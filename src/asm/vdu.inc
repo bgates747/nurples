@@ -618,9 +618,30 @@ vdu_flip:
 ; Command 65: Decompress a buffer
 ; VDU 23, 0, &A0, targetBufferId; 65, sourceBufferId;
 ; This command will decompress the contents of a buffer, replacing the target buffer with the decompressed data. Unless the target buffer is the same as the source, the source buffer will be left unchanged.
-; inputs: hl=sourceBufferId, de=targetBufferId
+; inputs: hl=sourceBufferId/targetBufferId
 vdu_decompress_buffer:
-	ld (@targetBufferId),de
+	ld (@targetBufferId),hl
+	ld (@sourceBufferId),hl
+	ld a,65
+	ld (@cmd1),a ; restore the part of command that got stomped on
+	ld hl,@cmd
+	ld bc,@end-@cmd
+	rst.lil $18
+	ret
+@cmd: 	db 23,0,0xA0
+@targetBufferId: dw 0x0000
+@cmd1:	db 65
+@sourceBufferId: dw 0x0000
+@end: 	db 0x00 ; padding
+
+; Command 65: Decompress a buffer
+; VDU 23, 0, &A0, targetBufferId; 65, sourceBufferId;
+; This command will decompress the contents of a buffer, replacing the target buffer with the decompressed data. Unless the target buffer is the same as the source, the source buffer will be left unchanged.
+; inputs: hl=sourceBufferId/targetBufferId
+; 0x7FFF for the source buffer is just an easy-to remember aribtrary value
+vdu_decompress_buffer_different:
+	ld (@targetBufferId),hl
+    ld hl,0x7FFF
 	ld (@sourceBufferId),hl
 	ld a,65
 	ld (@cmd1),a ; restore the part of command that got stomped on
@@ -1436,3 +1457,46 @@ vdu_sprite_add_buff:
 @cmd:      db 23,27,0x26
 @bufferId: dw 0x0000
 @end:      db 0x00 ; padding
+
+
+; #### from sfx.inc ####
+sfx_last_channel: db 0x00 ; 8-bit value between 0 and 31
+
+; ; play a sound effect on the next available channel at full volume for its full duration
+; ; inputs: hl = bufferId
+; sfx_play:
+; 	ld iy,sfx_last_channel
+; 	ld a,(iy+0)
+; 	ld (@bufferId),hl
+; @find_next_channel:
+; 	inc a ; bump to next channel
+; 	and 31 ; modulo 32 channel
+; 	cp (iy+0) ; if this is zero we've wrapped around and not found a free channel
+; 	ret z ; so we return to caller without doing anything
+; 	push af ; back up channel
+; 	call vdu_channel_status ; a comes back with channel status bitmask
+; 	and %00000010 ; bit 1 is the "is playing" flag
+; 	jr z,@play_sfx ; if not playing, we can use this channel
+; 	pop af ; restore channel
+; 	jr @find_next_channel ; try the next channel
+; @play_sfx:
+; 	pop af ; restore channel
+; 	ld (iy+0),a ; store channel
+; 	ld hl,(@bufferId)
+; 	ld c,a ; channel
+; 	ld b,127 ; full volume
+; 	ld de,1000 ; 1 second duration (should have no effect)
+; 	jp vdu_play_sample 
+; @bufferId:
+; 	dw 0x0000 ; 16-bit value
+
+vdu_clear_all_buffers:
+; clear all buffers
+    ld hl,@beg
+    ld bc,@end-@beg
+    rst.lil $18
+    ret
+@beg: db 23,0,$A0
+      dw -1 ; clear all buffers
+      db 2  ; command 2: clear a buffer
+@end:

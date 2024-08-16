@@ -160,7 +160,7 @@ fa_open_always:		EQU	10h
 fa_open_append:		EQU	30h
 	
 ; System variable indexes for api_sysvars
-; Index into _sysvars in globals.asm
+; Index into _sysvars in globals.inc
 ;
 sysvar_time:			EQU	00h	; 4: Clock timer in centiseconds (incremented by 2 every VBLANK)
 sysvar_vpd_pflags:		EQU	04h	; 1: Flags to indicate completion of VDP commands

@@ -6,18 +6,6 @@
 ; see: https://discord.com/channels/1158535358624039014/1158536711148675072/1212136741608099910
 ;
 ; ---------------------------------------------------------
-; GLOBAL SCRATCH VARIABLES
-; ---------------------------------------------------------
-uaf: ds 4 ; 32-bit scratch
-uhl: ds 4 ; the extra byte at the end
-ubc: ds 4 ; is padding for overflow
-ude: ds 4 ; when shifting up registers
-uix: ds 4
-uiy: ds 4
-usp: ds 4
-upc: ds 4
-
-; ---------------------------------------------------------
 ; BEGIN DIVISION ROUTINES
 ; ---------------------------------------------------------
 ;

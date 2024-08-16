@@ -18,7 +18,7 @@ sendVDUsequence:
 	POP		BC
 	RET
 ; Print Newline sequence to VDP
-printNewline:
+printNewLine:
 	LD	A, '\r'
 	RST.LIL 10h
 	LD	A, '\n'
@@ -66,50 +66,38 @@ DisplayHexPrefix:
 	RST.LIL 10h
 	RET
 
-; Prints the decimal value in HL without leading zeroes
+
+; Prints the right justified decimal value in HL without leading zeroes
 ; HL : Value to print
 printDec:
 	LD	 DE, _printDecBuffer
 	CALL Num2String
-	LD	 HL, _printDecBuffer
+; BEGIN MY CODE
+; replace leading zeroes with spaces
+    LD	 HL, _printDecBuffer
+    ld   B, 7 ; if HL was 0, we want to keep the final zero 
+@loop:
+    LD	 A, (HL)
+    CP	 '0'
+    JP	 NZ, @done
+    LD   A, ' '
+    LD	 (HL), A
+    INC	 HL
+    CALL vdu_cursor_forward
+    DJNZ @loop
+@done:
+; END MY CODE
+	; LD	 HL, _printDecBuffer
 	CALL printString
 	RET
-_printDecBuffer:
-	DS 9
+_printDecBuffer: blkb 9,0 ; nine bytes full of zeroes
+
 ; This routine converts the value from HL into it's ASCII representation, 
-; starting to memory location pointing by DE, in decimal form and with trailing zeroes 
-; so it will allways be 5 characters length
+; starting to memory location pointing by DE, in decimal form and with leading zeroes 
+; so it will allways be 8 characters length
 ; HL : Value to convert to string
 ; DE : pointer to buffer, at least 8 byte + 0
 Num2String:
-	PUSH DE
-	CALL Num2String_worker
-	LD	 A, 0
-	LD	 (DE), A	; terminate string
-	POP  DE
-	PUSH DE
-@findfirstzero:
-	LD	 A, (DE)
-	CP	 '0'
-	JR	 NZ, @done
-	INC  DE
-	JR	 @findfirstzero
-@done:
-	OR	 A	; end-of-string reached / was the value 0?
-	JR	 NZ, @removezeroes
-	DEC  DE
-@removezeroes:
-	POP	 HL	; start of string, DE == start of first number
-@copydigit:
-	LD	A, (DE)
-	LD	(HL), A
-	OR  A
-	RET	Z
-	INC	HL
-	INC DE
-	JR	@copydigit
-
-Num2String_worker:
 	LD	 BC,-10000000
 	CALL OneDigit
 	LD	 BC,-1000000
@@ -163,6 +151,114 @@ printBin8:
 @cmd: ds 8 ; eight bytes for eight bits
 @end:
 
+; print the binary representation of the 8-bit value in a
+; in reverse order (lsb first)
+; destroys a, hl, bc
+printBin8Rev:
+    ld b,8      ; loop counter for 8 bits
+    ld hl,@cmd  ; set hl to the low byte of the output string
+                ; (which will be the high bit of the value in a)
+@loop:
+    rrca ; put the next lowest bit into carry
+    jr c,@one
+    ld (hl),'0'
+    jr @next_bit
+@one:
+    ld (hl),'1'
+@next_bit:
+    inc hl
+    djnz @loop
+; print it
+	ld hl,@cmd         
+	ld bc,@end-@cmd    
+	rst.lil $18         
+	ret
+@cmd: ds 8 ; eight bytes for eight bits
+@end:
+
+; print registers to screen in hexidecimal format
+; inputs: none
+; outputs: values of every register printed to screen
+;    values of each register in global scratch memory
+; destroys: nothing
+stepRegistersHex:
+; store everything in scratch
+    ld (uhl),hl
+    ld (ubc),bc
+    ld (ude),de
+    ld (uix),ix
+    ld (uiy),iy
+    push af ; fml
+    pop hl  ; thanks, zilog
+    ld (uaf),hl
+    push af ; dammit
+
+; home the cursor
+    call vdu_home_cursor
+
+; print each register
+    ld hl,str_afu
+    call printString
+    ld hl,(uaf)
+    call printHex24
+    call printNewLine
+
+    ld hl,str_hlu
+    call printString
+    ld hl,(uhl)
+    call printHex24
+    call printNewLine
+
+    ld hl,str_bcu
+    call printString
+    ld hl,(ubc)
+    call printHex24
+    call printNewLine
+
+    ld hl,str_deu
+    call printString
+    ld hl,(ude)
+    call printHex24
+    call printNewLine
+
+    ld hl,str_ixu
+    call printString
+    ld hl,(uix)
+    call printHex24
+    call printNewLine
+
+    ld hl,str_iyu
+    call printString
+    ld hl,(uiy)
+    call printHex24
+    call printNewLine
+
+    ; call vdu_vblank
+
+    call printNewLine
+
+; check for right shift key and quit if pressed
+	MOSCALL mos_getkbmap
+@stayhere:
+; 7 RightShift
+    bit 6,(ix+0)
+    jr nz,@RightShift
+    jr @stayhere
+@RightShift:
+    res 0,(ix+14) ; debounce the key (hopefully)
+    ld a,%10000000
+    call multiPurposeDelay
+
+; restore everything
+    ld hl, (uhl)
+    ld bc, (ubc)
+    ld de, (ude)
+    ld ix, (uix)
+    ld iy, (uiy)
+    pop af
+; all done
+    ret
+
 ; print registers to screen in hexidecimal format
 ; inputs: none
 ; outputs: values of every register printed to screen
@@ -181,48 +277,48 @@ dumpRegistersHex:
     push af ; dammit
 
 ; home the cursor
-    ; call vdu_home_cursor
+    call vdu_home_cursor
 
 ; print each register
-    ld hl,@str_afu
+    ld hl,str_afu
     call printString
     ld hl,(uaf)
     call printHex24
-    call printNewline
+    call printNewLine
 
-    ld hl,@str_hlu
+    ld hl,str_hlu
     call printString
     ld hl,(uhl)
     call printHex24
-    call printNewline
+    call printNewLine
 
-    ld hl,@str_bcu
+    ld hl,str_bcu
     call printString
     ld hl,(ubc)
     call printHex24
-    call printNewline
+    call printNewLine
 
-    ld hl,@str_deu
+    ld hl,str_deu
     call printString
     ld hl,(ude)
     call printHex24
-    call printNewline
+    call printNewLine
 
-    ld hl,@str_ixu
+    ld hl,str_ixu
     call printString
     ld hl,(uix)
     call printHex24
-    call printNewline
+    call printNewLine
 
-    ld hl,@str_iyu
+    ld hl,str_iyu
     call printString
     ld hl,(uiy)
     call printHex24
-    call printNewline
+    call printNewLine
 
-    ; call vsync
+    call vdu_vblank
 
-    call printNewline
+    call printNewLine
 ; restore everything
     ld hl, (uhl)
     ld bc, (ubc)
@@ -233,12 +329,12 @@ dumpRegistersHex:
 ; all done
     ret
 
-@str_afu: db "af=",0
-@str_hlu: db "hl=",0
-@str_bcu: db "bc=",0
-@str_deu: db "de=",0
-@str_ixu: db "ix=",0
-@str_iyu: db "iy=",0
+str_afu: db "af=",0
+str_hlu: db "hl=",0
+str_bcu: db "bc=",0
+str_deu: db "de=",0
+str_ixu: db "ix=",0
+str_iyu: db "iy=",0
 
 ; print udeuhl to screen in hexidecimal format
 ; inputs: none
@@ -255,7 +351,7 @@ dumpUDEUHLHex:
 
 ; print each register
 
-    ld hl,@str_udeuhl
+    ld hl,str_udeuhl
     call printString
     ld hl,(ude)
     call printHex24
@@ -263,7 +359,7 @@ dumpUDEUHLHex:
 	rst.lil 10h
     ld hl,(uhl)
     call printHex24
-    call printNewline
+    call printNewLine
 
 ; restore everything
     ld hl, (uhl)
@@ -275,23 +371,23 @@ dumpUDEUHLHex:
 ; all done
     ret
 
-@str_udeuhl: db "ude.uhl=",0
+str_udeuhl: db "ude.uhl=",0
 
-; ; global scratch memory for registers
-; uaf: dl 0
-; uhl: dl 0
-; ubc: dl 0
-; ude: dl 0
-; uix: dl 0
-; uiy: dl 0
-; usp: dl 0
-; upc: dl 0
+; global scratch memory for registers
+uaf: dl 0
+uhl: dl 0
+ubc: dl 0
+ude: dl 0
+uix: dl 0
+uiy: dl 0
+usp: dl 0
+upc: dl 0
 
 ; inputs: whatever is in the flags register
 ; outputs: binary representation of flags
 ;          with a header so we know which is what
-; destroys: hl
-; preserves: af
+; destroys: nothing
+; preserves: everything
 dumpFlags:
 ; first we curse zilog for not giving direct access to flags
     push af ; this is so we can send it back unharmed
@@ -308,7 +404,7 @@ dumpFlags:
     pop hl ; flags are now in l
     ld a,l ; flags are now in a
     call printBin8
-	call printNewline
+	call printNewLine
 ; restore everything
     ld hl, (uhl)
     ld bc, (ubc)
@@ -353,43 +449,135 @@ resetAllFlags:
     pop af
     ret
 
-; ------------------
-; delay routine
-; Author: Richard Turrnidge
-; https://github.com/richardturnnidge/lessons/blob/main/slowdown.asm
-; routine waits a fixed time, then returns
-; arrive with A =  the delay byte. One bit to be set only.
-; eg. ld A, 00000100b
+; wait until user presses a key
+; inputs: none
+; outputs: none
+; destroys: af,ix
+waitKeypress:
+    MOSCALL mos_sysvars
+    xor a ; zero out any prior keypresses
+    ld (ix+sysvar_keyascii),a
+@loop:
+    ld a,(ix+sysvar_keyascii)
+    and a
+    ret nz
+    jr @loop
 
-multiPurposeDelay:                      
-    push bc                 
-    ld b, a 
-    ld a,$08
-    RST.LIL	08h                 ; get IX pointer to sysvars               
 
-waitLoop:
+; print bytes from an address to the screen in hexidecimal format
+; inputs: hl = address of first byte to print, a = number of bytes to print
+; outputs: values of each byte printed to screen separated by spaces
+; destroys: nothing
+dumpMemoryHex:
+; save all registers to the stack
+    push af
+    push bc
+    push de
+    push hl
+    push ix
+    push iy
 
-    ld a, (ix + 0)              ; ix+0h is lowest byte of clock timer
+; set b to be our loop counter
+    ld b,a
+@loop:
+; print the byte
+    ld a,(hl)
+    call printHex8
+; print a space
+    ld a,' '
+    rst.lil 10h
+    inc hl
+    djnz @loop
+    call printNewLine
 
-                                ;   we check if bit set is same as last time we checked.
-                                ;   bit 0 - don't use
-                                ;   bit 1 - changes 64 times per second
-                                ;   bit 2 - changes 32 times per second
-                                ;   bit 3 - changes 16 times per second
-
-                                ;   bit 4 - changes 8 times per second
-                                ;   bit 5 - changes 4 times per second
-                                ;   bit 6 - changes 2 times per second
-                                ;   bit 7 - changes 1 times per second
-    and b 
-    ld c,a 
-    ld a, (oldTimeStamp)
-    cp c                        ; is A same as last value?
-    jr z, waitLoop              ; loop here if it is
-    ld a, c 
-    ld (oldTimeStamp), a        ; set new value
-
+; restore everything
+    pop iy
+    pop ix
+    pop hl
+    pop de
     pop bc
+    pop af
+; all done
     ret
 
-oldTimeStamp:   .db 00h
+
+; print bytes from an address to the screen in binary format
+; inputs: hl = address of first byte to print, a = number of bytes to print
+; outputs: values of each byte printed to screen separated by spaces
+; destroys: nothing
+dumpMemoryBin:
+; save all registers to the stack
+    push af
+    push bc
+    push de
+    push hl
+    push ix
+    push iy
+
+; set b to be our loop counter
+    ld b,a
+@loop:
+; print the byte
+    ld a,(hl)
+    push hl
+    push bc
+    call printBin8
+    pop bc
+; print a space
+    ld a,' '
+    rst.lil 10h
+    pop hl
+    inc hl
+    djnz @loop
+    call printNewLine
+
+; restore everything
+    pop iy
+    pop ix
+    pop hl
+    pop de
+    pop bc
+    pop af
+; all done
+    ret
+
+; print bytes from an address to the screen in binary format
+; with the bits of each byte in reverse order (lsb first)
+; inputs: hl = address of first byte to print, a = number of bytes to print
+; outputs: values of each byte printed to screen separated by spaces
+; destroys: nothing
+dumpMemoryBinRev:
+; save all registers to the stack
+    push af
+    push bc
+    push de
+    push hl
+    push ix
+    push iy
+
+; set b to be our loop counter
+    ld b,a
+@loop:
+; print the byte
+    ld a,(hl)
+    push hl
+    push bc
+    call printBin8Rev
+    pop bc
+; print a space
+    ld a,' '
+    rst.lil 10h
+    pop hl
+    inc hl
+    djnz @loop
+    call printNewLine
+
+; restore everything
+    pop iy
+    pop ix
+    pop hl
+    pop de
+    pop bc
+    pop af
+; all done
+    ret

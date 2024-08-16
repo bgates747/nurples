@@ -2,7 +2,7 @@
 ; which call the macro, otherwise the assembler won't have the macro
 ; available to run when it is called, and will fail with something 
 ; along the lines of 'invalid label' at such and such a line
-    include "nurples/src/asm/macros.inc"
+    include "src/asm/macros.inc"
 
 ;MOS INITIALIATION MUST GO HERE BEFORE ANY OTHER CODE
     .assume adl=1   
@@ -44,29 +44,33 @@ exit:
 
 ; after this we can put includes in any order we wish, even in between
 ; code blocks if there is any program-dependent or asethetic reason to do so
-	include "nurples/src/asm/images2.asm"
-	include "nurples/src/asm/fonts.asm"
-	include "nurples/src/asm/levels.asm"
+	include "src/asm/images2.inc"
+	include "src/asm/fonts.inc"
+	include "src/asm/levels.inc"
 
-	include "nurples/src/asm/sprites.asm"
+	include "src/asm/sprites.inc"
 ; API includes
-    include "nurples/src/asm/mos_api.inc"
-    include "nurples/src/asm/functions.inc"
-    include "nurples/src/asm/vdu.inc"
-    include "nurples/src/asm/vdu_buff.inc"
-    ; include "nurples/src/asm/vdu_plot.inc"
-	; include "nurples/src/asm/vdu_sprites.inc"
-	; include "nurples/src/asm/vdp.inc"
-	include "nurples/src/asm/div_168_signed.inc"
-	include "nurples/src/asm/maths24.inc"
+    include "src/asm/mos_api.inc"
+    include "src/asm/functions.inc"
+    include "src/asm/vdu.inc"
+    include "src/asm/vdu_buff.inc"
+    ; include "src/asm/vdu_plot.inc"
+	; include "src/asm/vdu_sprites.inc"
+	; include "src/asm/vdp.inc"
+	include "src/asm/div_168_signed.inc"
+	include "src/asm/maths24.inc"
 ; App-specific includes
-	include "nurples/src/asm/player.asm"
-	include "nurples/src/asm/tiles.asm"
-	include "nurples/src/asm/enemies.asm"
-	include "nurples/src/asm/laser.asm"
-	; include "nurples/src/asm/temp.asm"
+	include "src/asm/player.inc"
+	include "src/asm/tiles.inc"
+	include "src/asm/enemies.inc"
+	include "src/asm/laser.inc"
+
+	include "src/asm/timer.inc"
 
 hello_world: defb "Hello, World!\n\r",0
+is_emulator: defb 0
+on_emulator: defb "Running on emulator.\r\n",0
+on_hardware: defb "Running on hardware.\r\n",0
 
 init:
 ; ; set fonts
@@ -95,7 +99,7 @@ init:
 	ld de,16
 	call vdu_set_gfx_origin
 
-	call vdu_init ; grab a bunch of sysvars and stuff
+	; call vdu_init ; grab a bunch of sysvars and stuff ; TODO: DEPRECATE
 	call cursor_off
 
 ; ; TESTING SOME MATHS
@@ -257,7 +261,7 @@ main:
 	call move_enemies
 
 ; wait for the next vsync
-	call vsync
+	call vdu_vblank
 
 ; poll keyboard
     ld a, $08                           ; code to send to MOS
@@ -301,7 +305,7 @@ main_end:
 ; ;     ld a,1
 ; ;     out (#e0),a ; start counting instructions
 
-;     call vsync
+;     call vdu_vblank
 ; ; ; debug: stop execution counter and print results
 ; ;     ld a,0
 ; ;     out (#e0),a ; stop counting instructions

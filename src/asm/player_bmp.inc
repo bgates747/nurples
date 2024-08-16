@@ -270,7 +270,7 @@ player_input:
 ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
 ;     ld (player_move_timer),a
 ; kill_player_loop:
-;     call vsync
+;     call vdu_vblank
 ;     ld a,(player_move_timer)
 ;     dec a
 ;     ld (player_move_timer),a
