@@ -36,7 +36,7 @@ move_enemies:
     ld hl,0
     ld a,(table_active_sprites)
     ld l,a
-    call dumpRegistersHex
+    ; call dumpRegistersHex
     and a ; will be zero if no alive enemies or explosions
     ; ret z ; so nothing to do but go back
     ; ld hl,(respawn_timer)
