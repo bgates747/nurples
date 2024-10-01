@@ -1,8 +1,3 @@
-    MACRO printChar char
-        LD A, char
-        RST.LIL 10h
-    ENDMACRO
-
 ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/functions.s
 ; Print a zero-terminated string
 ; HL: Pointer to string
@@ -24,12 +19,10 @@ sendVDUsequence:
 	RET
 ; Print Newline sequence to VDP
 printNewLine:
-    push af ; for some reason rst.lil 10h sets carry flag
 	LD	A, '\r'
 	RST.LIL 10h
 	LD	A, '\n'
 	RST.LIL 10h
-    pop af
 	RET
 ; Print a 24-bit HEX number
 ; HLU: Number to print
@@ -73,52 +66,10 @@ DisplayHexPrefix:
 	RST.LIL 10h
 	RET
 
-    MACRO printDecBC
-        push hl
-        push bc
-        pop hl
-        call printDec
-        pop hl
-    ENDMACRO
-
-    MACRO printDecDE
-        push hl
-        push de
-        pop hl
-        call printDec
-        pop hl
-    ENDMACRO
-
-    MACRO printDecHL
-        call printDec
-    ENDMACRO
-
-    MACRO printDecIX
-        push hl
-        push ix
-        pop hl
-        call printDec
-        pop hl
-    ENDMACRO
-
-    MACRO printDecIY
-        push hl
-        push iy
-        pop hl
-        call printDec
-        pop hl
-    ENDMACRO
 
 ; Prints the right justified decimal value in HL without leading zeroes
 ; HL : Value to print
 printDec:
-; BEGIN MY CODE
-; back up all the things
-    push af
-    push bc
-    push de
-    push hl
-; END MY CODE
 	LD	 DE, _printDecBuffer
 	CALL Num2String
 ; BEGIN MY CODE
@@ -138,13 +89,6 @@ printDec:
 ; END MY CODE
 	; LD	 HL, _printDecBuffer
 	CALL printString
-; BEGIN MY CODE
-; restore all the things
-    pop hl
-    pop de
-    pop bc
-    pop af
-; END MY CODE
 	RET
 _printDecBuffer: blkb 9,0 ; nine bytes full of zeroes
 
@@ -289,7 +233,7 @@ stepRegistersHex:
     call printHex24
     call printNewLine
 
-    ; call vsync
+    ; call vdu_vblank
 
     call printNewLine
 
@@ -333,8 +277,7 @@ dumpRegistersHex:
     push af ; dammit
 
 ; home the cursor
-    ; call vdu_home_cursor
-    call printNewLine
+    call vdu_home_cursor
 
 ; print each register
     ld hl,str_afu
@@ -545,7 +488,7 @@ dumpMemoryHex:
     rst.lil 10h
     inc hl
     djnz @loop
-    ; call printNewLine
+    call printNewLine
 
 ; restore everything
     pop iy

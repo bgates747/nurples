@@ -86,45 +86,45 @@ prt_reload_emulator: equ 11519 ; 1 centisecond on emulator with 16 clock divider
 prt_reload_hardware: equ 11532 ; 1 centisecond on hardware with 16 clock divider
 prt_reload: dl 0x000000
 
-; ; returns: a = 0 if running on hardware,1 if running on emulator
-; ;          de = number PRT interrupts during test interval
-; prt_calibrate:
-;     call vdu_vblank
-; ; set a MOS timer
-;     ld hl,120*1 ; 1 second
-;     ld iy,tmr_test
-;     call tmr_set
-; ; set a PRT timer
-;     ; ld hl,prt_reload_hardware 
-;     ; ld hl,prt_reload_emulator
-;     ld hl,prt_reload_emulator + prt_reload_hardware / 2
-;     ld (prt_reload),hl
-;     call prt_set
-; @loop:
-; ; check time remaining on MOS timer
-;     call tmr_get
-;     jp z,@done ; time expired,so quit
-;     jp m,@done ; time past expiration (negative),so quit
-;     jr @loop
-; @done:
-;     ld de,(prt_irq_counter)
-;     ld bc,prt_reload_hardware ; default value for running on hardware
-;     ld (prt_reload),bc
-;     ld hl,100 ; halfway between 101 for real hardware and 99 for emulator
-;     xor a ; clear carry,zero is default value for running on hardware
-;     ld (is_emulator),a
-;     sbc hl,de
-;     ld hl,on_hardware ; default message for running on hardware
-;     jp z,prt_calibrate ; zero result is indeterminate so we try again
-;     ret m ; negative result means we're on hardware
-;     inc a ; we're on emulator
-;     ld (is_emulator),a
-;     ld bc,prt_reload_emulator
-;     ld (prt_reload),bc
-;     ld hl,on_emulator
-;     ret
+; returns: a = 0 if running on hardware,1 if running on emulator
+;          de = number PRT interrupts during test interval
+prt_calibrate:
+    call vdu_vblank
+; set a MOS timer
+    ld hl,120*1 ; 1 second
+    ld iy,tmr_test
+    call tmr_set
+; set a PRT timer
+    ; ld hl,prt_reload_hardware 
+    ; ld hl,prt_reload_emulator
+    ld hl,prt_reload_emulator + prt_reload_hardware / 2
+    ld (prt_reload),hl
+    call prt_set
+@loop:
+; check time remaining on MOS timer
+    call tmr_get
+    jp z,@done ; time expired,so quit
+    jp m,@done ; time past expiration (negative),so quit
+    jr @loop
+@done:
+    ld de,(prt_irq_counter)
+    ld bc,prt_reload_hardware ; default value for running on hardware
+    ld (prt_reload),bc
+    ld hl,100 ; halfway between 101 for real hardware and 99 for emulator
+    xor a ; clear carry,zero is default value for running on hardware
+    ld (is_emulator),a
+    sbc hl,de
+    ld hl,on_hardware ; default message for running on hardware
+    jp z,prt_calibrate ; zero result is indeterminate so we try again
+    ret m ; negative result means we're on hardware
+    inc a ; we're on emulator
+    ld (is_emulator),a
+    ld bc,prt_reload_emulator
+    ld (prt_reload),bc
+    ld hl,on_emulator
+    ret
 
-; calibrating_timer: defb "Calibrating timer\r\n",0
+calibrating_timer: defb "Calibrating timer\r\n",0
 
 ; set PRT timer
 prt_set:
@@ -276,6 +276,8 @@ tmr_get:
                             ; (we do adc because add hl,rr doesn't set sign or zero flags)
     ret
 
+tmr_test: ds 6 ; example of a buffer to hold timer data
+
 timestamp_now: dl 0
 timestamp_old: dl 0
 timestamp_chg: dl 0
@@ -323,31 +325,6 @@ timestamp_tmr_get:
     xor a                   ; clear carry
     adc hl,de               ; hl = time remaining 
                             ; (we do adc because add hl,rr doesn't set sign or zero flags)
-    ret
-
-; main loop timer functions
-tmr_main_loop: ds 6 ; buffer to hold main loop timer
-
-; set a countdown timer for the main loop using the timestamp timer
-; inputs: hl = time to set in 1/120ths of a second
-; returns: hl = current time
-; destroys: af,hl,de,ix,iy
-tmr_main_loop_set:
-    ld iy,tmr_main_loop
-    ld (iy+3),hl ; set time remaining
-    call timestamp_tick
-    ld hl,(timestamp_now)   ; get current timestamp
-    ld (iy+0),hl ; set start time
-    ret
-
-; gets time remaining on the main loop countdown timer following the global timestamp
-; returns: hl pos = time remaining in 1/120ths of a second,hl neg = time past expiration
-;          sign flags: pos = time not expired,zero or neg = time expired
-; destroys: af,hl,de,ix,iy
-tmr_main_loop_get:
-    call timestamp_tick
-    ld iy,tmr_main_loop
-    call timestamp_tmr_get
     ret
 
 ; set a stopwatch
