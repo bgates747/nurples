@@ -5,24 +5,24 @@ cur_buffer_id_lut: dl 0
 cur_load_jump_table: dl 0
 
 img_load_init:
-; initialize logo's position parameters
+; initialize bj's position parameters
 	ld hl,0
-	ld (logo_yvel),hl
+	ld (bj_yvel),hl
 
     ld hl,45
-	ld (logo_y_cur),hl
-	ld (logo_y_min),hl
-    ld (logo_y_max),hl
+	ld (bj_y_cur),hl
+	ld (bj_y_min),hl
+    ld (bj_y_max),hl
 
 	ld hl,1
-	ld (logo_xvel),hl
+	ld (bj_xvel),hl
 
 	ld hl,10
-	ld (logo_x_cur),hl
-	ld (logo_x_min),hl
+	ld (bj_x_cur),hl
+	ld (bj_x_min),hl
 
 	ld hl,320-120
-	ld (logo_x_max),hl
+	ld (bj_x_max),hl
 
     ret
 
@@ -43,10 +43,10 @@ img_load_main_loop:
 	ld bc,0
 	ld de,0
 	call vdu_plot_bmp
-; move logo
-	call move_logo
+; move bj
+	call move_bj
 ; print welcome message
-	ld ix,font_rc
+	ld ix,font_itc_honda
 	ld hl,hello_world
 	ld bc,32
 	ld de,2
@@ -68,6 +68,12 @@ img_load_main_loop:
 ; decrement loop counter
     pop bc
 	dec bc
+; ; DEBUG: DUMP REGISTERS
+; 	push bc
+; 	call dumpRegistersHex
+; 	call vdu_flip
+; 	pop bc
+; ; END DEBUG
     ld a,c
     or a
     jp nz,img_load_main_loop
@@ -103,58 +109,91 @@ load_next_panel:
 	ld (cur_file_idx),hl
 	ret
 
-move_logo:
-; activate logo bitmap
-	ld hl, BUF_SPLASH_LOGO
+move_bj:
+; activate bj bitmap
+	ld hl, BUF_UI_BJ_120_120
 	call vdu_buff_select
 ; update position based on velocity parameters
-	ld hl, (logo_x_cur)
-	ld de, (logo_xvel)
+	ld hl, (bj_x_cur)
+	ld de, (bj_xvel)
 	add hl, de
-	ld (logo_x_cur), hl
+	ld (bj_x_cur), hl
 	ex de,hl ; store x_cur in de
 ; check if we're < x_min
-	ld hl,(logo_x_min)
+	ld hl,(bj_x_min)
 	xor a ; clear carry
 	sbc hl,de ; x_min - x_cur
-	jp p, move_logo_x_min
+	jp p, move_bj_x_min
 ; check if we're > x_max
-	ld hl,(logo_x_max)
+	ld hl,(bj_x_max)
 	xor a ; clear carry
 	sbc hl,de ; x_max - x_cur
-	jp m, move_logo_x_max
-; if not at either boundary, fall through to draw logo's
-draw_logo:
-	ld bc,(logo_x_cur)
-	ld de,(logo_y_cur)
+	jp m, move_bj_x_max
+; if not at either boundary, fall through to draw bj's
+draw_bj:
+	ld bc,(bj_x_cur)
+	ld de,(bj_y_cur)
 	call vdu_plot_bmp
 	ret
-move_logo_x_min:
+move_bj_x_min:
 	ld hl,1
-	ld (logo_xvel),hl
-	ld hl,(logo_x_min)
-	ld (logo_x_cur),hl
-	jr draw_logo
-move_logo_x_max:
+	ld (bj_xvel),hl
+	ld hl,(bj_x_min)
+	ld (bj_x_cur),hl
+	jr draw_bj
+move_bj_x_max:
 	ld hl,-1
-	ld (logo_xvel),hl
-	ld hl,(logo_x_max)
-	ld (logo_x_cur),hl
-	jr draw_logo
-logo_xvel: dl 0
-logo_x_cur: dl 0
-logo_x_min: dl 0
-logo_x_max: dl 0
+	ld (bj_xvel),hl
+	ld hl,(bj_x_max)
+	ld (bj_x_cur),hl
+	jr draw_bj
+bj_xvel: dl 0
+bj_x_cur: dl 0
+bj_x_min: dl 0
+bj_x_max: dl 0
 
-logo_yvel: dl 0
-logo_y_cur: dl 0
-logo_y_min: dl 0
-logo_y_max: dl 0
+bj_yvel: dl 0
+bj_y_cur: dl 0
+bj_y_min: dl 0
+bj_y_max: dl 0
 
 tmp_draw_all_the_things:
-    ld hl,BUF_SPLASH_BG
+    ld hl,BUF_UI_SPLASH
     call vdu_buff_select
     ld bc,0
     ld de,0
     call vdu_plot_bmp
 	ret
+
+; load an uncompressed rgba2222 image file to a buffer
+; inputs: bc,de image width,height ; hl = bufferId ; ix = file size
+vdu_load_img:
+; back up image dimension parameters
+	push bc
+	push de
+; load the image
+	call vdu_load_buffer_from_file
+; now make it a bitmap
+	pop de
+	pop bc
+	ld a,1 ; the magic number for rgba2222
+	jp vdu_bmp_create ; will return to caller from there
+
+; load a compressed rgba2222 image file to a buffer
+; inputs: bc,de image width,height ; hl = bufferId ; ix = file size
+vdu_load_img_cmp:
+; back up image dimension parameters
+	push bc
+	push de
+; back up the buffer id
+	push hl
+; load the image
+	call vdu_load_buffer_from_file
+; decompress the buffer
+	pop hl ; bufferId
+	call vdu_decompress_buffer
+; now make it a bitmap
+	pop de ; image height
+	pop bc ; image width
+	ld a,1 ; the magic number for rgba2222
+	jp vdu_bmp_create ; will return to caller from there

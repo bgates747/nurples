@@ -1,4 +1,4 @@
-	.assume adl=1   
+    .assume adl=1   
     .org 0x040000    
 
     jp start       
@@ -6,7 +6,29 @@
     .align 64      
     .db "MOS"       
     .db 00h         
-    .db 01h       
+    .db 01h
+
+	include "src/asm/mos_api.asm" ; wants to be first include b/c it has macros
+	include "src/asm/vdu_sound.asm" ; also has macros
+	include "src/asm/images.asm"
+	include "src/asm/fonts_bmp.asm"
+	include "src/asm/maps.asm"
+	include "src/asm/render.asm"
+	include "src/asm/polys.asm"
+	include "src/asm/font_itc_honda.asm"
+	include "src/asm/font_retro_computer.asm"
+	include "src/asm/ui.asm"
+	include "src/asm/ui_img.asm"
+	include "src/asm/ui_img_bj.asm"
+	include "src/asm/sprites.asm"
+	include "src/asm/vdu.asm"
+    include "src/asm/functions.asm"
+	include "src/asm/player.asm"
+	include "src/asm/maths.asm"
+	include "src/asm/img_load.asm"
+	include "src/asm/sfx.asm"
+	include "src/asm/timer.asm"
+
 
 start:              
     push af
@@ -15,19 +37,19 @@ start:
     push ix
     push iy
 
-; ###############################################
-	call	init			; Initialization code
-	call 	main			; Call the main function
-; ###############################################
+	call init ; Initialization code
+    call main ; Call the main function
 
 exit:
-    pop iy
+
+    pop iy 
     pop ix
     pop de
     pop bc
     pop af
     ld hl,0
-    ret
+
+    ret 
 
 hello_world: defb "Welcome to Agon Wolf3D",0
 loading_ui: defb "Loading UI",0
@@ -38,15 +60,6 @@ on_emulator: defb "Running on emulator.\r\n",0
 on_hardware: defb "Running on hardware.\r\n",0
 
 init:
-; clear all buffers
-    call vdu_clear_all_buffers
-
-; set up the display
-    ld a,8+128 ; 320x240x64 double-buffered
-    call vdu_set_screen_mode
-    xor a
-    call vdu_set_scaling
-	
 ; start generic stopwatch to time setup loop 
 ; so we can determine if we're running on emulator or hardware
 	call stopwatch_set
@@ -54,9 +67,6 @@ init:
 ; initialize global timestamp
     ld hl,(ix+sysvar_time) ; ix was set by stopwatch_start
     ld (timestamp_now),hl
-
-; enable additional audio channels
-	call vdu_enable_channels
 
 ; set the cursor off
 	call cursor_off
@@ -73,12 +83,14 @@ init:
 	call load_ui_images
 	call load_ui_images_bj
 
+; set up the display
+    ld a,8;+128 ; 320x240x64 double-buffered
+    call vdu_set_screen_mode
+    xor a
+    call vdu_set_scaling
+
 ; set text background color
 	ld a,4 + 128
-	call vdu_colour_text
-
-; set text foreground color
-	ld a,47 ; aaaaff lavenderish
 	call vdu_colour_text
 
 ; set gfx bg color
@@ -172,6 +184,9 @@ init:
 	call vdu_flip 
 	call waitKeypress
 
+; clear the screen
+	call vdu_cls
+
 ; initialization done
 	ret
 
@@ -181,51 +196,42 @@ debug_timer: db 0x01
 main_loop_tmr: ds 6
 framerate: equ 30
 
-new_game:
-; initialize map variables and load map file
-	ld hl,room_flags
-	xor a
-	ld b,10
-@room_flags_loop:
-	ld (hl),a
-	inc hl
-	djnz @room_flags_loop
-; map_init:
-	ld (cur_floor),a
-	ld (cur_room),a
-; load room file
-	call map_load
-; initialize sprite data
-	call map_init_sprites
-; initialize player position
-	call plyr_init
-
-	ret
-
-main:
-	call new_game
-
-; main:
-; ; set map variables and load initial map file
-; 	call map_init
+; new_game:
+; ; initialize map variables and load map file
+; 	ld hl,room_flags
+; 	xor a
+; 	ld b,10
+; @room_flags_loop:
+; 	ld (hl),a
+; 	inc hl
+; 	djnz @room_flags_loop
+; ; map_init:
+; 	ld (cur_floor),a
+; 	ld (cur_room),a
+; ; load room file
+; 	call map_load
+; ; initialize sprite data
+; 	call map_init_sprites
 ; ; initialize player position
 ; 	call plyr_init
 
+; 	ret
+
+; main:
+; 	call new_game
 
 main_loop:
 ; update global timestamp
     call timestamp_tick
 
 ; move enemies
-	call sprites_see_plyr ; 220-285  prt ticks
+	call sprites_see_plyr
 
 ; get player input and update sprite position
-	; 0-1 prt ticks
 	call plyr_input ; ix points to cell defs/status, a is target cell current obj_id
 
 ; render the updated scene
-	call render_scene ; 6-12 prt ticks
-; full loop 12-16 prt ticks
+	call render_scene
 
 ; flip the screen
 	call vdu_flip
@@ -253,10 +259,6 @@ main_loop:
 
 main_end:
 	; call do_outro
-
-    call vdu_clear_all_buffers
-	call vdu_disable_channels
-
 ; restore screen to something normalish
 	xor a
 	call vdu_set_screen_mode

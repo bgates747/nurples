@@ -1,4 +1,4 @@
-	.assume adl=1   
+    .assume adl=1   
     .org 0x040000    
 
     jp start       
@@ -6,7 +6,29 @@
     .align 64      
     .db "MOS"       
     .db 00h         
-    .db 01h       
+    .db 01h
+
+	include "src/asm/mos_api.asm" ; wants to be first include b/c it has macros
+	include "src/asm/vdu_sound.asm" ; also has macros
+	include "src/asm/images.asm"
+	include "src/asm/fonts_bmp.asm"
+	include "src/asm/maps.asm"
+	include "src/asm/render.asm"
+	include "src/asm/polys.asm"
+	include "src/asm/font_itc_honda.asm"
+	include "src/asm/font_retro_computer.asm"
+	include "src/asm/ui.asm"
+	include "src/asm/ui_img.asm"
+	include "src/asm/ui_img_bj.asm"
+	include "src/asm/sprites.asm"
+	include "src/asm/vdu.asm"
+    include "src/asm/functions.asm"
+	include "src/asm/player.asm"
+	include "src/asm/maths.asm"
+	include "src/asm/img_load.asm"
+	include "src/asm/sfx.asm"
+	include "src/asm/timer.asm"
+
 
 start:              
     push af
@@ -15,19 +37,19 @@ start:
     push ix
     push iy
 
-; ###############################################
-	call	init			; Initialization code
-	call 	main			; Call the main function
-; ###############################################
+	call init ; Initialization code
+    call main ; Call the main function
 
 exit:
-    pop iy
+
+    pop iy 
     pop ix
     pop de
     pop bc
     pop af
     ld hl,0
-    ret
+
+    ret 
 
 hello_world: defb "Welcome to Agon Wolf3D",0
 loading_ui: defb "Loading UI",0
@@ -254,7 +276,7 @@ main_loop:
 main_end:
 	; call do_outro
 
-    call vdu_clear_all_buffers
+        call vdu_clear_all_buffers
 	call vdu_disable_channels
 
 ; restore screen to something normalish
