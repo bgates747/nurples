@@ -1,11 +1,7 @@
-; macro files generally want to go here, before any of the other includes
-; which call the macro, otherwise the assembler won't have the macro
-; available to run when it is called, and will fail with something 
-; along the lines of 'invalid label' at such and such a line
-    include "src/asm/macros.inc"
+; MOS API EQUs and macros want to be up here
+    include "src/asm/mos_api.inc"
 
-;MOS INITIALIATION MUST GO HERE BEFORE ANY OTHER CODE
-    .assume adl=1   
+	.assume adl=1   
     .org 0x040000    
 
     jp start       
@@ -23,10 +19,6 @@ start:
     push iy
 
 ; ###############################################
-; ez80asmLinker.py loader code goes here if used.
-; ###############################################
-
-; ###############################################
 	call	init			; Initialization code
 	call 	main			; Call the main function
 ; ###############################################
@@ -42,29 +34,25 @@ exit:
 
     ret                                 ; Return MOS
 
-; after this we can put includes in any order we wish, even in between
-; code blocks if there is any program-dependent or asethetic reason to do so
-	include "src/asm/images2.inc"
-	include "src/asm/fonts.inc"
-	include "src/asm/levels.inc"
-
-	include "src/asm/sprites.inc"
-; API includes
-    include "src/asm/mos_api.inc"
-    include "src/asm/functions.inc"
-    include "src/asm/vdu.inc"
-    include "src/asm/vdu_buff.inc"
-    ; include "src/asm/vdu_plot.inc"
-	; include "src/asm/vdu_sprites.inc"
-	; include "src/asm/vdp.inc"
-	include "src/asm/div_168_signed.inc"
-	include "src/asm/maths24.inc"
 ; App-specific includes
 	include "src/asm/player.inc"
 	include "src/asm/tiles.inc"
 	include "src/asm/enemies.inc"
 	include "src/asm/laser.inc"
+	include "src/asm/img_load.inc"
+	include "src/asm/images2.inc"
+	include "src/asm/fonts.inc"
+	include "src/asm/levels.inc"
+	include "src/asm/sprites.inc"
 
+; API includes
+    include "src/asm/functions.inc"
+    include "src/asm/vdu.inc"
+    include "src/asm/vdu_buff.inc"
+    ; include "src/asm/vdu_plot.inc"
+	; include "src/asm/vdu_sprites.inc"
+	include "src/asm/div_168_signed.inc"
+	include "src/asm/maths24.inc"
 	include "src/asm/timer.inc"
 
 hello_world: defb "Hello, World!\n\r",0
@@ -390,3 +378,5 @@ main_end:
 ;     sub 10
 ;     djnz draw_lives_loop
 ;     ret 
+
+	include "src/asm/files.inc" ; this must be the final include so that filedata doesn't clobber code or other data
