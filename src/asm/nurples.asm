@@ -40,7 +40,7 @@ exit:
 	include "enemies.inc"
 	include "laser.inc"
 	include "img_load.inc"
-	include "images2.inc"
+	include "images.inc"
 	include "fonts.inc"
 	include "levels.inc"
 	include "sprites.inc"
