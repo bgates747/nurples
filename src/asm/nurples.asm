@@ -1,5 +1,5 @@
 ; MOS API EQUs and macros want to be up here
-    include "src/asm/mos_api.inc"
+    include "mos_api.inc"
 
 	.assume adl=1   
     .org 0x040000    
@@ -35,25 +35,25 @@ exit:
     ret                                 ; Return MOS
 
 ; App-specific includes
-	include "src/asm/player.inc"
-	include "src/asm/tiles.inc"
-	include "src/asm/enemies.inc"
-	include "src/asm/laser.inc"
-	include "src/asm/img_load.inc"
-	include "src/asm/images2.inc"
-	include "src/asm/fonts.inc"
-	include "src/asm/levels.inc"
-	include "src/asm/sprites.inc"
+	include "player.inc"
+	include "tiles.inc"
+	include "enemies.inc"
+	include "laser.inc"
+	include "img_load.inc"
+	include "images2.inc"
+	include "fonts.inc"
+	include "levels.inc"
+	include "sprites.inc"
 
 ; API includes
-    include "src/asm/functions.inc"
-    include "src/asm/vdu.inc"
-    include "src/asm/vdu_buff.inc"
-    ; include "src/asm/vdu_plot.inc"
-	; include "src/asm/vdu_sprites.inc"
-	include "src/asm/div_168_signed.inc"
-	include "src/asm/maths24.inc"
-	include "src/asm/timer.inc"
+    include "functions.inc"
+    include "vdu.inc"
+    include "vdu_buff.inc"
+    ; include "vdu_plot.inc"
+	; include "vdu_sprites.inc"
+	include "div_168_signed.inc"
+	include "maths24.inc"
+	include "timer.inc"
 
 hello_world: defb "Hello, World!\n\r",0
 is_emulator: defb 0
@@ -379,4 +379,4 @@ main_end:
 ;     djnz draw_lives_loop
 ;     ret 
 
-	include "src/asm/files.inc" ; this must be the final include so that filedata doesn't clobber code or other data
+	include "files.inc" ; this must be the final include so that filedata doesn't clobber code or other data
