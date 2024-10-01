@@ -91,7 +91,7 @@ BUF_0346: equ 0x015A ; 90 Z
 ; Missing character 121 y
 ; Missing character 122 z
 ; [y_offset, dim_y, dim_x], buffer_id label: ; mind the little-endian order when fetching these!!!
-font_retro_computer:
+font_rc:
 	dl 0x000106,BUF_0288
 	dl 0x000E03,BUF_0289
 	dl 0x000106,BUF_0288 ; Missing character 34
@@ -185,7 +185,7 @@ font_retro_computer:
 	dl 0x000106,BUF_0288 ; Missing character 122
 
 ; Import .rgba2 bitmap files and load them into VDP buffers
-load_font_retro_computer:
+load_font_rc:
 
 	ld hl,BUF_0288
 	ld bc,6

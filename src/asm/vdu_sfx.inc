@@ -10,10 +10,10 @@ sfx_load_main_loop:
     call load_next_sound
 ; draw all the things
     call tmp_draw_all_the_things
-; move bj
-	call move_bj
+; move logo
+	call move_logo
 ; print welcome message
-	ld ix,font_itc_honda
+	ld ix,font_rc
 	ld hl,hello_world
 	ld bc,32
 	ld de,2

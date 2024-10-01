@@ -42,6 +42,7 @@ exit:
 	include "img_load.inc"
 	include "images.inc"
 	include "fonts.inc"
+	include "font_rc.inc"
 	include "levels.inc"
 	include "sprites.inc"
 
@@ -55,10 +56,9 @@ exit:
 	include "maths24.inc"
 	include "timer.inc"
 
-hello_world: defb "Hello, World!\n\r",0
-is_emulator: defb 0
-on_emulator: defb "Running on emulator.\r\n",0
-on_hardware: defb "Running on hardware.\r\n",0
+hello_world: defb "Welcome to Agon Wolf3D",0
+loading_ui: defb "Loading UI",0
+loading_complete: defb "Press any key to continue.\r\n",0
 
 init:
 ; ; set fonts

@@ -1,0 +1,1786 @@
+PC     Output      Line
+
+040000             0001   ; MOS API EQUs and macros want to be up here
+040000             0002       include "mos_api.inc"
+040000             0001*  ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/mos_api.inc
+040000             0002*  ; Title:	AGON MOS - API for user projects
+040000             0003*  ; Author:	Dean Belfield
+040000             0004*  ;			Adapted for agon-ez80asm by Jeroen Venema
+040000             0005*  ;			Added MOS error codes for return in HL
+040000             0006*  ; Created:	03/08/2022
+040000             0007*  ; Last Updated:	10/08/2023
+040000             0008*  ;
+040000             0009*  ; Modinfo:
+040000             0010*  ; 05/08/2022:	Added mos_feof
+040000             0011*  ; 09/08/2022:	Added system variables: cursorX, cursorY
+040000             0012*  ; 18/08/2022:	Added system variables: scrchar, scrpixel, audioChannel, audioSuccess, vpd_pflags
+040000             0013*  ; 05/09/2022:	Added mos_ren, vdp_pflag_mode
+040000             0014*  ; 24/09/2022:	Added mos_getError, mos_mkdir
+040000             0015*  ; 13/10/2022:	Added mos_oscli
+040000             0016*  ; 23/02/2023:	Added more sysvars, fixed typo in sysvar_audioSuccess, offsets for sysvar_scrCols, sysvar_scrRows
+040000             0017*  ; 04/03/2023:	Added sysvar_scrpixelIndex
+040000             0018*  ; 08/03/2023:	Renamed sysvar_keycode to sysvar_keyascii, added sysvar_vkeycode
+040000             0019*  ; 15/03/2023:	Added mos_copy, mos_getrtc, mos_setrtc, rtc, vdp_pflag_rtc
+040000             0020*  ; 21/03/2023:	Added mos_setintvector, sysvars for keyboard status, vdu codes for vdp
+040000             0021*  ; 22/03/2023:	The VDP commands are now indexed from 0x80
+040000             0022*  ; 29/03/2023:	Added mos_uopen, mos_uclose, mos_ugetc, mos_uputc
+040000             0023*  ; 13/04/2023:	Added FatFS file structures (FFOBJID, FIL, DIR, FILINFO)
+040000             0024*  ; 15/04/2023:	Added mos_getfil, mos_fread, mos_fwrite and mos_flseek
+040000             0025*  ; 19/05/2023:	Added sysvar_scrMode
+040000             0026*  ; 05/06/2023:	Added sysvar_rtcEnable
+040000             0027*  ; 03/08/2023:	Added mos_setkbvector
+040000             0028*  ; 10/08/2023:	Added mos_getkbmap
+040000             0029*  
+040000             0030*  ; VDP control (VDU 23, 0, n)
+040000             0031*  ;
+040000             0032*  vdp_gp:				EQU 80h
+040000             0033*  vdp_keycode:		EQU 81h
+040000             0034*  vdp_cursor:			EQU	82h
+040000             0035*  vdp_scrchar:		EQU	83h
+040000             0036*  vdp_scrpixel:		EQU	84h
+040000             0037*  vdp_audio:			EQU	85h
+040000             0038*  vdp_mode:			EQU	86h
+040000             0039*  vdp_rtc:			EQU	87h
+040000             0040*  vdp_keystate:		EQU	88h
+040000             0041*  vdp_logicalcoords:	EQU	C0h
+040000             0042*  vdp_terminalmode:	EQU	FFh
+040000             0043*  
+040000             0044*  ; MOS high level functions
+040000             0045*  ;
+040000             0046*  mos_getkey:			EQU	00h
+040000             0047*  mos_load:			EQU	01h
+040000             0048*  mos_save:			EQU	02h
+040000             0049*  mos_cd:				EQU	03h
+040000             0050*  mos_dir:			EQU	04h
+040000             0051*  mos_del:			EQU	05h
+040000             0052*  mos_ren:			EQU	06h
+040000             0053*  mos_mkdir:			EQU	07h
+040000             0054*  mos_sysvars:		EQU	08h
+040000             0055*  mos_editline:		EQU	09h
+040000             0056*  mos_fopen:			EQU	0Ah
+040000             0057*  mos_fclose:			EQU	0Bh
+040000             0058*  mos_fgetc:			EQU	0Ch
+040000             0059*  mos_fputc:			EQU	0Dh
+040000             0060*  mos_feof:			EQU	0Eh
+040000             0061*  mos_getError:		EQU	0Fh
+040000             0062*  mos_oscli:			EQU	10h
+040000             0063*  mos_copy:			EQU	11h
+040000             0064*  mos_getrtc:			EQU	12h
+040000             0065*  mos_setrtc:			EQU	13h
+040000             0066*  mos_setintvector:	EQU	14h
+040000             0067*  mos_uopen:			EQU	15h
+040000             0068*  mos_uclose:			EQU	16h
+040000             0069*  mos_ugetc:			EQU	17h
+040000             0070*  mos_uputc:			EQU	18h
+040000             0071*  mos_getfil:			EQU	19h
+040000             0072*  mos_fread:			EQU	1Ah
+040000             0073*  mos_fwrite:			EQU	1Bh
+040000             0074*  mos_flseek:			EQU	1Ch
+040000             0075*  mos_setkbvector:	EQU	1Dh
+040000             0076*  mos_getkbmap:		EQU	1Eh
+040000             0077*  
+040000             0078*  ; MOS program exit codes
+040000             0079*  ;
+040000             0080*  EXIT_OK:				EQU  0;	"OK",
+040000             0081*  EXIT_ERROR_SD_ACCESS:	EQU	 1;	"Error accessing SD card",
+040000             0082*  EXIT_ERROR_ASSERTION:	EQU  2;	"Assertion failed",
+040000             0083*  EXIT_SD_CARDFAILURE:	EQU  3;	"SD card failure",
+040000             0084*  EXIT_FILENOTFOUND:		EQU  4;	"Could not find file",
+040000             0085*  EXIT_PATHNOTFOUND:		EQU  5;	"Could not find path",
+040000             0086*  EXIT_INVALIDPATHNAME:	EQU  6;	"Invalid path name",
+040000             0087*  EXIT_ACCESSDENIED_FULL:	EQU  7;	"Access denied or directory full",
+040000             0088*  EXIT_ACCESSDENIED:		EQU  8;	"Access denied",
+040000             0089*  EXIT_INVALIDOBJECT:		EQU  9;	"Invalid file/directory object",
+040000             0090*  EXIT_SD_WRITEPROTECTED:	EQU 10;	"SD card is write protected",
+040000             0091*  EXIT_INVALIDDRIVENUMBER:EQU 11;	"Logical drive number is invalid",
+040000             0092*  EXIT_NOVOLUMEWORKAREA:	EQU 12;	"Volume has no work area",
+040000             0093*  EXIT_NOVALIDFATVOLUME:	EQU 13;	"No valid FAT volume",
+040000             0094*  EXIT_ERRORMKFS:			EQU 14;	"Error occurred during mkfs",
+040000             0095*  EXIT_VOLUMETIMEOUT:		EQU 15;	"Volume timeout",
+040000             0096*  EXIT_VOLUMELOCKED:		EQU 16;	"Volume locked",
+040000             0097*  EXIT_LFNALLOCATION:		EQU 17;	"LFN working buffer could not be allocated",
+040000             0098*  EXIT_MAXOPENFILES:		EQU 18;	"Too many open files",
+040000             0099*  EXIT_INVALIDPARAMETER:	EQU 19;	"Invalid parameter",
+040000             0100*  EXIT_INVALIDCOMMAND:	EQU 20;	"Invalid command",
+040000             0101*  EXIT_INVALIDEXECUTABLE:	EQU 21;	"Invalid executable",
+040000             0102*  ; FatFS file access functions
+040000             0103*  ;
+040000             0104*  ffs_fopen:			EQU	80h
+040000             0105*  ffs_fclose:			EQU	81h
+040000             0106*  ffs_fread:			EQU	82h
+040000             0107*  ffs_fwrite:			EQU	83h
+040000             0108*  ffs_flseek:			EQU	84h
+040000             0109*  ffs_ftruncate:		EQU	85h
+040000             0110*  ffs_fsync:			EQU	86h
+040000             0111*  ffs_fforward:		EQU	87h
+040000             0112*  ffs_fexpand:		EQU	88h
+040000             0113*  ffs_fgets:			EQU	89h
+040000             0114*  ffs_fputc:			EQU	8Ah
+040000             0115*  ffs_fputs:			EQU	8Bh
+040000             0116*  ffs_fprintf:		EQU	8Ch
+040000             0117*  ffs_ftell:			EQU	8Dh
+040000             0118*  ffs_feof:			EQU	8Eh
+040000             0119*  ffs_fsize:			EQU	8Fh
+040000             0120*  ffs_ferror:			EQU	90h
+040000             0121*  
+040000             0122*  ; FatFS directory access functions
+040000             0123*  ;
+040000             0124*  ffs_dopen:			EQU	91h
+040000             0125*  ffs_dclose:			EQU	92h
+040000             0126*  ffs_dread:			EQU	93h
+040000             0127*  ffs_dfindfirst:		EQU	94h
+040000             0128*  ffs_dfindnext:		EQU	95h
+040000             0129*  
+040000             0130*  ; FatFS file and directory management functions
+040000             0131*  ;
+040000             0132*  ffs_stat:			EQU	96h
+040000             0133*  ffs_unlink:			EQU	97h
+040000             0134*  ffs_rename:			EQU	98h
+040000             0135*  ffs_chmod:			EQU	99h
+040000             0136*  ffs_utime:			EQU	9Ah
+040000             0137*  ffs_mkdir:			EQU	9Bh
+040000             0138*  ffs_chdir:			EQU	9Ch
+040000             0139*  ffs_chdrive:		EQU	9Dh
+040000             0140*  ffs_getcwd:			EQU	9Eh
+040000             0141*  
+040000             0142*  ; FatFS volume management and system configuration functions
+040000             0143*  ;
+040000             0144*  ffs_mount:			EQU	9Fh
+040000             0145*  ffs_mkfs:			EQU	A0h
+040000             0146*  ffs_fdisk:			EQU	A1h
+040000             0147*  ffs_getfree:		EQU	A2h
+040000             0148*  ffs_getlabel:		EQU	A3h
+040000             0149*  ffs_setlabel:		EQU	A4h
+040000             0150*  ffs_setcp:			EQU	A5h
+040000             0151*  
+040000             0152*  ; File access modes
+040000             0153*  ;
+040000             0154*  fa_read:			EQU	01h
+040000             0155*  fa_write:			EQU	02h
+040000             0156*  fa_open_existing:	EQU	00h
+040000             0157*  fa_create_new:		EQU	04h
+040000             0158*  fa_create_always:	EQU	08h
+040000             0159*  fa_open_always:		EQU	10h
+040000             0160*  fa_open_append:		EQU	30h
+040000             0161*  
+040000             0162*  ; System variable indexes for api_sysvars
+040000             0163*  ; Index into _sysvars in globals.inc
+040000             0164*  ;
+040000             0165*  sysvar_time:			EQU	00h	; 4: Clock timer in centiseconds (incremented by 2 every VBLANK)
+040000             0166*  sysvar_vpd_pflags:		EQU	04h	; 1: Flags to indicate completion of VDP commands
+040000             0167*  sysvar_keyascii:		EQU	05h	; 1: ASCII keycode, or 0 if no key is pressed
+040000             0168*  sysvar_keymods:			EQU	06h	; 1: Keycode modifiers
+040000             0169*  sysvar_cursorX:			EQU	07h	; 1: Cursor X position
+040000             0170*  sysvar_cursorY:			EQU	08h	; 1: Cursor Y position
+040000             0171*  sysvar_scrchar:			EQU	09h	; 1: Character read from screen
+040000             0172*  sysvar_scrpixel:		EQU	0Ah	; 3: Pixel data read from screen (R,B,G)
+040000             0173*  sysvar_audioChannel:	EQU	0Dh	; 1: Audio channel
+040000             0174*  sysvar_audioSuccess:	EQU	0Eh	; 1: Audio channel note queued (0 = no, 1 = yes)
+040000             0175*  sysvar_scrWidth:		EQU	0Fh	; 2: Screen width in pixels
+040000             0176*  sysvar_scrHeight:		EQU	11h	; 2: Screen height in pixels
+040000             0177*  sysvar_scrCols:			EQU	13h	; 1: Screen columns in characters
+040000             0178*  sysvar_scrRows:			EQU	14h	; 1: Screen rows in characters
+040000             0179*  sysvar_scrColours:		EQU	15h	; 1: Number of colours displayed
+040000             0180*  sysvar_scrpixelIndex:	EQU	16h	; 1: Index of pixel data read from screen
+040000             0181*  sysvar_vkeycode:		EQU	17h	; 1: Virtual key code from FabGL
+040000             0182*  sysvar_vkeydown:		EQU	18h	; 1: Virtual key state from FabGL (0=up, 1=down)
+040000             0183*  sysvar_vkeycount:		EQU	19h	; 1: Incremented every time a key packet is received
+040000             0184*  sysvar_rtc:				EQU	1Ah	; 6: Real time clock data
+040000             0185*  sysvar_spare:			EQU	20h	; 2: Spare, previously used by rtc
+040000             0186*  sysvar_keydelay:		EQU	22h	; 2: Keyboard repeat delay
+040000             0187*  sysvar_keyrate:			EQU	24h	; 2: Keyboard repeat reat
+040000             0188*  sysvar_keyled:			EQU	26h	; 1: Keyboard LED status
+040000             0189*  sysvar_scrMode:			EQU	27h	; 1: Screen mode
+040000             0190*  sysvar_rtcEnable:		EQU	28h	; 1: RTC enable flag (0: disabled, 1: use ESP32 RTC)
+040000             0191*  
+040000             0192*  ; Flags for the VPD protocol
+040000             0193*  ;
+040000             0194*  vdp_pflag_cursor:		EQU	00000001b
+040000             0195*  vdp_pflag_scrchar:		EQU	00000010b
+040000             0196*  vdp_pflag_point:		EQU	00000100b
+040000             0197*  vdp_pflag_audio:		EQU	00001000b
+040000             0198*  vdp_pflag_mode:			EQU	00010000b
+040000             0199*  vdp_pflag_rtc:			EQU	00100000b
+040000             0200*  
+040000             0201*  ;
+040000             0202*  ; FatFS structures
+040000             0203*  ; These mirror the structures contained in src_fatfs/ff.h in the MOS project
+040000             0204*  ;
+040000             0205*  ; Object ID and allocation information (FFOBJID)
+040000             0206*  ;
+040000             0207*  ; Indexes into FFOBJID structure
+040000             0208*  ffobjid_fs:			EQU	0	; 3: Pointer to the hosting volume of this object
+040000             0209*  ffobjid_id:			EQU	3	; 2: Hosting volume mount ID
+040000             0210*  ffobjid_attr:		EQU	5	; 1: Object attribute
+040000             0211*  ffobjid_stat:		EQU	6	; 1: Object chain status (b1-0: =0:not contiguous, =2:contiguous, =3:fragmented in this session, b2:sub-directory stretched)
+040000             0212*  ffobjid_sclust:		EQU	7	; 4: Object data start cluster (0:no cluster or root directory)
+040000             0213*  ffobjid_objsize:	EQU	11	; 4: Object size (valid when sclust != 0)
+040000             0214*  ;
+040000             0215*  ; File object structure (FIL)
+040000             0216*  ;
+040000             0217*  ; Indexes into FIL structure
+040000             0218*  fil_obj:		EQU 0	; 15: Object identifier
+040000             0219*  fil_flag:		EQU	15 	;  1: File status flags
+040000             0220*  fil_err:		EQU	16	;  1: Abort flag (error code)
+040000             0221*  fil_fptr:		EQU	17	;  4: File read/write pointer (Zeroed on file open)
+040000             0222*  fil_clust:		EQU	21	;  4: Current cluster of fpter (invalid when fptr is 0)
+040000             0223*  fil_sect:		EQU	25	;  4: Sector number appearing in buf[] (0:invalid)
+040000             0224*  fil_dir_sect:	EQU	29	;  4: Sector number containing the directory entry
+040000             0225*  fil_dir_ptr:	EQU	33	;  3: Pointer to the directory entry in the win[]
+040000             0226*  ;
+040000             0227*  ; Directory object structure (DIR)
+040000             0228*  ; Indexes into DIR structure
+040000             0229*  dir_obj:		EQU  0	; 15: Object identifier
+040000             0230*  dir_dptr:		EQU	15	;  4: Current read/write offset
+040000             0231*  dir_clust:		EQU	19	;  4: Current cluster
+040000             0232*  dir_sect:		EQU	23	;  4: Current sector (0:Read operation has terminated)
+040000             0233*  dir_dir:		EQU	27	;  3: Pointer to the directory item in the win[]
+040000             0234*  dir_fn:			EQU	30	; 12: SFN (in/out) {body[8],ext[3],status[1]}
+040000             0235*  dir_blk_ofs:	EQU	42	;  4: Offset of current entry block being processed (0xFFFFFFFF:Invalid)
+040000             0236*  ;
+040000             0237*  ; File information structure (FILINFO)
+040000             0238*  ;
+040000             0239*  ; Indexes into FILINFO structure
+040000             0240*  filinfo_fsize:		EQU 0	;   4: File size
+040000             0241*  filinfo_fdate:		EQU	4	;   2: Modified date
+040000             0242*  filinfo_ftime:		EQU	6	;   2: Modified time
+040000             0243*  filinfo_fattrib:	EQU	8	;   1: File attribute
+040000             0244*  filinfo_altname:	EQU	9	;  13: Alternative file name
+040000             0245*  filinfo_fname:		EQU	22	; 256: Primary file name
+040000             0246*  ;
+040000             0247*  ; Macro for calling the API
+040000             0248*  ; Parameters:
+040000             0249*  ; - function: One of the function numbers listed above
+040000             0250*  ;
+040000             0251*  	MACRO	MOSCALL	function
+040000             0252*  			LD	A, function
+040000             0253*  			RST.LIL	08h
+040000             0254*  	ENDMACRO
+040000             0003   
+040000             0004   	.assume adl=1
+040000             0005       .org 0x040000
+040000             0006   
+040000 C3 45 00 04 0007       jp start
+040004             0008   
+040004 FF FF FF FF 0009       .align 64
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+040040 4D 4F 53    0010       .db "MOS"
+040043 00          0011       .db 00h
+040044 01          0012       .db 01h
+040045             0013   
+040045             0014   start:
+040045 F5          0015       push af
+040046 C5          0016       push bc
+040047 D5          0017       push de
+040048 DD E5       0018       push ix
+04004A FD E5       0019       push iy
+04004C             0020   
+04004C             0021   ; ###############################################
+04004C CD 00 43 04 0022   	call	init			; Initialization code
+040050 CD 8B 43 04 0023   	call 	main			; Call the main function
+040054             0024   ; ###############################################
+040054             0025   
+040054             0026   exit:
+040054             0027   
+040054 FD E1       0028       pop iy                              ; Pop all registers back from the stack
+040056 DD E1       0029       pop ix
+040058 D1          0030       pop de
+040059 C1          0031       pop bc
+04005A F1          0032       pop af
+04005B 21 00 00 00 0033       ld hl,0                             ; Load the MOS API return code (0) for no errors.
+04005F             0034   
+04005F C9          0035       ret                                 ; Return MOS
+040060             0036   
+040060             0037   ; App-specific includes
+040060             0038   	include "player.inc"
+040060             0001*  ; ######## GAME STATE VARIABLES #######
+040060             0002*  ; THESE MUST BE IN THIS ORDER FOR new_game TO WORK PROPERLY
+040060 00 00 00    0003*  player_score: db 0x00,#00,#00 ; bcd
+040063             0004*  ; player current shields,binary
+040063             0005*  ; when < 0 player splodes
+040063             0006*  ; restores to player_max_shields when new ship spawns
+040063 10          0007*  player_shields: db 16 ; binary
+040064             0008*  ; max player shields,binary
+040064             0009*  ; can increase with power-ups (todo)
+040064 10          0010*  player_max_shields: db 16 ; binary
+040065             0011*  ; when reaches zero,game ends
+040065             0012*  ; can increase based on TODO
+040065 03          0013*  player_ships: db 0x03 ; binary
+040066             0014*  
+040066             0015*  ; ######### PLAYER SPRITE PARAMETERS ##########
+040066             0016*  ; uses the same offsets from its table base as the main sprite table:
+040066             0017*  player_start_variables: ; label marking beginning of table
+040066 10          0018*  player_id:               db table_max_records
+040067 00          0019*  player_type:             db     0x00 ; 1 bytes currently not used
+040068 34 01 00    0020*  player_base_bufferId:    dl BUF_SHIP_0L ; 3 bytes bitmap bufferId
+04006B 00 00 00    0021*  player_move_program:     dl 0x000000 ; 3 bytes not currently used
+04006E 00          0022*  player_collisions:       db     0x00 ; 1 bytes bit 0 set=alive, otherwise dead, bit 1 set=just died
+04006F 00          0023*  player_dim_x:            db     0x00 ; 1 bytes sprite width in pixels
+040070 00          0024*  player_dim_y:            db     0x00 ; 1 bytes sprite height in pixels
+040071 00 00 00    0025*  player_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels
+040074 00 00 00    0026*  player_y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
+040077 00 00 00    0027*  player_xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+04007A 00 00 00    0028*  player_yvel:             dl 0x000000 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+04007D 00 00 00    0029*  player_vel:              dl 0x000000 ; 3 bytes velocity px/frame (16.8 fixed)
+040080 00 00 00    0030*  player_heading:          dl 0x000000 ; 3 bytes sprite movement direction deg256 16.8 fixed
+040083 00 00 00    0031*  player_orientation:      dl 0x000000 ; 3 bytes not currently used
+040086 00          0032*  player_animation:        db     0x00 ; 1 bytes not currently used
+040087 00          0033*  player_animation_timer:  db     0x00 ; 1 bytes not currently used
+040088 00          0034*  player_move_timer:       db     0x00 ; 1 bytes not currently used
+040089 00          0035*  player_move_step:        db     0x00 ; 1 bytes not currently used
+04008A 00          0036*  player_points:           db     0x00 ; 1 bytes not currently used
+04008B 00          0037*  player_shield_damage:    db     0x00 ; 1 bytes not currently used
+04008C             0038*  player_end_variables: ; for when we want to traverse this table in reverse
+04008C             0039*  
+04008C             0040*  ; set initial player position
+04008C             0041*  ; inputs: none,everything is hardcoded
+04008C             0042*  ; outputs: player_x/y set to bottom-left corner of screen
+04008C             0043*  ; destroys: a
+04008C             0044*  player_init:
+04008C 3E 10       0045*  	ld a,table_max_records ; this is always player spriteId
+04008E CD A1 34 04 0046*  	call vdu_sprite_select
+040092 CD B4 34 04 0047*      call vdu_sprite_clear_frames
+040096 21 34 01 00 0048*      ld hl,BUF_SHIP_0L
+04009A CD EE 35 04 0049*      call vdu_sprite_add_buff
+04009E 21 35 01 00 0050*      ld hl,BUF_SHIP_1C
+0400A2 CD EE 35 04 0051*      call vdu_sprite_add_buff
+0400A6 21 36 01 00 0052*      ld hl,BUF_SHIP_2R
+0400AA CD EE 35 04 0053*      call vdu_sprite_add_buff
+0400AE 01 00 00 00 0054*      ld bc,0
+0400B2 ED 43 71 00 0055*      ld (player_x),bc
+       04          
+0400B7 11 00 DF 00 0056*      ld de,0x00DF00
+0400BB ED 53 74 00 0057*      ld (player_y),de
+       04          
+0400C0 CD 6D 35 04 0058*      call vdu_sprite_move_abs168
+0400C4 CD 17 35 04 0059*      call vdu_sprite_show
+0400C8 C9          0060*      ret
+0400C9             0061*  
+0400C9             0062*  ; process player keyboard input, set player bitmap
+0400C9             0063*  ; velocities and draw player bitmap at updated coordinates
+0400C9             0064*  ; Inputs: player_x/y set at desired position
+0400C9             0065*  ; Returns: player bitmap drawn at updated position
+0400C9             0066*  ; Destroys: probably everything except maybe iy
+0400C9             0067*  ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
+0400C9             0068*  ; TODO: requires sprite implementation
+0400C9             0069*  player_input:
+0400C9             0070*  ; reset player component velocities to zero as the default
+0400C9 21 00 00 00 0071*  	ld hl,0
+0400CD 22 77 00 04 0072*  	ld (player_xvel),hl
+0400D1 22 7A 00 04 0073*  	ld (player_yvel),hl
+0400D5             0074*  ; make ship the active sprite
+0400D5 3E 10       0075*      ld a,table_max_records ; this is always player spriteId
+0400D7 CD A1 34 04 0076*      call vdu_sprite_select
+0400DB             0077*  ; check for keypresses and branch accordingly
+0400DB             0078*  ; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
+0400DB             0079*      MOSCALL	mos_getkbmap ;ix = pointer to MOS virtual keys table
+0400DB 3E 1E       0001*M 			LD	A, function
+0400DD 5B CF       0002*M 			RST.LIL	08h
+0400DF             0080*  ; we test all four arrow keys and add/subract velocities accordingly
+0400DF             0081*  ; this handles the case where two opposing movement keys
+0400DF             0082*  ; are down simultaneously (velocities will net to zero)
+0400DF             0083*  ; and allows diagonal movement when a vertical and horizontal key are down
+0400DF             0084*  ; it also allows movement and action keys to be detected simultaneously
+0400DF             0085*  ; so we can walk and chew gum at the same time
+0400DF 3E 01       0086*      ld a,1 ; set ship's default animation to center
+0400E1             0087*          ; if left and right are both down a will net to
+0400E1             0088*  
+0400E1             0089*  @left:
+0400E1 DD CB 03 4E 0090*      bit 1,(ix+3) ; keycode 26
+0400E5 28 0E       0091*      jr z,@right
+0400E7 2A 77 00 04 0092*      ld hl,(player_xvel)
+0400EB 01 00 FD FF 0093*      ld bc,-speed_player
+0400EF 09          0094*      add hl,bc
+0400F0 22 77 00 04 0095*      ld (player_xvel),hl
+0400F4 3D          0096*      dec a ; set ship's animation to left
+0400F5             0097*  @right:
+0400F5 DD CB 0F 4E 0098*      bit 1,(ix+15) ; keycode 122
+0400F9 28 0E       0099*  	jr z,@up
+0400FB 2A 77 00 04 0100*      ld hl,(player_xvel)
+0400FF 01 00 03 00 0101*      ld bc,speed_player
+040103 09          0102*      add hl,bc
+040104 22 77 00 04 0103*      ld (player_xvel),hl
+040108 3C          0104*      inc a ; set ship's animation to right
+040109             0105*  @up:
+040109 DD CB 07 4E 0106*      bit 1,(ix+7) ; keycode 58
+04010D 28 0D       0107*  	jr z,@down
+04010F 2A 7A 00 04 0108*      ld hl,(player_yvel)
+040113 01 00 FD FF 0109*      ld bc,-speed_player
+040117 09          0110*      add hl,bc
+040118 22 7A 00 04 0111*      ld (player_yvel),hl
+04011C             0112*  @down:
+04011C DD CB 05 4E 0113*      bit 1,(ix+5) ; keycode 42
+040120 28 0D       0114*  	jr z,@done_keyboard
+040122 2A 7A 00 04 0115*      ld hl,(player_yvel)
+040126 01 00 03 00 0116*      ld bc,speed_player
+04012A 09          0117*      add hl,bc
+04012B 22 7A 00 04 0118*      ld (player_yvel),hl
+04012F             0119*  @done_keyboard:
+04012F             0120*  ; move player sprite according to velocities set by keypresses
+04012F 2A 77 00 04 0121*      ld hl,(player_xvel)
+040133             0122*  ; compute new x position
+040133 ED 5B 71 00 0123*      ld de,(player_x)
+       04          
+040138 19          0124*      add hl,de ; hl = player_x + player_xvel
+040139             0125*      ; check for horizontal screen edge collisions
+040139             0126*      ; and adjust coordinate as necessary
+040139             0127*  ; TODO: make this work using 24-bit registers
+040139             0128*      ; cp 8 ; 0 + 1/2 bitmap dim_x
+040139             0129*      ; jr nc,@check_right ; x >= 8, no adjustment necessary
+040139             0130*      ; ld a,8 ; set x to leftmost allowable position
+040139             0131*  ; @check_right:
+040139             0132*  ;     cp 248 ; 256 - 1/2 bitmap dim_x
+040139             0133*  ;     jr c,@x_ok ; x < 248, no adjustment necessary
+040139             0134*  ;     ld a,248 ; set x to rightmost allowable position
+040139             0135*  @x_ok:
+040139             0136*  ; save the updated drawing coordinate
+040139 22 71 00 04 0137*      ld (player_x),hl
+04013D             0138*  ;compute new y position
+04013D 2A 74 00 04 0139*      ld hl,(player_y)
+040141 ED 5B 7A 00 0140*      ld de,(player_yvel)
+       04          
+040146 19          0141*      add hl,de ; hl = player_y + player_yvel
+040147             0142*  ; TODO: make this work using 24-bit registers
+040147             0143*  ;     ; check for vertical screen edge collisions
+040147             0144*  ;     ; and adjust coordinate as necessary
+040147             0145*  ;     cp 8 ; 0 + 1/2 bitmap dim_y
+040147             0146*  ;     jr nc,@check_top ; y >= 8, no adjustment necessary
+040147             0147*  ;     ld a,8 ; set y to topmost allowable position
+040147             0148*  ; @check_top:
+040147             0149*  ;     cp 232 ; 240 - 1/2 bitmap dim_y
+040147             0150*  ;     jr c,@y_ok ; y < 248, no adjustment necessary
+040147             0151*  ;     ld a,232 ; set y to bottommost allowable position
+040147             0152*  @y_ok:
+040147 22 74 00 04 0153*      ld (player_y),hl ; do this here b/c next call destroys hl
+04014B             0154*  ; a should land here loaded with the correct frame
+04014B CD 04 35 04 0155*      call vdu_sprite_select_frame
+04014F             0156*  ; draw player at updated position
+04014F ED 4B 71 00 0157*      ld bc,(player_x)
+       04          
+040154 ED 5B 74 00 0158*  	ld de,(player_y)
+       04          
+040159             0159*  
+040159             0160*      ; call dumpRegistersHex
+040159             0161*  
+040159 CD 6D 35 04 0162*  	call vdu_sprite_move_abs168
+04015D             0163*  
+04015D             0164*  ; end player_input
+04015D C9          0165*  	ret
+04015E             0166*  
+04015E             0167*  ; ; THE BELOW WORKS WITH THE AGON BUT USES INTEGER COORDINATES
+04015E             0168*  ; ; INSTEAD OF FRACTIONAL
+04015E             0169*  ; ; ----------------------------------------------------------------
+04015E             0170*  ; ; process player keyboard input, set player bitmap
+04015E             0171*  ; ; velocities and draw player bitmap at updated coordinates
+04015E             0172*  ; ; Inputs: player_x/y set at desired position
+04015E             0173*  ; ; Returns: player bitmap drawn at updated position
+04015E             0174*  ; ; Destroys: probably everything except maybe iy
+04015E             0175*  ; ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
+04015E             0176*  ; ; TODO: requires sprite implementation
+04015E             0177*  ; player_input:
+04015E             0178*  ; ; reset player component velocities to zero as the default
+04015E             0179*  ; 	ld hl,0
+04015E             0180*  ; 	ld (player_xvel),hl
+04015E             0181*  ; 	ld (player_yvel),hl
+04015E             0182*  ; ; check for keypresses and branch accordingly
+04015E             0183*  ; ; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
+04015E             0184*  ;     MOSCALL	mos_getkbmap ;ix = pointer to MOS virtual keys table
+04015E             0185*  ; ; we test all four arrow keys and add/subract velocities accordingly
+04015E             0186*  ; ; this handles the case where two opposing movement keys
+04015E             0187*  ; ; are down simultaneously (velocities will net to zero)
+04015E             0188*  ; ; and allows diagonal movement when a vertical and horizontal key are down
+04015E             0189*  ; ; it also allows movement and action keys to be detected simultaneously
+04015E             0190*  ; ; so we can walk and chew gum at the same time
+04015E             0191*  ; @left:
+04015E             0192*  ;     bit 1,(ix+3) ; keycode 26
+04015E             0193*  ;     jr z,@right
+04015E             0194*  ;     ld hl,(player_xvel)
+04015E             0195*  ;     ld bc,-3
+04015E             0196*  ;     add hl,bc
+04015E             0197*  ;     ld (player_xvel),hl
+04015E             0198*  ; @right:
+04015E             0199*  ;     bit 1,(ix+15) ; keycode 122
+04015E             0200*  ; 	jr z,@up
+04015E             0201*  ;     ld hl,(player_xvel)
+04015E             0202*  ;     ld bc,3
+04015E             0203*  ;     add hl,bc
+04015E             0204*  ;     ld (player_xvel),hl
+04015E             0205*  ; @up:
+04015E             0206*  ;     bit 1,(ix+7) ; keycode 58
+04015E             0207*  ; 	jr z,@down
+04015E             0208*  ;     ld hl,(player_yvel)
+04015E             0209*  ;     ld bc,-3
+04015E             0210*  ;     add hl,bc
+04015E             0211*  ;     ld (player_yvel),hl
+04015E             0212*  ; @down:
+04015E             0213*  ;     bit 1,(ix+5) ; keycode 42
+04015E             0214*  ; 	jr z,@done_keyboard
+04015E             0215*  ;     ld hl,(player_yvel)
+04015E             0216*  ;     ld bc,3
+04015E             0217*  ;     add hl,bc
+04015E             0218*  ;     ld (player_yvel),hl
+04015E             0219*  ; @done_keyboard:
+04015E             0220*  ; ; move player sprite according to velocities set by keypresses
+04015E             0221*  ;     ld hl,(player_xvel)
+04015E             0222*  ; ; compute new x position
+04015E             0223*  ;     ld de,(player_x)
+04015E             0224*  ;     add hl,de ; hl = player_x + player_xvel
+04015E             0225*  ;     ; check for horizontal screen edge collisions
+04015E             0226*  ;     ; and adjust coordinate as necessary
+04015E             0227*  ; ; TODO: make this work using 24-bit registers
+04015E             0228*  ;     ; cp 8 ; 0 + 1/2 bitmap dim_x
+04015E             0229*  ;     ; jr nc,@check_right ; x >= 8, no adjustment necessary
+04015E             0230*  ;     ; ld a,8 ; set x to leftmost allowable position
+04015E             0231*  ; ; @check_right:
+04015E             0232*  ; ;     cp 248 ; 256 - 1/2 bitmap dim_x
+04015E             0233*  ; ;     jr c,@x_ok ; x < 248, no adjustment necessary
+04015E             0234*  ; ;     ld a,248 ; set x to rightmost allowable position
+04015E             0235*  ; @x_ok:
+04015E             0236*  ;     ; save the updated drawing coordinate
+04015E             0237*  ;     ld (player_x),hl
+04015E             0238*  ; ;compute new y position
+04015E             0239*  ;     ld hl,(player_y)
+04015E             0240*  ;     ld de,(player_yvel)
+04015E             0241*  ;     add hl,de ; hl = player_y + player_yvel
+04015E             0242*  ; ; TODO: make this work using 24-bit registers
+04015E             0243*  ; ;     ; check for vertical screen edge collisions
+04015E             0244*  ; ;     ; and adjust coordinate as necessary
+04015E             0245*  ; ;     cp 8 ; 0 + 1/2 bitmap dim_y
+04015E             0246*  ; ;     jr nc,@check_top ; y >= 8, no adjustment necessary
+04015E             0247*  ; ;     ld a,8 ; set y to topmost allowable position
+04015E             0248*  ; ; @check_top:
+04015E             0249*  ; ;     cp 232 ; 240 - 1/2 bitmap dim_y
+04015E             0250*  ; ;     jr c,@y_ok ; y < 248, no adjustment necessary
+04015E             0251*  ; ;     ld a,232 ; set y to bottommost allowable position
+04015E             0252*  ; @y_ok:
+04015E             0253*  ;     ld (player_y),hl
+04015E             0254*  ; ; draw player at updated position
+04015E             0255*  ;     ld a,table_max_records ; this is always player spriteId
+04015E             0256*  ;     call vdu_sprite_select
+04015E             0257*  ;     ld hl,(player_xvel) ; we do a cheeky little hack
+04015E             0258*  ;     call get_sign_hlu ; to set the proper animation
+04015E             0259*  ;     add a,1 ; ...
+04015E             0260*  ;     call vdu_sprite_select_frame
+04015E             0261*  ;     ld bc,(player_x)
+04015E             0262*  ; 	ld de,(player_y)
+04015E             0263*  ; 	call vdu_sprite_move_abs
+04015E             0264*  ; ; end player_input
+04015E             0265*  ; 	ret
+04015E             0266*  
+04015E             0267*  
+04015E             0268*  ; ###################################################################
+04015E             0269*  ; TODO: the below is all stuff from the original code we need to port
+04015E             0270*  ; ###################################################################
+04015E             0271*  
+04015E             0272*  ; kill_player:
+04015E             0273*  ; ; set player status to dead
+04015E             0274*  ;     xor a; sets all player flags to zero
+04015E             0275*  ;     ld (player_collisions),a
+04015E             0276*  ; ; deduct a ship from the inventory
+04015E             0277*  ;     ld a,(player_ships)
+04015E             0278*  ;     dec a
+04015E             0279*  ;     ld (player_ships),a
+04015E             0280*  ; ; are we out of ships?
+04015E             0281*  ;     jp z,game_over
+04015E             0282*  ; ; wait a few ticks
+04015E             0283*  ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
+04015E             0284*  ;     ld (player_move_timer),a
+04015E             0285*  ; kill_player_loop:
+04015E             0286*  ;     call vdu_vblank
+04015E             0287*  ;     ld a,(player_move_timer)
+04015E             0288*  ;     dec a
+04015E             0289*  ;     ld (player_move_timer),a
+04015E             0290*  ;     jr nz,kill_player_loop
+04015E             0291*  ;     call player_init ; player respawn if timer zero
+04015E             0292*  ;     ret ; and out
+04015E             0293*  
+04015E             0294*  
+04015E             0295*  ; player_move:
+04015E             0296*  ; ; begin setting player to active sprite
+04015E             0297*  ;     ld hl,player
+04015E             0298*  ;     ld (sprite_base_bufferId),hl
+04015E             0299*  ;     ld hl,0 ; north
+04015E             0300*  ;     ld (sprite_heading),hl
+04015E             0301*  ;     ld a,#01 ; animation 1 is center,which we set here as a default
+04015E             0302*  ;     ld (sprite_animation),a
+04015E             0303*  ;     ; we set position here for the time being as a default
+04015E             0304*  ;     ; in case the player doesn't move,or is flagged for deletion
+04015E             0305*  ;     ld hl,(player_x)
+04015E             0306*  ;     ld (sprite_x),hl
+04015E             0307*  ;     ld hl,(player_y)
+04015E             0308*  ;     ld (sprite_y),hl
+04015E             0309*  ; ; did we just die?
+04015E             0310*  ;     ld a,(player_collisions)
+04015E             0311*  ;     and %00000010 ; zero flag will be set if not dead
+04015E             0312*  ;     jr z,player_not_dead
+04015E             0313*  ; ; yes we died
+04015E             0314*  ;     call kill_player
+04015E             0315*  ;     ret ; done
+04015E             0316*  ; ; yay we didn't die
+04015E             0317*  ; player_not_dead:
+04015E             0318*  ; ; set player movements to zero by default
+04015E             0319*  ;     ld hl,0
+04015E             0320*  ;     ld (player_xvel),hl
+04015E             0321*  ;     ld (player_yvel),hl
+04015E             0322*  ; ; do we move it?
+04015E             0323*  ;     in a,(#82) ; keyboard
+04015E             0324*  ;     or a ; if zero,don't move
+04015E             0325*  ;     jr z,player_draw
+04015E             0326*  ; ; move it
+04015E             0327*  ;     call player_move_calc
+04015E             0328*  ; player_draw:
+04015E             0329*  ;     call vdu_bmp_select
+04015E             0330*  ;     call vdu_bmp_draw
+04015E             0331*  ; player_move_done:
+04015E             0332*  ;     ; write updated x,y coordinates back to player table
+04015E             0333*  ;     ld hl,(sprite_x)
+04015E             0334*  ;     ld (player_x),hl
+04015E             0335*  ;     ld hl,(sprite_y)
+04015E             0336*  ;     ld (player_y),hl
+04015E             0337*  ;     ret
+04015E             0039   	include "tiles.inc"
+04015E             0001*  ; ######### TILES #########
+04015E             0002*  ; TODO: implement buffering of tiles here when there isn't other stuff to do
+04015E             0003*  ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
+04015E 00 00 00    0004*  tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
+040161 00          0005*  tiles_row: db 0 ; decrements each time a row is drawn. level is over when hits zero
+040162             0006*                          ; initialize to zero for a maximum of 256 rows in a level
+040162 00          0007*  cur_level: db 0
+040163             0008*  num_levels: equ 2 ; number of levels,duh
+040163             0009*  
+040163             0010*  ; lookup table for level definitions
+040163 95 18 04 96 0011*  tiles_levels: dl tiles_level_00,tiles_level_01
+       28 04       
+040169             0012*  
+040169             0013*  ; tiles_bufferId: dl 0
+040169 00 00 00    0014*  tiles_x_plot: dl 0
+04016C F1 FF FF    0015*  tiles_y_plot: dl -15
+04016F             0016*  
+04016F             0017*  
+04016F             0018*  tiles_plot:
+04016F             0019*  ; ; NOTE: this is bugged. y1 should be zero to get a 1px-tall viewport
+04016F             0020*  ; ;       as written it gves a 2px-tall window which is what we'd expect,
+04016F             0021*  ; ;       but don't want
+04016F             0022*  ; ; https://discord.com/channels/1158535358624039014/1158536809916149831/1209571014514712637
+04016F             0023*  ; ; set gfx viewport to one scanline to optimise plotting tiles
+04016F             0024*  ; 	ld bc,0 ; leftmost x-coord
+04016F             0025*  ; 	ld de,0 ; topmost y-coord
+04016F             0026*  ; 	ld ix,255 ; rightmost x-coord
+04016F             0027*  ; 	ld iy,1 ; bottommost y-coord
+04016F             0028*  ; 	call vdu_set_gfx_viewport
+04016F             0029*  
+04016F 21 00 00 00 0030*      ld hl,0 ; init plotting x-coordinate
+040173 22 69 01 04 0031*      ld (tiles_x_plot),hl
+040177 2A 5E 01 04 0032*      ld hl,(tiles_row_defs)
+04017B 06 10       0033*  	ld b,16 ; loop counter
+04017D             0034*  @loop:
+04017D C5          0035*  	push bc ; save the loop counter
+04017E             0036*  ; read the tile defintion for the current column
+04017E 7E          0037*      ld a,(hl) ; a has tile definition
+04017F E5          0038*      push hl  ; save pointer to tile definition
+040180 21 00 00 00 0039*      ld hl,0 ; hlu is non-zero
+040184 6F          0040*      ld l,a ; l is tile defintion
+040185 26 01       0041*      ld h,0x01 ; hl = 256 + tile index = the tile's bitmapId
+040187 CD 2F 32 04 0042*      call vdu_buff_select ; tile bitmap buffer is now active
+04018B             0043*  
+04018B             0044*  ; plot the active bitmap
+04018B ED 4B 69 01 0045*      ld bc,(tiles_x_plot)
+       04          
+040190 ED 5B 6C 01 0046*      ld de,(tiles_y_plot)
+       04          
+040195 CD 00 34 04 0047*      call vdu_plot_bmp
+040199             0048*  
+040199             0049*  ; bump x-coords the width of one tile and save it
+040199 2A 69 01 04 0050*      ld hl,(tiles_x_plot)
+04019D 01 10 00 00 0051*      ld bc,16
+0401A1 09          0052*      add hl,bc
+0401A2 22 69 01 04 0053*      ld (tiles_x_plot),hl
+0401A6             0054*  
+0401A6             0055*  ; prepare to loop to next column
+0401A6 E1          0056*      pop hl ; get back pointer to tile def
+0401A7 23          0057*      inc hl ; bump it to the next column
+0401A8 C1          0058*  	pop bc ; snag our loop counter
+0401A9 10 D2       0059*      djnz @loop
+0401AB             0060*  
+0401AB             0061*  ; increment tiles plotting y-coordinate
+0401AB             0062*  ; when it hits zero, we go to next row of tiles in the map
+0401AB             0063*  ; (we use ix b/c we want to preserve hl for the next step)
+0401AB DD 21 6C 01 0064*  	ld ix,tiles_y_plot
+       04          
+0401B0 DD 34 00    0065*  	inc (ix)
+0401B3 C0          0066*  	ret nz
+0401B4             0067*  
+0401B4             0068*  ; time to bump tiles_row_defs to next row
+0401B4             0069*  ; (hl was already there at the end of the loop)
+0401B4 22 5E 01 04 0070*      ld (tiles_row_defs),hl
+0401B8             0071*  
+0401B8             0072*  ; reset coords to plot next row of tiles
+0401B8 21 00 00 00 0073*      ld hl,0
+0401BC 22 69 01 04 0074*      ld (tiles_x_plot),hl
+0401C0 21 F1 FF FF 0075*      ld hl,-15
+0401C4 22 6C 01 04 0076*      ld (tiles_y_plot),hl
+0401C8             0077*  
+0401C8             0078*  ; decrement tiles row counter
+0401C8 21 61 01 04 0079*      ld hl,tiles_row
+0401CC 35          0080*      dec (hl)
+0401CD C0          0081*      ret nz
+0401CE             0082*  
+0401CE             0083*  ; queue up next level
+0401CE 3A 62 01 04 0084*      ld a,(cur_level)
+0401D2 FE 01       0085*      cp num_levels-1
+0401D4 20 02       0086*      jr nz,@inc_level
+0401D6 3E FF       0087*      ld a,-1 ; will wrap around to zero when we fall through
+0401D8             0088*  
+0401D8             0089*  @inc_level:
+0401D8 3C          0090*      inc a
+0401D9 32 62 01 04 0091*      ld (cur_level),a
+0401DD             0092*  
+0401DD             0093*  ; increase the number of enemy sprites
+0401DD 3A 2C 02 04 0094*      ld a,(max_enemy_sprites)
+0401E1 3C          0095*      inc a
+0401E2 FE 10       0096*      cp table_max_records ; if we're at the global limit,skip ahead at max level
+0401E4 28 04       0097*      jr z,init_level
+0401E6 32 2C 02 04 0098*      ld (max_enemy_sprites),a ; otherwise save the updated number
+0401EA             0099*  ; fall through to init_level
+0401EA             0100*  
+0401EA             0101*  init_level:
+0401EA             0102*  ; look up address of level's tile defintion
+0401EA 21 63 01 04 0103*      ld hl,tiles_levels
+0401EE 3A 62 01 04 0104*      ld a,(cur_level)
+0401F2 11 00 00 00 0105*      ld de,0 ; just in case deu is non-zero
+0401F6 57          0106*      ld d,a
+0401F7 1E 03       0107*      ld e,3
+0401F9 ED 5C       0108*      mlt de
+0401FB 19          0109*      add hl,de
+0401FC ED 37       0110*      ld ix,(hl)
+0401FE DD 22 5E 01 0111*      ld (tiles_row_defs),ix
+       04          
+040203             0112*  
+040203             0113*  ; set tiles_row counter
+040203 DD 7E 00    0114*      ld a,(ix)
+040206 32 61 01 04 0115*      ld (tiles_row),a
+04020A DD 23       0116*      inc ix ; now ix points first element of first row tile def
+04020C DD 22 5E 01 0117*      ld (tiles_row_defs),ix ; ... so we save it
+       04          
+040211 C9          0118*      ret
+040212             0119*  
+040212             0120*  
+040212             0121*  ; ###### TODO: NEW CODE TO IMPLEMENT ######
+040212             0122*  ; dt_is_active:
+040212             0123*  ; ; a lands here containing a tile index in the low nibble
+040212             0124*  ; ; we test the values for the tiles which are active
+040212             0125*  ;     cp #07
+040212             0126*  ;     call z,ld_act_landing_pad
+040212             0127*  ;     cp #08
+040212             0128*  ;     call z,ld_act_laser_turret
+040212             0129*  ;     ; fall through
+040212             0130*  ;     ret
+040212             0131*  
+040212             0132*  ; ; some tiles become active sprites,so we load those here
+040212             0133*  ; ; sprite_x/y have already been loaded
+040212             0134*  ; ; sprite_dim_x/y are loaded by table_add_record
+040212             0135*  ; ; we don't want sprite drawn to background like other tiles
+040212             0136*  ; ; so this routine only adds them to the sprite table
+040212             0137*  ; dt_ld_act:
+040212             0138*  ;     ld a,#48 ; top of screen + 1/2 tile height
+040212             0139*  ;     ld (sprite_y+1),a ; just the integer part
+040212             0140*  ;     ld (sprite_base_bufferId),hl
+040212             0141*  ;     call vdu_bmp_select
+040212             0142*  ;     call table_add_record
+040212             0143*  ;     call sprite_variables_from_stack
+040212             0144*  ;     ld a,#FF ; lets calling proc know we loaded an active tile
+040212             0145*  ;     ret ; and back
+040212             0146*  
+040212             0147*  ; ld_act_landing_pad:
+040212             0148*  ;     call sprite_variables_to_stack
+040212             0149*  
+040212             0150*  ;     ld hl,move_landing_pad
+040212             0151*  ;     ld (sprite_move_program),hl
+040212             0152*  
+040212             0153*  ;     xor a
+040212             0154*  ;     ld (sprite_animation),a ; animation 0
+040212             0155*  
+040212             0156*  ;     call rand_8     ; snag a random number
+040212             0157*  ;     and %00011111   ; keep only 5 lowest bits (max 31)
+040212             0158*  ;     add a,64 ; range is now 64-127
+040212             0159*  ;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
+040212             0160*  
+040212             0161*  ;     ld a,%10 ; collides with laser but not player
+040212             0162*  ;     ld (iy+sprite_collisions),a
+040212             0163*  
+040212             0164*  ;     ld a,#05 ; BCD
+040212             0165*  ;     ld (sprite_points),a
+040212             0166*  ;     ld a,0 ; binary
+040212             0167*  ;     ld (sprite_shield_damage),a
+040212             0168*  
+040212             0169*  ;     ld hl,landing_pad ; dt_ld_act loads this to sprite_base_bufferId
+040212             0170*  ;     jr dt_ld_act
+040212             0171*  
+040212             0172*  ; ld_act_laser_turret:
+040212             0173*  ;     call sprite_variables_to_stack
+040212             0174*  
+040212             0175*  ;     ld hl,move_laser_turret
+040212             0176*  ;     ld (sprite_move_program),hl
+040212             0177*  
+040212             0178*  ;     xor a
+040212             0179*  ;     ld (sprite_animation),a
+040212             0180*  ;     ld (sprite_move_step),a
+040212             0181*  
+040212             0182*  ;     call rand_8     ; snag a random number
+040212             0183*  ;     and %00011111   ; keep only 5 lowest bits (max 31)
+040212             0184*  ;     add a,64 ; range is now 64-127
+040212             0185*  ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+040212             0186*  
+040212             0187*  ;     ld a,%10 ; collides with laser but not player
+040212             0188*  ;     ld (iy+sprite_collisions),a
+040212             0189*  
+040212             0190*  ;     ld a,#10 ; BCD
+040212             0191*  ;     ld (sprite_points),a
+040212             0192*  ;     ld a,0 ; binary
+040212             0193*  ;     ld (sprite_shield_damage),a
+040212             0194*  
+040212             0195*  ;     ld hl,laser_turret ; dt_ld_act loads this to sprite_base_bufferId
+040212             0196*  ;     jp dt_ld_act
+040212             0197*  
+040212             0198*  
+040212             0199*  ; moves active tile sprites down one pixel in sync with tiles movement
+040212             0200*  ; deletes sprites from table when they wrap around to top of screen
+040212             0201*  move_active_tiles:
+040212             0202*  ; get current position
+040212 3A 0F 00 00 0203*      ld a,(sprite_y+1) ; we only need the integer part
+040216 3C          0204*      inc a
+040217             0205*  ; are we at the bottom of the screen?
+040217 20 06       0206*      jr nz,move_active_tiles_draw_sprite ; nope
+040219             0207*  ; otherwise kill sprite
+040219 3E 80       0208*      ld a,%10000000 ; any bit set in high nibble means sprite will die
+04021B FD 77 08    0209*      ld (iy+sprite_collisions),a
+04021E C9          0210*      ret ; debug
+04021F             0211*  move_active_tiles_draw_sprite:
+04021F 32 0F 00 00 0212*      ld (sprite_y+1),a ; update tile y position integer part
+040223 CD 1C 32 04 0213*      call vdu_bmp_select
+040227 CD 65 32 04 0214*      call vdu_bmp_draw ; draw it
+04022B C9          0215*      ret ; and done
+04022C             0040   	include "enemies.inc"
+04022C 10          0001*  max_enemy_sprites: db 16
+04022D             0002*  
+04022D             0003*  ; sprite_type
+04022D             0004*  enemy_dead: equ 0
+04022D             0005*  enemy_small: equ 1
+04022D             0006*  enemy_medium: equ 2
+04022D             0007*  enemy_large: equ 3
+04022D             0008*  landing_pad: equ 4
+04022D             0009*  laser_turret: equ 5
+04022D             0010*  fireballs: equ 6
+04022D             0011*  explosion: equ 7
+04022D             0012*  
+04022D             0013*  
+04022D             0014*  respawn_countdown:
+04022D 2A 4E 02 04 0015*      ld hl,(respawn_timer)
+040231 2B          0016*      dec hl
+040232 22 4E 02 04 0017*      ld (respawn_timer),hl
+040236             0018*  ; check hl for zero
+040236 19          0019*      add hl,de
+040237 B7          0020*      or a
+040238 ED 52       0021*      sbc hl,de
+04023A C0          0022*      ret nz
+04023B 06 10       0023*      ld b,table_max_records
+04023D             0024*  @respawn_loop:
+04023D C5          0025*      push bc
+04023E CD 3F 03 04 0026*      call enemy_init_from_landing_pad
+040242 C1          0027*      pop bc
+040243 10 F8       0028*      djnz @respawn_loop
+040245 21 3C 00 00 0029*      ld hl,1*60 ; 1 second
+040249 22 4E 02 04 0030*      ld (respawn_timer),hl
+04024D C9          0031*      ret
+04024E 3C 00 00    0032*  respawn_timer: dl 1*60
+040251             0033*  
+040251             0034*  move_enemies:
+040251             0035*  ; are there any active enemies or explosions?
+040251 21 00 00 00 0036*      ld hl,0
+040255 3A FA 2B 04 0037*      ld a,(table_active_sprites)
+040259 6F          0038*      ld l,a
+04025A             0039*      ; call dumpRegistersHex
+04025A A7          0040*      and a ; will be zero if no alive enemies or explosions
+04025B             0041*      ; ret z ; so nothing to do but go back
+04025B             0042*      ; ld hl,(respawn_timer)
+04025B             0043*      ; call dumpRegistersHex
+04025B 20 05       0044*      jr nz,move_enemies_do
+04025D CD 2D 02 04 0045*      call respawn_countdown
+040261 C9          0046*      ret
+040262             0047*  move_enemies_do:
+040262             0048*  ; initialize pointers and loop counter
+040262 FD 21 97 29 0049*      ld iy,table_base ; set iy to first record in table
+       04          
+040267 06 10       0050*      ld b,table_max_records ; loop counter
+040269             0051*  move_enemies_loop:
+040269 FD 22 F7 2B 0052*      ld (table_pointer),iy ; update table pointer
+       04          
+04026E C5          0053*      push bc ; backup loop counter
+04026F             0054*  ; check sprite_type to see if sprite is active
+04026F FD 7E 01    0055*      ld a,(iy+sprite_type)
+040272 A7          0056*      and a ; if zero, sprite is dead
+040273 28 2E       0057*      jr z,move_enemies_next_record ; ... and we skip to next record
+040275             0058*  ; otherwise we prepare to move the sprite
+040275 FD 7E 00    0059*      ld a,(iy+sprite_id) ; get spriteId
+040278 CD A1 34 04 0060*      call vdu_sprite_select ; select sprite
+04027C FD 27 05    0061*      ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
+04027F E9          0062*      jp (hl)  ; ... and jump to it
+040280             0063*  ; we always jp back here from behavior subroutines
+040280             0064*  move_enemies_loop_return:
+040280 FD 2A F7 2B 0065*      ld iy,(table_pointer) ; get back table pointer
+       04          
+040285             0066*  ; now we check results of all the moves
+040285 FD 7E 08    0067*      ld a,(iy+sprite_collisions)
+040288 E6 F0       0068*      and %11110000 ; any bits set in high nibble means we died
+04028A FD 7E 00    0069*      ld a,(iy+sprite_id) ; get spriteId for the deactivate_sprite call if needed
+04028D 28 0A       0070*      jr z,move_enemies_draw_sprite ; if not dead,draw sprite
+04028F CD 43 2C 04 0071*      call table_deactivate_sprite ; otherwise we ded
+040293 AF          0072*      xor a ; zero a so that we can ...
+040294 FD 77 08    0073*      ld (iy+sprite_collisions),a ; ... clear collision flags
+040297 18 0A       0074*      jr move_enemies_next_record ; and to the next record
+040299             0075*  move_enemies_draw_sprite:
+040299             0076*  ; if we got here sprite will have already been activated
+040299             0077*  ; so all we need to do is set its coordinates and draw it
+040299 FD 07 0B    0078*      ld bc,(iy+sprite_x)
+04029C FD 17 0E    0079*      ld de,(iy+sprite_y)
+04029F CD 6D 35 04 0080*      call vdu_sprite_move_abs168
+0402A3             0081*  ; fall through to next record
+0402A3             0082*  move_enemies_next_record:
+0402A3 11 26 00 00 0083*      ld de,table_bytes_per_record
+0402A7 FD 19       0084*      add iy,de ; point to next record
+0402A9 AF          0085*      xor a ; clears carry flag
+0402AA 32 FB 2B 04 0086*      ld (sprite_screen_edge),a ; clear screen edge collision flag
+0402AE C1          0087*      pop bc ; get back our loop counter
+0402AF 10 B8       0088*      djnz move_enemies_loop ; loop until we've checked all the records
+0402B1 C9          0089*      ret ; and we're out
+0402B2             0090*  
+0402B2             0091*  en_nav_zigzag_start:
+0402B2 FD 2A F7 2B 0092*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+       04          
+0402B7 CD 63 38 04 0093*      call rand_8
+0402BB E6 3F       0094*      and %00111111 ; limit it to 64
+0402BD CB DF       0095*      set 3,a ; make sure it's at least 8
+0402BF FD 77 22    0096*      ld (iy+sprite_move_timer),a ; store it
+0402C2             0097*      ; fall through to en_nav_zigzag
+0402C2             0098*  en_nav_zigzag:
+0402C2 FD 7E 22    0099*      ld a,(iy+sprite_move_timer)
+0402C5 3D          0100*      dec a
+0402C6 FD 77 22    0101*      ld (iy+sprite_move_timer),a
+0402C9 20 1C       0102*      jr nz,en_nav_zigzag_no_switch
+0402CB             0103*      ; otherwise flip direction and restart timer
+0402CB FD 7E 23    0104*      ld a,(iy+sprite_move_step)
+0402CE EE 01       0105*      xor %1 ; flips bit one
+0402D0 FD 77 23    0106*      ld (iy+sprite_move_step),a ; store it
+0402D3 20 09       0107*      jr nz,en_nav_zigzag_right
+0402D5             0108*  ;otherwise zag left
+0402D5 21 00 A0 00 0109*      ld hl,0x00A000; southwest heading
+0402D9 FD 2F 1A    0110*      ld (iy+sprite_heading),hl ; save sprite heading
+0402DC 18 D4       0111*      jr en_nav_zigzag_start
+0402DE             0112*  en_nav_zigzag_right:
+0402DE 21 00 60 00 0113*      ld hl,0x006000; southeast heading
+0402E2 FD 2F 1A    0114*      ld (iy+sprite_heading),hl ; save sprite heading
+0402E5 18 CB       0115*      jr en_nav_zigzag_start
+0402E7             0116*  en_nav_zigzag_no_switch:
+0402E7             0117*      ; ld a,(sprite_orientation)
+0402E7 FD 27 1A    0118*      ld hl,(iy+sprite_heading)
+0402EA 18 13       0119*      jr en_nav_computevelocities
+0402EC             0120*  
+0402EC             0121*  ; contains the logic for how to move the enemy
+0402EC             0122*  ; and then does the moving
+0402EC             0123*  ; inputs: a fully-populated active sprite table
+0402EC             0124*  ;         player position variables
+0402EC             0125*  ; destroys: everything except index registers
+0402EC             0126*  ; outputs: moving enemies
+0402EC             0127*  en_nav:
+0402EC             0128*  ; set velocity and orientation by player's relative location
+0402EC             0129*  ; move enemies y-axis
+0402EC             0130*  ; where is player relative to us?
+0402EC CD C2 03 04 0131*      call orientation_to_player
+0402F0             0132*  ;    h.l 16.8 fixed angle256 to player
+0402F0             0133*  ;    ub.c and ud.e as 16.8 signed fixed point numbers
+0402F0             0134*  ; is player above or below us?
+0402F0 ED 53 7A 2F 0135*      ld (ude),de ; dy
+       04          
+0402F5 3A 7C 2F 04 0136*      ld a,(ude+2) ; deu
+0402F9 17          0137*      rla ; shift sign bit into carry
+0402FA 30 C6       0138*      jr nc,en_nav_zigzag ; player is below,evade
+0402FC             0139*  ; player is even or above,so home in on current heading
+0402FC FD 2F 1A    0140*      ld (iy+sprite_heading),hl ; save sprite heading
+0402FF             0141*  
+0402FF             0142*  ; we land here from zig-zag program so as not to
+0402FF             0143*  ; redundantly save orientation and heading
+0402FF             0144*  en_nav_computevelocities:
+0402FF             0145*  ; set x/y component velocities based on bearing to player
+0402FF FD 2A F7 2B 0146*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+       04          
+040304 E5          0147*      push hl ; we need it back to set rotation frame
+040305 FD 17 17    0148*      ld de,(iy+sprite_vel)
+040308 CD 8F 38 04 0149*      call polar_to_cartesian
+04030C FD 0F 11    0150*      ld (iy+sprite_xvel),bc ; save x-velocity component
+04030F FD 1F 14    0151*      ld (iy+sprite_yvel),de ; save y-velocity component
+040312             0152*  ; change the animation frame to match heading
+040312             0153*  ; by dividng the heading by 8
+040312 E1          0154*      pop hl ; get back Heading
+040313 7C          0155*      ld a,h
+040314 CB 3F       0156*      srl a
+040316 CB 3F       0157*      srl a
+040318 CB 3F       0158*      srl a
+04031A CD 04 35 04 0159*      call vdu_sprite_select_frame
+04031E             0160*  ; update sprite position
+04031E             0161*  move_enemy_sprite:
+04031E FD 27 0B    0162*      ld hl,(iy+sprite_x)
+040321 FD 17 11    0163*      ld de,(iy+sprite_xvel)
+040324 19          0164*      add hl,de
+040325 FD 2F 0B    0165*      ld (iy+sprite_x),hl
+040328             0166*  
+040328 FD 27 0E    0167*      ld hl,(iy+sprite_y)
+04032B FD 17 14    0168*      ld de,(iy+sprite_yvel)
+04032E 19          0169*      add hl,de
+04032F FD 2F 0E    0170*      ld (iy+sprite_y),hl
+040332 C9          0171*      ret
+040333             0172*  
+040333             0173*  ; ; TODO: IMPLEMENT THIS PROPERLY
+040333             0174*  ; move_enemy_sprite:
+040333             0175*  ; ; x-axis movement first
+040333             0176*  ;     ld hl,(iy+sprite_x)
+040333             0177*  ;     push hl ; save pre-move position
+040333             0178*  ;     pop bc ; to detect screen edge collision
+040333             0179*  ;     ld de,(iy+sprite_xvel)
+040333             0180*  ;     add hl,de ;compute new x position
+040333             0181*  ;     ld (iy+sprite_x),hl ; store it
+040333             0182*  ;     and a ; clear the carry flag
+040333             0183*  ;     sbc hl,bc ; test which direction was our movement
+040333             0184*  ;     jr z,@move_y ; zero flag means no horizontal movement
+040333             0185*  ;     jp p,@move_right ; sign positive means moved right
+040333             0186*  ; @move_left: ; otherwise we moved left
+040333             0187*  ;     jr c,@move_y ; move left,no wraparound |C1 N1 PV1 H1 Z0 S1|A=00 HL=FF00 BC=0100 DE=FF00
+040333             0188*  ;     ld hl,0x000000   ; move left,with wraparound |C0 N1 PV0 H0 Z0 S1|A=00 HL=FF00 BC=0000 DE=FF00
+040333             0189*  ;     ld (iy+sprite_x),hl ; set x position to left edge of screen
+040333             0190*  ;     ld a,#20 ; west
+040333             0191*  ;     ld (sprite_screen_edge),a ; set screen edge collision flag
+040333             0192*  ;     jr @move_y
+040333             0193*  ; @move_right:
+040333             0194*  ;     jr nc,@move_y ; move right,no wraparound |C0 N1 PV1 H0 Z0 S0|A=00 HL=0100 BC=FE00 DE=0100
+040333             0195*  ;     ; move right,with wraparound |C1 N1 PV0 H1 Z0 S0|A=00 HL=0100 BC=FF00 DE=0100
+040333             0196*  ;     ld l,0x00
+040333             0197*  ;     ld a,(iy+sprite_dim_x)
+040333             0198*  ;     ld h,a
+040333             0199*  ;     ld a,0x00
+040333             0200*  ;     sub h
+040333             0201*  ;     ld h,a
+040333             0202*  ;     ld (iy+sprite_x),hl ; set x position to right edge of screen
+040333             0203*  ;     ld a,0x02 ; east
+040333             0204*  ;     ld (sprite_screen_edge),a ; set screen edge collision flag
+040333             0205*  ; @move_y:
+040333             0206*  ;     ld hl,(iy+sprite_y)
+040333             0207*  ;     ld b,h ; save pre-move position
+040333             0208*  ;     ld c,l ; to detect screen edge collision
+040333             0209*  ;     ld de,(iy+sprite_yvel)
+040333             0210*  ;     add hl,de ;compute new y position
+040333             0211*  ;     ld (iy+sprite_y),hl ; store it
+040333             0212*  ;     and a ; clear the carry flag
+040333             0213*  ;     sbc hl,bc ; test which direction was our movement
+040333             0214*  ;     jr z,@move_ret ; zero flag means no vertical movement
+040333             0215*  ;     jp p,@move_dn ; sign positive means moved down
+040333             0216*  ; @move_up:
+040333             0217*  ;     add hl,bc ; get back new y position
+040333             0218*  ;     ld de,0x5000 ; top edge of visible screen
+040333             0219*  ;     and a ; clear the carry flag
+040333             0220*  ;     sbc hl,de
+040333             0221*  ;     jr nc,@move_ret ; move up,no wraparound |C0 N1 PV0 H0 Z1 S0|A=00 HL=0000 BC=5100 DE=5000
+040333             0222*  ;     ; move up,with wraparound |C1 N1 PV1 H0 Z0 S1|A=00 HL=FF00 BC=5000 DE=5000
+040333             0223*  ;     ld (iy+sprite_y),de ; set y position flush with top of screen
+040333             0224*  ;     ld a,(sprite_screen_edge) ; load any vertical edge collision
+040333             0225*  ;     or 0x80 ; north
+040333             0226*  ;     ld (sprite_screen_edge),a ; set screen edge collision flag
+040333             0227*  ;     jr @move_ret
+040333             0228*  ; @move_dn:
+040333             0229*  ;     jr nc,@move_ret ; move down,no wraparound |C0 N1 PV0 H0 Z0 S0|A=00 HL=0100 BC=5100 DE=0100
+040333             0230*  ;     ; move down,with wraparound |C1 N1 PV0 H1 Z0 S0|A=00 HL=0100 BC=FF00 DE=0100
+040333             0231*  ;     ld l,0x00
+040333             0232*  ;     ld a,(iy+sprite_dim_y)
+040333             0233*  ;     ld h,a
+040333             0234*  ;     ld a,0x00
+040333             0235*  ;     sub h
+040333             0236*  ;     ld h,a
+040333             0237*  ;     ld (iy+sprite_y),hl ; set y position flush with bottom of screen
+040333             0238*  ;     ld a,(sprite_screen_edge) ; load any vertical edge collision
+040333             0239*  ;     or 0x08 ; south
+040333             0240*  ;     ld (sprite_screen_edge),a ; set screen edge collision flag
+040333             0241*  ; @move_ret:
+040333             0242*  ;     ret
+040333             0243*  
+040333             0244*  ; ; ######### SPRITE BEHAVIOR ROUTINES #########
+040333             0245*  ; ; each sprite in the table must have one of these defined
+040333             0246*  ; ; but they need not be unique to a particular sprite
+040333             0247*  ; ; these are jumped to from move_enemies_do_program,but could come from other places
+040333             0248*  ; ; and have the option but not obligation to go back to move_enemies_loop_return
+040333             0249*  ; ; but they can call anything they want between those two endpoints
+040333             0250*  ; move_programs: ; bookmark in case we want to know the first address of the first subroutine
+040333             0251*  
+040333             0252*  ; move_nop: ; does nothing but burn a few cycles changing the PC
+040333             0253*  ;     jp move_enemies_loop_return
+040333             0254*  
+040333             0255*  ; move_explosion:
+040333             0256*  ;     call animate_explosion
+040333             0257*  ;     jp move_enemies_loop_return
+040333             0258*  
+040333             0259*  move_enemy_small:
+040333 CD EC 02 04 0260*      call en_nav
+040337 CD 5E 04 04 0261*      call check_collisions
+04033B C3 80 02 04 0262*      jp move_enemies_loop_return
+04033F             0263*  
+04033F             0264*  ; move_enemy_medium:
+04033F             0265*  ;     call en_nav
+04033F             0266*  ;     call check_collisions
+04033F             0267*  ;     jp move_enemies_loop_return
+04033F             0268*  
+04033F             0269*  ; move_enemy_large:
+04033F             0270*  ;     call en_nav
+04033F             0271*  ;     call check_collisions
+04033F             0272*  ;     jp move_enemies_loop_return
+04033F             0273*  
+04033F             0274*  ; move_landing_pad:
+04033F             0275*  ;     call move_active_tiles
+04033F             0276*  ;     call check_collisions
+04033F             0277*  ; ; is it time to launch an enemy?
+04033F             0278*  ;     ld hl,sprite_move_timer
+04033F             0279*  ;     dec (hl)
+04033F             0280*  ;     jp nz,move_enemies_loop_return
+04033F             0281*  ;     call enemy_init_from_landing_pad
+04033F             0282*  ;     ; reset move timer so can spawn again if player doesn't take us out
+04033F             0283*  ;     call rand_8     ; snag a random number
+04033F             0284*  ;     and %00011111   ; keep only 5 lowest bits (max 31)
+04033F             0285*  ;     add a,64 ; range is now 64-127
+04033F             0286*  ;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
+04033F             0287*  ;     jp move_enemies_loop_return
+04033F             0288*  
+04033F             0289*  enemy_init_from_landing_pad:
+04033F             0290*  ; get next available spriteId
+04033F CD 1E 2C 04 0291*      call table_get_next_id
+040343 D0          0292*      ret nc ; no carry means no free sprite slots, so we go home
+040344             0293*  ; ix comes back with the pointer to the new sprite variables
+040344 DD E5       0294*      push ix ; de picks it up when we're ready for the copy to the table
+040346             0295*  ; a comes back with the spriteId of the new sprite
+040346 32 9C 03 04 0296*      ld (@id),a
+04034A             0297*  ; initialize the new sprite
+04034A CD A1 34 04 0298*      call vdu_sprite_select
+04034E CD B4 34 04 0299*      call vdu_sprite_clear_frames
+040352 21 14 01 00 0300*      ld hl,BUF_SEEKER_000
+040356 06 20       0301*      ld b,32
+040358             0302*  @load_frames:
+040358 C5          0303*      push bc
+040359 E5          0304*      push hl
+04035A CD EE 35 04 0305*      call vdu_sprite_add_buff
+04035E E1          0306*      pop hl
+04035F 23          0307*      inc hl
+040360 C1          0308*      pop bc
+040361 10 F5       0309*      djnz @load_frames
+040363             0310*  ; copy coordinates of active sprite to new sprite
+040363 FD 2A F7 2B 0311*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+       04          
+040368             0312*      ; ld hl,(iy+sprite_x)
+040368             0313*  	; ld hl,0x008000 ; debug
+040368             0314*  
+040368 CD 63 38 04 0315*      call rand_8
+04036C 21 00 00 00 0316*      ld hl,0
+040370 67          0317*      ld h,a
+040371             0318*  
+040371 22 A7 03 04 0319*      ld (@x),hl
+040375             0320*      ; ld hl,(iy+sprite_y)
+040375             0321*      ; ld hl,0x002000 ; debug
+040375             0322*  
+040375 CD 63 38 04 0323*      call rand_8
+040379 21 00 00 00 0324*      ld hl,0
+04037D 67          0325*      ld h,a
+04037E             0326*  
+04037E 22 AA 03 04 0327*      ld (@y),hl
+040382 CD 63 38 04 0328*      call rand_8
+040386 E6 01       0329*      and %00000001 ; 50/50 chance of moving left or right on spanw
+040388 32 BF 03 04 0330*      ld (@move_step),a
+04038C             0331*  ; now copy to the table
+04038C 21 9C 03 04 0332*      ld hl,@id ; address to copy from
+040390 D1          0333*      pop de ; address to copy to (was ix)
+040391 01 26 00 00 0334*      ld bc,table_bytes_per_record ; number of bytes to copy
+040395 ED B0       0335*      ldir ; copy the records from local scratch to sprite table
+040397             0336*  ; finally, make the new sprite visible
+040397 CD 17 35 04 0337*      call vdu_sprite_show
+04039B C9          0338*      ret
+04039C 00          0339*  @id:               db     0x00 ; 1 bytes unique spriteId, zero-based
+04039D 01          0340*  @type:             db enemy_small ; 1 bytes type of sprite as defined in enemies.inc
+04039E 14 01 00    0341*  @base_bufferId:    dl BUF_SEEKER_000 ; 3 bytes bitmap bufferId
+0403A1 33 03 04    0342*  @move_program:     dl move_enemy_small ; 3 bytes address of sprite's behavior subroutine
+0403A4 03          0343*  @collisions:       db %00000011 ; 3 bytes collides with enemy and laser
+0403A5 10          0344*  @dim_x:            db     0x10 ; 1 bytes sprite width in pixels
+0403A6 10          0345*  @dim_y:            db     0x10 ; 1 bytes sprite height in pixels
+0403A7 00 00 00    0346*  @x:                dl 0x000000 ; 1 bytes 16.8 fractional x position in pixels
+0403AA 00 00 00    0347*  @y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
+0403AD 00 00 00    0348*  @xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+0403B0 00 00 00    0349*  @yvel:             dl 0x000000 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+0403B3 80 02 00    0350*  @vel:              dl speed_seeker ; 3 bytes velocity, 16.8 fixed, pixels
+0403B6 00 80 00    0351*  @heading:          dl 0x008000 ; 3 bytes sprite movement direction deg256 16.8 fixed
+0403B9 00 80 00    0352*  @orientation:      dl 0x008000 ; 3 bytes orientation bits
+0403BC 00          0353*  @animation:        db     0x00 ; 1 bytes current animation index, zero-based
+0403BD 00          0354*  @animation_timer:  db     0x00 ; 1 bytes when hits zero, draw next animation
+0403BE 01          0355*  @move_timer:       db     0x01 ; 1 bytes when zero, go to next move program, or step
+0403BF 00          0356*  @move_step:        db     0x00 ; 1 bytes stage in a move program sequence, varies
+0403C0 20          0357*  @points:           db     0x20 ; 1 bytes points awarded for killing this sprite type, BCD
+0403C1 02          0358*  @shield_damage:    db     0x02 ; 1 bytes shield points deducted for collision, binary
+0403C2             0359*  
+0403C2             0360*  ; move_laser_turret:
+0403C2             0361*  ; ; compute orientation to player
+0403C2             0362*  ;     call orientation_to_player
+0403C2             0363*  ; ; h.l 8.8 fixed angle256 to player
+0403C2             0364*  ; ; bc and de as signed 16-bit integers
+0403C2             0365*  ; ; representing delta-x/y *to* target respectively
+0403C2             0366*  ;     ld (Bearing_t),hl
+0403C2             0367*  ;     ld hl,0x0400
+0403C2             0368*  ;     ld (Vp),hl
+0403C2             0369*  ;     call targeting_computer
+0403C2             0370*  ;     ld (sprite_heading),hl ; store bearing to player
+0403C2             0371*  ; ; is it time to launch a fireball?
+0403C2             0372*  ;     ld hl,sprite_move_timer
+0403C2             0373*  ;     dec (hl)
+0403C2             0374*  ;     jp nz,move_laser_turret_boilerplate
+0403C2             0375*  ;     call fireballs_init
+0403C2             0376*  ;     ; reset move timer so can fire again if player doesn't take us out
+0403C2             0377*  ;     call rand_8     ; snag a random number
+0403C2             0378*  ;     and %00011111   ; keep only 5 lowest bits (max 31)
+0403C2             0379*  ;     add a,64 ; range is now 64-127
+0403C2             0380*  ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+0403C2             0381*  ; move_laser_turret_boilerplate:
+0403C2             0382*  ;     call move_active_tiles
+0403C2             0383*  ;     call check_collisions
+0403C2             0384*  ;     jp move_enemies_loop_return
+0403C2             0385*  
+0403C2             0386*  ; fireballs_init:
+0403C2             0387*  ;     call sprite_variables_to_stack
+0403C2             0388*  
+0403C2             0389*  ;     ld hl,fireballs
+0403C2             0390*  ;     ld (sprite_base_bufferId),hl
+0403C2             0391*  
+0403C2             0392*  ;     ld hl,move_fireballs
+0403C2             0393*  ;     ld (sprite_move_program),hl
+0403C2             0394*  
+0403C2             0395*  ;     ld a,%11 ; collides with laser and player
+0403C2             0396*  ;     ; ld a,%10 ; collides with laser DEBUG
+0403C2             0397*  ;     ld (iy+sprite_collisions),a
+0403C2             0398*  
+0403C2             0399*  ;     ld hl,(Vp)
+0403C2             0400*  ;     ld (sprite_vel),hl
+0403C2             0401*  ;     ld hl,(Vp_x)
+0403C2             0402*  ;     ld (sprite_xvel),hl
+0403C2             0403*  ;     ld hl,(Vp_y)
+0403C2             0404*  ;     inc h ; account for ground movement
+0403C2             0405*  ;     ld (sprite_yvel),hl
+0403C2             0406*  
+0403C2             0407*  ;     xor a ; zero a
+0403C2             0408*  ;     ld (sprite_animation),a
+0403C2             0409*  ;     ld (sprite_move_step),a
+0403C2             0410*  ;     ld (sprite_move_timer),a
+0403C2             0411*  
+0403C2             0412*  ;     ld a,6 ; 1/10th of a second timer
+0403C2             0413*  ;     ld (sprite_animation_timer),a
+0403C2             0414*  
+0403C2             0415*  ;     ld a,0x00 ; BCD
+0403C2             0416*  ;     ld (sprite_points),a
+0403C2             0417*  ;     ld a,1 ; binary
+0403C2             0418*  ;     ld (sprite_shield_damage),a
+0403C2             0419*  
+0403C2             0420*  ;     call table_add_record ; plops that on the sprite stack for later
+0403C2             0421*  ;     call sprite_variables_from_stack ; come back to where we started
+0403C2             0422*  ;     ret
+0403C2             0423*  
+0403C2             0424*  ; move_fireballs:
+0403C2             0425*  ;     call move_enemy_sprite ; move sprite
+0403C2             0426*  ;     ld a,(sprite_screen_edge) ; check for collision with screen edge
+0403C2             0427*  ;     and a ; if zero we're still within screen bounds
+0403C2             0428*  ;     jr z,move_fireballs_alive
+0403C2             0429*  ; ; otherwise kill sprite
+0403C2             0430*  ;     ld a,%10000000 ; any bit set in high nibble means sprite will die
+0403C2             0431*  ;     ld (iy+sprite_collisions),a
+0403C2             0432*  ;     jp move_enemies_loop_return
+0403C2             0433*  ; move_fireballs_alive:
+0403C2             0434*  ;     ld a,(sprite_animation_timer)
+0403C2             0435*  ;     dec a
+0403C2             0436*  ;     ld (sprite_animation_timer),a
+0403C2             0437*  ;     jr nz,move_fireballs_draw
+0403C2             0438*  ;     ld a,(sprite_animation)
+0403C2             0439*  ;     xor %1
+0403C2             0440*  ;     ld (sprite_animation),a
+0403C2             0441*  ;     ld a,6 ; 1/10th of a second timer
+0403C2             0442*  ;     ld (sprite_animation_timer),a
+0403C2             0443*  ;     ; fall through
+0403C2             0444*  
+0403C2             0445*  ; move_fireballs_draw:
+0403C2             0446*  ;     call vdu_bmp_select
+0403C2             0447*  ;     call vdu_bmp_draw
+0403C2             0448*  ;     call check_collisions
+0403C2             0449*  ;     jp move_enemies_loop_return
+0403C2             0450*  
+0403C2             0451*  ; compute orientation to player
+0403C2             0452*  ; based on relative positions
+0403C2             0453*  ; returns: h.l 16.8 fixed angle256 to player
+0403C2             0454*  ;    ub.c and ud.e as 16.8 signed fixed point numbers
+0403C2             0455*  ;    representing delta-x/y *to* target respectively
+0403C2             0456*  orientation_to_player:
+0403C2 FD 2A F7 2B 0457*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+       04          
+0403C7 FD E5       0458*      push iy ; so we can send it back intact
+0403C9 FD 07 0B    0459*      ld bc,(iy+sprite_x)
+0403CC FD 17 0E    0460*      ld de,(iy+sprite_y)
+0403CF DD 2A 71 00 0461*      ld ix,(player_x)
+       04          
+0403D4 FD 2A 74 00 0462*      ld iy,(player_y)
+       04          
+0403D9 CD D9 38 04 0463*      call dxy168
+0403DD CD 40 39 04 0464*      call atan2_168game
+0403E1 ED 4B 34 39 0465*      ld bc,(dx168)
+       04          
+0403E6 ED 5B 3A 39 0466*      ld de,(dy168)
+       04          
+0403EB FD E1       0467*      pop iy ; restore table pointer
+0403ED C9          0468*      ret
+0403EE             0469*  
+0403EE             0470*  
+0403EE             0471*  ; targeting_computer scratch variables
+0403EE 00 00       0472*  Bearing_t: dw #0000 ; 8.8 fixed
+0403F0 00 00       0473*  Heading_t: dw #0000 ; 8.8 fixed
+0403F2 00 00       0474*  Vp: dw #0000 ; 8.8 fixed
+0403F4 00 00       0475*  Vp_x: dw #0000 ; 8.8 fixed
+0403F6 00 00       0476*  Vp_y: dw #0000 ; 8.8 fixed
+0403F8 00 00       0477*  Vt: dw #0000 ; 8.8 fixed
+0403FA 00 00       0478*  Vt_x: dw #0000 ; 8.8 fixed
+0403FC 00 00       0479*  Vt_y: dw #0000 ; 8.8 fixed
+0403FE             0480*  
+0403FE             0481*  
+0403FE             0482*  ; ; Inputs:   see scratch variables
+0403FE             0483*  ; ; Note:     a call to orientation_to_player provides these inputs
+0403FE             0484*  ; ; Outputs:  h.l is the 16.8 fixed firing angle256
+0403FE             0485*  ; ;           b.c and d.e are the 16.8 fixed x,y component projectile velocities
+0403FE             0486*  ; ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
+0403FE             0487*  ; targeting_computer:
+0403FE             0488*  ; ; compute target velocity from x,y component velocities
+0403FE             0489*  ;     ld bc,(player_xvel)
+0403FE             0490*  ;     ld de,(player_yvel)
+0403FE             0491*  ;     dec d ; account for vertical ground movement: b.c=player_xvel,d.e=player_yvel-1
+0403FE             0492*  
+0403FE             0493*  ;     call cartesian_to_polar ; b.c=Heading_t, d.e=Vt
+0403FE             0494*  ;     ld (Heading_t),bc
+0403FE             0495*  ;     ld (Vt),de
+0403FE             0496*  
+0403FE             0497*  ; ; compute Heading_t-Bearing_t
+0403FE             0498*  ;     ld h,b
+0403FE             0499*  ;     ld l,c
+0403FE             0500*  ;     ld bc,(Bearing_t)
+0403FE             0501*  ;     and a ; clear carry
+0403FE             0502*  ;     sbc hl,bc ; h.l=Heading_t-Bearing_t
+0403FE             0503*  
+0403FE             0504*  ; ; compute sin(Heading_t-Bearing_t)
+0403FE             0505*  ;     ld b,h
+0403FE             0506*  ;     ld c,l
+0403FE             0507*  ;     call sin_bc ; h.l=sin(Heading_t-Bearing_t)
+0403FE             0508*  
+0403FE             0509*  ; ; compute (Vt*sin(Heading_t-Bearing_t))
+0403FE             0510*  ;     ex de,hl
+0403FE             0511*  ;     ld bc,(Vt)
+0403FE             0512*  ;     call BC_Mul_DE_88 ; h.l=(Vt*sin(Heading_t-Bearing_t))
+0403FE             0513*  
+0403FE             0514*  ; ; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
+0403FE             0515*  ;     ld b,h
+0403FE             0516*  ;     ld c,l
+0403FE             0517*  ;     ld de,(Vp)
+0403FE             0518*  ;     call div_88 ; h.l=(Vt*sin(Heading_t-Bearing_t)) / Vp
+0403FE             0519*  ; ; answer is in radians, convert to degrees256
+0403FE             0520*  ;     ex de,hl
+0403FE             0521*  ;     ld bc,#28BE ; 40.74=57.29578*256/360
+0403FE             0522*  ;     call BC_Mul_DE_88
+0403FE             0523*  
+0403FE             0524*  ; ; add lead angle to target bearing
+0403FE             0525*  ;     ld de,(Bearing_t)
+0403FE             0526*  ;     add hl,de ; h.l=lead angle+target bearing
+0403FE             0527*  ;     push hl
+0403FE             0528*  
+0403FE             0529*  ; ; compute component projectile velocities
+0403FE             0530*  ;     ld b,h
+0403FE             0531*  ;     ld c,l
+0403FE             0532*  ;     ld de,(Vp)
+0403FE             0533*  ;     call polar_to_cartesian ; b.c=Vp_x, d.e=Vp_y
+0403FE             0534*  
+0403FE             0535*  ;     ld (Vp_x),bc
+0403FE             0536*  ;     ld (Vp_y),de
+0403FE             0537*  ;     pop hl ; h.l=lead angle+target bearing
+0403FE             0538*  ;     ret
+0403FE             0539*  
+0403FE             0540*  ; this routine vanquishes the enemy sprite
+0403FE             0541*  ; and replaces it with an animated explosion
+0403FE             0542*  ; we jump here instead of call because
+0403FE             0543*  ; we want to return to differing locations in the loop
+0403FE             0544*  ; depending on whether we're still sploding
+0403FE             0545*  ; destroys: everything except index registers
+0403FE             0546*  ; returns: an incandescent ball of debris and gas
+0403FE             0547*  kill_nurple:
+0403FE             0548*  ; ; tally up points
+0403FE             0549*  ;     ld bc,0
+0403FE             0550*  ;     ld a,(sprite_points)
+0403FE             0551*  ;     ld e,a
+0403FE             0552*  ;     ld d,0
+0403FE             0553*  ;     ld hl,add_bcd_arg2
+0403FE             0554*  ;     call set_bcd
+0403FE             0555*  ;     ld hl,player_score
+0403FE             0556*  ;     ld de,add_bcd_arg2
+0403FE             0557*  ;     ld a,3 ; number of bytes to add
+0403FE             0558*  ;     call add_bcd
+0403FE             0559*  ; ; initialize explosion
+0403FE             0560*  ; init_explosion:
+0403FE             0561*  ;     ld hl,explosion
+0403FE             0562*  ;     ld (sprite_base_bufferId),hl
+0403FE             0563*  ;     ld hl,move_explosion
+0403FE             0564*  ;     ld (sprite_move_program),hl
+0403FE             0565*  ;     ld a,%00000000 ; collides with nothing
+0403FE             0566*  ;     ld (iy+sprite_collisions),a
+0403FE             0567*  ;     ld hl,0 ; north
+0403FE             0568*  ;     ld (sprite_heading),hl
+0403FE             0569*  ;     ld a,0x04 ; will decrement to 03
+0403FE             0570*  ;     ld (sprite_animation),a
+0403FE             0571*  ;     ld a,0x07 ; 7/60th of a second timer
+0403FE             0572*  ;     ld (sprite_animation_timer),a
+0403FE             0573*  ;     xor a
+0403FE             0574*  ;     ld (sprite_move_timer),a
+0403FE             0575*  ;     call vdu_bmp_select
+0403FE             0576*  ; ; fall through to next_explosion
+0403FE             0577*  ; next_explosion:
+0403FE             0578*  ;     ld a,(sprite_animation)
+0403FE             0579*  ;     dec a ; if rolled negative from zero,we're done sploding
+0403FE             0580*  ;     jp m,done_explosion
+0403FE             0581*  ;     ld (sprite_animation),a
+0403FE             0582*  ;     ld a,0x7 ; 7/60th of a second timer
+0403FE             0583*  ;     ld (sprite_animation_timer),a
+0403FE             0584*  ; ; fall through to animate_explosion
+0403FE             0585*  ; animate_explosion:
+0403FE             0586*  ;     ld hl,sprite_y+1
+0403FE             0587*  ;     inc (hl) ; move explosion down 1 pixel
+0403FE             0588*  ;     jr z, done_explosion ; if wraparound to top of screen, kill explosion
+0403FE             0589*  ;     ld hl,sprite_animation_timer
+0403FE             0590*  ;     dec (hl) ; if timer is zero,we do next animation
+0403FE             0591*  ;     jr z,next_explosion
+0403FE             0592*  ;     ;otherwise we fall through to draw the current one
+0403FE             0593*  ;     call vdu_bmp_select
+0403FE             0594*  ;     call vdu_bmp_draw
+0403FE             0595*  ;     ret ; now we go back to caller
+0403FE             0596*  ; done_explosion:
+0403FE 3E 80       0597*      ld a,%10000000 ; high bit set is non-specific kill-me flag
+040400 FD 2A F7 2B 0598*      ld iy,(table_pointer); TODO: see if we can get IY to land here with the proper value
+       04          
+040405 FD 77 08    0599*      ld (iy+sprite_collisions),a
+040408 C9          0600*      ret ; now we go back to caller
+040409             0601*  
+040409             0602*  ; game_over:
+040409             0603*  ;     jp new_game
+040409             0604*  
+040409             0605*  ; it's presumed we've already checked that laser is alive
+040409             0606*  collision_enemy_with_laser:
+040409 DD 2A 96 04 0607*      ld ix,(laser_x)
+       04          
+04040E FD 2A 99 04 0608*      ld iy,(laser_y)
+       04          
+040413 3A 94 04 04 0609*      ld a,(laser_dim_x)
+040417 CB 2F       0610*      sra a ; divide by 2
+040419 F5          0611*      push af ; we need this later
+04041A             0612*      ; ld de,0
+04041A             0613*      ; ld d,a
+04041A             0614*      ; add ix,de
+04041A             0615*      ; add iy,de
+04041A 18 11       0616*      jr collision_enemy
+04041C             0617*  
+04041C             0618*  ; it's presumed we've already checked that player is alive
+04041C             0619*  collision_enemy_with_player:
+04041C DD 2A 71 00 0620*      ld ix,(player_x)
+       04          
+040421 FD 2A 74 00 0621*      ld iy,(player_y)
+       04          
+040426 3A 6F 00 04 0622*      ld a,(player_dim_x)
+04042A             0623*  
+04042A             0624*      ; call dumpRegistersHex
+04042A             0625*  
+04042A CB 2F       0626*      sra a ; divide by 2
+04042C F5          0627*      push af ; we need this later
+04042D             0628*      ; ld de,0
+04042D             0629*      ; ld d,a
+04042D             0630*      ; add ix,de
+04042D             0631*      ; add iy,de
+04042D             0632*      ; fall through to collision_enemy
+04042D             0633*  
+04042D             0634*  ; compute the distance between the two sprites' centers
+04042D             0635*  ; inputs: bc and de as y0,x0 and y1,x1 respectively
+04042D             0636*  collision_enemy:
+04042D             0637*  ; back up iy because we need it as the sprite table pointer
+04042D FD E5       0638*      push iy
+04042F FD 2A F7 2B 0639*      ld iy,(table_pointer)
+       04          
+040434 FD 27 0B    0640*      ld hl,(iy+sprite_x)
+040437 FD 7E 09    0641*      ld a,(iy+sprite_dim_x)
+04043A CB 2F       0642*      sra a
+04043C F5          0643*      push af ; we need this later
+04043D             0644*      ; ld de,0
+04043D             0645*      ; ld d,a
+04043D             0646*      ; add hl,de
+04043D E5          0647*      push hl
+04043E C1          0648*      pop bc ; bc = x0
+04043F FD 27 0E    0649*      ld hl,(iy+sprite_y)
+040442 FD 7E 0A    0650*      ld a,(iy+sprite_dim_y)
+040445             0651*      ; sra a
+040445             0652*      ; ld de,0
+040445             0653*      ; ld d,a
+040445             0654*      ; add hl,de
+040445 EB          0655*      ex de,hl ; de = y0
+040446 F1          0656*      pop af ; TODO: srsly, this is the best way to do this?
+040447 FD E1       0657*      pop iy
+040449 F5          0658*      push af
+04044A             0659*  
+04044A             0660*      ; call dumpRegistersHex
+04044A             0661*  
+04044A CD F4 38 04 0662*      call distance168
+04044E             0663*      ; CALL dumpRegistersHex
+04044E             0664*  ; ; subtract sum of radii from distance between centers
+04044E             0665*  ;     ld de,0
+04044E             0666*  ;     pop af ; radius of enemy sprite
+04044E             0667*  ;     ld e,a
+04044E             0668*  ;     pop af ; radius of player or laser sprite
+04044E             0669*  ;     add a,e
+04044E             0670*  ;     ld e,a
+04044E             0671*  ;     and a ; clear carry
+04044E             0672*  ;     sbc hl,de
+04044E             0673*  ;     jr c,collision_enemy_is
+04044E             0674*  ;     xor a
+04044E             0675*  ;     ret
+04044E             0676*  ; temp fix TODO: remove this
+04044E F1          0677*      pop af
+04044F F1          0678*      pop af
+040450 11 00 10 00 0679*      ld de,16*256
+040454 A7          0680*      and a
+040455 ED 52       0681*      sbc hl,de
+040457 38 02       0682*      jr c,collision_enemy_is
+040459 AF          0683*      xor a
+04045A             0684*      ; call dumpRegistersHex
+04045A C9          0685*      ret
+04045B             0686*  collision_enemy_is:
+04045B AF          0687*      xor a
+04045C 3C          0688*      inc a
+04045D             0689*      ; call dumpRegistersHex
+04045D C9          0690*      ret
+04045E             0691*  
+04045E             0692*  ; ; looks up what enemy sprite collides with
+04045E             0693*  ; ; detects collisions
+04045E             0694*  ; ; and sets things to sploding accordingly
+04045E             0695*  ; check_collisions:
+04045E             0696*  ;     ld a,(iy+sprite_collisions) ; snag what we collide with
+04045E             0697*  ;     and a ; if this is zero,
+04045E             0698*  ;     ret z ; there's nothing to do
+04045E             0699*  ;     and %01 ; do we collide with player?
+04045E             0700*  ;     jr z,move_enemies_laser ; if not,check laser collision
+04045E             0701*  ;     call collision_enemy_with_player ; otherwise see if we hit player
+04045E             0702*  ;     and a ; was there a collision?
+04045E             0703*  ;     jr z,move_enemies_laser ; if not,see if laser smacked us
+04045E             0704*  ; ; yes collision with player
+04045E             0705*  ;     ; deduct shield damage
+04045E             0706*  ;     ld hl,sprite_shield_damage
+04045E             0707*  ;     ld a,(player_shields)
+04045E             0708*  ;     sub (hl)
+04045E             0709*  ;     ld (player_shields),a
+04045E             0710*  ; ; if shields >= 0,player survives
+04045E             0711*  ;     jp p,check_collisions_kill_nurple
+04045E             0712*  ; ; otherwise update player status so it will die
+04045E             0713*  ;     ld a,(player_collisions)
+04045E             0714*  ;     or %10 ; sets bit 1,meaning player just died
+04045E             0715*  ;     ld (player_collisions),a
+04045E             0716*  ;     ; fall through
+04045E             0717*  ; check_collisions_kill_nurple:
+04045E             0718*  ; ; kill enemy and replace with explosion
+04045E             0719*  ;     call kill_nurple
+04045E             0720*  ;     ret ; and out
+04045E             0721*  
+04045E             0722*  check_collisions:
+04045E CD 1C 04 04 0723*      call collision_enemy_with_player ; did we hit the player?
+040462 A7          0724*      and a ; was there a collision?
+040463 C8          0725*      ret z ; if not,we're done
+040464 CD FE 03 04 0726*      call kill_nurple ; otherwise kill enemy
+040468 C9          0727*      ret
+040469             0728*  
+040469             0729*  ; did we hit the laser?
+040469             0730*  move_enemies_laser:
+040469 FD 7E 08    0731*      ld a,(iy+sprite_collisions) ; snag what we collide with again
+04046C E6 02       0732*      and %10 ; do we even collide with laser?
+04046E C8          0733*      ret z ; if not,we're out
+04046F 3A 93 04 04 0734*      ld a,(laser_collisions) ; is laser alive?
+040473 E6 01       0735*      and %1 ; if bit 0 is not set laser is dead
+040475 C8          0736*      ret z ; so we're out
+040476 CD 09 04 04 0737*      call collision_enemy_with_laser ; otherwise check for collision
+04047A A7          0738*      and a ; was there a collision?
+04047B C8          0739*      ret z ; if not,we're done
+04047C             0740*  ; otherwise we mark laser for termination and kill enemy
+04047C             0741*  ; update laser status so it will die
+04047C 3A 93 04 04 0742*      ld a,(laser_collisions)
+040480 F6 02       0743*      or %10 ; bit 1 set means laser just died
+040482 32 93 04 04 0744*      ld (laser_collisions),a
+040486 CD FE 03 04 0745*      call kill_nurple ; yes there was a collision,so kill enemy
+04048A C9          0746*      ret ; we're outta' here
+04048B             0041   	include "laser.inc"
+04048B             0001*  ; ##### LASER SPRITE PARAMETERS #####
+04048B             0002*  ; uses the same offsets from its table base as the main sprite table:
+04048B             0003*  laser_start_variables: ; label marking beginning of table
+04048B 11          0004*  laser_id:               db table_max_records+1
+04048C 00          0005*  laser_type:             db     0x00 ; 1 bytes currently not used
+04048D 11 01 00    0006*  laser_base_bufferId:    dl BUF_LASER_A ; 3 bytes bitmap bufferId
+040490 00 00 00    0007*  laser_move_program:     dl 0x000000 ; 3 bytes not currently used
+040493 00          0008*  laser_collisions:       db     0x00 ; 1 bytes bit 0 set=alive, otherwise dead, bit 1 set=just died
+040494 00          0009*  laser_dim_x:            db     0x00 ; 1 bytes sprite width in pixels
+040495 00          0010*  laser_dim_y:            db     0x00 ; 1 bytes sprite height in pixels
+040496 00 00 00    0011*  laser_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels
+040499 00 00 00    0012*  laser_y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
+04049C 00 00 00    0013*  laser_xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+04049F 00 F8 FF    0014*  laser_yvel:             dl 0xFFF800 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+0404A2 00 00 00    0015*  laser_vel:              dl 0x000000 ; 3 bytes not currently used
+0404A5 00 00 00    0016*  laser_heading:          dl 0x000000 ; 3 bytes sprite movement direction deg256 16.8 fixed
+0404A8 00 00 00    0017*  laser_orientation:      dl 0x000000 ; 3 bytes not currently used
+0404AB 00          0018*  laser_animation:        db     0x00 ; 1 bytes current sprite animation frame
+0404AC 00          0019*  laser_animation_timer:  db     0x00 ; 1 bytes decremented every frame, when zero, advance animation
+0404AD 00          0020*  laser_move_timer:       db     0x00 ; 1 bytes not currently used
+0404AE 00          0021*  laser_move_step:        db     0x00 ; 1 bytes not currently used
+0404AF 00          0022*  laser_points:           db     0x00 ; 1 bytes not currently used
+0404B0 00          0023*  laser_shield_damage:    db     0x00 ; 1 bytes not currently used
+0404B1             0024*  laser_end_variables: ; for when we want to traverse this table in reverse
+0404B1             0025*  
+0404B1             0026*  ; laser_control:
+0404B1             0027*  ; ; is laser already active?
+0404B1             0028*  ;     ld a,(laser_collisions)
+0404B1             0029*  ;     and %00000001 ; bit zero is lit if laser is active
+0404B1             0030*  ;     jr nz,laser_move ; move laser if not zero
+0404B1             0031*  ; ; otherwise check if laser fired
+0404B1             0032*  ;     in a,(#82) ; keyboard
+0404B1             0033*  ;     and %00010000 ; bit 4 is lit if space bar pressed
+0404B1             0034*  ;     ret z ; go back if laser not fired
+0404B1             0035*  ; ; otherwise,FIRE ZEE LASER!!1111
+0404B1             0036*  ; ; set laser status to active (set bit 0)
+0404B1             0037*  ;     ld a,%1
+0404B1             0038*  ;     ld (laser_collisions),a
+0404B1             0039*  ; ; initialize laser position
+0404B1             0040*  ;     ld a,(player_x+1) ; we only need the integer part
+0404B1             0041*  ;     ; add a,6 ; horizontal center with player sprite
+0404B1             0042*  ;     ld (laser_x+1),a ; store laser x coordinate
+0404B1             0043*  ;     ld a,(player_y+1) ; we only need the integer part
+0404B1             0044*  ;     add a,-6 ; set laser y a few pixels above player
+0404B1             0045*  ;     ld (laser_y+1),a ; store laser y coordinate
+0404B1             0046*  ;     ; fall through to laser_move
+0404B1             0047*  
+0404B1             0048*  ; laser_move:
+0404B1             0049*  ; ; begin setting laser to active sprite
+0404B1             0050*  ;     ld hl,lasers
+0404B1             0051*  ;     ld (sprite_base_bufferId),hl
+0404B1             0052*  ;     ld hl,0 ; north
+0404B1             0053*  ;     ld (sprite_heading),hl
+0404B1             0054*  ;     xor a ; laser has no animations yet :-(
+0404B1             0055*  ;     ld (sprite_animation),a
+0404B1             0056*  ;     ; we set position here for the time being as a default
+0404B1             0057*  ;     ; in case the laser is flagged for deletion
+0404B1             0058*  ;     ; load sprite_x with laser x position (we do y further down)
+0404B1             0059*  ;     ld hl,(laser_x)
+0404B1             0060*  ;     ld (sprite_x),hl
+0404B1             0061*  ; ; did laser just die?
+0404B1             0062*  ;     ld a,(laser_collisions)
+0404B1             0063*  ;     bit 1,a ; z if laser didn't just die
+0404B1             0064*  ;     jr z,laser_not_dead_yet
+0404B1             0065*  ; ; yes laser died
+0404B1             0066*  ;     call kill_laser
+0404B1             0067*  ;     ret ; done
+0404B1             0068*  ; laser_not_dead_yet:
+0404B1             0069*  ; ; draw it
+0404B1             0070*  ; ; update laser y position
+0404B1             0071*  ;     ld hl,(laser_y) ; grab laser y position
+0404B1             0072*  ;     ld de,(laser_yvel) ; snag laser y velocity
+0404B1             0073*  ;     add hl,de ; add y velocity to y pos
+0404B1             0074*  ;     ld (sprite_y),hl ; update laser y position
+0404B1             0075*  ;     ld (laser_y),hl ; update laser y position
+0404B1             0076*  ; ; are we at top of screen?
+0404B1             0077*  ;     ld a,#51 ; top of visible screen plus a pixel
+0404B1             0078*  ;     sub h ; no carry if above threshold
+0404B1             0079*  ;     jr c,finally_draw_the_frikken_laser
+0404B1             0080*  ;     ; if at top of screen,laser dies
+0404B1             0081*  ;     call kill_laser
+0404B1             0082*  ;     ret
+0404B1             0083*  ; ; otherwise,finally draw the frikken laser
+0404B1             0084*  ; finally_draw_the_frikken_laser:
+0404B1             0085*  ;     call vdu_bmp_select
+0404B1             0086*  ;     call vdu_bmp_draw
+0404B1             0087*  ; ; all done
+0404B1             0088*  ;     ret
+0404B1             0089*  
+0404B1             0090*  ; kill_laser:
+0404B1             0091*  ; ; update status to inactive
+0404B1             0092*  ;     xor a ; zero out a
+0404B1             0093*  ;     ld (laser_collisions),a
+0404B1             0094*  ;     ret
+0404B1             0042   	include "img_load.inc"
+0404B1 00 00 00    0001*  cur_file_idx: dl 0
+0404B4 00 00 00    0002*  cur_filename: dl 0
+0404B7 00 00 00    0003*  cur_buffer_id: dl 0
+0404BA 00 00 00    0004*  cur_buffer_id_lut: dl 0
+0404BD 00 00 00    0005*  cur_load_jump_table: dl 0
+0404C0             0006*  
+0404C0             0007*  img_load_init:
+0404C0             0008*  ; initialize logo's position parameters
+0404C0 21 00 00 00 0009*  	ld hl,0
+0404C4 22 0E 06 04 0010*  	ld (logo_yvel),hl
+0404C8             0011*  
+0404C8 21 2D 00 00 0012*      ld hl,45
+0404CC 22 11 06 04 0013*  	ld (logo_y_cur),hl
+0404D0 22 14 06 04 0014*  	ld (logo_y_min),hl
+0404D4 22 17 06 04 0015*      ld (logo_y_max),hl
+0404D8             0016*  
+0404D8 21 01 00 00 0017*  	ld hl,1
+0404DC 22 02 06 04 0018*  	ld (logo_xvel),hl
+0404E0             0019*  
+0404E0 21 0A 00 00 0020*  	ld hl,10
+0404E4 22 05 06 04 0021*  	ld (logo_x_cur),hl
+0404E8 22 08 06 04 0022*  	ld (logo_x_min),hl
+0404EC             0023*  
+0404EC 21 C8 00 00 0024*  	ld hl,320-120
+0404F0 22 0B 06 04 0025*  	ld (logo_x_max),hl
+0404F4             0026*  
+0404F4 C9          0027*      ret
+0404F5             0028*  
+0404F5             0029*  ; inputs: bc is the number of images to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
+0404F5             0030*  img_load_main:
+0404F5 21 00 00 00 0031*      ld hl,0
+0404F9 22 B1 04 04 0032*      ld (cur_file_idx),hl
+0404FD             0033*  img_load_main_loop:
+0404FD             0034*  ; back up loop counter
+0404FD C5          0035*      push bc
+0404FE             0036*  ; load the next panel
+0404FE CD 66 05 04 0037*      call load_next_panel
+040502             0038*  ; draw all the things
+040502 CD 1A 06 04 0039*      call tmp_draw_all_the_things
+040506             0040*  ; draw the most recently loaded panel
+040506 2A B7 04 04 0041*  	ld hl,(cur_buffer_id)
+04050A CD 2F 32 04 0042*  	call vdu_buff_select
+04050E 01 00 00 00 0043*  	ld bc,0
+040512 11 00 00 00 0044*  	ld de,0
+040516 CD 00 34 04 0045*  	call vdu_plot_bmp
+04051A             0046*  ; move logo
+04051A CD A2 05 04 0047*  	call move_logo
+04051E             0048*  ; printfont_rcge
+04051E DD 21 00 00 0049*  	ld ix,font_itc_honda
+       00          
