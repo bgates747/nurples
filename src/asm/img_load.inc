@@ -68,12 +68,6 @@ img_load_main_loop:
 ; decrement loop counter
     pop bc
 	dec bc
-; ; DEBUG: DUMP REGISTERS
-; 	push bc
-; 	call dumpRegistersHex
-; 	call vdu_flip
-; 	pop bc
-; ; END DEBUG
     ld a,c
     or a
     jp nz,img_load_main_loop
@@ -164,35 +158,3 @@ tmp_draw_all_the_things:
     ld de,0
     call vdu_plot_bmp
 	ret
-
-; load an rgba2222 image file to a buffer
-; inputs: bc,de image width,height ; hl = bufferId ; ix = file size ; iy = pointer to filename
-vdu_load_img_2: 
-; back up image dimension parameters and buffer id
-	push hl
-	push bc
-	push de
-; load the image
-	call vdu_load_buffer_from_file
-; now make it a bitmap
-	pop de
-	pop bc
-	pop hl
-	ld a,1 ; the magic number for rgba2222
-	jp vdu_bmp_create ; will return to caller from there
-
-; load an rgba8888 image file to a buffer
-; inputs: bc,de image width,height ; hl = bufferId ; ix = file size ; iy = pointer to filename
-vdu_load_img_8: 
-; back up image dimension parameters and buffer id
-	push hl
-	push bc
-	push de
-; load the image
-	call vdu_load_buffer_from_file
-; now make it a bitmap
-	pop de
-	pop bc
-	pop hl
-	ld a,0 ; the magic number for rgba8888
-	jp vdu_bmp_create ; will return to caller from there
