@@ -80,6 +80,27 @@ def crop_images(img, target_aspect_ratio=(4, 3)):
 def scale_image(image, target_width, target_height):
     return image.resize((target_width, target_height), Image.NEAREST)
 
+def rotate_image(image, degrees256):
+    # Calculate the rotation angle in degrees (left-handed coordinate system)
+    degrees = 360 - (degrees256 * 360 / 256) 
+    
+    # Get the original size of the image
+    original_width, original_height = image.size
+    
+    # Rotate the image about its center
+    rotated_image = image.rotate(degrees, resample=Image.NEAREST, expand=True)
+    
+    # Calculate the coordinates to crop the image back to the original size
+    center_x, center_y = rotated_image.size[0] // 2, rotated_image.size[1] // 2
+    left = center_x - original_width // 2
+    top = center_y - original_height // 2
+    right = center_x + original_width // 2
+    bottom = center_y + original_height // 2
+    
+    # Crop the rotated image back to the original size, centered
+    cropped_image = rotated_image.crop((left, top, right, bottom))
+    
+    return cropped_image
 
 def make_images():
     # Load the palette
@@ -111,8 +132,26 @@ def make_images():
                 # Optionally, delete the original .jpeg, .jpg, or .gif file after conversion
                 os.remove(input_image_path)
 
-    # Now scan the directory again for all .png files and sort them
-    filenames = sorted([f for f in os.listdir(originals_dir) if f.endswith('.png')])
+    # Copy all .png files from the input directory to the output png directory
+    for input_image_filename in os.listdir(originals_dir):
+        if input_image_filename.endswith('.png'):
+            input_image_path = os.path.join(originals_dir, input_image_filename)
+            output_image_path = os.path.join(output_dir_png, input_image_filename)
+            shutil.copy(input_image_path, output_image_path)
+
+    rot_images_list = ['seeker.png','turret.png']
+    for input_image_filename in rot_images_list:
+        input_image_path = os.path.join(output_dir_png, input_image_filename)
+        output_image_path = os.path.join(output_dir_png, input_image_filename)
+        img = Image.open(input_image_path)
+        os.remove(input_image_path)
+        for degrees256 in range(0, 256, 8):
+            output_image_path = os.path.join(output_dir_png, f'{os.path.splitext(input_image_filename)[0]}_{degrees256:03d}.png')
+            img_rot = rotate_image(img, degrees256)
+            img_rot.save(output_image_path)
+
+    # Scan the output directory for all .png files and sort them
+    filenames = sorted([f for f in os.listdir(output_dir_png) if f.endswith('.png')])
 
     # Initialize variables
     buffer_id = 256
@@ -125,7 +164,7 @@ def make_images():
 
     # Process the images
     for input_image_filename in filenames:
-        input_image_path = os.path.join(originals_dir, input_image_filename)
+        input_image_path = os.path.join(output_dir_png, input_image_filename)
 
         # Continue only if it's a .png file
         if input_image_filename.endswith('.png'):
@@ -141,49 +180,46 @@ def make_images():
         else:
             continue
 
-        input_image_filepath = f'{originals_dir}/{input_image_filename}'
+        image_filepath = f'{output_dir_png}/{input_image_filename}'
         file_name, ext = os.path.splitext(input_image_filename)
-        output_image_filepath_png = f'{output_dir_png}/{input_image_filename}'
 
-        start_time = time.perf_counter()
+        with Image.open(image_filepath) as img:
+            start_time = time.perf_counter()
 
-        if do_crop:
-            with Image.open(input_image_filepath) as img:
-                # Crop the image to the target aspect ratio if needed
-                img = crop_images(img)
-                img = scale_image(img, img_width, img_height)
-                img.save(output_image_filepath_png)
+            if do_crop:
+                    img = crop_images_fixed_size(img, img_width, img_height)
+                    img = img
+                    img.save(image_filepath)
 
-        if do_scale:
-                # Alternative: Scale to fixed size and save to original
-                img = crop_images_fixed_size(img, img_width, img_height)
-                img = img
-                img.save(input_image_filepath)
+            if do_scale:
+                    img = crop_images(img)
+                    img = scale_image(img, img_width, img_height)
+                    img.save(image_filepath)
 
-        if do_palette:
-            au.convert_to_palette(output_image_filepath_png, output_image_filepath_png, palette_filepath, palette_conv_type, transparent_rgb)
+            if do_palette:
+                au.convert_to_palette(image_filepath, image_filepath, palette_filepath, palette_conv_type, transparent_rgb)
 
-        if image_type == 1:
-            rgba_filepath = f'{output_dir_rgba}/{file_name}.rgba2'
-            au.img_to_rgba2(output_image_filepath_png, rgba_filepath)
-        else:
-            rgba_filepath = f'{output_dir_rgba}/{file_name}.rgba8'
-            au.img_to_rgba8(output_image_filepath_png, rgba_filepath)
+            if image_type == 1:
+                rgba_filepath = f'{output_dir_rgba}/{file_name}.rgba2'
+                au.img_to_rgba2(image_filepath, rgba_filepath)
+            else:
+                rgba_filepath = f'{output_dir_rgba}/{file_name}.rgba8'
+                au.img_to_rgba8(image_filepath, rgba_filepath)
 
-        end_time = time.perf_counter()
-        print(f'{file_name} conversion took {end_time - start_time} seconds')
+            end_time = time.perf_counter()
+            print(f'{file_name} conversion took {end_time - start_time} seconds')
 
-        buffer_ids.append(f'buf_{file_name}: equ {buffer_id}\n')
+            buffer_ids.append(f'BUF_{file_name.upper()}: equ {buffer_id}\n')
 
-        image_width, image_height = img.width, img.height
-        image_filesize = os.path.getsize(rgba_filepath)
+            image_width, image_height = img.width, img.height
+            image_filesize = os.path.getsize(rgba_filepath)
 
-        image_list.append(f'\tdl {image_type}, {image_width}, {image_height}, {image_filesize}, fn_{file_name}\n')
+            image_list.append(f'\tdl {image_type}, {image_width}, {image_height}, {image_filesize}, fn_{file_name}\n')
 
-        files_list.append(f'fn_{file_name}: db "images/{file_name}.rgba2",0 \n') 
+            files_list.append(f'fn_{file_name}: db "images/{file_name}.rgba2",0 \n') 
 
-        buffer_id += 1
-        num_images += 1
+            buffer_id += 1
+            num_images += 1
 
     # Open assembly file for writing
     with open(f'{asm_images_filepath}', 'w') as f:
@@ -210,7 +246,7 @@ def make_images():
 if __name__ == '__main__':
     img_width =             16
     img_height =            16
-    asm_images_filepath =   'src/asm/images2.inc'
+    asm_images_filepath =   'src/asm/images.inc'
     originals_dir =         'src/assets/img/orig'
     output_dir_png =        'src/assets/img/proc'
     output_dir_rgba =       'tgt/img'
@@ -222,3 +258,5 @@ if __name__ == '__main__':
     do_crop =               False
     do_scale =              False
     do_palette =            False
+
+    make_images()
