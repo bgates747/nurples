@@ -7,70 +7,283 @@ image_filesize: equ image_height+3
 image_filename: equ image_filesize+3
 image_record_size: equ image_filename+3
 
-num_images: equ 20
+num_images: equ 91
 
 ; buffer_ids:
-buf_Zhan44: equ 256
-buf_aurora: equ 257
-buf_balloon: equ 258
-buf_berkeley1: equ 259
-buf_berkeley2: equ 260
-buf_berkeley3: equ 261
-buf_bridge: equ 262
-buf_canyon: equ 263
-buf_cliff: equ 264
-buf_clouds: equ 265
-buf_fisherman: equ 266
-buf_fjord: equ 267
-buf_islands: equ 268
-buf_lasers: equ 269
-buf_mountain: equ 270
-buf_road: equ 271
-buf_sand: equ 272
-buf_temple: equ 273
-buf_trees: equ 274
-buf_waterfall: equ 275
+BUF_0TILE_EMPTY: equ 256
+BUF_1TILE_CROSS: equ 257
+BUF_2TILE_HORIZ: equ 258
+BUF_3TILE_VERT: equ 259
+BUF_4TILE_SQUARE: equ 260
+BUF_5TILE_CIRCLE: equ 261
+BUF_6TILE_PAD: equ 262
+BUF_7TILE_TURRET: equ 263
+BUF_CIRCLE: equ 264
+BUF_CRATER: equ 265
+BUF_EXPLOSION_A: equ 266
+BUF_EXPLOSION_B: equ 267
+BUF_EXPLOSION_C: equ 268
+BUF_EXPLOSION_D: equ 269
+BUF_EXPLOSION_E: equ 270
+BUF_FIREBALL_A: equ 271
+BUF_FIREBALL_B: equ 272
+BUF_LASER_A: equ 273
+BUF_LASER_B: equ 274
+BUF_PAD: equ 275
+BUF_SEEKER_000: equ 276
+BUF_SEEKER_008: equ 277
+BUF_SEEKER_016: equ 278
+BUF_SEEKER_024: equ 279
+BUF_SEEKER_032: equ 280
+BUF_SEEKER_040: equ 281
+BUF_SEEKER_048: equ 282
+BUF_SEEKER_056: equ 283
+BUF_SEEKER_064: equ 284
+BUF_SEEKER_072: equ 285
+BUF_SEEKER_080: equ 286
+BUF_SEEKER_088: equ 287
+BUF_SEEKER_096: equ 288
+BUF_SEEKER_104: equ 289
+BUF_SEEKER_112: equ 290
+BUF_SEEKER_120: equ 291
+BUF_SEEKER_128: equ 292
+BUF_SEEKER_136: equ 293
+BUF_SEEKER_144: equ 294
+BUF_SEEKER_152: equ 295
+BUF_SEEKER_160: equ 296
+BUF_SEEKER_168: equ 297
+BUF_SEEKER_176: equ 298
+BUF_SEEKER_184: equ 299
+BUF_SEEKER_192: equ 300
+BUF_SEEKER_200: equ 301
+BUF_SEEKER_208: equ 302
+BUF_SEEKER_216: equ 303
+BUF_SEEKER_224: equ 304
+BUF_SEEKER_232: equ 305
+BUF_SEEKER_240: equ 306
+BUF_SEEKER_248: equ 307
+BUF_SHIP_0L: equ 308
+BUF_SHIP_1C: equ 309
+BUF_SHIP_2R: equ 310
+BUF_SHIP_SMALL: equ 311
+BUF_SPLASH_BG: equ 312
+BUF_SPLASH_LOGO: equ 313
+BUF_STAR: equ 314
+BUF_TURRET_000: equ 315
+BUF_TURRET_008: equ 316
+BUF_TURRET_016: equ 317
+BUF_TURRET_024: equ 318
+BUF_TURRET_032: equ 319
+BUF_TURRET_040: equ 320
+BUF_TURRET_048: equ 321
+BUF_TURRET_056: equ 322
+BUF_TURRET_064: equ 323
+BUF_TURRET_072: equ 324
+BUF_TURRET_080: equ 325
+BUF_TURRET_088: equ 326
+BUF_TURRET_096: equ 327
+BUF_TURRET_104: equ 328
+BUF_TURRET_112: equ 329
+BUF_TURRET_120: equ 330
+BUF_TURRET_128: equ 331
+BUF_TURRET_136: equ 332
+BUF_TURRET_144: equ 333
+BUF_TURRET_152: equ 334
+BUF_TURRET_160: equ 335
+BUF_TURRET_168: equ 336
+BUF_TURRET_176: equ 337
+BUF_TURRET_184: equ 338
+BUF_TURRET_192: equ 339
+BUF_TURRET_200: equ 340
+BUF_TURRET_208: equ 341
+BUF_TURRET_216: equ 342
+BUF_TURRET_224: equ 343
+BUF_TURRET_232: equ 344
+BUF_TURRET_240: equ 345
+BUF_TURRET_248: equ 346
 
 image_list: ; type; width; height; filename:
-	dl 1, 512, 384, 196608, fn_Zhan44
-	dl 1, 512, 384, 196608, fn_aurora
-	dl 1, 512, 384, 196608, fn_balloon
-	dl 1, 512, 384, 196608, fn_berkeley1
-	dl 1, 512, 384, 196608, fn_berkeley2
-	dl 1, 512, 384, 196608, fn_berkeley3
-	dl 1, 512, 384, 196608, fn_bridge
-	dl 1, 512, 384, 196608, fn_canyon
-	dl 1, 512, 384, 196608, fn_cliff
-	dl 1, 512, 384, 196608, fn_clouds
-	dl 1, 512, 384, 196608, fn_fisherman
-	dl 1, 512, 384, 196608, fn_fjord
-	dl 1, 512, 384, 196608, fn_islands
-	dl 1, 512, 384, 196608, fn_lasers
-	dl 1, 512, 384, 196608, fn_mountain
-	dl 1, 512, 384, 196608, fn_road
-	dl 1, 512, 384, 196608, fn_sand
-	dl 1, 512, 384, 196608, fn_temple
-	dl 1, 512, 384, 196608, fn_trees
-	dl 1, 512, 384, 196608, fn_waterfall
+	dl 1, 16, 16, 256, fn_0tile_empty
+	dl 1, 16, 16, 256, fn_1tile_cross
+	dl 1, 16, 16, 256, fn_2tile_horiz
+	dl 1, 16, 16, 256, fn_3tile_vert
+	dl 1, 16, 16, 256, fn_4tile_square
+	dl 1, 16, 16, 256, fn_5tile_circle
+	dl 1, 16, 16, 256, fn_6tile_pad
+	dl 1, 16, 16, 256, fn_7tile_turret
+	dl 1, 16, 16, 256, fn_circle
+	dl 1, 16, 16, 256, fn_crater
+	dl 1, 16, 16, 256, fn_explosion_a
+	dl 1, 16, 16, 256, fn_explosion_b
+	dl 1, 16, 16, 256, fn_explosion_c
+	dl 1, 16, 16, 256, fn_explosion_d
+	dl 1, 16, 16, 256, fn_explosion_e
+	dl 1, 7, 7, 49, fn_fireball_a
+	dl 1, 7, 7, 49, fn_fireball_b
+	dl 1, 5, 13, 65, fn_laser_a
+	dl 1, 5, 13, 65, fn_laser_b
+	dl 1, 16, 16, 256, fn_pad
+	dl 1, 16, 16, 256, fn_seeker_000
+	dl 1, 16, 16, 256, fn_seeker_008
+	dl 1, 16, 16, 256, fn_seeker_016
+	dl 1, 16, 16, 256, fn_seeker_024
+	dl 1, 16, 16, 256, fn_seeker_032
+	dl 1, 16, 16, 256, fn_seeker_040
+	dl 1, 16, 16, 256, fn_seeker_048
+	dl 1, 16, 16, 256, fn_seeker_056
+	dl 1, 16, 16, 256, fn_seeker_064
+	dl 1, 16, 16, 256, fn_seeker_072
+	dl 1, 16, 16, 256, fn_seeker_080
+	dl 1, 16, 16, 256, fn_seeker_088
+	dl 1, 16, 16, 256, fn_seeker_096
+	dl 1, 16, 16, 256, fn_seeker_104
+	dl 1, 16, 16, 256, fn_seeker_112
+	dl 1, 16, 16, 256, fn_seeker_120
+	dl 1, 16, 16, 256, fn_seeker_128
+	dl 1, 16, 16, 256, fn_seeker_136
+	dl 1, 16, 16, 256, fn_seeker_144
+	dl 1, 16, 16, 256, fn_seeker_152
+	dl 1, 16, 16, 256, fn_seeker_160
+	dl 1, 16, 16, 256, fn_seeker_168
+	dl 1, 16, 16, 256, fn_seeker_176
+	dl 1, 16, 16, 256, fn_seeker_184
+	dl 1, 16, 16, 256, fn_seeker_192
+	dl 1, 16, 16, 256, fn_seeker_200
+	dl 1, 16, 16, 256, fn_seeker_208
+	dl 1, 16, 16, 256, fn_seeker_216
+	dl 1, 16, 16, 256, fn_seeker_224
+	dl 1, 16, 16, 256, fn_seeker_232
+	dl 1, 16, 16, 256, fn_seeker_240
+	dl 1, 16, 16, 256, fn_seeker_248
+	dl 1, 16, 16, 256, fn_ship_0l
+	dl 1, 16, 16, 256, fn_ship_1c
+	dl 1, 16, 16, 256, fn_ship_2r
+	dl 1, 8, 8, 64, fn_ship_small
+	dl 1, 320, 240, 76800, fn_splash_bg
+	dl 1, 320, 212, 67840, fn_splash_logo
+	dl 1, 5, 5, 25, fn_star
+	dl 1, 16, 16, 256, fn_turret_000
+	dl 1, 16, 16, 256, fn_turret_008
+	dl 1, 16, 16, 256, fn_turret_016
+	dl 1, 16, 16, 256, fn_turret_024
+	dl 1, 16, 16, 256, fn_turret_032
+	dl 1, 16, 16, 256, fn_turret_040
+	dl 1, 16, 16, 256, fn_turret_048
+	dl 1, 16, 16, 256, fn_turret_056
+	dl 1, 16, 16, 256, fn_turret_064
+	dl 1, 16, 16, 256, fn_turret_072
+	dl 1, 16, 16, 256, fn_turret_080
+	dl 1, 16, 16, 256, fn_turret_088
+	dl 1, 16, 16, 256, fn_turret_096
+	dl 1, 16, 16, 256, fn_turret_104
+	dl 1, 16, 16, 256, fn_turret_112
+	dl 1, 16, 16, 256, fn_turret_120
+	dl 1, 16, 16, 256, fn_turret_128
+	dl 1, 16, 16, 256, fn_turret_136
+	dl 1, 16, 16, 256, fn_turret_144
+	dl 1, 16, 16, 256, fn_turret_152
+	dl 1, 16, 16, 256, fn_turret_160
+	dl 1, 16, 16, 256, fn_turret_168
+	dl 1, 16, 16, 256, fn_turret_176
+	dl 1, 16, 16, 256, fn_turret_184
+	dl 1, 16, 16, 256, fn_turret_192
+	dl 1, 16, 16, 256, fn_turret_200
+	dl 1, 16, 16, 256, fn_turret_208
+	dl 1, 16, 16, 256, fn_turret_216
+	dl 1, 16, 16, 256, fn_turret_224
+	dl 1, 16, 16, 256, fn_turret_232
+	dl 1, 16, 16, 256, fn_turret_240
+	dl 1, 16, 16, 256, fn_turret_248
 
 ; files_list: ; filename:
-fn_Zhan44: db "images/Zhan44.rgba2",0 
-fn_aurora: db "images/aurora.rgba2",0 
-fn_balloon: db "images/balloon.rgba2",0 
-fn_berkeley1: db "images/berkeley1.rgba2",0 
-fn_berkeley2: db "images/berkeley2.rgba2",0 
-fn_berkeley3: db "images/berkeley3.rgba2",0 
-fn_bridge: db "images/bridge.rgba2",0 
-fn_canyon: db "images/canyon.rgba2",0 
-fn_cliff: db "images/cliff.rgba2",0 
-fn_clouds: db "images/clouds.rgba2",0 
-fn_fisherman: db "images/fisherman.rgba2",0 
-fn_fjord: db "images/fjord.rgba2",0 
-fn_islands: db "images/islands.rgba2",0 
-fn_lasers: db "images/lasers.rgba2",0 
-fn_mountain: db "images/mountain.rgba2",0 
-fn_road: db "images/road.rgba2",0 
-fn_sand: db "images/sand.rgba2",0 
-fn_temple: db "images/temple.rgba2",0 
-fn_trees: db "images/trees.rgba2",0 
-fn_waterfall: db "images/waterfall.rgba2",0 
+fn_0tile_empty: db "images/0tile_empty.rgba2",0 
+fn_1tile_cross: db "images/1tile_cross.rgba2",0 
+fn_2tile_horiz: db "images/2tile_horiz.rgba2",0 
+fn_3tile_vert: db "images/3tile_vert.rgba2",0 
+fn_4tile_square: db "images/4tile_square.rgba2",0 
+fn_5tile_circle: db "images/5tile_circle.rgba2",0 
+fn_6tile_pad: db "images/6tile_pad.rgba2",0 
+fn_7tile_turret: db "images/7tile_turret.rgba2",0 
+fn_circle: db "images/circle.rgba2",0 
+fn_crater: db "images/crater.rgba2",0 
+fn_explosion_a: db "images/explosion_a.rgba2",0 
+fn_explosion_b: db "images/explosion_b.rgba2",0 
+fn_explosion_c: db "images/explosion_c.rgba2",0 
+fn_explosion_d: db "images/explosion_d.rgba2",0 
+fn_explosion_e: db "images/explosion_e.rgba2",0 
+fn_fireball_a: db "images/fireball_a.rgba2",0 
+fn_fireball_b: db "images/fireball_b.rgba2",0 
+fn_laser_a: db "images/laser_a.rgba2",0 
+fn_laser_b: db "images/laser_b.rgba2",0 
+fn_pad: db "images/pad.rgba2",0 
+fn_seeker_000: db "images/seeker_000.rgba2",0 
+fn_seeker_008: db "images/seeker_008.rgba2",0 
+fn_seeker_016: db "images/seeker_016.rgba2",0 
+fn_seeker_024: db "images/seeker_024.rgba2",0 
+fn_seeker_032: db "images/seeker_032.rgba2",0 
+fn_seeker_040: db "images/seeker_040.rgba2",0 
+fn_seeker_048: db "images/seeker_048.rgba2",0 
+fn_seeker_056: db "images/seeker_056.rgba2",0 
+fn_seeker_064: db "images/seeker_064.rgba2",0 
+fn_seeker_072: db "images/seeker_072.rgba2",0 
+fn_seeker_080: db "images/seeker_080.rgba2",0 
+fn_seeker_088: db "images/seeker_088.rgba2",0 
+fn_seeker_096: db "images/seeker_096.rgba2",0 
+fn_seeker_104: db "images/seeker_104.rgba2",0 
+fn_seeker_112: db "images/seeker_112.rgba2",0 
+fn_seeker_120: db "images/seeker_120.rgba2",0 
+fn_seeker_128: db "images/seeker_128.rgba2",0 
+fn_seeker_136: db "images/seeker_136.rgba2",0 
+fn_seeker_144: db "images/seeker_144.rgba2",0 
+fn_seeker_152: db "images/seeker_152.rgba2",0 
+fn_seeker_160: db "images/seeker_160.rgba2",0 
+fn_seeker_168: db "images/seeker_168.rgba2",0 
+fn_seeker_176: db "images/seeker_176.rgba2",0 
+fn_seeker_184: db "images/seeker_184.rgba2",0 
+fn_seeker_192: db "images/seeker_192.rgba2",0 
+fn_seeker_200: db "images/seeker_200.rgba2",0 
+fn_seeker_208: db "images/seeker_208.rgba2",0 
+fn_seeker_216: db "images/seeker_216.rgba2",0 
+fn_seeker_224: db "images/seeker_224.rgba2",0 
+fn_seeker_232: db "images/seeker_232.rgba2",0 
+fn_seeker_240: db "images/seeker_240.rgba2",0 
+fn_seeker_248: db "images/seeker_248.rgba2",0 
+fn_ship_0l: db "images/ship_0l.rgba2",0 
+fn_ship_1c: db "images/ship_1c.rgba2",0 
+fn_ship_2r: db "images/ship_2r.rgba2",0 
+fn_ship_small: db "images/ship_small.rgba2",0 
+fn_splash_bg: db "images/splash_bg.rgba2",0 
+fn_splash_logo: db "images/splash_logo.rgba2",0 
+fn_star: db "images/star.rgba2",0 
+fn_turret_000: db "images/turret_000.rgba2",0 
+fn_turret_008: db "images/turret_008.rgba2",0 
+fn_turret_016: db "images/turret_016.rgba2",0 
+fn_turret_024: db "images/turret_024.rgba2",0 
+fn_turret_032: db "images/turret_032.rgba2",0 
+fn_turret_040: db "images/turret_040.rgba2",0 
+fn_turret_048: db "images/turret_048.rgba2",0 
+fn_turret_056: db "images/turret_056.rgba2",0 
+fn_turret_064: db "images/turret_064.rgba2",0 
+fn_turret_072: db "images/turret_072.rgba2",0 
+fn_turret_080: db "images/turret_080.rgba2",0 
+fn_turret_088: db "images/turret_088.rgba2",0 
+fn_turret_096: db "images/turret_096.rgba2",0 
+fn_turret_104: db "images/turret_104.rgba2",0 
+fn_turret_112: db "images/turret_112.rgba2",0 
+fn_turret_120: db "images/turret_120.rgba2",0 
+fn_turret_128: db "images/turret_128.rgba2",0 
+fn_turret_136: db "images/turret_136.rgba2",0 
+fn_turret_144: db "images/turret_144.rgba2",0 
+fn_turret_152: db "images/turret_152.rgba2",0 
+fn_turret_160: db "images/turret_160.rgba2",0 
+fn_turret_168: db "images/turret_168.rgba2",0 
+fn_turret_176: db "images/turret_176.rgba2",0 
+fn_turret_184: db "images/turret_184.rgba2",0 
+fn_turret_192: db "images/turret_192.rgba2",0 
+fn_turret_200: db "images/turret_200.rgba2",0 
+fn_turret_208: db "images/turret_208.rgba2",0 
+fn_turret_216: db "images/turret_216.rgba2",0 
+fn_turret_224: db "images/turret_224.rgba2",0 
+fn_turret_232: db "images/turret_232.rgba2",0 
+fn_turret_240: db "images/turret_240.rgba2",0 
+fn_turret_248: db "images/turret_248.rgba2",0 
