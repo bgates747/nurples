@@ -482,9 +482,9 @@ vdu_load_buffer_from_file:
     ld de,filedata
     call vdu_load_buffer
 
-; ; print progress breadcrumbs
-;     ld a,'.'
-;     rst.lil 10h
+; print progress breadcrumbs
+    ld a,'.'
+    rst.lil 10h
 
 ; read the next block
     jp @read_file

@@ -75,7 +75,7 @@ def copy_to_sdcard():
     try:
         # Define the source and target directories
         src_directory = "tgt"
-        tgt_directory = "/media/smith/AGON/mystuff/agonutils/nurples/tgt"
+        tgt_directory = "/media/smith/AGON/mystuff/nurples/tgt"
 
         # Check if the target directory exists, if so, delete it recursively
         if os.path.exists(tgt_directory):

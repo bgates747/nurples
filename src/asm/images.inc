@@ -10,6 +10,38 @@ cur_image_list: dl 0
 cur_file_idx: dl 0
 cur_filename: dl 0
 cur_buffer_id: dl 0
+
+load_ui_images:
+; initialize image loading variables
+	ld hl,0
+	ld (cur_file_idx),hl
+	ld hl,ui_image_list
+	ld (cur_image_list),hl
+; load images
+	ld b,ui_num_images
+@loop:
+	push bc
+	call load_next_image
+	pop bc
+	djnz @loop
+	ret
+
+load_next_image:
+    ld (cur_file_idx),de
+    ld d,image_record_size
+    mlt de
+    ld iy,(cur_image_list)
+    add iy,de
+    ld a,(iy+image_type) ; get image type
+    ld bc,(iy+image_width) ; get image width
+    ld de,(iy+image_height) ; get image height
+    ld ix,(iy+image_filesize) ; get image file size
+	ld hl,(iy+image_bufferId) ; get image bufferId
+    ld iy,(iy+image_filename) ; get image filename
+    call vdu_load_img
+    ld iy,cur_file_idx
+	inc (iy)
+	ret
 img_load_init:
 ; initialize logo's position parameters
 	ld hl,0
@@ -81,21 +113,6 @@ img_load_main_loop:
     or a
     jp nz,img_load_main_loop
     ret
-
-load_next_image:
-    ld (cur_file_idx),de
-    ld d,image_record_size
-    mlt de
-    ld iy,(cur_image_list)
-    add iy,de
-    ld a,(iy+image_type) ; get image type
-    ld bc,(iy+image_width) ; get image width
-    ld de,(iy+image_height) ; get image height
-    ld ix,(iy+image_filesize) ; get image file size
-	ld hl,(iy+image_bufferId) ; get image bufferId
-    ld iy,(iy+image_filename) ; get image filename
-    call vdu_load_img
-	ret
 
 move_logo:
 ; activate logo bitmap
