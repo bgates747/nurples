@@ -78,7 +78,7 @@ init:
 	call printString
 
 ; load fonts
-	; call load_font_rc ; TODO
+	call load_font_rc
 
 ; load UI images
 	; call load_ui_images ; TODO

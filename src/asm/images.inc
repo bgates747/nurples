@@ -8,7 +8,7 @@ image_filename: equ image_filesize+3
 image_bufferId: equ image_filename+3
 image_record_size: equ image_bufferId+3
 
-num_images: equ 91
+num_images: equ 89
 
 ; buffer_ids:
 BUF_0TILE_EMPTY: equ 256
@@ -67,41 +67,39 @@ BUF_SHIP_0L: equ 308
 BUF_SHIP_1C: equ 309
 BUF_SHIP_2R: equ 310
 BUF_SHIP_SMALL: equ 311
-BUF_SPLASH_BG: equ 312
-BUF_SPLASH_LOGO: equ 313
-BUF_STAR: equ 314
-BUF_TURRET_000: equ 315
-BUF_TURRET_008: equ 316
-BUF_TURRET_016: equ 317
-BUF_TURRET_024: equ 318
-BUF_TURRET_032: equ 319
-BUF_TURRET_040: equ 320
-BUF_TURRET_048: equ 321
-BUF_TURRET_056: equ 322
-BUF_TURRET_064: equ 323
-BUF_TURRET_072: equ 324
-BUF_TURRET_080: equ 325
-BUF_TURRET_088: equ 326
-BUF_TURRET_096: equ 327
-BUF_TURRET_104: equ 328
-BUF_TURRET_112: equ 329
-BUF_TURRET_120: equ 330
-BUF_TURRET_128: equ 331
-BUF_TURRET_136: equ 332
-BUF_TURRET_144: equ 333
-BUF_TURRET_152: equ 334
-BUF_TURRET_160: equ 335
-BUF_TURRET_168: equ 336
-BUF_TURRET_176: equ 337
-BUF_TURRET_184: equ 338
-BUF_TURRET_192: equ 339
-BUF_TURRET_200: equ 340
-BUF_TURRET_208: equ 341
-BUF_TURRET_216: equ 342
-BUF_TURRET_224: equ 343
-BUF_TURRET_232: equ 344
-BUF_TURRET_240: equ 345
-BUF_TURRET_248: equ 346
+BUF_STAR: equ 312
+BUF_TURRET_000: equ 313
+BUF_TURRET_008: equ 314
+BUF_TURRET_016: equ 315
+BUF_TURRET_024: equ 316
+BUF_TURRET_032: equ 317
+BUF_TURRET_040: equ 318
+BUF_TURRET_048: equ 319
+BUF_TURRET_056: equ 320
+BUF_TURRET_064: equ 321
+BUF_TURRET_072: equ 322
+BUF_TURRET_080: equ 323
+BUF_TURRET_088: equ 324
+BUF_TURRET_096: equ 325
+BUF_TURRET_104: equ 326
+BUF_TURRET_112: equ 327
+BUF_TURRET_120: equ 328
+BUF_TURRET_128: equ 329
+BUF_TURRET_136: equ 330
+BUF_TURRET_144: equ 331
+BUF_TURRET_152: equ 332
+BUF_TURRET_160: equ 333
+BUF_TURRET_168: equ 334
+BUF_TURRET_176: equ 335
+BUF_TURRET_184: equ 336
+BUF_TURRET_192: equ 337
+BUF_TURRET_200: equ 338
+BUF_TURRET_208: equ 339
+BUF_TURRET_216: equ 340
+BUF_TURRET_224: equ 341
+BUF_TURRET_232: equ 342
+BUF_TURRET_240: equ 343
+BUF_TURRET_248: equ 344
 
 image_list: ; type; width; height; filename; bufferId:
 	dl 1, 16, 16, 256, fn_0tile_empty, 256
@@ -160,41 +158,39 @@ image_list: ; type; width; height; filename; bufferId:
 	dl 1, 16, 16, 256, fn_ship_1c, 309
 	dl 1, 16, 16, 256, fn_ship_2r, 310
 	dl 1, 8, 8, 64, fn_ship_small, 311
-	dl 1, 320, 240, 76800, fn_splash_bg, 312
-	dl 1, 320, 212, 67840, fn_splash_logo, 313
-	dl 1, 5, 5, 25, fn_star, 314
-	dl 1, 16, 16, 256, fn_turret_000, 315
-	dl 1, 16, 16, 256, fn_turret_008, 316
-	dl 1, 16, 16, 256, fn_turret_016, 317
-	dl 1, 16, 16, 256, fn_turret_024, 318
-	dl 1, 16, 16, 256, fn_turret_032, 319
-	dl 1, 16, 16, 256, fn_turret_040, 320
-	dl 1, 16, 16, 256, fn_turret_048, 321
-	dl 1, 16, 16, 256, fn_turret_056, 322
-	dl 1, 16, 16, 256, fn_turret_064, 323
-	dl 1, 16, 16, 256, fn_turret_072, 324
-	dl 1, 16, 16, 256, fn_turret_080, 325
-	dl 1, 16, 16, 256, fn_turret_088, 326
-	dl 1, 16, 16, 256, fn_turret_096, 327
-	dl 1, 16, 16, 256, fn_turret_104, 328
-	dl 1, 16, 16, 256, fn_turret_112, 329
-	dl 1, 16, 16, 256, fn_turret_120, 330
-	dl 1, 16, 16, 256, fn_turret_128, 331
-	dl 1, 16, 16, 256, fn_turret_136, 332
-	dl 1, 16, 16, 256, fn_turret_144, 333
-	dl 1, 16, 16, 256, fn_turret_152, 334
-	dl 1, 16, 16, 256, fn_turret_160, 335
-	dl 1, 16, 16, 256, fn_turret_168, 336
-	dl 1, 16, 16, 256, fn_turret_176, 337
-	dl 1, 16, 16, 256, fn_turret_184, 338
-	dl 1, 16, 16, 256, fn_turret_192, 339
-	dl 1, 16, 16, 256, fn_turret_200, 340
-	dl 1, 16, 16, 256, fn_turret_208, 341
-	dl 1, 16, 16, 256, fn_turret_216, 342
-	dl 1, 16, 16, 256, fn_turret_224, 343
-	dl 1, 16, 16, 256, fn_turret_232, 344
-	dl 1, 16, 16, 256, fn_turret_240, 345
-	dl 1, 16, 16, 256, fn_turret_248, 346
+	dl 1, 5, 5, 25, fn_star, 312
+	dl 1, 16, 16, 256, fn_turret_000, 313
+	dl 1, 16, 16, 256, fn_turret_008, 314
+	dl 1, 16, 16, 256, fn_turret_016, 315
+	dl 1, 16, 16, 256, fn_turret_024, 316
+	dl 1, 16, 16, 256, fn_turret_032, 317
+	dl 1, 16, 16, 256, fn_turret_040, 318
+	dl 1, 16, 16, 256, fn_turret_048, 319
+	dl 1, 16, 16, 256, fn_turret_056, 320
+	dl 1, 16, 16, 256, fn_turret_064, 321
+	dl 1, 16, 16, 256, fn_turret_072, 322
+	dl 1, 16, 16, 256, fn_turret_080, 323
+	dl 1, 16, 16, 256, fn_turret_088, 324
+	dl 1, 16, 16, 256, fn_turret_096, 325
+	dl 1, 16, 16, 256, fn_turret_104, 326
+	dl 1, 16, 16, 256, fn_turret_112, 327
+	dl 1, 16, 16, 256, fn_turret_120, 328
+	dl 1, 16, 16, 256, fn_turret_128, 329
+	dl 1, 16, 16, 256, fn_turret_136, 330
+	dl 1, 16, 16, 256, fn_turret_144, 331
+	dl 1, 16, 16, 256, fn_turret_152, 332
+	dl 1, 16, 16, 256, fn_turret_160, 333
+	dl 1, 16, 16, 256, fn_turret_168, 334
+	dl 1, 16, 16, 256, fn_turret_176, 335
+	dl 1, 16, 16, 256, fn_turret_184, 336
+	dl 1, 16, 16, 256, fn_turret_192, 337
+	dl 1, 16, 16, 256, fn_turret_200, 338
+	dl 1, 16, 16, 256, fn_turret_208, 339
+	dl 1, 16, 16, 256, fn_turret_216, 340
+	dl 1, 16, 16, 256, fn_turret_224, 341
+	dl 1, 16, 16, 256, fn_turret_232, 342
+	dl 1, 16, 16, 256, fn_turret_240, 343
+	dl 1, 16, 16, 256, fn_turret_248, 344
 
 ; files_list: ; filename:
 fn_0tile_empty: db "images/0tile_empty.rgba2",0 
@@ -253,8 +249,6 @@ fn_ship_0l: db "images/ship_0l.rgba2",0
 fn_ship_1c: db "images/ship_1c.rgba2",0 
 fn_ship_2r: db "images/ship_2r.rgba2",0 
 fn_ship_small: db "images/ship_small.rgba2",0 
-fn_splash_bg: db "images/splash_bg.rgba2",0 
-fn_splash_logo: db "images/splash_logo.rgba2",0 
 fn_star: db "images/star.rgba2",0 
 fn_turret_000: db "images/turret_000.rgba2",0 
 fn_turret_008: db "images/turret_008.rgba2",0 
