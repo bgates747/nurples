@@ -42,7 +42,8 @@ exit:
 	include "font_rc.inc"
 	include "input.inc"
     include "images.inc"
-	include "img_load.inc"
+    include "images_sprites.inc"
+	include "images_ui.inc"
 
 hello_world: defb "Welcome to Purple Nurples!",0
 loading_ui: defb "Loading UI",0
@@ -110,8 +111,8 @@ init:
 	call vdu_set_txt_viewport
 
 ; load images
-	ld bc,num_images
-	ld hl,image_list
+	ld bc,sprite_num_images
+	ld hl,sprite_image_list
 	ld (cur_image_list),hl
 	call img_load_main
 
