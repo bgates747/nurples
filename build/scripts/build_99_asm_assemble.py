@@ -12,7 +12,7 @@ def run_ez80asm():
         # Define the directory containing the .asm file
         asm_directory = "src/asm"
         asm_file = "app.asm"
-        output_file = "../tgt/nurples.bin"
+        output_file = "../../tgt/nurples.bin"
 
         # Change working directory to the directory containing the .asm file
         os.chdir(asm_directory)
