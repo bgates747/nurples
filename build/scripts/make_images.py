@@ -214,7 +214,7 @@ def make_images():
             image_width, image_height = img.width, img.height
             image_filesize = os.path.getsize(rgba_filepath)
 
-            image_list.append(f'\tdl {image_type}, {image_width}, {image_height}, {image_filesize}, fn_{file_name}\n')
+            image_list.append(f'\tdl {image_type}, {image_width}, {image_height}, {image_filesize}, fn_{file_name}, {buffer_id}\n')
 
             files_list.append(f'fn_{file_name}: db "images/{file_name}.rgba2",0 \n') 
 
@@ -229,14 +229,15 @@ def make_images():
         f.write(f'image_height: equ image_width+3\n')
         f.write(f'image_filesize: equ image_height+3\n')
         f.write(f'image_filename: equ image_filesize+3\n')
-        f.write(f'image_record_size: equ image_filename+3\n\n')
+        f.write(f'image_bufferId: equ image_filename+3\n')
+        f.write(f'image_record_size: equ image_bufferId+3\n\n')
         f.write(f'num_images: equ {num_images}\n\n')
 
         f.write(f'; buffer_ids:\n')
         f.write(''.join(buffer_ids))
         f.write(f'\n') 
 
-        f.write(f'image_list: ; type; width; height; filename:\n')
+        f.write(f'image_list: ; type; width; height; filename; bufferId:\n')
         f.write(''.join(image_list))
         f.write(f'\n') 
 

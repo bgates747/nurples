@@ -46,7 +46,7 @@ img_load_main_loop:
 ; move bj
 	call move_bj
 ; print welcome message
-	ld ix,font_itc_honda
+	ld ix,font_rc
 	ld hl,hello_world
 	ld bc,32
 	ld de,2

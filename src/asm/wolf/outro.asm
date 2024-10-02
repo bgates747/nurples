@@ -19,7 +19,7 @@ outro1:
 	ld de,0
 	call vdu_plot_bmp
 ; print the text message
-	ld ix,font_itc_honda
+	ld ix,font_rc
 	ld hl,thanks_for_playing
 	ld bc,20 ; x
 	ld de,(@text_y) ; y
@@ -80,7 +80,7 @@ outro2:
 	ld (@logo_y),de
     call vdu_plot_bmp
 ; print be sure not to miss
-	ld ix,font_retro_computer
+	ld ix,font_rc
 	ld hl,be_sure_not_to_miss
 	ld bc,2 ; x
 	ld de,2 ; y
@@ -129,7 +129,7 @@ outro3:
     ld de,(@logo_y)
     call vdu_plot_bmp
 ; print coming soon message
-	ld ix,font_retro_computer
+	ld ix,font_rc
 	ld hl,coming_soon
 	ld bc,14 ; x
 	ld de,240-30; y
@@ -170,13 +170,13 @@ outro3:
     ld de,(@logo_y)
     call vdu_plot_bmp
 ; prit attack of the
-	ld ix,font_retro_computer
+	ld ix,font_rc
 	ld hl,attack_of
 	ld bc,180 ; x
 	ld de,8; y
 	call font_bmp_print
 ; print coming soon message
-	ld ix,font_retro_computer
+	ld ix,font_rc
 	ld hl,coming_soon
 	ld bc,14 ; x
 	ld de,240-30; y

@@ -1,6 +1,6 @@
 ; Bitmap indices:
-BUF_4128: equ 0x1020 ; 32  
-BUF_4129: equ 0x1021 ; 33 !
+BUF_0032: equ 0x0020 ; 32  
+BUF_0033: equ 0x0021 ; 33 !
 ; Missing character 34 "
 ; Missing character 35 #
 ; Missing character 36 $
@@ -15,49 +15,49 @@ BUF_4129: equ 0x1021 ; 33 !
 ; Missing character 45 -
 ; Missing character 46 .
 ; Missing character 47 /
-BUF_4144: equ 0x1030 ; 48 0
-BUF_4145: equ 0x1031 ; 49 1
-BUF_4146: equ 0x1032 ; 50 2
-BUF_4147: equ 0x1033 ; 51 3
-BUF_4148: equ 0x1034 ; 52 4
-BUF_4149: equ 0x1035 ; 53 5
-BUF_4150: equ 0x1036 ; 54 6
-BUF_4151: equ 0x1037 ; 55 7
-BUF_4152: equ 0x1038 ; 56 8
-BUF_4153: equ 0x1039 ; 57 9
+BUF_0048: equ 0x0030 ; 48 0
+BUF_0049: equ 0x0031 ; 49 1
+BUF_0050: equ 0x0032 ; 50 2
+BUF_0051: equ 0x0033 ; 51 3
+BUF_0052: equ 0x0034 ; 52 4
+BUF_0053: equ 0x0035 ; 53 5
+BUF_0054: equ 0x0036 ; 54 6
+BUF_0055: equ 0x0037 ; 55 7
+BUF_0056: equ 0x0038 ; 56 8
+BUF_0057: equ 0x0039 ; 57 9
 ; Missing character 58 :
 ; Missing character 59 ;
 ; Missing character 60 <
 ; Missing character 61 =
 ; Missing character 62 >
-BUF_4159: equ 0x103F ; 63 ?
+BUF_0063: equ 0x003F ; 63 ?
 ; Missing character 64 @
-BUF_4161: equ 0x1041 ; 65 A
-BUF_4162: equ 0x1042 ; 66 B
-BUF_4163: equ 0x1043 ; 67 C
-BUF_4164: equ 0x1044 ; 68 D
-BUF_4165: equ 0x1045 ; 69 E
-BUF_4166: equ 0x1046 ; 70 F
-BUF_4167: equ 0x1047 ; 71 G
-BUF_4168: equ 0x1048 ; 72 H
-BUF_4169: equ 0x1049 ; 73 I
-BUF_4170: equ 0x104A ; 74 J
-BUF_4171: equ 0x104B ; 75 K
-BUF_4172: equ 0x104C ; 76 L
-BUF_4173: equ 0x104D ; 77 M
-BUF_4174: equ 0x104E ; 78 N
-BUF_4175: equ 0x104F ; 79 O
-BUF_4176: equ 0x1050 ; 80 P
-BUF_4177: equ 0x1051 ; 81 Q
-BUF_4178: equ 0x1052 ; 82 R
-BUF_4179: equ 0x1053 ; 83 S
-BUF_4180: equ 0x1054 ; 84 T
-BUF_4181: equ 0x1055 ; 85 U
-BUF_4182: equ 0x1056 ; 86 V
-BUF_4183: equ 0x1057 ; 87 W
-BUF_4184: equ 0x1058 ; 88 X
-BUF_4185: equ 0x1059 ; 89 Y
-BUF_4186: equ 0x105A ; 90 Z
+BUF_0065: equ 0x0041 ; 65 A
+BUF_0066: equ 0x0042 ; 66 B
+BUF_0067: equ 0x0043 ; 67 C
+BUF_0068: equ 0x0044 ; 68 D
+BUF_0069: equ 0x0045 ; 69 E
+BUF_0070: equ 0x0046 ; 70 F
+BUF_0071: equ 0x0047 ; 71 G
+BUF_0072: equ 0x0048 ; 72 H
+BUF_0073: equ 0x0049 ; 73 I
+BUF_0074: equ 0x004A ; 74 J
+BUF_0075: equ 0x004B ; 75 K
+BUF_0076: equ 0x004C ; 76 L
+BUF_0077: equ 0x004D ; 77 M
+BUF_0078: equ 0x004E ; 78 N
+BUF_0079: equ 0x004F ; 79 O
+BUF_0080: equ 0x0050 ; 80 P
+BUF_0081: equ 0x0051 ; 81 Q
+BUF_0082: equ 0x0052 ; 82 R
+BUF_0083: equ 0x0053 ; 83 S
+BUF_0084: equ 0x0054 ; 84 T
+BUF_0085: equ 0x0055 ; 85 U
+BUF_0086: equ 0x0056 ; 86 V
+BUF_0087: equ 0x0057 ; 87 W
+BUF_0088: equ 0x0058 ; 88 X
+BUF_0089: equ 0x0059 ; 89 Y
+BUF_0090: equ 0x005A ; 90 Z
 ; Missing character 91 [
 ; Missing character 92 \
 ; Missing character 93 ]
@@ -92,97 +92,97 @@ BUF_4186: equ 0x105A ; 90 Z
 ; Missing character 122 z
 ; [y_offset, dim_y, dim_x], buffer_id label: ; mind the little-endian order when fetching these!!!
 font_rc:
-	dl 0x000106,BUF_4128
-	dl 0x000E03,BUF_4129
-	dl 0x000106,BUF_4128 ; Missing character 34
-	dl 0x000106,BUF_4128 ; Missing character 35
-	dl 0x000106,BUF_4128 ; Missing character 36
-	dl 0x000106,BUF_4128 ; Missing character 37
-	dl 0x000106,BUF_4128 ; Missing character 38
-	dl 0x000106,BUF_4128 ; Missing character 39
-	dl 0x000106,BUF_4128 ; Missing character 40
-	dl 0x000106,BUF_4128 ; Missing character 41
-	dl 0x000106,BUF_4128 ; Missing character 42
-	dl 0x000106,BUF_4128 ; Missing character 43
-	dl 0x000106,BUF_4128 ; Missing character 44
-	dl 0x000106,BUF_4128 ; Missing character 45
-	dl 0x000106,BUF_4128 ; Missing character 46
-	dl 0x000106,BUF_4128 ; Missing character 47
-	dl 0x000E08,BUF_4144
-	dl 0x000E08,BUF_4145
-	dl 0x000E08,BUF_4146
-	dl 0x000E08,BUF_4147
-	dl 0x000E08,BUF_4148
-	dl 0x000E08,BUF_4149
-	dl 0x000E08,BUF_4150
-	dl 0x000E08,BUF_4151
-	dl 0x000E08,BUF_4152
-	dl 0x000E08,BUF_4153
-	dl 0x000106,BUF_4128 ; Missing character 58
-	dl 0x000106,BUF_4128 ; Missing character 59
-	dl 0x000106,BUF_4128 ; Missing character 60
-	dl 0x000106,BUF_4128 ; Missing character 61
-	dl 0x000106,BUF_4128 ; Missing character 62
-	dl 0x000E08,BUF_4159
-	dl 0x000106,BUF_4128 ; Missing character 64
-	dl 0x000E07,BUF_4161
-	dl 0x000E08,BUF_4162
-	dl 0x000E07,BUF_4163
-	dl 0x000E08,BUF_4164
-	dl 0x000E08,BUF_4165
-	dl 0x000E07,BUF_4166
-	dl 0x000E08,BUF_4167
-	dl 0x000E07,BUF_4168
-	dl 0x000E07,BUF_4169
-	dl 0x000E08,BUF_4170
-	dl 0x000E07,BUF_4171
-	dl 0x000E08,BUF_4172
-	dl 0x000E09,BUF_4173
-	dl 0x000E07,BUF_4174
-	dl 0x000E08,BUF_4175
-	dl 0x000E07,BUF_4176
-	dl 0x000F08,BUF_4177
-	dl 0x000E08,BUF_4178
-	dl 0x000E08,BUF_4179
-	dl 0x000E07,BUF_4180
-	dl 0x000E08,BUF_4181
-	dl 0x000E07,BUF_4182
-	dl 0x000E0B,BUF_4183
-	dl 0x000E07,BUF_4184
-	dl 0x000E08,BUF_4185
-	dl 0x000E07,BUF_4186
-	dl 0x000106,BUF_4128 ; Missing character 91
-	dl 0x000106,BUF_4128 ; Missing character 92
-	dl 0x000106,BUF_4128 ; Missing character 93
-	dl 0x000106,BUF_4128 ; Missing character 94
-	dl 0x000106,BUF_4128 ; Missing character 95
-	dl 0x000106,BUF_4128 ; Missing character 96
-	dl 0x000106,BUF_4128 ; Missing character 97
-	dl 0x000106,BUF_4128 ; Missing character 98
-	dl 0x000106,BUF_4128 ; Missing character 99
-	dl 0x000106,BUF_4128 ; Missing character 100
-	dl 0x000106,BUF_4128 ; Missing character 101
-	dl 0x000106,BUF_4128 ; Missing character 102
-	dl 0x000106,BUF_4128 ; Missing character 103
-	dl 0x000106,BUF_4128 ; Missing character 104
-	dl 0x000106,BUF_4128 ; Missing character 105
-	dl 0x000106,BUF_4128 ; Missing character 106
-	dl 0x000106,BUF_4128 ; Missing character 107
-	dl 0x000106,BUF_4128 ; Missing character 108
-	dl 0x000106,BUF_4128 ; Missing character 109
-	dl 0x000106,BUF_4128 ; Missing character 110
-	dl 0x000106,BUF_4128 ; Missing character 111
-	dl 0x000106,BUF_4128 ; Missing character 112
-	dl 0x000106,BUF_4128 ; Missing character 113
-	dl 0x000106,BUF_4128 ; Missing character 114
-	dl 0x000106,BUF_4128 ; Missing character 115
-	dl 0x000106,BUF_4128 ; Missing character 116
-	dl 0x000106,BUF_4128 ; Missing character 117
-	dl 0x000106,BUF_4128 ; Missing character 118
-	dl 0x000106,BUF_4128 ; Missing character 119
-	dl 0x000106,BUF_4128 ; Missing character 120
-	dl 0x000106,BUF_4128 ; Missing character 121
-	dl 0x000106,BUF_4128 ; Missing character 122
+	dl 0x000106,BUF_0032
+	dl 0x000E03,BUF_0033
+	dl 0x000106,BUF_0032 ; Missing character 34
+	dl 0x000106,BUF_0032 ; Missing character 35
+	dl 0x000106,BUF_0032 ; Missing character 36
+	dl 0x000106,BUF_0032 ; Missing character 37
+	dl 0x000106,BUF_0032 ; Missing character 38
+	dl 0x000106,BUF_0032 ; Missing character 39
+	dl 0x000106,BUF_0032 ; Missing character 40
+	dl 0x000106,BUF_0032 ; Missing character 41
+	dl 0x000106,BUF_0032 ; Missing character 42
+	dl 0x000106,BUF_0032 ; Missing character 43
+	dl 0x000106,BUF_0032 ; Missing character 44
+	dl 0x000106,BUF_0032 ; Missing character 45
+	dl 0x000106,BUF_0032 ; Missing character 46
+	dl 0x000106,BUF_0032 ; Missing character 47
+	dl 0x000E08,BUF_0048
+	dl 0x000E08,BUF_0049
+	dl 0x000E08,BUF_0050
+	dl 0x000E08,BUF_0051
+	dl 0x000E08,BUF_0052
+	dl 0x000E08,BUF_0053
+	dl 0x000E08,BUF_0054
+	dl 0x000E08,BUF_0055
+	dl 0x000E08,BUF_0056
+	dl 0x000E08,BUF_0057
+	dl 0x000106,BUF_0032 ; Missing character 58
+	dl 0x000106,BUF_0032 ; Missing character 59
+	dl 0x000106,BUF_0032 ; Missing character 60
+	dl 0x000106,BUF_0032 ; Missing character 61
+	dl 0x000106,BUF_0032 ; Missing character 62
+	dl 0x000E08,BUF_0063
+	dl 0x000106,BUF_0032 ; Missing character 64
+	dl 0x000E07,BUF_0065
+	dl 0x000E08,BUF_0066
+	dl 0x000E07,BUF_0067
+	dl 0x000E08,BUF_0068
+	dl 0x000E08,BUF_0069
+	dl 0x000E07,BUF_0070
+	dl 0x000E08,BUF_0071
+	dl 0x000E07,BUF_0072
+	dl 0x000E07,BUF_0073
+	dl 0x000E08,BUF_0074
+	dl 0x000E07,BUF_0075
+	dl 0x000E08,BUF_0076
+	dl 0x000E09,BUF_0077
+	dl 0x000E07,BUF_0078
+	dl 0x000E08,BUF_0079
+	dl 0x000E07,BUF_0080
+	dl 0x000F08,BUF_0081
+	dl 0x000E08,BUF_0082
+	dl 0x000E08,BUF_0083
+	dl 0x000E07,BUF_0084
+	dl 0x000E08,BUF_0085
+	dl 0x000E07,BUF_0086
+	dl 0x000E0B,BUF_0087
+	dl 0x000E07,BUF_0088
+	dl 0x000E08,BUF_0089
+	dl 0x000E07,BUF_0090
+	dl 0x000106,BUF_0032 ; Missing character 91
+	dl 0x000106,BUF_0032 ; Missing character 92
+	dl 0x000106,BUF_0032 ; Missing character 93
+	dl 0x000106,BUF_0032 ; Missing character 94
+	dl 0x000106,BUF_0032 ; Missing character 95
+	dl 0x000106,BUF_0032 ; Missing character 96
+	dl 0x000106,BUF_0032 ; Missing character 97
+	dl 0x000106,BUF_0032 ; Missing character 98
+	dl 0x000106,BUF_0032 ; Missing character 99
+	dl 0x000106,BUF_0032 ; Missing character 100
+	dl 0x000106,BUF_0032 ; Missing character 101
+	dl 0x000106,BUF_0032 ; Missing character 102
+	dl 0x000106,BUF_0032 ; Missing character 103
+	dl 0x000106,BUF_0032 ; Missing character 104
+	dl 0x000106,BUF_0032 ; Missing character 105
+	dl 0x000106,BUF_0032 ; Missing character 106
+	dl 0x000106,BUF_0032 ; Missing character 107
+	dl 0x000106,BUF_0032 ; Missing character 108
+	dl 0x000106,BUF_0032 ; Missing character 109
+	dl 0x000106,BUF_0032 ; Missing character 110
+	dl 0x000106,BUF_0032 ; Missing character 111
+	dl 0x000106,BUF_0032 ; Missing character 112
+	dl 0x000106,BUF_0032 ; Missing character 113
+	dl 0x000106,BUF_0032 ; Missing character 114
+	dl 0x000106,BUF_0032 ; Missing character 115
+	dl 0x000106,BUF_0032 ; Missing character 116
+	dl 0x000106,BUF_0032 ; Missing character 117
+	dl 0x000106,BUF_0032 ; Missing character 118
+	dl 0x000106,BUF_0032 ; Missing character 119
+	dl 0x000106,BUF_0032 ; Missing character 120
+	dl 0x000106,BUF_0032 ; Missing character 121
+	dl 0x000106,BUF_0032 ; Missing character 122
 
 ; Import .rgba2 bitmap files and load them into VDP buffers
 load_font_rc:
@@ -192,7 +192,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4128
+	ld hl,BUF_0032
 	ld bc,6
 	ld de,1
 	ld ix,6
@@ -203,7 +203,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4129
+	ld hl,BUF_0033
 	ld bc,3
 	ld de,14
 	ld ix,42
@@ -228,7 +228,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4144
+	ld hl,BUF_0048
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -239,7 +239,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4145
+	ld hl,BUF_0049
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -250,7 +250,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4146
+	ld hl,BUF_0050
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -261,7 +261,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4147
+	ld hl,BUF_0051
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -272,7 +272,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4148
+	ld hl,BUF_0052
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -283,7 +283,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4149
+	ld hl,BUF_0053
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -294,7 +294,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4150
+	ld hl,BUF_0054
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -305,7 +305,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4151
+	ld hl,BUF_0055
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -316,7 +316,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4152
+	ld hl,BUF_0056
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -327,7 +327,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4153
+	ld hl,BUF_0057
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -343,7 +343,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4159
+	ld hl,BUF_0063
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -355,7 +355,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4161
+	ld hl,BUF_0065
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -366,7 +366,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4162
+	ld hl,BUF_0066
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -377,7 +377,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4163
+	ld hl,BUF_0067
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -388,7 +388,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4164
+	ld hl,BUF_0068
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -399,7 +399,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4165
+	ld hl,BUF_0069
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -410,7 +410,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4166
+	ld hl,BUF_0070
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -421,7 +421,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4167
+	ld hl,BUF_0071
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -432,7 +432,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4168
+	ld hl,BUF_0072
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -443,7 +443,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4169
+	ld hl,BUF_0073
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -454,7 +454,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4170
+	ld hl,BUF_0074
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -465,7 +465,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4171
+	ld hl,BUF_0075
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -476,7 +476,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4172
+	ld hl,BUF_0076
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -487,7 +487,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4173
+	ld hl,BUF_0077
 	ld bc,9
 	ld de,14
 	ld ix,126
@@ -498,7 +498,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4174
+	ld hl,BUF_0078
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -509,7 +509,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4175
+	ld hl,BUF_0079
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -520,7 +520,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4176
+	ld hl,BUF_0080
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -531,7 +531,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4177
+	ld hl,BUF_0081
 	ld bc,8
 	ld de,15
 	ld ix,120
@@ -542,7 +542,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4178
+	ld hl,BUF_0082
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -553,7 +553,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4179
+	ld hl,BUF_0083
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -564,7 +564,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4180
+	ld hl,BUF_0084
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -575,7 +575,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4181
+	ld hl,BUF_0085
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -586,7 +586,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4182
+	ld hl,BUF_0086
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -597,7 +597,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4183
+	ld hl,BUF_0087
 	ld bc,11
 	ld de,14
 	ld ix,154
@@ -608,7 +608,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4184
+	ld hl,BUF_0088
 	ld bc,7
 	ld de,14
 	ld ix,98
@@ -619,7 +619,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4185
+	ld hl,BUF_0089
 	ld bc,8
 	ld de,14
 	ld ix,112
@@ -630,7 +630,7 @@ load_font_rc:
 	ld bc,65536
 	ld a,mos_load
 	RST.LIL 08h
-	ld hl,BUF_4186
+	ld hl,BUF_0090
 	ld bc,7
 	ld de,14
 	ld ix,98

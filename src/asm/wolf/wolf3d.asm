@@ -15,8 +15,8 @@
 	include "src/asm/maps.asm"
 	include "src/asm/render.asm"
 	include "src/asm/polys.asm"
-	include "src/asm/font_itc_honda.asm"
-	include "src/asm/font_retro_computer.asm"
+	include "src/asm/font_rc.asm"
+	include "src/asm/font_rc.asm"
 	include "src/asm/ui.asm"
 	include "src/asm/ui_img.asm"
 	include "src/asm/ui_img_bj.asm"
@@ -88,8 +88,8 @@ init:
 	call printString
 
 ; load fonts
-	call load_font_itc_honda
-	call load_font_retro_computer
+	call load_font_rc
+	call load_font_rc
 
 ; load UI images
 	call load_ui_images

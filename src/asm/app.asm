@@ -29,13 +29,25 @@ exit:
     ld hl,0
     ret
 
-hello_world: defb "Welcome to Agon Wolf3D",0
+; API includes
+    include "mos_api.inc"
+    include "functions.inc"
+	include "files.inc"
+	include "fonts_bmp.inc"
+    include "timer.inc"
+    include "vdu.inc"
+    include "vdu_sound.inc"
+
+; Application includes
+	include "font_rc.inc"
+	include "input.inc"
+    include "images.inc"
+	include "img_load.inc"
+
+hello_world: defb "Welcome to Purple Nurples!",0
 loading_ui: defb "Loading UI",0
 loading_time: defb "Loading time:",0
 loading_complete: defb "Press any key to continue.\r\n",0
-is_emulator: defb 0
-on_emulator: defb "Running on emulator.\r\n",0
-on_hardware: defb "Running on hardware.\r\n",0
 
 init:
 ; clear all buffers
@@ -66,12 +78,10 @@ init:
 	call printString
 
 ; load fonts
-	call load_font_itc_honda
-	call load_font_retro_computer
+	; call load_font_rc ; TODO
 
 ; load UI images
-	call load_ui_images
-	call load_ui_images_bj
+	; call load_ui_images ; TODO
 
 ; set text background color
 	ld a,4 + 128
@@ -99,72 +109,19 @@ init:
 	ld b,29; bottom
 	call vdu_set_txt_viewport
 
-; initialize image load routine
-	call img_load_init
-
-; load panels
-	ld bc,cube_num_panels
-	ld hl,cube_buffer_id_lut
-	ld (cur_buffer_id_lut),hl
-	ld hl,cube_load_panels_table
-	ld (cur_load_jump_table),hl
+; load images
+	ld bc,num_images
+	ld hl,image_list
+	ld (cur_image_list),hl
 	call img_load_main
 
-; load sprites
-	ld bc,sprite_num_panels
-	ld hl,sprite_buffer_id_lut
-	ld (cur_buffer_id_lut),hl
-	ld hl,sprite_load_panels_table
-	ld (cur_load_jump_table),hl
-	call img_load_main
-
-; load distance walls
-	ld bc,dws_num_panels
-	ld hl,dws_buffer_id_lut
-	ld (cur_buffer_id_lut),hl
-	ld hl,dws_load_panels_table
-	ld (cur_load_jump_table),hl
-	call img_load_main
-
-; load sound effects
-	ld bc,SFX_num_buffers
-	ld hl,SFX_buffer_id_lut
-	ld (cur_buffer_id_lut),hl
-	ld hl,SFX_load_routines_table
-	ld (cur_load_jump_table),hl
-	call sfx_load_main
-
-; self modify vdu_play_sfx to enable sound
-	xor a
-	ld (vdu_play_sfx_disable),a
-
-; use loading time to determine if we're running on emulator or hardware
-	call stopwatch_get ; hl = elapsed time in 120ths of a second
-	ld de,8000 ; emulator loads in about 2,400 ticks, hardware about 15,000
-	xor a ; clear carry, default is running on hardware
-	ld (is_emulator),a
-	sbc hl,de
-	jp m,@on_emulator
-	call vdu_home_cursor
-	ld hl,on_hardware
-	call printString
-	jp @test_done
-
-@on_emulator:
-; print emulator message
-	ld a,1
-	ld (is_emulator),a
-	call vdu_home_cursor
-	ld hl,on_emulator
-	call printString
-
-@test_done:
-; print final loading time
-	ld hl,loading_time
-	call printString
-	call stopwatch_get ; hl = elapsed time in 120ths of a second
-	call printDec
-	call printNewLine
+; ; load sound effects ; TODO
+; 	ld bc,SFX_num_buffers
+; 	ld hl,SFX_buffer_id_lut
+; 	ld (cur_buffer_id_lut),hl
+; 	ld hl,SFX_load_routines_table
+; 	ld (cur_load_jump_table),hl
+; 	call sfx_load_main
 
 ; print loading complete message and wait for user keypress
 	ld hl,loading_complete
@@ -175,62 +132,30 @@ init:
 ; initialization done
 	ret
 
-; DEBUG: set up a simple countdown timer
-debug_timer: db 0x01
-
 main_loop_tmr: ds 6
 framerate: equ 30
 
 new_game:
-; initialize map variables and load map file
-	ld hl,room_flags
-	xor a
-	ld b,10
-@room_flags_loop:
-	ld (hl),a
-	inc hl
-	djnz @room_flags_loop
-; map_init:
-	ld (cur_floor),a
-	ld (cur_room),a
-; load room file
-	call map_load
-; initialize sprite data
-	call map_init_sprites
-; initialize player position
-	call plyr_init
 
 	ret
 
 main:
-	call new_game
-
-; main:
-; ; set map variables and load initial map file
-; 	call map_init
-; ; initialize player position
-; 	call plyr_init
 
 
 main_loop:
 ; update global timestamp
     call timestamp_tick
 
+; move player
+
+
 ; move enemies
-	call sprites_see_plyr ; 220-285  prt ticks
 
-; get player input and update sprite position
-	; 0-1 prt ticks
-	call plyr_input ; ix points to cell defs/status, a is target cell current obj_id
 
-; render the updated scene
-	call render_scene ; 6-12 prt ticks
-; full loop 12-16 prt ticks
-
-; flip the screen
-	call vdu_flip
+; render frame
 
 @wait:
+	call set_keys
 	ld iy,main_loop_tmr
 	call tmr_get
 	jp z,@continue
@@ -262,6 +187,3 @@ main_end:
 	call vdu_set_screen_mode
 	call cursor_on
 	ret
-
-; files.asm must go here so that filedata doesn't stomp on program data
-	include "src/asm/files.asm"

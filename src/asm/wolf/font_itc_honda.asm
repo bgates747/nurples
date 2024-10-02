@@ -91,7 +91,7 @@ BUF_4472: equ 0x1178 ; 120 x
 BUF_4473: equ 0x1179 ; 121 y
 BUF_4474: equ 0x117A ; 122 z
 ; [y_offset, dim_y, dim_x], buffer_id label: ; mind the little-endian order when fetching these!!!
-font_itc_honda:
+font_rc:
 	dl 0x000106,BUF_4384
 	dl 0x000106,BUF_4384 ; Missing character 33
 	dl 0x000106,BUF_4384 ; Missing character 34
@@ -185,7 +185,7 @@ font_itc_honda:
 	dl 0x060C09,BUF_4474
 
 ; Import .rgba2 bitmap files and load them into VDP buffers
-load_font_itc_honda:
+load_font_rc:
 
 	ld hl,Fhonda032
 	ld de,filedata
