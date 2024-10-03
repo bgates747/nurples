@@ -1,4 +1,5 @@
 import os
+import csv
 from PIL import Image
 import shutil
 
@@ -27,11 +28,7 @@ def process_character_data(img, font_width, font_height, num_chars_per_row):
                     row_data = 0  # Reset for the next row
     return data
 
-def make_fonts(asm_fonts_filepath, originals_dir, target_dir):
-    # Scan the source directory for all font files ending in .png
-    font_filenames = [f for f in os.listdir(originals_dir) if f.endswith('.png')]
-    font_filenames.sort()
-
+def make_fonts(asm_fonts_filepath, originals_dir, target_dir, metadata_filepath):
     # Initialize variables
     num_fonts = 0
     font_list = []
@@ -41,6 +38,18 @@ def make_fonts(asm_fonts_filepath, originals_dir, target_dir):
     # Ensure target directory exists
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
+
+    # Read the CSV metadata file for the true font width and height (used only for assembly generation)
+    metadata = {}
+    with open(metadata_filepath, mode='r') as csvfile:
+        csvreader = csv.reader(csvfile)
+        for row in csvreader:
+            font_name, true_font_width, font_height = row
+            metadata[font_name] = (int(true_font_width), int(font_height))
+
+    # Scan the source directory for all .png files
+    font_filenames = [f for f in os.listdir(originals_dir) if f.endswith('.png')]
+    font_filenames.sort()
 
     # Process the fonts
     for index, font_filename in enumerate(font_filenames):
@@ -62,21 +71,24 @@ def make_fonts(asm_fonts_filepath, originals_dir, target_dir):
         # Process the image to extract character data in the correct byte order
         character_data = process_character_data(img, font_width, font_height, num_chars_per_row)
 
-        # Write the character data to the .font file
+        # Write the character data to the .font file in the target directory (using modified file name)
         target_font_file = os.path.join(target_dir, f'{file_name}.font')
         with open(target_font_file, 'wb') as f:
             f.write(bytearray(character_data))
 
         print(f"Generated {target_font_file} from {font_filename}")
 
-        # Calculate the font file size (number of bytes for 256 characters, 8x8 or 16x16 pixels per char)
+        # Calculate the font file size (number of bytes for 256 characters)
         font_filesize = len(character_data)
 
         # Add to index list (modified font name with index)
         index_list.append(f'{file_name}: equ {index}\n')
 
-        # Add to font list (dimensions and file reference)
-        font_list.append(f'\tdl {font_width}, {font_height}, {font_filesize}, fn_{file_name}\n')
+        # Use the true font width and height from metadata for assembly file
+        true_font_width, true_font_height = metadata.get(original_base_name, (font_width, font_height))
+
+        # Add to font list (true width and height from metadata)
+        font_list.append(f'\tdl {true_font_width}, {true_font_height}, {font_filesize}, fn_{file_name}\n')
 
         # Add the file to the file list (corresponding .font file path)
         files_list.append(f'fn_{file_name}: db "cfonts/{file_name}.font",0 \n')
@@ -96,7 +108,7 @@ def make_fonts(asm_fonts_filepath, originals_dir, target_dir):
         f.write(''.join(index_list))
         f.write(f'\n')
 
-        # Write font list
+        # Write font list (true width and height from metadata)
         f.write(f'font_list: ; width; height; filesize; filename;:\n')
         f.write(''.join(font_list))
         f.write(f'\n')
@@ -109,5 +121,6 @@ if __name__ == '__main__':
     asm_fonts_filepath = 'src/asm/fonts.inc'
     originals_dir = 'src/assets/cfonts'
     target_dir = 'tgt/cfonts'
+    metadata_filepath = 'src/assets/cfonts/font_metadata.csv'
 
-    make_fonts(asm_fonts_filepath, originals_dir, target_dir)
+    make_fonts(asm_fonts_filepath, originals_dir, target_dir, metadata_filepath)

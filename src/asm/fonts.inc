@@ -128,22 +128,22 @@ font_list: ; width; height; filesize; filename;:
 	dl 8, 15, 3840, fn_Lat15_Fixed15
 	dl 8, 16, 4096, fn_Lat15_Fixed16
 	dl 8, 18, 4608, fn_Lat15_Fixed18
-	dl 8, 12, 3072, fn_Lat15_Terminus12x6
+	dl 6, 12, 3072, fn_Lat15_Terminus12x6
 	dl 8, 14, 3584, fn_Lat15_Terminus14
 	dl 8, 16, 4096, fn_Lat15_Terminus16
-	dl 16, 18, 9216, fn_Lat15_Terminus18x10
-	dl 16, 20, 10240, fn_Lat15_Terminus20x10
-	dl 16, 22, 11264, fn_Lat15_Terminus22x11
-	dl 16, 24, 12288, fn_Lat15_Terminus24x12
-	dl 16, 28, 14336, fn_Lat15_Terminus28x14
+	dl 10, 18, 9216, fn_Lat15_Terminus18x10
+	dl 10, 20, 10240, fn_Lat15_Terminus20x10
+	dl 11, 22, 11264, fn_Lat15_Terminus22x11
+	dl 12, 24, 12288, fn_Lat15_Terminus24x12
+	dl 14, 28, 14336, fn_Lat15_Terminus28x14
 	dl 16, 32, 16384, fn_Lat15_Terminus32x16
 	dl 8, 14, 3584, fn_Lat15_TerminusBold14
 	dl 8, 16, 4096, fn_Lat15_TerminusBold16
-	dl 16, 18, 9216, fn_Lat15_TerminusBold18x10
-	dl 16, 20, 10240, fn_Lat15_TerminusBold20x10
-	dl 16, 22, 11264, fn_Lat15_TerminusBold22x11
-	dl 16, 24, 12288, fn_Lat15_TerminusBold24x12
-	dl 16, 28, 14336, fn_Lat15_TerminusBold28x14
+	dl 10, 18, 9216, fn_Lat15_TerminusBold18x10
+	dl 10, 20, 10240, fn_Lat15_TerminusBold20x10
+	dl 11, 22, 11264, fn_Lat15_TerminusBold22x11
+	dl 12, 24, 12288, fn_Lat15_TerminusBold24x12
+	dl 14, 28, 14336, fn_Lat15_TerminusBold28x14
 	dl 16, 32, 16384, fn_Lat15_TerminusBold32x16
 	dl 8, 14, 3584, fn_Lat15_TerminusBoldVGA14
 	dl 8, 16, 4096, fn_Lat15_TerminusBoldVGA16
@@ -157,22 +157,22 @@ font_list: ; width; height; filesize; filename;:
 	dl 8, 15, 3840, fn_Lat2_Fixed15
 	dl 8, 16, 4096, fn_Lat2_Fixed16
 	dl 8, 18, 4608, fn_Lat2_Fixed18
-	dl 8, 12, 3072, fn_Lat2_Terminus12x6
+	dl 6, 12, 3072, fn_Lat2_Terminus12x6
 	dl 8, 14, 3584, fn_Lat2_Terminus14
 	dl 8, 16, 4096, fn_Lat2_Terminus16
-	dl 16, 18, 9216, fn_Lat2_Terminus18x10
-	dl 16, 20, 10240, fn_Lat2_Terminus20x10
-	dl 16, 22, 11264, fn_Lat2_Terminus22x11
-	dl 16, 24, 12288, fn_Lat2_Terminus24x12
-	dl 16, 28, 14336, fn_Lat2_Terminus28x14
+	dl 10, 18, 9216, fn_Lat2_Terminus18x10
+	dl 10, 20, 10240, fn_Lat2_Terminus20x10
+	dl 11, 22, 11264, fn_Lat2_Terminus22x11
+	dl 12, 24, 12288, fn_Lat2_Terminus24x12
+	dl 14, 28, 14336, fn_Lat2_Terminus28x14
 	dl 16, 32, 16384, fn_Lat2_Terminus32x16
 	dl 8, 14, 3584, fn_Lat2_TerminusBold14
 	dl 8, 16, 4096, fn_Lat2_TerminusBold16
-	dl 16, 18, 9216, fn_Lat2_TerminusBold18x10
-	dl 16, 20, 10240, fn_Lat2_TerminusBold20x10
-	dl 16, 22, 11264, fn_Lat2_TerminusBold22x11
-	dl 16, 24, 12288, fn_Lat2_TerminusBold24x12
-	dl 16, 28, 14336, fn_Lat2_TerminusBold28x14
+	dl 10, 18, 9216, fn_Lat2_TerminusBold18x10
+	dl 10, 20, 10240, fn_Lat2_TerminusBold20x10
+	dl 11, 22, 11264, fn_Lat2_TerminusBold22x11
+	dl 12, 24, 12288, fn_Lat2_TerminusBold24x12
+	dl 14, 28, 14336, fn_Lat2_TerminusBold28x14
 	dl 16, 32, 16384, fn_Lat2_TerminusBold32x16
 	dl 8, 14, 3584, fn_Lat2_TerminusBoldVGA14
 	dl 8, 16, 4096, fn_Lat2_TerminusBoldVGA16
@@ -186,22 +186,22 @@ font_list: ; width; height; filesize; filename;:
 	dl 8, 15, 3840, fn_Lat38_Fixed15
 	dl 8, 16, 4096, fn_Lat38_Fixed16
 	dl 8, 18, 4608, fn_Lat38_Fixed18
-	dl 8, 12, 3072, fn_Lat38_Terminus12x6
+	dl 6, 12, 3072, fn_Lat38_Terminus12x6
 	dl 8, 14, 3584, fn_Lat38_Terminus14
 	dl 8, 16, 4096, fn_Lat38_Terminus16
-	dl 16, 18, 9216, fn_Lat38_Terminus18x10
-	dl 16, 20, 10240, fn_Lat38_Terminus20x10
-	dl 16, 22, 11264, fn_Lat38_Terminus22x11
-	dl 16, 24, 12288, fn_Lat38_Terminus24x12
-	dl 16, 28, 14336, fn_Lat38_Terminus28x14
+	dl 10, 18, 9216, fn_Lat38_Terminus18x10
+	dl 10, 20, 10240, fn_Lat38_Terminus20x10
+	dl 11, 22, 11264, fn_Lat38_Terminus22x11
+	dl 12, 24, 12288, fn_Lat38_Terminus24x12
+	dl 14, 28, 14336, fn_Lat38_Terminus28x14
 	dl 16, 32, 16384, fn_Lat38_Terminus32x16
 	dl 8, 14, 3584, fn_Lat38_TerminusBold14
 	dl 8, 16, 4096, fn_Lat38_TerminusBold16
-	dl 16, 18, 9216, fn_Lat38_TerminusBold18x10
-	dl 16, 20, 10240, fn_Lat38_TerminusBold20x10
-	dl 16, 22, 11264, fn_Lat38_TerminusBold22x11
-	dl 16, 24, 12288, fn_Lat38_TerminusBold24x12
-	dl 16, 28, 14336, fn_Lat38_TerminusBold28x14
+	dl 10, 18, 9216, fn_Lat38_TerminusBold18x10
+	dl 10, 20, 10240, fn_Lat38_TerminusBold20x10
+	dl 11, 22, 11264, fn_Lat38_TerminusBold22x11
+	dl 12, 24, 12288, fn_Lat38_TerminusBold24x12
+	dl 14, 28, 14336, fn_Lat38_TerminusBold28x14
 	dl 16, 32, 16384, fn_Lat38_TerminusBold32x16
 	dl 8, 14, 3584, fn_Lat38_TerminusBoldVGA14
 	dl 8, 16, 4096, fn_Lat38_TerminusBoldVGA16
@@ -215,22 +215,22 @@ font_list: ; width; height; filesize; filename;:
 	dl 8, 15, 3840, fn_Lat7_Fixed15
 	dl 8, 16, 4096, fn_Lat7_Fixed16
 	dl 8, 18, 4608, fn_Lat7_Fixed18
-	dl 8, 12, 3072, fn_Lat7_Terminus12x6
+	dl 6, 12, 3072, fn_Lat7_Terminus12x6
 	dl 8, 14, 3584, fn_Lat7_Terminus14
 	dl 8, 16, 4096, fn_Lat7_Terminus16
-	dl 16, 18, 9216, fn_Lat7_Terminus18x10
-	dl 16, 20, 10240, fn_Lat7_Terminus20x10
-	dl 16, 22, 11264, fn_Lat7_Terminus22x11
-	dl 16, 24, 12288, fn_Lat7_Terminus24x12
-	dl 16, 28, 14336, fn_Lat7_Terminus28x14
+	dl 10, 18, 9216, fn_Lat7_Terminus18x10
+	dl 10, 20, 10240, fn_Lat7_Terminus20x10
+	dl 11, 22, 11264, fn_Lat7_Terminus22x11
+	dl 12, 24, 12288, fn_Lat7_Terminus24x12
+	dl 14, 28, 14336, fn_Lat7_Terminus28x14
 	dl 16, 32, 16384, fn_Lat7_Terminus32x16
 	dl 8, 14, 3584, fn_Lat7_TerminusBold14
 	dl 8, 16, 4096, fn_Lat7_TerminusBold16
-	dl 16, 18, 9216, fn_Lat7_TerminusBold18x10
-	dl 16, 20, 10240, fn_Lat7_TerminusBold20x10
-	dl 16, 22, 11264, fn_Lat7_TerminusBold22x11
-	dl 16, 24, 12288, fn_Lat7_TerminusBold24x12
-	dl 16, 28, 14336, fn_Lat7_TerminusBold28x14
+	dl 10, 18, 9216, fn_Lat7_TerminusBold18x10
+	dl 10, 20, 10240, fn_Lat7_TerminusBold20x10
+	dl 11, 22, 11264, fn_Lat7_TerminusBold22x11
+	dl 12, 24, 12288, fn_Lat7_TerminusBold24x12
+	dl 14, 28, 14336, fn_Lat7_TerminusBold28x14
 	dl 16, 32, 16384, fn_Lat7_TerminusBold32x16
 	dl 8, 14, 3584, fn_Lat7_TerminusBoldVGA14
 	dl 8, 16, 4096, fn_Lat7_TerminusBoldVGA16
