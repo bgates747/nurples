@@ -43,7 +43,7 @@ main:
     call vdu_set_screen_mode
 
 ; inputs: hl = bufferId; iy = pointer to filename
-    ld e,Lat2_VGA16
+    ld e,Lat2_VGA32x16
     ld d,12 ; bytes per font list record
     mlt de
     ld iy,font_list

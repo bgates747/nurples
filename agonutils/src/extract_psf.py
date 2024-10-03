@@ -2,6 +2,7 @@ import gzip
 import struct
 import os
 from PIL import Image
+import csv
 from make_agon_font import binary_to_image, save_binary_from_image, build_master_image, find_max_font_dimensions
 
 # PSF1 and PSF2 magic numbers
@@ -26,7 +27,7 @@ def read_psf1(file_path):
     """Reads a PSF1 font file and returns glyph bitmaps and metadata."""
     with open(file_path, 'rb') as f:
         # Read the header (4 bytes)
-        magic, mode, char_size = struct.unpack('2sBB', f.read(4))
+        magic, mode, charsize = struct.unpack('2sBB', f.read(4))
         
         # Verify the magic number
         if magic != PSF1_MAGIC:
@@ -35,20 +36,19 @@ def read_psf1(file_path):
         # Determine number of glyphs (256 or 512)
         num_glyphs = 512 if mode & PSF1_MODE512 else 256
         
-        # Read each glyph bitmap (char_size bytes per glyph)
+        # Read each glyph bitmap (charsize bytes per glyph)
         glyphs = []
         for _ in range(num_glyphs):
-            glyph_data = f.read(char_size)
+            glyph_data = f.read(charsize)
             glyphs.append(glyph_data)
 
         return {
             'glyphs': glyphs,
             'num_glyphs': num_glyphs,
-            'char_size': char_size,
-            'height': char_size,
-            'width': 8  # PSF1 fonts are typically 8 pixels wide
+            'charsize': charsize,
+            'height': charsize,  # In PSF1, width is always 8, so height == charsize
+            'width': 8
         }
-
 def read_psf2(file_path):
     """Reads a PSF2 font file and returns glyph bitmaps and metadata."""
     with open(file_path, 'rb') as f:
@@ -60,7 +60,7 @@ def read_psf2(file_path):
         if magic != 0x864ab572:
             raise ValueError(f"Not a valid PSF2 file: {file_path}")
         
-        # Read each glyph bitmap
+        # Read each glyph bitmap (using the actual width, no adjustments here)
         glyphs = []
         for _ in range(num_glyphs):
             glyph_data = f.read(glyph_size)
@@ -85,12 +85,13 @@ def read_psf2(file_path):
                     unicodes.append(codepoint)
                 unicode_table[glyph_index] = unicodes
 
+        # Return the actual width and height, without padding
         return {
             'glyphs': glyphs,
             'num_glyphs': num_glyphs,
             'glyph_size': glyph_size,
             'height': height,
-            'width': width,
+            'width': width,  # Return original width here
             'unicode_table': unicode_table
         }
 
@@ -123,7 +124,7 @@ def extract_bitmasks(psf_data):
     
     return bitmasks
 
-def process_psf_files(src_dir):
+def process_psf_files(src_dir, metadata_file):
     # Step 1: Find and process all .psf.gz files (first pass)
     font_base_names = [file.replace('.psf.gz', '') for file in os.listdir(src_dir) if file.endswith('.psf.gz')]
     font_base_names.sort()
@@ -148,83 +149,85 @@ def process_psf_files(src_dir):
         os.remove(psf_gz_file)
         print(f"Decompressed {font_base_name}.psf.gz and removed the original archive.")
 
-    # Step 2: Process each decompressed .psf file in the subdirectories (second pass)
-    for subdir in os.listdir(src_dir):
-        subdir_path = os.path.join(src_dir, subdir)
+    # Step 2: Process each decompressed .psf (second pass)
+    font_base_names = [subdir for subdir in os.listdir(src_dir) if os.path.isdir(os.path.join(src_dir, subdir))]
+    font_base_names.sort()
+    for font_base_name in font_base_names:
 
-        # Check if the subdir is actually a directory
-        if os.path.isdir(subdir_path):
-            # Look for the .psf file inside this subdirectory
-            psf_files = [file for file in os.listdir(subdir_path) if file.endswith('.psf')]
+        # if font_base_name != 'Lat2-Terminus18x10':
+        #     continue
 
-            if psf_files:
-                # Assuming only one .psf file per directory
-                psf_file = psf_files[0]
-                psf_file_path = os.path.join(subdir_path, psf_file)
-                print(f"Processing font: {psf_file_path}")
+        print(f"Processing font: {font_base_name}")
+        
+        # Construct file paths based on sorted font names
+        output_dir = os.path.join(src_dir, font_base_name)
+        psf_file_path = os.path.join(output_dir, f"{font_base_name}.psf")
 
-                output_font_binary = os.path.join(subdir_path, f"{subdir}.data")
-                output_image = os.path.join(src_dir, f"{subdir}.png")  # Master image in the root directory
+        output_font_binary = os.path.join(output_dir, f"{font_base_name}.data")
+        output_image = os.path.join(src_dir, f"{font_base_name}.png")  # Master image in the root directory
 
-                # Read the PSF font file (automatically detects PSF1 or PSF2)
-                psf_data = read_psf(psf_file_path)
+        # Read the PSF font file (automatically detects PSF1 or PSF2)
+        psf_data = read_psf(psf_file_path)
 
-                # For each character (0-255), create an individual PNG file
-                for char_code in range(256):
-                    glyph_data = psf_data['glyphs'][char_code]
-                    char_png_file = os.path.join(subdir_path, f"{char_code:03d}.png")
-                    
-                    # Create a monochrome image for the glyph
-                    glyph_img = Image.new('1', (psf_data['width'], psf_data['height']), color=1)  # White background
-                    for y in range(psf_data['height']):
-                        byte = glyph_data[y] if y < len(glyph_data) else 0
-                        for bit in range(psf_data['width']):
-                            if byte & (0x80 >> bit):  # Set black pixel where bit is set
-                                glyph_img.putpixel((bit, y), 0)  # Black pixel
-                    
-                    # Save the individual glyph as a .png
-                    glyph_img.save(char_png_file)
+        # Append font metadata (original width and height)
+        append_font_metadata(metadata_file, font_base_name, psf_data['width'], psf_data['height'])
 
-                # Find the maximum width and height of the character images
-                max_width, max_height = find_max_font_dimensions(subdir_path)
-                print(f"Max width: {max_width}, max height: {max_height}")
+        # For each character (0-255), create an individual PNG file
+        for char_code in range(256):
+            glyph_data = psf_data['glyphs'][char_code]
+            char_png_file = os.path.join(output_dir, f"{char_code:03d}.png")
+            
+            # Create a monochrome image for the glyph
+            glyph_img = Image.new('1', (psf_data['width'], psf_data['height']), color=1)  # White background
+            for y in range(psf_data['height']):
+                byte = glyph_data[y] if y < len(glyph_data) else 0
+                for bit in range(psf_data['width']):
+                    if byte & (0x80 >> bit):  # Set black pixel where bit is set
+                        glyph_img.putpixel((bit, y), 0)  # Black pixel
+            
+            # Save the individual glyph as a .png
+            glyph_img.save(char_png_file)
 
-                # Set target width and height for characters
-                target_width, target_height = max_width, max_height
-                
-                # Build the master image
-                master_img = build_master_image(subdir_path, target_width, target_height)
+        # Find the maximum width and height of the character images
+        max_width, max_height = find_max_font_dimensions(output_dir)
+        print(f"Max width: {max_width}, max height: {max_height}")
 
-                # Save the master image in the root directory
-                master_img.save(output_image)
-                print(f"Master image saved to {output_image}")
+        # Set target width and height for characters (with padding if needed)
+        target_width = (max_width + 7) // 8 * 8  # Round up to the next multiple of 8
+        target_height = max_height
 
-                # Convert the master image to binary and save it to a file
-                save_binary_from_image(master_img, output_font_binary, target_width, target_height)
+        # Build the master image
+        master_img = build_master_image(output_dir, target_width, target_height)
 
-                # Convert the binary file back to an image (for validation)
-                img_width = 16 * target_width
-                img_height = 16 * target_height
-                binary_to_image(output_font_binary, output_image, img_width, img_height)
+        # Save the master image in the root directory
+        master_img.save(output_image)
+        print(f"Master image saved to {output_image}")
+
+        # Convert the master image to binary and save it to a file
+        save_binary_from_image(master_img, output_font_binary, target_width, target_height)
+
+        # Convert the binary file back to an image (for validation)
+        img_width = 16 * target_width
+        img_height = 16 * target_height
+        binary_to_image(output_font_binary, output_image, img_width, img_height)
 
     # Step 3: Clean up individual character .png files
-    for subdir in os.listdir(src_dir):
-        subdir_path = os.path.join(src_dir, subdir)
+    for font_base_name in font_base_names:
+        output_dir = os.path.join(src_dir, font_base_name)
+        for file_name in os.listdir(output_dir):
+            if file_name.endswith('.png') and file_name[:-4].isdigit():
+                file_path = os.path.join(output_dir, file_name)
+                os.remove(file_path)
 
-        # Check if it's actually a directory
-        if os.path.isdir(subdir_path):
-            # Find all .png files with filenames consisting only of numbers
-            for file_name in os.listdir(subdir_path):
-                if file_name.endswith('.png') and file_name[:-4].isdigit():
-                    file_path = os.path.join(subdir_path, file_name)
-                    try:
-                        os.remove(file_path)
-                    except Exception as e:
-                        print(f"Failed to delete {file_path}: {e}")
+def append_font_metadata(metadata_file, font_name, width, height):
+    """Appends font metadata (name, width, height) to a CSV file."""
+    with open(metadata_file, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([font_name, width, height])
 
 if __name__ == "__main__":
-    # Define the base source directory
     src_dir = "src/assets/cfonts"
-    
-    # Process all PSF files and generate outputs
-    process_psf_files(src_dir)
+    metadata_file = os.path.join(src_dir, 'font_metadata.csv')
+    if os.path.exists(metadata_file):
+        os.remove(metadata_file)
+    process_psf_files(src_dir, metadata_file)
