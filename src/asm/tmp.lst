@@ -1,0 +1,3235 @@
+PC     Output      Line
+
+040000             0001   	.assume adl=1
+040000             0002       .org 0x040000
+040000             0003   
+040000 C3 45 00 04 0004       jp start
+040004             0005   
+040004 FF FF FF FF 0006       .align 64
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+040040 4D 4F 53    0007       .db "MOS"
+040043 00          0008       .db 00h
+040044 01          0009       .db 01h
+040045             0010   
+040045             0011   start:
+040045 F5          0012       push af
+040046 C5          0013       push bc
+040047 D5          0014       push de
+040048 DD E5       0015       push ix
+04004A FD E5       0016       push iy
+04004C             0017   
+04004C CD D9 13 04 0018   	call main
+040050             0019   
+040050             0020   exit:
+040050 FD E1       0021       pop iy
+040052 DD E1       0022       pop ix
+040054 D1          0023       pop de
+040055 C1          0024       pop bc
+040056 F1          0025       pop af
+040057 21 00 00 00 0026       ld hl,0
+04005B C9          0027       ret
+04005C             0028   
+04005C             0029   ; API includes
+04005C             0030       include "mos_api.inc"
+04005C             0001*  ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/mos_api.inc
+04005C             0002*  ;
+04005C             0003*  ; Title:	AGON MOS - API for user projects
+04005C             0004*  ; Author:	Dean Belfield
+04005C             0005*  ;			Adapted for agon-ez80asm by Jeroen Venema
+04005C             0006*  ;			Added MOS error codes for return in HL
+04005C             0007*  ; Created:	03/08/2022
+04005C             0008*  ; Last Updated:	10/08/2023
+04005C             0009*  ;
+04005C             0010*  ; Modinfo:
+04005C             0011*  ; 05/08/2022:	Added mos_feof
+04005C             0012*  ; 09/08/2022:	Added system variables: cursorX, cursorY
+04005C             0013*  ; 18/08/2022:	Added system variables: scrchar, scrpixel, audioChannel, audioSuccess, vpd_pflags
+04005C             0014*  ; 05/09/2022:	Added mos_ren, vdp_pflag_mode
+04005C             0015*  ; 24/09/2022:	Added mos_getError, mos_mkdir
+04005C             0016*  ; 13/10/2022:	Added mos_oscli
+04005C             0017*  ; 23/02/2023:	Added more sysvars, fixed typo in sysvar_audioSuccess, offsets for sysvar_scrCols, sysvar_scrRows
+04005C             0018*  ; 04/03/2023:	Added sysvar_scrpixelIndex
+04005C             0019*  ; 08/03/2023:	Renamed sysvar_keycode to sysvar_keyascii, added sysvar_vkeycode
+04005C             0020*  ; 15/03/2023:	Added mos_copy, mos_getrtc, mos_setrtc, rtc, vdp_pflag_rtc
+04005C             0021*  ; 21/03/2023:	Added mos_setintvector, sysvars for keyboard status, vdu codes for vdp
+04005C             0022*  ; 22/03/2023:	The VDP commands are now indexed from 0x80
+04005C             0023*  ; 29/03/2023:	Added mos_uopen, mos_uclose, mos_ugetc, mos_uputc
+04005C             0024*  ; 13/04/2023:	Added FatFS file structures (FFOBJID, FIL, DIR, FILINFO)
+04005C             0025*  ; 15/04/2023:	Added mos_getfil, mos_fread, mos_fwrite and mos_flseek
+04005C             0026*  ; 19/05/2023:	Added sysvar_scrMode
+04005C             0027*  ; 05/06/2023:	Added sysvar_rtcEnable
+04005C             0028*  ; 03/08/2023:	Added mos_setkbvector
+04005C             0029*  ; 10/08/2023:	Added mos_getkbmap
+04005C             0030*  
+04005C             0031*  ; VDP control (VDU 23, 0, n)
+04005C             0032*  ;
+04005C             0033*  vdp_gp:				EQU 80h
+04005C             0034*  vdp_keycode:		EQU 81h
+04005C             0035*  vdp_cursor:			EQU	82h
+04005C             0036*  vdp_scrchar:		EQU	83h
+04005C             0037*  vdp_scrpixel:		EQU	84h
+04005C             0038*  vdp_audio:			EQU	85h
+04005C             0039*  vdp_mode:			EQU	86h
+04005C             0040*  vdp_rtc:			EQU	87h
+04005C             0041*  vdp_keystate:		EQU	88h
+04005C             0042*  vdp_logicalcoords:	EQU	C0h
+04005C             0043*  vdp_terminalmode:	EQU	FFh
+04005C             0044*  
+04005C             0045*  ;
+04005C             0046*  ; Macro for calling the API
+04005C             0047*  ; Parameters:
+04005C             0048*  ; - function: One of the function numbers listed below
+04005C             0049*  ;
+04005C             0050*  	MACRO	MOSCALL	function
+04005C             0051*  			LD	A, function
+04005C             0052*  			RST.LIL	08h
+04005C             0053*  	ENDMACRO
+04005C             0054*  
+04005C             0055*  ; MOS high level functions
+04005C             0056*  ;
+04005C             0057*  ; Get keycode
+04005C             0058*  ; Returns:
+04005C             0059*  ;  A: ASCII code of key pressed, or 0 if no key pressed
+04005C             0060*  mos_getkey:			EQU	00h
+04005C             0061*  
+04005C             0062*  ; Load an area of memory from a file.
+04005C             0063*  ; HLU: Address of filename (zero terminated)
+04005C             0064*  ; DEU: Address at which to load
+04005C             0065*  ; BCU: Maximum allowed size (bytes)
+04005C             0066*  ; Returns:
+04005C             0067*  ; - A: File error, or 0 if OK
+04005C             0068*  ; - F: Carry reset indicates no room for file.
+04005C             0069*  mos_load:			EQU	01h
+04005C             0070*  
+04005C             0071*  ; Save a file to the SD card from RAM
+04005C             0072*  ; HLU: Address of filename (zero terminated)
+04005C             0073*  ; DEU: Address to save from
+04005C             0074*  ; BCU: Number of bytes to save
+04005C             0075*  ; Returns:
+04005C             0076*  ; - A: File error, or 0 if OK
+04005C             0077*  ; - F: Carry reset indicates no room for file
+04005C             0078*  mos_save:			EQU	02h
+04005C             0079*  
+04005C             0080*  ; Change directory
+04005C             0081*  ; HLU: Address of path (zero terminated)
+04005C             0082*  ; Returns:
+04005C             0083*  ; - A: File error, or 0 if OK
+04005C             0084*  mos_cd:				EQU	03h
+04005C             0085*  
+04005C             0086*  ; Directory listing
+04005C             0087*  ; HLU: Address of path (zero terminated)
+04005C             0088*  ; Returns:
+04005C             0089*  ; - A: File error, or 0 if OK
+04005C             0090*  mos_dir:			EQU	04h
+04005C             0091*  
+04005C             0092*  ; Delete a file from the SD card
+04005C             0093*  ; HLU: Address of filename (zero terminated)
+04005C             0094*  ; Returns:
+04005C             0095*  ; - A: File error, or 0 if OK
+04005C             0096*  mos_del:			EQU	05h
+04005C             0097*  
+04005C             0098*  ; Rename a file on the SD card
+04005C             0099*  ; HLU: Address of filename1 (zero terminated)
+04005C             0100*  ; DEU: Address of filename2 (zero terminated)
+04005C             0101*  ; Returns:
+04005C             0102*  ; - A: File error, or 0 if OK
+04005C             0103*  mos_ren:			EQU	06h
+04005C             0104*  
+04005C             0105*  ; Make a folder on the SD card
+04005C             0106*  ; HLU: Address of filename (zero terminated)
+04005C             0107*  ; Returns:
+04005C             0108*  ; - A: File error, or 0 if OK
+04005C             0109*  mos_mkdir:			EQU	07h
+04005C             0110*  
+04005C             0111*  ; Get a pointer to a system variable
+04005C             0112*  ; Returns:
+04005C             0113*  ; IXU: Pointer to system variables (see mos_api.asm for more details)
+04005C             0114*  mos_sysvars:		EQU	08h
+04005C             0115*  
+04005C             0116*  ; Invoke the line editor
+04005C             0117*  ; HLU: Address of the buffer
+04005C             0118*  ; BCU: Buffer length
+04005C             0119*  ;   E: 0 to not clear buffer, 1 to clear
+04005C             0120*  ; Returns:
+04005C             0121*  ;   A: Key that was used to exit the input loop (CR=13, ESC=27)
+04005C             0122*  mos_editline:		EQU	09h
+04005C             0123*  
+04005C             0124*  ; Open a file
+04005C             0125*  ; HLU: Filename
+04005C             0126*  ;   C: Mode
+04005C             0127*  ; Returns:
+04005C             0128*  ;   A: Filehandle, or 0 if couldn't open
+04005C             0129*  mos_fopen:			EQU	0Ah
+04005C             0130*  
+04005C             0131*  ; Close a file
+04005C             0132*  ;   C: Filehandle
+04005C             0133*  ; Returns
+04005C             0134*  ;   A: Number of files still open
+04005C             0135*  mos_fclose:			EQU	0Bh
+04005C             0136*  
+04005C             0137*  ; Get a character from a file
+04005C             0138*  ;   C: Filehandle
+04005C             0139*  ; Returns:
+04005C             0140*  ;   A: Character read
+04005C             0141*  ;   F: C set if last character in file, otherwise NC
+04005C             0142*  mos_fgetc:			EQU	0Ch
+04005C             0143*  
+04005C             0144*  ; Write a character to a file
+04005C             0145*  ;   C: Filehandle
+04005C             0146*  ;   B: Character to write
+04005C             0147*  mos_fputc:			EQU	0Dh
+04005C             0148*  
+04005C             0149*  ; Check whether we're at the end of the file
+04005C             0150*  ;   C: Filehandle
+04005C             0151*  ; Returns:
+04005C             0152*  ;   A: 1 if at end of file, otherwise 0
+04005C             0153*  mos_feof:			EQU	0Eh
+04005C             0154*  
+04005C             0155*  ; Copy an error message
+04005C             0156*  ;   E: The error code
+04005C             0157*  ; HLU: Address of buffer to copy message into
+04005C             0158*  ; BCU: Size of buffer
+04005C             0159*  mos_getError:		EQU	0Fh
+04005C             0160*  
+04005C             0161*  ; Execute a MOS command
+04005C             0162*  ; HLU: Pointer the the MOS command string
+04005C             0163*  ; DEU: Pointer to additional command structure
+04005C             0164*  ; BCU: Number of additional commands
+04005C             0165*  ; Returns:
+04005C             0166*  ;   A: MOS error code
+04005C             0167*  mos_oscli:			EQU	10h
+04005C             0168*  
+04005C             0169*  ; Copy a file on the SD card
+04005C             0170*  ; HLU: Address of filename1 (zero terminated)
+04005C             0171*  ; DEU: Address of filename2 (zero terminated)
+04005C             0172*  ; Returns:
+04005C             0173*  ; - A: File error, or 0 if OK
+04005C             0174*  mos_copy:			EQU	11h
+04005C             0175*  
+04005C             0176*  ; Fetch a RTC string
+04005C             0177*  ; HLU: Pointer to a buffer to copy the string to
+04005C             0178*  ; Returns:
+04005C             0179*  ;   A: Length of time
+04005C             0180*  mos_getrtc:			EQU	12h
+04005C             0181*  
+04005C             0182*  ; Set the RTC
+04005C             0183*  ; HLU: Pointer to a buffer with the time data in
+04005C             0184*  mos_setrtc:			EQU	13h
+04005C             0185*  
+04005C             0186*  ; Set an interrupt vector
+04005C             0187*  ; HLU: Pointer to the interrupt vector (24-bit pointer)
+04005C             0188*  ;   E: Vector # to set
+04005C             0189*  ; Returns:
+04005C             0190*  ; HLU: Pointer to the previous vector
+04005C             0191*  mos_setintvector:	EQU	14h
+04005C             0192*  
+04005C             0193*  ; Open UART1
+04005C             0194*  ; IXU: Pointer to UART struct
+04005C             0195*  ;	+0: Baud rate (24-bit, little endian)
+04005C             0196*  ;	+3: Data bits
+04005C             0197*  ;	+4: Stop bits
+04005C             0198*  ;	+5: Parity bits
+04005C             0199*  ;	+6: Flow control (0: None, 1: Hardware)
+04005C             0200*  ;	+7: Enabled interrupts
+04005C             0201*  ; Returns:
+04005C             0202*  ;   A: Error code (0 = no error)
+04005C             0203*  mos_uopen:			EQU	15h
+04005C             0204*  
+04005C             0205*  ; Close UART1
+04005C             0206*  mos_uclose:			EQU	16h
+04005C             0207*  
+04005C             0208*  ; Get a character from UART1
+04005C             0209*  ; Returns:
+04005C             0210*  ;   A: Character read
+04005C             0211*  ;   F: C if successful
+04005C             0212*  ;   F: NC if the UART is not open
+04005C             0213*  mos_ugetc:			EQU	17h
+04005C             0214*  
+04005C             0215*  ; Write a character to UART1
+04005C             0216*  ;   C: Character to write
+04005C             0217*  ; Returns:
+04005C             0218*  ;   F: C if successful
+04005C             0219*  ;   F: NC if the UART is not open
+04005C             0220*  mos_uputc:			EQU	18h
+04005C             0221*  
+04005C             0222*  ; Convert a file handle to a FIL structure pointer
+04005C             0223*  ;   C: Filehandle
+04005C             0224*  ; Returns:
+04005C             0225*  ; HLU: Pointer to a FIL struct
+04005C             0226*  mos_getfil:			EQU	19h
+04005C             0227*  
+04005C             0228*  ; Read a block of data from a file
+04005C             0229*  ;   C: Filehandle
+04005C             0230*  ; HLU: Pointer to where to write the data to
+04005C             0231*  ; DEU: Number of bytes to read
+04005C             0232*  ; Returns:
+04005C             0233*  ; DEU: Number of bytes read
+04005C             0234*  mos_fread:			EQU	1Ah
+04005C             0235*  
+04005C             0236*  ; Write a block of data to a file
+04005C             0237*  ;  C: Filehandle
+04005C             0238*  ; HLU: Pointer to where the data is
+04005C             0239*  ; DEU: Number of bytes to write
+04005C             0240*  ; Returns:
+04005C             0241*  ; DEU: Number of bytes read
+04005C             0242*  mos_fwrite:			EQU	1Bh
+04005C             0243*  
+04005C             0244*  ; Move the read/write pointer in a file
+04005C             0245*  ;   C: Filehandle
+04005C             0246*  ; HLU: Least significant 3 bytes of the offset from the start of the file (DWORD)
+04005C             0247*  ;   E: Most significant byte of the offset
+04005C             0248*  ; Returns:
+04005C             0249*  ;   A: FRESULT
+04005C             0250*  mos_flseek:			EQU	1Ch
+04005C             0251*  
+04005C             0252*  ; Move the read/write pointer in a file relative to the current position
+04005C             0253*  ;   C: Filehandle
+04005C             0254*  ; DEU: Signed 24-bit offset
+04005C             0255*  ; Returns:
+04005C             0256*  ;   A: FRESULT
+04005C             0257*  mos_api_flseek_rel:
+04005C C5          0258*  	push bc ; back up file handle in c
+04005D D5          0259*  	push de ; save offset
+04005E             0260*  	MOSCALL mos_getfil
+04005E 3E 19       0001*M 			LD	A, function
+040060 5B CF       0002*M 			RST.LIL	08h
+040062 E5          0261*  	push hl
+040063 FD E1       0262*  	pop iy ; iy points to FIL struct
+040065 FD 27 11    0263*  	ld hl,(iy+fil_fptr) ; get lowest 3 bytes of current position
+040068 AF          0264*  	xor a ; clear carry
+040069 D1          0265*  	pop de ; restore offset
+04006A ED 5A       0266*  	adc hl,de ; adc the offset because we need sign flag
+04006C F2 74 00 04 0267*  	jp p,@not_neg
+040070 21 00 00 00 0268*  	ld hl,0 ; seek to beginning of file
+040074             0269*  @not_neg:
+040074 C1          0270*  	pop bc ; restore file handle to c
+040075 1E 00       0271*  	ld e,0 ; highest byte of offset
+040077             0272*  	MOSCALL mos_flseek
+040077 3E 1C       0001*M 			LD	A, function
+040079 5B CF       0002*M 			RST.LIL	08h
+04007B C9          0273*  	ret
+04007C             0274*  
+04007C             0275*  ; Set a VDP keyboard packet receiver callback
+04007C             0276*  ;   C: If non-zero then set the top byte of HLU(callback address)  to MB (for ADL=0 callers)
+04007C             0277*  ; HLU: Pointer to callback
+04007C             0278*  mos_setkbvector:	EQU	1Dh
+04007C             0279*  
+04007C             0280*  ; Get the address of the keyboard map
+04007C             0281*  ; Returns:
+04007C             0282*  ; IXU: Base address of the keymap
+04007C             0283*  mos_getkbmap:		EQU	1Eh
+04007C             0284*  
+04007C             0285*  ; MOS program exit codes
+04007C             0286*  ;
+04007C             0287*  EXIT_OK:				EQU  0;	"OK",
+04007C             0288*  EXIT_ERROR_SD_ACCESS:	EQU	 1;	"Error accessing SD card",
+04007C             0289*  EXIT_ERROR_ASSERTION:	EQU  2;	"Assertion failed",
+04007C             0290*  EXIT_SD_CARDFAILURE:	EQU  3;	"SD card failure",
+04007C             0291*  EXIT_FILENOTFOUND:		EQU  4;	"Could not find file",
+04007C             0292*  EXIT_PATHNOTFOUND:		EQU  5;	"Could not find path",
+04007C             0293*  EXIT_INVALIDPATHNAME:	EQU  6;	"Invalid path name",
+04007C             0294*  EXIT_ACCESSDENIED_FULL:	EQU  7;	"Access denied or directory full",
+04007C             0295*  EXIT_ACCESSDENIED:		EQU  8;	"Access denied",
+04007C             0296*  EXIT_INVALIDOBJECT:		EQU  9;	"Invalid file/directory object",
+04007C             0297*  EXIT_SD_WRITEPROTECTED:	EQU 10;	"SD card is write protected",
+04007C             0298*  EXIT_INVALIDDRIVENUMBER:EQU 11;	"Logical drive number is invalid",
+04007C             0299*  EXIT_NOVOLUMEWORKAREA:	EQU 12;	"Volume has no work area",
+04007C             0300*  EXIT_NOVALIDFATVOLUME:	EQU 13;	"No valid FAT volume",
+04007C             0301*  EXIT_ERRORMKFS:			EQU 14;	"Error occurred during mkfs",
+04007C             0302*  EXIT_VOLUMETIMEOUT:		EQU 15;	"Volume timeout",
+04007C             0303*  EXIT_VOLUMELOCKED:		EQU 16;	"Volume locked",
+04007C             0304*  EXIT_LFNALLOCATION:		EQU 17;	"LFN working buffer could not be allocated",
+04007C             0305*  EXIT_MAXOPENFILES:		EQU 18;	"Too many open files",
+04007C             0306*  EXIT_INVALIDPARAMETER:	EQU 19;	"Invalid parameter",
+04007C             0307*  EXIT_INVALIDCOMMAND:	EQU 20;	"Invalid command",
+04007C             0308*  EXIT_INVALIDEXECUTABLE:	EQU 21;	"Invalid executable",
+04007C             0309*  
+04007C             0310*  ; FatFS file access functions
+04007C             0311*  ;
+04007C             0312*  ; Open a file
+04007C             0313*  ; HLU: Pointer to a blank FIL struct
+04007C             0314*  ; DEU: Pointer to the filename (0 terminated)
+04007C             0315*  ;   C: File mode
+04007C             0316*  ; Returns:
+04007C             0317*  ;   A: FRESULT
+04007C             0318*  ffs_fopen:			EQU	80h
+04007C             0319*  
+04007C             0320*  ; Close a file
+04007C             0321*  ; HLU: Pointer to a blank FIL struct
+04007C             0322*  ; Returns:
+04007C             0323*  ;   A: FRESULT
+04007C             0324*  ffs_fclose:			EQU	81h
+04007C             0325*  
+04007C             0326*  ; Read data from a file
+04007C             0327*  ; HLU: Pointer to a FIL struct
+04007C             0328*  ; DEU: Pointer to where to write the file out
+04007C             0329*  ; BCU: Number of bytes to read
+04007C             0330*  ; Returns:
+04007C             0331*  ;   A: FRESULT
+04007C             0332*  ; BCU: Number of bytes read
+04007C             0333*  ffs_fread:			EQU	82h
+04007C             0334*  
+04007C             0335*  ; Write data to a file
+04007C             0336*  ; HLU: Pointer to a FIL struct
+04007C             0337*  ; DEU: Pointer to the data to write out
+04007C             0338*  ; BCU: Number of bytes to write
+04007C             0339*  ; Returns:
+04007C             0340*  ;   A: FRESULT
+04007C             0341*  ; BCU: Number of bytes written
+04007C             0342*  ffs_fwrite:			EQU	83h
+04007C             0343*  
+04007C             0344*  ; Move the read/write pointer in a file
+04007C             0345*  ; HLU: Pointer to a FIL struct
+04007C             0346*  ; DEU: Least significant 3 bytes of the offset from the start of the file (DWORD)
+04007C             0347*  ;   C: Most significant byte of the offset
+04007C             0348*  ; Returns:
+04007C             0349*  ;   A: FRESULT
+04007C             0350*  ffs_flseek:			EQU	84h
+04007C             0351*  
+04007C             0352*  ; not implemented
+04007C             0353*  ffs_ftruncate:		EQU	85h
+04007C             0354*  
+04007C             0355*  ; not implemented
+04007C             0356*  ffs_fsync:			EQU	86h
+04007C             0357*  
+04007C             0358*  ; not implemented
+04007C             0359*  ffs_fforward:		EQU	87h
+04007C             0360*  
+04007C             0361*  ; not implemented
+04007C             0362*  ffs_fexpand:		EQU	88h
+04007C             0363*  
+04007C             0364*  ; not implemented
+04007C             0365*  ffs_fgets:			EQU	89h
+04007C             0366*  
+04007C             0367*  ; not implemented
+04007C             0368*  ffs_fputc:			EQU	8Ah
+04007C             0369*  
+04007C             0370*  ; not implemented
+04007C             0371*  ffs_fputs:			EQU	8Bh
+04007C             0372*  
+04007C             0373*  ; not implemented
+04007C             0374*  ffs_fprintf:		EQU	8Ch
+04007C             0375*  
+04007C             0376*  ; not implemented
+04007C             0377*  ffs_ftell:			EQU	8Dh
+04007C             0378*  
+04007C             0379*  ; Check for EOF
+04007C             0380*  ; HLU: Pointer to a FILINFO struct
+04007C             0381*  ; Returns:
+04007C             0382*  ;   A: 1 if end of file, otherwise 0
+04007C             0383*  ffs_feof:			EQU	8Eh
+04007C             0384*  
+04007C             0385*  ; not implemented
+04007C             0386*  ffs_fsize:			EQU	8Fh
+04007C             0387*  
+04007C             0388*  ; not implemented
+04007C             0389*  ffs_ferror:			EQU	90h
+04007C             0390*  
+04007C             0391*  ; FatFS directory access functions
+04007C             0392*  ;
+04007C             0393*  ; Open a directory
+04007C             0394*  ; HLU: Pointer to a blank DIR struct
+04007C             0395*  ; DEU: Pointer to the directory path
+04007C             0396*  ; Returns:
+04007C             0397*  ; A: FRESULT
+04007C             0398*  ffs_dopen:			EQU	91h
+04007C             0399*  
+04007C             0400*  ; Close a directory
+04007C             0401*  ; HLU: Pointer to an open DIR struct
+04007C             0402*  ; Returns:
+04007C             0403*  ; A: FRESULT
+04007C             0404*  ffs_dclose:			EQU	92h
+04007C             0405*  
+04007C             0406*  ; Read the next FILINFO from an open DIR
+04007C             0407*  ; HLU: Pointer to an open DIR struct
+04007C             0408*  ; DEU: Pointer to an empty FILINFO struct
+04007C             0409*  ; Returns:
+04007C             0410*  ; A: FRESULT
+04007C             0411*  ffs_dread:			EQU	93h
+04007C             0412*  
+04007C             0413*  ; not implemented
+04007C             0414*  ffs_dfindfirst:		EQU	94h
+04007C             0415*  
+04007C             0416*  ; not implemented
+04007C             0417*  ffs_dfindnext:		EQU	95h
+04007C             0418*  
+04007C             0419*  ; FatFS file and directory management functions
+04007C             0420*  ;
+04007C             0421*  ; Check file exists
+04007C             0422*  ; HLU: Pointer to a FILINFO struct
+04007C             0423*  ; DEU: Pointer to the filename (0 terminated)
+04007C             0424*  ; Returns:
+04007C             0425*  ;   A: FRESULT
+04007C             0426*  ffs_stat:			EQU	96h
+04007C             0427*  
+04007C             0428*  ; not implemented
+04007C             0429*  ffs_unlink:			EQU	97h
+04007C             0430*  
+04007C             0431*  ; not implemented
+04007C             0432*  ffs_rename:			EQU	98h
+04007C             0433*  
+04007C             0434*  ; not implemented
+04007C             0435*  ffs_chmod:			EQU	99h
+04007C             0436*  
+04007C             0437*  ; not implemented
+04007C             0438*  ffs_utime:			EQU	9Ah
+04007C             0439*  
+04007C             0440*  ; not implemented
+04007C             0441*  ffs_mkdir:			EQU	9Bh
+04007C             0442*  
+04007C             0443*  ; not implemented
+04007C             0444*  ffs_chdir:			EQU	9Ch
+04007C             0445*  
+04007C             0446*  ; not implemented
+04007C             0447*  ffs_chdrive:		EQU	9Dh
+04007C             0448*  
+04007C             0449*  ; Copy the current directory (string) into buffer (hl)
+04007C             0450*  ; HLU: Pointer to a buffer
+04007C             0451*  ; BCU: Maximum length of buffer
+04007C             0452*  ; Returns:
+04007C             0453*  ; A: FRESULT
+04007C             0454*  ffs_getcwd:			EQU	9Eh
+04007C             0455*  
+04007C             0456*  ; FatFS volume management and system configuration functions
+04007C             0457*  ;
+04007C             0458*  ; not implemented
+04007C             0459*  ffs_mount:			EQU	9Fh
+04007C             0460*  
+04007C             0461*  ; not implemented
+04007C             0462*  ffs_mkfs:			EQU	A0h
+04007C             0463*  
+04007C             0464*  ; not implemented
+04007C             0465*  ffs_fdisk:			EQU	A1h
+04007C             0466*  
+04007C             0467*  ; not implemented
+04007C             0468*  ffs_getfree:		EQU	A2h
+04007C             0469*  
+04007C             0470*  ; not implemented
+04007C             0471*  ffs_getlabel:		EQU	A3h
+04007C             0472*  
+04007C             0473*  ; not implemented
+04007C             0474*  ffs_setlabel:		EQU	A4h
+04007C             0475*  
+04007C             0476*  ; not implemented
+04007C             0477*  ffs_setcp:			EQU	A5h
+04007C             0478*  
+04007C             0479*  ; File access modes
+04007C             0480*  ;
+04007C             0481*  fa_read:			EQU	01h
+04007C             0482*  fa_write:			EQU	02h
+04007C             0483*  fa_open_existing:	EQU	00h
+04007C             0484*  fa_create_new:		EQU	04h
+04007C             0485*  fa_create_always:	EQU	08h
+04007C             0486*  fa_open_always:		EQU	10h
+04007C             0487*  fa_open_append:		EQU	30h
+04007C             0488*  
+04007C             0489*  ; System variable indexes for api_sysvars
+04007C             0490*  ; Index into _sysvars in globals.asm
+04007C             0491*  ;
+04007C             0492*  sysvar_time:			EQU	00h	; 4: Clock timer in centiseconds (incremented by 2 every VBLANK)
+04007C             0493*  sysvar_vpd_pflags:		EQU	04h	; 1: Flags to indicate completion of VDP commands
+04007C             0494*  sysvar_keyascii:		EQU	05h	; 1: ASCII keycode, or 0 if no key is pressed
+04007C             0495*  sysvar_keymods:			EQU	06h	; 1: Keycode modifiers
+04007C             0496*  sysvar_cursorX:			EQU	07h	; 1: Cursor X position
+04007C             0497*  sysvar_cursorY:			EQU	08h	; 1: Cursor Y position
+04007C             0498*  sysvar_scrchar:			EQU	09h	; 1: Character read from screen
+04007C             0499*  sysvar_scrpixel:		EQU	0Ah	; 3: Pixel data read from screen (R,B,G)
+04007C             0500*  sysvar_audioChannel:	EQU	0Dh	; 1: Audio channel
+04007C             0501*  sysvar_audioSuccess:	EQU	0Eh	; 1: Audio channel note queued (0 = no, 1 = yes)
+04007C             0502*  sysvar_scrWidth:		EQU	0Fh	; 2: Screen width in pixels
+04007C             0503*  sysvar_scrHeight:		EQU	11h	; 2: Screen height in pixels
+04007C             0504*  sysvar_scrCols:			EQU	13h	; 1: Screen columns in characters
+04007C             0505*  sysvar_scrRows:			EQU	14h	; 1: Screen rows in characters
+04007C             0506*  sysvar_scrColours:		EQU	15h	; 1: Number of colours displayed
+04007C             0507*  sysvar_scrpixelIndex:	EQU	16h	; 1: Index of pixel data read from screen
+04007C             0508*  sysvar_vkeycode:		EQU	17h	; 1: Virtual key code from FabGL
+04007C             0509*  sysvar_vkeydown:		EQU	18h	; 1: Virtual key state from FabGL (0=up, 1=down)
+04007C             0510*  sysvar_vkeycount:		EQU	19h	; 1: Incremented every time a key packet is received
+04007C             0511*  sysvar_rtc:				EQU	1Ah	; 6: Real time clock data
+04007C             0512*  sysvar_spare:			EQU	20h	; 2: Spare, previously used by rtc
+04007C             0513*  sysvar_keydelay:		EQU	22h	; 2: Keyboard repeat delay
+04007C             0514*  sysvar_keyrate:			EQU	24h	; 2: Keyboard repeat reat
+04007C             0515*  sysvar_keyled:			EQU	26h	; 1: Keyboard LED status
+04007C             0516*  sysvar_scrMode:			EQU	27h	; 1: Screen mode
+04007C             0517*  sysvar_rtcEnable:		EQU	28h	; 1: RTC enable flag (0: disabled, 1: use ESP32 RTC)
+04007C             0518*  
+04007C             0519*  ; Flags for the VPD protocol
+04007C             0520*  ;
+04007C             0521*  vdp_pflag_cursor:		EQU	00000001b
+04007C             0522*  vdp_pflag_scrchar:		EQU	00000010b
+04007C             0523*  vdp_pflag_point:		EQU	00000100b
+04007C             0524*  vdp_pflag_audio:		EQU	00001000b
+04007C             0525*  vdp_pflag_mode:			EQU	00010000b
+04007C             0526*  vdp_pflag_rtc:			EQU	00100000b
+04007C             0527*  
+04007C             0528*  ;
+04007C             0529*  ; FatFS structures
+04007C             0530*  ; These mirror the structures contained in src_fatfs/ff.h in the MOS project
+04007C             0531*  ;
+04007C             0532*  ; Object ID and allocation information (FFOBJID)
+04007C             0533*  ;
+04007C             0534*  ; Indexes into FFOBJID structure
+04007C             0535*  ffobjid_fs:			EQU	0	; 3: Pointer to the hosting volume of this object
+04007C             0536*  ffobjid_id:			EQU	3	; 2: Hosting volume mount ID
+04007C             0537*  ffobjid_attr:		EQU	5	; 1: Object attribute
+04007C             0538*  ffobjid_stat:		EQU	6	; 1: Object chain status (b1-0: =0:not contiguous, =2:contiguous, =3:fragmented in this session, b2:sub-directory stretched)
+04007C             0539*  ffobjid_sclust:		EQU	7	; 4: Object data start cluster (0:no cluster or root directory)
+04007C             0540*  ffobjid_objsize:	EQU	11	; 4: Object size (valid when sclust != 0)
+04007C             0541*  ;
+04007C             0542*  ; File object structure (FIL)
+04007C             0543*  ;
+04007C             0544*  ; Indexes into FIL structure
+04007C             0545*  fil_obj:		EQU 0	; 15: Object identifier
+04007C             0546*  fil_flag:		EQU	15 	;  1: File status flags
+04007C             0547*  fil_err:		EQU	16	;  1: Abort flag (error code)
+04007C             0548*  fil_fptr:		EQU	17	;  4: File read/write pointer (Zeroed on file open)
+04007C             0549*  fil_clust:		EQU	21	;  4: Current cluster of fpter (invalid when fptr is 0)
+04007C             0550*  fil_sect:		EQU	25	;  4: Sector number appearing in buf[] (0:invalid)
+04007C             0551*  fil_dir_sect:	EQU	29	;  4: Sector number containing the directory entry
+04007C             0552*  fil_dir_ptr:	EQU	33	;  3: Pointer to the directory entry in the win[]
+04007C             0553*  ;
+04007C             0554*  ; Directory object structure (DIR)
+04007C             0555*  ; Indexes into DIR structure
+04007C             0556*  dir_obj:		EQU  0	; 15: Object identifier
+04007C             0557*  dir_dptr:		EQU	15	;  4: Current read/write offset
+04007C             0558*  dir_clust:		EQU	19	;  4: Current cluster
+04007C             0559*  dir_sect:		EQU	23	;  4: Current sector (0:Read operation has terminated)
+04007C             0560*  dir_dir:		EQU	27	;  3: Pointer to the directory item in the win[]
+04007C             0561*  dir_fn:			EQU	30	; 12: SFN (in/out) {body[8],ext[3],status[1]}
+04007C             0562*  dir_blk_ofs:	EQU	42	;  4: Offset of current entry block being processed (0xFFFFFFFF:Invalid)
+04007C             0563*  ;
+04007C             0564*  ; File information structure (FILINFO)
+04007C             0565*  ;
+04007C             0566*  ; Indexes into FILINFO structure
+04007C             0567*  filinfo_fsize:		EQU 0	;   4: File size
+04007C             0568*  filinfo_fdate:		EQU	4	;   2: Modified date
+04007C             0569*  filinfo_ftime:		EQU	6	;   2: Modified time
+04007C             0570*  filinfo_fattrib:	EQU	8	;   1: File attribute
+04007C             0571*  filinfo_altname:	EQU	9	;  13: Alternative file name
+04007C             0572*  filinfo_fname:		EQU	22	; 256: Primary file name
+04007C             0031       include "functions.inc"
+04007C             0001*      MACRO printChar char
+04007C             0002*          LD A, char
+04007C             0003*          RST.LIL 10h
+04007C             0004*      ENDMACRO
+04007C             0005*  
+04007C             0006*  ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/functions.s
+04007C             0007*  ; Print a zero-terminated string
+04007C             0008*  ; HL: Pointer to string
+04007C             0009*  printString:
+04007C C5          0010*  	PUSH	BC
+04007D 01 00 00 00 0011*  	LD		BC,0
+040081 3E 00       0012*  	LD 	 	A,0
+040083 5B DF       0013*  	RST.LIL 18h
+040085 C1          0014*  	POP		BC
+040086 C9          0015*  	RET
+040087             0016*  ; print a VDU sequence
+040087             0017*  ; HL: Pointer to VDU sequence - <1 byte length> <data>
+040087             0018*  sendVDUsequence:
+040087 C5          0019*  	PUSH	BC
+040088 01 00 00 00 0020*  	LD		BC, 0
+04008C 4E          0021*  	LD		C, (HL)
+04008D 5B DF       0022*  	RST.LIL	18h
+04008F C1          0023*  	POP		BC
+040090 C9          0024*  	RET
+040091             0025*  ; Print Newline sequence to VDP
+040091             0026*  printNewLine:
+040091 F5          0027*      push af ; for some reason rst.lil 10h sets carry flag
+040092 3E 0D       0028*  	LD	A, '\r'
+040094 5B D7       0029*  	RST.LIL 10h
+040096 3E 0A       0030*  	LD	A, '\n'
+040098 5B D7       0031*  	RST.LIL 10h
+04009A F1          0032*      pop af
+04009B C9          0033*  	RET
+04009C             0034*  ; Print a 24-bit HEX number
+04009C             0035*  ; HLU: Number to print
+04009C             0036*  printHex24:
+04009C E5          0037*  	PUSH	HL
+04009D 21 02 00 00 0038*  	LD		HL, 2
+0400A1 39          0039*  	ADD		HL, SP
+0400A2 7E          0040*  	LD		A, (HL)
+0400A3 E1          0041*  	POP		HL
+0400A4 CD AE 00 04 0042*  	CALL	printHex8
+0400A8             0043*  ; Print a 16-bit HEX number
+0400A8             0044*  ; HL: Number to print
+0400A8             0045*  printHex16:
+0400A8 7C          0046*  	LD		A,H
+0400A9 CD AE 00 04 0047*  	CALL	printHex8
+0400AD 7D          0048*  	LD		A,L
+0400AE             0049*  ; Print an 8-bit HEX number
+0400AE             0050*  ; A: Number to print
+0400AE             0051*  printHex8:
+0400AE 4F          0052*  	LD		C,A
+0400AF 1F          0053*  	RRA
+0400B0 1F          0054*  	RRA
+0400B1 1F          0055*  	RRA
+0400B2 1F          0056*  	RRA
+0400B3 CD B8 00 04 0057*  	CALL	@F
+0400B7 79          0058*  	LD		A,C
+0400B8             0059*  @@:
+0400B8 E6 0F       0060*  	AND		0Fh
+0400BA C6 90       0061*  	ADD		A,90h
+0400BC 27          0062*  	DAA
+0400BD CE 40       0063*  	ADC		A,40h
+0400BF 27          0064*  	DAA
+0400C0 5B D7       0065*  	RST.LIL	10h
+0400C2 C9          0066*  	RET
+0400C3             0067*  
+0400C3             0068*  ; Print a 0x HEX prefix
+0400C3             0069*  DisplayHexPrefix:
+0400C3 3E 30       0070*  	LD	A, '0'
+0400C5 5B D7       0071*  	RST.LIL 10h
+0400C7 3E 78       0072*  	LD	A, 'x'
+0400C9 5B D7       0073*  	RST.LIL 10h
+0400CB C9          0074*  	RET
+0400CC             0075*  
+0400CC             0076*      MACRO printDecBC
+0400CC             0077*          push hl
+0400CC             0078*          push bc
+0400CC             0079*          pop hl
+0400CC             0080*          call printDec
+0400CC             0081*          pop hl
+0400CC             0082*      ENDMACRO
+0400CC             0083*  
+0400CC             0084*      MACRO printDecDE
+0400CC             0085*          push hl
+0400CC             0086*          push de
+0400CC             0087*          pop hl
+0400CC             0088*          call printDec
+0400CC             0089*          pop hl
+0400CC             0090*      ENDMACRO
+0400CC             0091*  
+0400CC             0092*      MACRO printDecHL
+0400CC             0093*          call printDec
+0400CC             0094*      ENDMACRO
+0400CC             0095*  
+0400CC             0096*      MACRO printDecIX
+0400CC             0097*          push hl
+0400CC             0098*          push ix
+0400CC             0099*          pop hl
+0400CC             0100*          call printDec
+0400CC             0101*          pop hl
+0400CC             0102*      ENDMACRO
+0400CC             0103*  
+0400CC             0104*      MACRO printDecIY
+0400CC             0105*          push hl
+0400CC             0106*          push iy
+0400CC             0107*          pop hl
+0400CC             0108*          call printDec
+0400CC             0109*          pop hl
+0400CC             0110*      ENDMACRO
+0400CC             0111*  
+0400CC             0112*  ; Prints the right justified decimal value in HL without leading zeroes
+0400CC             0113*  ; HL : Value to print
+0400CC             0114*  printDec:
+0400CC             0115*  ; BEGIN MY CODE
+0400CC             0116*  ; back up all the things
+0400CC F5          0117*      push af
+0400CD C5          0118*      push bc
+0400CE D5          0119*      push de
+0400CF E5          0120*      push hl
+0400D0             0121*  ; END MY CODE
+0400D0 11 F8 00 04 0122*  	LD	 DE, _printDecBuffer
+0400D4 CD 01 01 04 0123*  	CALL Num2String
+0400D8             0124*  ; BEGIN MY CODE
+0400D8             0125*  ; replace leading zeroes with spaces
+0400D8 21 F8 00 04 0126*      LD	 HL, _printDecBuffer
+0400DC 06 07       0127*      ld   B, 7 ; if HL was 0, we want to keep the final zero
+0400DE             0128*  @loop:
+0400DE 7E          0129*      LD	 A, (HL)
+0400DF FE 30       0130*      CP	 '0'
+0400E1 C2 EF 00 04 0131*      JP	 NZ, @done
+0400E5 3E 20       0132*      LD   A, ' '
+0400E7 77          0133*      LD	 (HL), A
+0400E8 23          0134*      INC	 HL
+0400E9 CD 9F 0F 04 0135*      CALL vdu_cursor_forward
+0400ED 10 EF       0136*      DJNZ @loop
+0400EF             0137*  @done:
+0400EF             0138*  ; END MY CODE
+0400EF             0139*  	; LD	 HL, _printDecBuffer
+0400EF CD 7C 00 04 0140*  	CALL printString
+0400F3             0141*  ; BEGIN MY CODE
+0400F3             0142*  ; restore all the things
+0400F3 E1          0143*      pop hl
+0400F4 D1          0144*      pop de
+0400F5 C1          0145*      pop bc
+0400F6 F1          0146*      pop af
+0400F7             0147*  ; END MY CODE
+0400F7 C9          0148*  	RET
+0400F8 00 00 00 00 0149*  _printDecBuffer: blkb 9,0 ; nine bytes full of zeroes
+       00 00 00 00 
+       00          
+040101             0150*  
+040101             0151*  ; This routine converts the value from HL into it's ASCII representation,
+040101             0152*  ; starting to memory location pointing by DE, in decimal form and with leading zeroes
+040101             0153*  ; so it will allways be 8 characters length
+040101             0154*  ; HL : Value to convert to string
+040101             0155*  ; DE : pointer to buffer, at least 8 byte + 0
+040101             0156*  Num2String:
+040101 01 80 69 67 0157*  	LD	 BC,-10000000
+040105 CD 38 01 04 0158*  	CALL OneDigit
+040109 01 C0 BD F0 0159*  	LD	 BC,-1000000
+04010D CD 38 01 04 0160*  	CALL OneDigit
+040111 01 60 79 FE 0161*  	LD	 BC,-100000
+040115 CD 38 01 04 0162*  	CALL OneDigit
+040119 01 F0 D8 FF 0163*  	LD   BC,-10000
+04011D CD 38 01 04 0164*  	CALL OneDigit
+040121 01 18 FC FF 0165*  	LD   BC,-1000
+040125 CD 38 01 04 0166*  	CALL OneDigit
+040129 01 9C FF FF 0167*  	LD   BC,-100
+04012D CD 38 01 04 0168*  	CALL OneDigit
+040131 0E F6       0169*  	LD   C,-10
+040133 CD 38 01 04 0170*  	CALL OneDigit
+040137 48          0171*  	LD   C,B
+040138             0172*  OneDigit:
+040138 3E 2F       0173*  	LD   A,'0'-1
+04013A             0174*  DivideMe:
+04013A 3C          0175*  	INC  A
+04013B 09          0176*  	ADD  HL,BC
+04013C 38 FC       0177*  	JR   C,DivideMe
+04013E ED 42       0178*  	SBC  HL,BC
+040140 12          0179*  	LD   (DE),A
+040141 13          0180*  	INC  DE
+040142 C9          0181*  	RET
+040143             0182*  
+040143             0183*  
+040143             0184*  ; #### new functions added by Brandon R. Gates ####
+040143             0185*  
+040143             0186*  ; print the binary representation of the 8-bit value in a
+040143             0187*  ; destroys a, hl, bc
+040143             0188*  printBin8:
+040143 06 08       0189*      ld b,8      ; loop counter for 8 bits
+040145 21 60 01 04 0190*      ld hl,@cmd  ; set hl to the low byte of the output string
+040149             0191*                  ; (which will be the high bit of the value in a)
+040149             0192*  @loop:
+040149 07          0193*      rlca ; put the next highest bit into carry
+04014A 38 04       0194*      jr c,@one
+04014C 36 30       0195*      ld (hl),'0'
+04014E 18 02       0196*      jr @next_bit
+040150             0197*  @one:
+040150 36 31       0198*      ld (hl),'1'
+040152             0199*  @next_bit:
+040152 23          0200*      inc hl
+040153 10 F4       0201*      djnz @loop
+040155             0202*  ; print it
+040155 21 60 01 04 0203*  	ld hl,@cmd
+040159 01 08 00 00 0204*  	ld bc,@end-@cmd
+04015D 5B DF       0205*  	rst.lil $18
+04015F C9          0206*  	ret
+040160             0207*  @cmd: ds 8 ; eight bytes for eight bits
+040168             0208*  @end:
+040168             0209*  
+040168             0210*  ; print the binary representation of the 8-bit value in a
+040168             0211*  ; in reverse order (lsb first)
+040168             0212*  ; destroys a, hl, bc
+040168             0213*  printBin8Rev:
+040168 06 08       0214*      ld b,8      ; loop counter for 8 bits
+04016A 21 85 01 04 0215*      ld hl,@cmd  ; set hl to the low byte of the output string
+04016E             0216*                  ; (which will be the high bit of the value in a)
+04016E             0217*  @loop:
+04016E 0F          0218*      rrca ; put the next lowest bit into carry
+04016F 38 04       0219*      jr c,@one
+040171 36 30       0220*      ld (hl),'0'
+040173 18 02       0221*      jr @next_bit
+040175             0222*  @one:
+040175 36 31       0223*      ld (hl),'1'
+040177             0224*  @next_bit:
+040177 23          0225*      inc hl
+040178 10 F4       0226*      djnz @loop
+04017A             0227*  ; print it
+04017A 21 85 01 04 0228*  	ld hl,@cmd
+04017E 01 08 00 00 0229*  	ld bc,@end-@cmd
+040182 5B DF       0230*  	rst.lil $18
+040184 C9          0231*  	ret
+040185             0232*  @cmd: ds 8 ; eight bytes for eight bits
+04018D             0233*  @end:
+04018D             0234*  
+04018D             0235*  ; print registers to screen in hexidecimal format
+04018D             0236*  ; inputs: none
+04018D             0237*  ; outputs: values of every register printed to screen
+04018D             0238*  ;    values of each register in global scratch memory
+04018D             0239*  ; destroys: nothing
+04018D             0240*  stepRegistersHex:
+04018D             0241*  ; store everything in scratch
+04018D 22 90 03 04 0242*      ld (uhl),hl
+040191 ED 43 93 03 0243*      ld (ubc),bc
+       04          
+040196 ED 53 96 03 0244*      ld (ude),de
+       04          
+04019B DD 22 99 03 0245*      ld (uix),ix
+       04          
+0401A0 FD 22 9C 03 0246*      ld (uiy),iy
+       04          
+0401A5 F5          0247*      push af ; fml
+0401A6 E1          0248*      pop hl  ; thanks, zilog
+0401A7 22 8D 03 04 0249*      ld (uaf),hl
+0401AB F5          0250*      push af ; dammit
+0401AC             0251*  
+0401AC             0252*  ; home the cursor
+0401AC CD 7E 0F 04 0253*      call vdu_home_cursor
+0401B0             0254*  
+0401B0             0255*  ; print each register
+0401B0 21 19 03 04 0256*      ld hl,str_afu
+0401B4 CD 7C 00 04 0257*      call printString
+0401B8 2A 8D 03 04 0258*      ld hl,(uaf)
+0401BC CD 9C 00 04 0259*      call printHex24
+0401C0 CD 91 00 04 0260*      call printNewLine
+0401C4             0261*  
+0401C4 21 1D 03 04 0262*      ld hl,str_hlu
+0401C8 CD 7C 00 04 0263*      call printString
+0401CC 2A 90 03 04 0264*      ld hl,(uhl)
+0401D0 CD 9C 00 04 0265*      call printHex24
+0401D4 CD 91 00 04 0266*      call printNewLine
+0401D8             0267*  
+0401D8 21 21 03 04 0268*      ld hl,str_bcu
+0401DC CD 7C 00 04 0269*      call printString
+0401E0 2A 93 03 04 0270*      ld hl,(ubc)
+0401E4 CD 9C 00 04 0271*      call printHex24
+0401E8 CD 91 00 04 0272*      call printNewLine
+0401EC             0273*  
+0401EC 21 25 03 04 0274*      ld hl,str_deu
+0401F0 CD 7C 00 04 0275*      call printString
+0401F4 2A 96 03 04 0276*      ld hl,(ude)
+0401F8 CD 9C 00 04 0277*      call printHex24
+0401FC CD 91 00 04 0278*      call printNewLine
+040200             0279*  
+040200 21 29 03 04 0280*      ld hl,str_ixu
+040204 CD 7C 00 04 0281*      call printString
+040208 2A 99 03 04 0282*      ld hl,(uix)
+04020C CD 9C 00 04 0283*      call printHex24
+040210 CD 91 00 04 0284*      call printNewLine
+040214             0285*  
+040214 21 2D 03 04 0286*      ld hl,str_iyu
+040218 CD 7C 00 04 0287*      call printString
+04021C 2A 9C 03 04 0288*      ld hl,(uiy)
+040220 CD 9C 00 04 0289*      call printHex24
+040224 CD 91 00 04 0290*      call printNewLine
+040228             0291*  
+040228             0292*      ; call vsync
+040228             0293*  
+040228 CD 91 00 04 0294*      call printNewLine
+04022C             0295*  
+04022C             0296*  ; check for right shift key and quit if pressed
+04022C             0297*  	MOSCALL mos_getkbmap
+04022C 3E 1E       0001*M 			LD	A, function
+04022E 5B CF       0002*M 			RST.LIL	08h
+040230             0298*  @stayhere:
+040230             0299*  ; 7 RightShift
+040230 DD CB 00 76 0300*      bit 6,(ix+0)
+040234 20 02       0301*      jr nz,@RightShift
+040236 18 F8       0302*      jr @stayhere
+040238             0303*  @RightShift:
+040238 DD CB 0E 86 0304*      res 0,(ix+14) ; debounce the key (hopefully)
+04023C 3E 80       0305*      ld a,%10000000
+04023E CD 5E 0F 04 0306*      call multiPurposeDelay
+040242             0307*  
+040242             0308*  ; restore everything
+040242 2A 90 03 04 0309*      ld hl, (uhl)
+040246 ED 4B 93 03 0310*      ld bc, (ubc)
+       04          
+04024B ED 5B 96 03 0311*      ld de, (ude)
+       04          
+040250 DD 2A 99 03 0312*      ld ix, (uix)
+       04          
+040255 FD 2A 9C 03 0313*      ld iy, (uiy)
+       04          
+04025A F1          0314*      pop af
+04025B             0315*  ; all done
+04025B C9          0316*      ret
+04025C             0317*  
+04025C             0318*  ; print registers to screen in hexidecimal format
+04025C             0319*  ; inputs: none
+04025C             0320*  ; outputs: values of every register printed to screen
+04025C             0321*  ;    values of each register in global scratch memory
+04025C             0322*  ; destroys: nothing
+04025C             0323*  dumpRegistersHex:
+04025C             0324*  ; store everything in scratch
+04025C 22 90 03 04 0325*      ld (uhl),hl
+040260 ED 43 93 03 0326*      ld (ubc),bc
+       04          
+040265 ED 53 96 03 0327*      ld (ude),de
+       04          
+04026A DD 22 99 03 0328*      ld (uix),ix
+       04          
+04026F FD 22 9C 03 0329*      ld (uiy),iy
+       04          
+040274 F5          0330*      push af ; fml
+040275 E1          0331*      pop hl  ; thanks, zilog
+040276 22 8D 03 04 0332*      ld (uaf),hl
+04027A F5          0333*      push af ; dammit
+04027B             0334*  
+04027B             0335*  ; home the cursor
+04027B             0336*      ; call vdu_home_cursor
+04027B CD 91 00 04 0337*      call printNewLine
+04027F             0338*  
+04027F             0339*  ; print each register
+04027F 21 19 03 04 0340*      ld hl,str_afu
+040283 CD 7C 00 04 0341*      call printString
+040287 2A 8D 03 04 0342*      ld hl,(uaf)
+04028B CD 9C 00 04 0343*      call printHex24
+04028F CD 91 00 04 0344*      call printNewLine
+040293             0345*  
+040293 21 1D 03 04 0346*      ld hl,str_hlu
+040297 CD 7C 00 04 0347*      call printString
+04029B 2A 90 03 04 0348*      ld hl,(uhl)
+04029F CD 9C 00 04 0349*      call printHex24
+0402A3 CD 91 00 04 0350*      call printNewLine
+0402A7             0351*  
+0402A7 21 21 03 04 0352*      ld hl,str_bcu
+0402AB CD 7C 00 04 0353*      call printString
+0402AF 2A 93 03 04 0354*      ld hl,(ubc)
+0402B3 CD 9C 00 04 0355*      call printHex24
+0402B7 CD 91 00 04 0356*      call printNewLine
+0402BB             0357*  
+0402BB 21 25 03 04 0358*      ld hl,str_deu
+0402BF CD 7C 00 04 0359*      call printString
+0402C3 2A 96 03 04 0360*      ld hl,(ude)
+0402C7 CD 9C 00 04 0361*      call printHex24
+0402CB CD 91 00 04 0362*      call printNewLine
+0402CF             0363*  
+0402CF 21 29 03 04 0364*      ld hl,str_ixu
+0402D3 CD 7C 00 04 0365*      call printString
+0402D7 2A 99 03 04 0366*      ld hl,(uix)
+0402DB CD 9C 00 04 0367*      call printHex24
+0402DF CD 91 00 04 0368*      call printNewLine
+0402E3             0369*  
+0402E3 21 2D 03 04 0370*      ld hl,str_iyu
+0402E7 CD 7C 00 04 0371*      call printString
+0402EB 2A 9C 03 04 0372*      ld hl,(uiy)
+0402EF CD 9C 00 04 0373*      call printHex24
+0402F3 CD 91 00 04 0374*      call printNewLine
+0402F7             0375*  
+0402F7 CD 15 10 04 0376*      call vdu_vblank
+0402FB             0377*  
+0402FB CD 91 00 04 0378*      call printNewLine
+0402FF             0379*  ; restore everything
+0402FF 2A 90 03 04 0380*      ld hl, (uhl)
+040303 ED 4B 93 03 0381*      ld bc, (ubc)
+       04          
+040308 ED 5B 96 03 0382*      ld de, (ude)
+       04          
+04030D DD 2A 99 03 0383*      ld ix, (uix)
+       04          
+040312 FD 2A 9C 03 0384*      ld iy, (uiy)
+       04          
+040317 F1          0385*      pop af
+040318             0386*  ; all done
+040318 C9          0387*      ret
+040319             0388*  
+040319 61 66 3D 00 0389*  str_afu: db "af=",0
+04031D 68 6C 3D 00 0390*  str_hlu: db "hl=",0
+040321 62 63 3D 00 0391*  str_bcu: db "bc=",0
+040325 64 65 3D 00 0392*  str_deu: db "de=",0
+040329 69 78 3D 00 0393*  str_ixu: db "ix=",0
+04032D 69 79 3D 00 0394*  str_iyu: db "iy=",0
+040331             0395*  
+040331             0396*  ; print udeuhl to screen in hexidecimal format
+040331             0397*  ; inputs: none
+040331             0398*  ; outputs: concatenated hexidecimal udeuhl
+040331             0399*  ; destroys: nothing
+040331             0400*  dumpUDEUHLHex:
+040331             0401*  ; store everything in scratch
+040331 22 90 03 04 0402*      ld (uhl),hl
+040335 ED 43 93 03 0403*      ld (ubc),bc
+       04          
+04033A ED 53 96 03 0404*      ld (ude),de
+       04          
+04033F DD 22 99 03 0405*      ld (uix),ix
+       04          
+040344 FD 22 9C 03 0406*      ld (uiy),iy
+       04          
+040349 F5          0407*      push af
+04034A             0408*  
+04034A             0409*  ; print each register
+04034A             0410*  
+04034A 21 84 03 04 0411*      ld hl,str_udeuhl
+04034E CD 7C 00 04 0412*      call printString
+040352 2A 96 03 04 0413*      ld hl,(ude)
+040356 CD 9C 00 04 0414*      call printHex24
+04035A 3E 2E       0415*  	ld a,'.'	; print a dot to separate the values
+04035C 5B D7       0416*  	rst.lil 10h
+04035E 2A 90 03 04 0417*      ld hl,(uhl)
+040362 CD 9C 00 04 0418*      call printHex24
+040366 CD 91 00 04 0419*      call printNewLine
+04036A             0420*  
+04036A             0421*  ; restore everything
+04036A 2A 90 03 04 0422*      ld hl, (uhl)
+04036E ED 4B 93 03 0423*      ld bc, (ubc)
+       04          
+040373 ED 5B 96 03 0424*      ld de, (ude)
+       04          
+040378 DD 2A 99 03 0425*      ld ix, (uix)
+       04          
+04037D FD 2A 9C 03 0426*      ld iy, (uiy)
+       04          
+040382 F1          0427*      pop af
+040383             0428*  ; all done
+040383 C9          0429*      ret
+040384             0430*  
+040384 75 64 65 2E 0431*  str_udeuhl: db "ude.uhl=",0
+       75 68 6C 3D 
+       00          
+04038D             0432*  
+04038D             0433*  ; global scratch memory for registers
+04038D 00 00 00    0434*  uaf: dl 0
+040390 00 00 00    0435*  uhl: dl 0
+040393 00 00 00    0436*  ubc: dl 0
+040396 00 00 00    0437*  ude: dl 0
+040399 00 00 00    0438*  uix: dl 0
+04039C 00 00 00    0439*  uiy: dl 0
+04039F 00 00 00    0440*  usp: dl 0
+0403A2 00 00 00    0441*  upc: dl 0
+0403A5             0442*  
+0403A5             0443*  ; inputs: whatever is in the flags register
+0403A5             0444*  ; outputs: binary representation of flags
+0403A5             0445*  ;          with a header so we know which is what
+0403A5             0446*  ; destroys: nothing
+0403A5             0447*  ; preserves: everything
+0403A5             0448*  dumpFlags:
+0403A5             0449*  ; first we curse zilog for not giving direct access to flags
+0403A5 F5          0450*      push af ; this is so we can send it back unharmed
+0403A6 F5          0451*      push af ; this is so we can pop it to hl
+0403A7             0452*  ; store everything in scratch
+0403A7 22 90 03 04 0453*      ld (uhl),hl
+0403AB ED 43 93 03 0454*      ld (ubc),bc
+       04          
+0403B0 ED 53 96 03 0455*      ld (ude),de
+       04          
+0403B5 DD 22 99 03 0456*      ld (uix),ix
+       04          
+0403BA FD 22 9C 03 0457*      ld (uiy),iy
+       04          
+0403BF             0458*  ; next we print the header
+0403BF 21 EB 03 04 0459*      ld hl,@header
+0403C3 CD 7C 00 04 0460*      call printString
+0403C7 E1          0461*      pop hl ; flags are now in l
+0403C8 7D          0462*      ld a,l ; flags are now in a
+0403C9 CD 43 01 04 0463*      call printBin8
+0403CD CD 91 00 04 0464*  	call printNewLine
+0403D1             0465*  ; restore everything
+0403D1 2A 90 03 04 0466*      ld hl, (uhl)
+0403D5 ED 4B 93 03 0467*      ld bc, (ubc)
+       04          
+0403DA ED 5B 96 03 0468*      ld de, (ude)
+       04          
+0403DF DD 2A 99 03 0469*      ld ix, (uix)
+       04          
+0403E4 FD 2A 9C 03 0470*      ld iy, (uiy)
+       04          
+0403E9 F1          0471*      pop af ; send her home the way she came
+0403EA C9          0472*      ret
+0403EB             0473*  ; Bit 7 (S): Sign flag
+0403EB             0474*  ; Bit 6 (Z): Zero flag
+0403EB             0475*  ; Bit 5 (5): Reserved (copy of bit 5 of the result)
+0403EB             0476*  ; Bit 4 (H): Half Carry flag
+0403EB             0477*  ; Bit 3 (3): Reserved (copy of bit 3 of the result)
+0403EB             0478*  ; Bit 2 (PV): Parity/Overflow flag
+0403EB             0479*  ; Bit 1 (N): Subtract flag
+0403EB             0480*  ; Bit 0 (C): Carry flag
+0403EB 53 5A 78 48 0481*  @header: db "SZxHxPNC\r\n",0 ; cr/lf and 0 terminator
+       78 50 4E 43 
+       0D 0A 00    
+0403F6             0482*  
+0403F6             0483*  ; set all the bits in the flag register
+0403F6             0484*  ; more of an academic exercise than anything useful
+0403F6             0485*  ; inputs; none
+0403F6             0486*  ; outputs; a=0,f=255
+0403F6             0487*  ; destroys: flags, hl
+0403F6             0488*  ; preserves: a, because why not
+0403F6             0489*  setAllFlags:
+0403F6 21 FF 00 00 0490*      ld hl,255
+0403FA 67          0491*      ld h,a ; four cycles to preserve a is cheap
+0403FB E5          0492*      push hl
+0403FC F1          0493*      pop af
+0403FD C9          0494*      ret
+0403FE             0495*  
+0403FE             0496*  ; reset all the bits in the flag register
+0403FE             0497*  ; unlike its inverse counterpart, this may actually be useful
+0403FE             0498*  ; inputs; none
+0403FE             0499*  ; outputs; a=0,f=0
+0403FE             0500*  ; destroys: flags, hl
+0403FE             0501*  ; preserves: a, because why not
+0403FE             0502*  resetAllFlags:
+0403FE 21 00 00 00 0503*      ld hl,0
+040402 67          0504*      ld h,a ; four cycles to preserve a is cheap
+040403 E5          0505*      push hl
+040404 F1          0506*      pop af
+040405 C9          0507*      ret
+040406             0508*  
+040406             0509*  ; wait until user presses a key
+040406             0510*  ; inputs: none
+040406             0511*  ; outputs: none
+040406             0512*  ; destroys: af,ix
+040406             0513*  waitKeypress:
+040406             0514*      MOSCALL mos_sysvars
+040406 3E 08       0001*M 			LD	A, function
+040408 5B CF       0002*M 			RST.LIL	08h
+04040A AF          0515*      xor a ; zero out any prior keypresses
+04040B DD 77 05    0516*      ld (ix+sysvar_keyascii),a
+04040E             0517*  @loop:
+04040E DD 7E 05    0518*      ld a,(ix+sysvar_keyascii)
+040411 A7          0519*      and a
+040412 C0          0520*      ret nz
+040413 18 F9       0521*      jr @loop
+040415             0522*  
+040415             0523*  
+040415             0524*  ; print bytes from an address to the screen in hexidecimal format
+040415             0525*  ; inputs: hl = address of first byte to print, a = number of bytes to print
+040415             0526*  ; outputs: values of each byte printed to screen separated by spaces
+040415             0527*  ; destroys: nothing
+040415             0528*  dumpMemoryHex:
+040415             0529*  ; save registers to the stack
+040415 C5          0530*      push bc
+040416 E5          0531*      push hl
+040417 F5          0532*      push af
+040418             0533*  
+040418             0534*  ; print the address and separator
+040418 CD 9C 00 04 0535*      call printHex24
+04041C 3E 3A       0536*      ld a,':'
+04041E 5B D7       0537*      rst.lil 10h
+040420 3E 20       0538*      ld a,' '
+040422 5B D7       0539*      rst.lil 10h
+040424             0540*  
+040424             0541*  ; set b to be our loop counter
+040424 F1          0542*      pop af
+040425 47          0543*      ld b,a
+040426 E1          0544*      pop hl
+040427 E5          0545*      push hl
+040428 F5          0546*      push af
+040429             0547*  @loop:
+040429             0548*  ; print the byte
+040429 7E          0549*      ld a,(hl)
+04042A CD AE 00 04 0550*      call printHex8
+04042E             0551*  ; print a space
+04042E 3E 20       0552*      ld a,' '
+040430 5B D7       0553*      rst.lil 10h
+040432 23          0554*      inc hl
+040433 10 F4       0555*      djnz @loop
+040435             0556*      ; call printNewLine
+040435             0557*  
+040435             0558*  ; restore everything
+040435 F1          0559*      pop af
+040436 E1          0560*      pop hl
+040437 C1          0561*      pop bc
+040438             0562*  
+040438             0563*  ; all done
+040438 C9          0564*      ret
+040439             0565*  
+040439             0566*  
+040439             0567*  ; print bytes from an address to the screen in binary format
+040439             0568*  ; inputs: hl = address of first byte to print, a = number of bytes to print
+040439             0569*  ; outputs: values of each byte printed to screen separated by spaces
+040439             0570*  ; destroys: nothing
+040439             0571*  dumpMemoryBin:
+040439             0572*  ; save all registers to the stack
+040439 F5          0573*      push af
+04043A C5          0574*      push bc
+04043B D5          0575*      push de
+04043C E5          0576*      push hl
+04043D DD E5       0577*      push ix
+04043F FD E5       0578*      push iy
+040441             0579*  
+040441             0580*  ; set b to be our loop counter
+040441 47          0581*      ld b,a
+040442             0582*  @loop:
+040442             0583*  ; print the byte
+040442 7E          0584*      ld a,(hl)
+040443 E5          0585*      push hl
+040444 C5          0586*      push bc
+040445 CD 43 01 04 0587*      call printBin8
+040449 C1          0588*      pop bc
+04044A             0589*  ; print a space
+04044A 3E 20       0590*      ld a,' '
+04044C 5B D7       0591*      rst.lil 10h
+04044E E1          0592*      pop hl
+04044F 23          0593*      inc hl
+040450 10 F0       0594*      djnz @loop
+040452 CD 91 00 04 0595*      call printNewLine
+040456             0596*  
+040456             0597*  ; restore everything
+040456 FD E1       0598*      pop iy
+040458 DD E1       0599*      pop ix
+04045A E1          0600*      pop hl
+04045B D1          0601*      pop de
+04045C C1          0602*      pop bc
+04045D F1          0603*      pop af
+04045E             0604*  ; all done
+04045E C9          0605*      ret
+04045F             0606*  
+04045F             0607*  ; print bytes from an address to the screen in binary format
+04045F             0608*  ; with the bits of each byte in reverse order (lsb first)
+04045F             0609*  ; inputs: hl = address of first byte to print, a = number of bytes to print
+04045F             0610*  ; outputs: values of each byte printed to screen separated by spaces
+04045F             0611*  ; destroys: nothing
+04045F             0612*  dumpMemoryBinRev:
+04045F             0613*  ; save all registers to the stack
+04045F F5          0614*      push af
+040460 C5          0615*      push bc
+040461 D5          0616*      push de
+040462 E5          0617*      push hl
+040463 DD E5       0618*      push ix
+040465 FD E5       0619*      push iy
+040467             0620*  
+040467             0621*  ; set b to be our loop counter
+040467 47          0622*      ld b,a
+040468             0623*  @loop:
+040468             0624*  ; print the byte
+040468 7E          0625*      ld a,(hl)
+040469 E5          0626*      push hl
+04046A C5          0627*      push bc
+04046B CD 68 01 04 0628*      call printBin8Rev
+04046F C1          0629*      pop bc
+040470             0630*  ; print a space
+040470 3E 20       0631*      ld a,' '
+040472 5B D7       0632*      rst.lil 10h
+040474 E1          0633*      pop hl
+040475 23          0634*      inc hl
+040476 10 F0       0635*      djnz @loop
+040478 CD 91 00 04 0636*      call printNewLine
+04047C             0637*  
+04047C             0638*  ; restore everything
+04047C FD E1       0639*      pop iy
+04047E DD E1       0640*      pop ix
+040480 E1          0641*      pop hl
+040481 D1          0642*      pop de
+040482 C1          0643*      pop bc
+040483 F1          0644*      pop af
+040484             0645*  ; all done
+040484 C9          0646*      ret
+040485             0032   	include "files.inc"
+040485             0001*  ; load to onboard 8k sram
+040485             0002*  filedata: equ 0xB7E000; Directory object structure (DIR)
+040485             0033       include "fonts.inc"
+040485             0001*  ; Generated by build_91b_asm_cfont.py
+040485             0002*  
+040485 FF FF FF    0003*  	 align 4
+040488             0004*  
+040488             0005*  num_fonts: equ 60
+040488             0006*  
+040488             0007*  ; Index list:
+040488             0008*  Lat15_Fixed13: equ 0
+040488             0009*  Lat15_Fixed14: equ 1
+040488             0010*  Lat15_Fixed15: equ 2
+040488             0011*  Lat15_Fixed16: equ 3
+040488             0012*  Lat15_Fixed18: equ 4
+040488             0013*  Lat15_Terminus12x6: equ 5
+040488             0014*  Lat15_Terminus14: equ 6
+040488             0015*  Lat15_Terminus16: equ 7
+040488             0016*  Lat15_TerminusBold14: equ 8
+040488             0017*  Lat15_TerminusBold16: equ 9
+040488             0018*  Lat15_TerminusBoldVGA14: equ 10
+040488             0019*  Lat15_TerminusBoldVGA16: equ 11
+040488             0020*  Lat15_VGA14: equ 12
+040488             0021*  Lat15_VGA16: equ 13
+040488             0022*  Lat15_VGA8: equ 14
+040488             0023*  Lat2_Fixed13: equ 15
+040488             0024*  Lat2_Fixed14: equ 16
+040488             0025*  Lat2_Fixed15: equ 17
+040488             0026*  Lat2_Fixed16: equ 18
+040488             0027*  Lat2_Fixed18: equ 19
+040488             0028*  Lat2_Terminus12x6: equ 20
+040488             0029*  Lat2_Terminus14: equ 21
+040488             0030*  Lat2_Terminus16: equ 22
+040488             0031*  Lat2_TerminusBold14: equ 23
+040488             0032*  Lat2_TerminusBold16: equ 24
+040488             0033*  Lat2_TerminusBoldVGA14: equ 25
+040488             0034*  Lat2_TerminusBoldVGA16: equ 26
+040488             0035*  Lat2_VGA14: equ 27
+040488             0036*  Lat2_VGA16: equ 28
+040488             0037*  Lat2_VGA8: equ 29
+040488             0038*  Lat38_Fixed13: equ 30
+040488             0039*  Lat38_Fixed14: equ 31
+040488             0040*  Lat38_Fixed15: equ 32
+040488             0041*  Lat38_Fixed16: equ 33
+040488             0042*  Lat38_Fixed18: equ 34
+040488             0043*  Lat38_Terminus12x6: equ 35
+040488             0044*  Lat38_Terminus14: equ 36
+040488             0045*  Lat38_Terminus16: equ 37
+040488             0046*  Lat38_TerminusBold14: equ 38
+040488             0047*  Lat38_TerminusBold16: equ 39
+040488             0048*  Lat38_TerminusBoldVGA14: equ 40
+040488             0049*  Lat38_TerminusBoldVGA16: equ 41
+040488             0050*  Lat38_VGA14: equ 42
+040488             0051*  Lat38_VGA16: equ 43
+040488             0052*  Lat38_VGA8: equ 44
+040488             0053*  Lat7_Fixed13: equ 45
+040488             0054*  Lat7_Fixed14: equ 46
+040488             0055*  Lat7_Fixed15: equ 47
+040488             0056*  Lat7_Fixed16: equ 48
+040488             0057*  Lat7_Fixed18: equ 49
+040488             0058*  Lat7_Terminus12x6: equ 50
+040488             0059*  Lat7_Terminus14: equ 51
+040488             0060*  Lat7_Terminus16: equ 52
+040488             0061*  Lat7_TerminusBold14: equ 53
+040488             0062*  Lat7_TerminusBold16: equ 54
+040488             0063*  Lat7_TerminusBoldVGA14: equ 55
+040488             0064*  Lat7_TerminusBoldVGA16: equ 56
+040488             0065*  Lat7_VGA14: equ 57
+040488             0066*  Lat7_VGA16: equ 58
+040488             0067*  Lat7_VGA8: equ 59
+040488             0068*  
+040488             0069*  font_list: ; width; height; filesize; filename;:
+040488 08 00 00 0D 0070*  	dl 8, 13, 26624, fn_Lat15_Fixed13
+       00 00 00 68 
+       00 58 07 04 
+040494 08 00 00 0E 0071*  	dl 8, 14, 28672, fn_Lat15_Fixed14
+       00 00 00 70 
+       00 72 07 04 
+0404A0 08 00 00 0F 0072*  	dl 8, 15, 30720, fn_Lat15_Fixed15
+       00 00 00 78 
+       00 8C 07 04 
+0404AC 08 00 00 10 0073*  	dl 8, 16, 32768, fn_Lat15_Fixed16
+       00 00 00 80 
+       00 A6 07 04 
+0404B8 08 00 00 12 0074*  	dl 8, 18, 36864, fn_Lat15_Fixed18
+       00 00 00 90 
+       00 C0 07 04 
+0404C4 08 00 00 0C 0075*  	dl 8, 12, 24576, fn_Lat15_Terminus12x6
+       00 00 00 60 
+       00 DA 07 04 
+0404D0 08 00 00 0E 0076*  	dl 8, 14, 28672, fn_Lat15_Terminus14
+       00 00 00 70 
+       00 F9 07 04 
+0404DC 08 00 00 10 0077*  	dl 8, 16, 32768, fn_Lat15_Terminus16
+       00 00 00 80 
+       00 16 08 04 
+0404E8 08 00 00 0E 0078*  	dl 8, 14, 28672, fn_Lat15_TerminusBold14
+       00 00 00 70 
+       00 33 08 04 
+0404F4 08 00 00 10 0079*  	dl 8, 16, 32768, fn_Lat15_TerminusBold16
+       00 00 00 80 
+       00 54 08 04 
+040500 08 00 00 0E 0080*  	dl 8, 14, 28672, fn_Lat15_TerminusBoldVGA14
+       00 00 00 70 
+       00 75 08 04 
+04050C 08 00 00 10 0081*  	dl 8, 16, 32768, fn_Lat15_TerminusBoldVGA16
+       00 00 00 80 
+       00 99 08 04 
+040518 08 00 00 0E 0082*  	dl 8, 14, 28672, fn_Lat15_VGA14
+       00 00 00 70 
+       00 BD 08 04 
+040524 08 00 00 10 0083*  	dl 8, 16, 32768, fn_Lat15_VGA16
+       00 00 00 80 
+       00 D5 08 04 
+040530 08 00 00 08 0084*  	dl 8, 8, 16384, fn_Lat15_VGA8
+       00 00 00 40 
+       00 ED 08 04 
+04053C 08 00 00 0D 0085*  	dl 8, 13, 26624, fn_Lat2_Fixed13
+       00 00 00 68 
+       00 04 09 04 
+040548 08 00 00 0E 0086*  	dl 8, 14, 28672, fn_Lat2_Fixed14
+       00 00 00 70 
+       00 1D 09 04 
+040554 08 00 00 0F 0087*  	dl 8, 15, 30720, fn_Lat2_Fixed15
+       00 00 00 78 
+       00 36 09 04 
+040560 08 00 00 10 0088*  	dl 8, 16, 32768, fn_Lat2_Fixed16
+       00 00 00 80 
+       00 4F 09 04 
+04056C 08 00 00 12 0089*  	dl 8, 18, 36864, fn_Lat2_Fixed18
+       00 00 00 90 
+       00 68 09 04 
+040578 08 00 00 0C 0090*  	dl 8, 12, 24576, fn_Lat2_Terminus12x6
+       00 00 00 60 
+       00 81 09 04 
+040584 08 00 00 0E 0091*  	dl 8, 14, 28672, fn_Lat2_Terminus14
+       00 00 00 70 
+       00 9F 09 04 
+040590 08 00 00 10 0092*  	dl 8, 16, 32768, fn_Lat2_Terminus16
+       00 00 00 80 
+       00 BB 09 04 
+04059C 08 00 00 0E 0093*  	dl 8, 14, 28672, fn_Lat2_TerminusBold14
+       00 00 00 70 
+       00 D7 09 04 
+0405A8 08 00 00 10 0094*  	dl 8, 16, 32768, fn_Lat2_TerminusBold16
+       00 00 00 80 
+       00 F7 09 04 
+0405B4 08 00 00 0E 0095*  	dl 8, 14, 28672, fn_Lat2_TerminusBoldVGA14
+       00 00 00 70 
+       00 17 0A 04 
+0405C0 08 00 00 10 0096*  	dl 8, 16, 32768, fn_Lat2_TerminusBoldVGA16
+       00 00 00 80 
+       00 3A 0A 04 
+0405CC 08 00 00 0E 0097*  	dl 8, 14, 28672, fn_Lat2_VGA14
+       00 00 00 70 
+       00 5D 0A 04 
+0405D8 08 00 00 10 0098*  	dl 8, 16, 32768, fn_Lat2_VGA16
+       00 00 00 80 
+       00 74 0A 04 
+0405E4 08 00 00 08 0099*  	dl 8, 8, 16384, fn_Lat2_VGA8
+       00 00 00 40 
+       00 8B 0A 04 
+0405F0 08 00 00 0D 0100*  	dl 8, 13, 26624, fn_Lat38_Fixed13
+       00 00 00 68 
+       00 A1 0A 04 
+0405FC 08 00 00 0E 0101*  	dl 8, 14, 28672, fn_Lat38_Fixed14
+       00 00 00 70 
+       00 BB 0A 04 
+040608 08 00 00 0F 0102*  	dl 8, 15, 30720, fn_Lat38_Fixed15
+       00 00 00 78 
+       00 D5 0A 04 
+040614 08 00 00 10 0103*  	dl 8, 16, 32768, fn_Lat38_Fixed16
+       00 00 00 80 
+       00 EF 0A 04 
+040620 08 00 00 12 0104*  	dl 8, 18, 36864, fn_Lat38_Fixed18
+       00 00 00 90 
+       00 09 0B 04 
+04062C 08 00 00 0C 0105*  	dl 8, 12, 24576, fn_Lat38_Terminus12x6
+       00 00 00 60 
+       00 23 0B 04 
+040638 08 00 00 0E 0106*  	dl 8, 14, 28672, fn_Lat38_Terminus14
+       00 00 00 70 
+       00 42 0B 04 
+040644 08 00 00 10 0107*  	dl 8, 16, 32768, fn_Lat38_Terminus16
+       00 00 00 80 
+       00 5F 0B 04 
+040650 08 00 00 0E 0108*  	dl 8, 14, 28672, fn_Lat38_TerminusBold14
+       00 00 00 70 
+       00 7C 0B 04 
+04065C 08 00 00 10 0109*  	dl 8, 16, 32768, fn_Lat38_TerminusBold16
+       00 00 00 80 
+       00 9D 0B 04 
+040668 08 00 00 0E 0110*  	dl 8, 14, 28672, fn_Lat38_TerminusBoldVGA14
+       00 00 00 70 
+       00 BE 0B 04 
+040674 08 00 00 10 0111*  	dl 8, 16, 32768, fn_Lat38_TerminusBoldVGA16
+       00 00 00 80 
+       00 E2 0B 04 
+040680 08 00 00 0E 0112*  	dl 8, 14, 28672, fn_Lat38_VGA14
+       00 00 00 70 
+       00 06 0C 04 
+04068C 08 00 00 10 0113*  	dl 8, 16, 32768, fn_Lat38_VGA16
+       00 00 00 80 
+       00 1E 0C 04 
+040698 08 00 00 08 0114*  	dl 8, 8, 16384, fn_Lat38_VGA8
+       00 00 00 40 
+       00 36 0C 04 
+0406A4 08 00 00 0D 0115*  	dl 8, 13, 26624, fn_Lat7_Fixed13
+       00 00 00 68 
+       00 4D 0C 04 
+0406B0 08 00 00 0E 0116*  	dl 8, 14, 28672, fn_Lat7_Fixed14
+       00 00 00 70 
+       00 66 0C 04 
+0406BC 08 00 00 0F 0117*  	dl 8, 15, 30720, fn_Lat7_Fixed15
+       00 00 00 78 
+       00 7F 0C 04 
+0406C8 08 00 00 10 0118*  	dl 8, 16, 32768, fn_Lat7_Fixed16
+       00 00 00 80 
+       00 98 0C 04 
+0406D4 08 00 00 12 0119*  	dl 8, 18, 36864, fn_Lat7_Fixed18
+       00 00 00 90 
+       00 B1 0C 04 
+0406E0 08 00 00 0C 0120*  	dl 8, 12, 24576, fn_Lat7_Terminus12x6
+       00 00 00 60 
+       00 CA 0C 04 
+0406EC 08 00 00 0E 0121*  	dl 8, 14, 28672, fn_Lat7_Terminus14
+       00 00 00 70 
+       00 E8 0C 04 
+0406F8 08 00 00 10 0122*  	dl 8, 16, 32768, fn_Lat7_Terminus16
+       00 00 00 80 
+       00 04 0D 04 
+040704 08 00 00 0E 0123*  	dl 8, 14, 28672, fn_Lat7_TerminusBold14
+       00 00 00 70 
+       00 20 0D 04 
+040710 08 00 00 10 0124*  	dl 8, 16, 32768, fn_Lat7_TerminusBold16
+       00 00 00 80 
+       00 40 0D 04 
+04071C 08 00 00 0E 0125*  	dl 8, 14, 28672, fn_Lat7_TerminusBoldVGA14
+       00 00 00 70 
+       00 60 0D 04 
+040728 08 00 00 10 0126*  	dl 8, 16, 32768, fn_Lat7_TerminusBoldVGA16
+       00 00 00 80 
+       00 83 0D 04 
+040734 08 00 00 0E 0127*  	dl 8, 14, 28672, fn_Lat7_VGA14
+       00 00 00 70 
+       00 A6 0D 04 
+040740 08 00 00 10 0128*  	dl 8, 16, 32768, fn_Lat7_VGA16
+       00 00 00 80 
+       00 BD 0D 04 
+04074C 08 00 00 08 0129*  	dl 8, 8, 16384, fn_Lat7_VGA8
+       00 00 00 40 
+       00 D4 0D 04 
+040758             0130*  
+040758             0131*  ; files_list: ; filename:.data
+040758 63 66 6F 6E 0132*  fn_Lat15_Fixed13: db "cfonts/Lat15_Fixed13.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 46 69 78 
+       65 64 31 33 
+       2E 64 61 74 
+       61 00       .data
+040772 63 66 6F 6E 0133*  fn_Lat15_Fixed14: db "cfonts/Lat15_Fixed14.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 46 69 78 
+       65 64 31 34 
+       2E 64 61 74 
+       61 00       .data
+04078C 63 66 6F 6E 0134*  fn_Lat15_Fixed15: db "cfonts/Lat15_Fixed15.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 46 69 78 
+       65 64 31 35 
+       2E 64 61 74 
+       61 00       .data
+0407A6 63 66 6F 6E 0135*  fn_Lat15_Fixed16: db "cfonts/Lat15_Fixed16.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 46 69 78 
+       65 64 31 36 
+       2E 64 61 74 
+       61 00       .data
+0407C0 63 66 6F 6E 0136*  fn_Lat15_Fixed18: db "cfonts/Lat15_Fixed18.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 46 69 78 
+       65 64 31 38 
+       2E 64 61 74 
+       61 00       .data
+0407DA 63 66 6F 6E 0137*  fn_Lat15_Terminus12x6: db "cfonts/Lat15_Terminus12x6.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 31 32 78 
+       36 2E 64 61 
+       74 61 00    .data
+0407F9 63 66 6F 6E 0138*  fn_Lat15_Terminus14: db "cfonts/Lat15_Terminus14.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 31 34 2E 
+       64 61 74 61 
+       00          .data
+040816 63 66 6F 6E 0139*  fn_Lat15_Terminus16: db "cfonts/Lat15_Terminus16.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 31 36 2E 
+       64 61 74 61 
+       00          .data
+040833 63 66 6F 6E 0140*  fn_Lat15_TerminusBold14: db "cfonts/Lat15_TerminusBold14.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 31 34 2E 
+       64 61 74 61 
+       00          .data
+040854 63 66 6F 6E 0141*  fn_Lat15_TerminusBold16: db "cfonts/Lat15_TerminusBold16.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 31 36 2E 
+       64 61 74 61 
+       00          .data
+040875 63 66 6F 6E 0142*  fn_Lat15_TerminusBoldVGA14: db "cfonts/Lat15_TerminusBoldVGA14.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 56 47 41 
+       31 34 2E 64 
+       61 74 61 00 .data
+040899 63 66 6F 6E 0143*  fn_Lat15_TerminusBoldVGA16: db "cfonts/Lat15_TerminusBoldVGA16.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 56 47 41 
+       31 36 2E 64 
+       61 74 61 00 .data
+0408BD 63 66 6F 6E 0144*  fn_Lat15_VGA14: db "cfonts/Lat15_VGA14.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 56 47 41 
+       31 34 2E 64 
+       61 74 61 00 .data
+0408D5 63 66 6F 6E 0145*  fn_Lat15_VGA16: db "cfonts/Lat15_VGA16.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 56 47 41 
+       31 36 2E 64 
+       61 74 61 00 .data
+0408ED 63 66 6F 6E 0146*  fn_Lat15_VGA8: db "cfonts/Lat15_VGA8.data",0
+       74 73 2F 4C 
+       61 74 31 35 
+       5F 56 47 41 
+       38 2E 64 61 
+       74 61 00    .data
+040904 63 66 6F 6E 0147*  fn_Lat2_Fixed13: db "cfonts/Lat2_Fixed13.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       46 69 78 65 
+       64 31 33 2E 
+       64 61 74 61 
+       00          .data
+04091D 63 66 6F 6E 0148*  fn_Lat2_Fixed14: db "cfonts/Lat2_Fixed14.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       46 69 78 65 
+       64 31 34 2E 
+       64 61 74 61 
+       00          .data
+040936 63 66 6F 6E 0149*  fn_Lat2_Fixed15: db "cfonts/Lat2_Fixed15.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       46 69 78 65 
+       64 31 35 2E 
+       64 61 74 61 
+       00          .data
+04094F 63 66 6F 6E 0150*  fn_Lat2_Fixed16: db "cfonts/Lat2_Fixed16.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       46 69 78 65 
+       64 31 36 2E 
+       64 61 74 61 
+       00          .data
+040968 63 66 6F 6E 0151*  fn_Lat2_Fixed18: db "cfonts/Lat2_Fixed18.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       46 69 78 65 
+       64 31 38 2E 
+       64 61 74 61 
+       00          .data
+040981 63 66 6F 6E 0152*  fn_Lat2_Terminus12x6: db "cfonts/Lat2_Terminus12x6.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       31 32 78 36 
+       2E 64 61 74 
+       61 00       .data
+04099F 63 66 6F 6E 0153*  fn_Lat2_Terminus14: db "cfonts/Lat2_Terminus14.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       31 34 2E 64 
+       61 74 61 00 .data
+0409BB 63 66 6F 6E 0154*  fn_Lat2_Terminus16: db "cfonts/Lat2_Terminus16.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       31 36 2E 64 
+       61 74 61 00 .data
+0409D7 63 66 6F 6E 0155*  fn_Lat2_TerminusBold14: db "cfonts/Lat2_TerminusBold14.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       31 34 2E 64 
+       61 74 61 00 .data
+0409F7 63 66 6F 6E 0156*  fn_Lat2_TerminusBold16: db "cfonts/Lat2_TerminusBold16.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       31 36 2E 64 
+       61 74 61 00 .data
+040A17 63 66 6F 6E 0157*  fn_Lat2_TerminusBoldVGA14: db "cfonts/Lat2_TerminusBoldVGA14.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       56 47 41 31 
+       34 2E 64 61 
+       74 61 00    .data
+040A3A 63 66 6F 6E 0158*  fn_Lat2_TerminusBoldVGA16: db "cfonts/Lat2_TerminusBoldVGA16.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       56 47 41 31 
+       36 2E 64 61 
+       74 61 00    .data
+040A5D 63 66 6F 6E 0159*  fn_Lat2_VGA14: db "cfonts/Lat2_VGA14.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       56 47 41 31 
+       34 2E 64 61 
+       74 61 00    .data
+040A74 63 66 6F 6E 0160*  fn_Lat2_VGA16: db "cfonts/Lat2_VGA16.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       56 47 41 31 
+       36 2E 64 61 
+       74 61 00    .data
+040A8B 63 66 6F 6E 0161*  fn_Lat2_VGA8: db "cfonts/Lat2_VGA8.data",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       56 47 41 38 
+       2E 64 61 74 
+       61 00       .data
+040AA1 63 66 6F 6E 0162*  fn_Lat38_Fixed13: db "cfonts/Lat38_Fixed13.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 46 69 78 
+       65 64 31 33 
+       2E 64 61 74 
+       61 00       .data
+040ABB 63 66 6F 6E 0163*  fn_Lat38_Fixed14: db "cfonts/Lat38_Fixed14.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 46 69 78 
+       65 64 31 34 
+       2E 64 61 74 
+       61 00       .data
+040AD5 63 66 6F 6E 0164*  fn_Lat38_Fixed15: db "cfonts/Lat38_Fixed15.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 46 69 78 
+       65 64 31 35 
+       2E 64 61 74 
+       61 00       .data
+040AEF 63 66 6F 6E 0165*  fn_Lat38_Fixed16: db "cfonts/Lat38_Fixed16.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 46 69 78 
+       65 64 31 36 
+       2E 64 61 74 
+       61 00       .data
+040B09 63 66 6F 6E 0166*  fn_Lat38_Fixed18: db "cfonts/Lat38_Fixed18.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 46 69 78 
+       65 64 31 38 
+       2E 64 61 74 
+       61 00       .data
+040B23 63 66 6F 6E 0167*  fn_Lat38_Terminus12x6: db "cfonts/Lat38_Terminus12x6.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 31 32 78 
+       36 2E 64 61 
+       74 61 00    .data
+040B42 63 66 6F 6E 0168*  fn_Lat38_Terminus14: db "cfonts/Lat38_Terminus14.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 31 34 2E 
+       64 61 74 61 
+       00          .data
+040B5F 63 66 6F 6E 0169*  fn_Lat38_Terminus16: db "cfonts/Lat38_Terminus16.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 31 36 2E 
+       64 61 74 61 
+       00          .data
+040B7C 63 66 6F 6E 0170*  fn_Lat38_TerminusBold14: db "cfonts/Lat38_TerminusBold14.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 31 34 2E 
+       64 61 74 61 
+       00          .data
+040B9D 63 66 6F 6E 0171*  fn_Lat38_TerminusBold16: db "cfonts/Lat38_TerminusBold16.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 31 36 2E 
+       64 61 74 61 
+       00          .data
+040BBE 63 66 6F 6E 0172*  fn_Lat38_TerminusBoldVGA14: db "cfonts/Lat38_TerminusBoldVGA14.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 56 47 41 
+       31 34 2E 64 
+       61 74 61 00 .data
+040BE2 63 66 6F 6E 0173*  fn_Lat38_TerminusBoldVGA16: db "cfonts/Lat38_TerminusBoldVGA16.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 54 65 72 
+       6D 69 6E 75 
+       73 42 6F 6C 
+       64 56 47 41 
+       31 36 2E 64 
+       61 74 61 00 .data
+040C06 63 66 6F 6E 0174*  fn_Lat38_VGA14: db "cfonts/Lat38_VGA14.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 56 47 41 
+       31 34 2E 64 
+       61 74 61 00 .data
+040C1E 63 66 6F 6E 0175*  fn_Lat38_VGA16: db "cfonts/Lat38_VGA16.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 56 47 41 
+       31 36 2E 64 
+       61 74 61 00 .data
+040C36 63 66 6F 6E 0176*  fn_Lat38_VGA8: db "cfonts/Lat38_VGA8.data",0
+       74 73 2F 4C 
+       61 74 33 38 
+       5F 56 47 41 
+       38 2E 64 61 
+       74 61 00    .data
+040C4D 63 66 6F 6E 0177*  fn_Lat7_Fixed13: db "cfonts/Lat7_Fixed13.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       46 69 78 65 
+       64 31 33 2E 
+       64 61 74 61 
+       00          .data
+040C66 63 66 6F 6E 0178*  fn_Lat7_Fixed14: db "cfonts/Lat7_Fixed14.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       46 69 78 65 
+       64 31 34 2E 
+       64 61 74 61 
+       00          .data
+040C7F 63 66 6F 6E 0179*  fn_Lat7_Fixed15: db "cfonts/Lat7_Fixed15.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       46 69 78 65 
+       64 31 35 2E 
+       64 61 74 61 
+       00          .data
+040C98 63 66 6F 6E 0180*  fn_Lat7_Fixed16: db "cfonts/Lat7_Fixed16.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       46 69 78 65 
+       64 31 36 2E 
+       64 61 74 61 
+       00          .data
+040CB1 63 66 6F 6E 0181*  fn_Lat7_Fixed18: db "cfonts/Lat7_Fixed18.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       46 69 78 65 
+       64 31 38 2E 
+       64 61 74 61 
+       00          .data
+040CCA 63 66 6F 6E 0182*  fn_Lat7_Terminus12x6: db "cfonts/Lat7_Terminus12x6.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       31 32 78 36 
+       2E 64 61 74 
+       61 00       .data
+040CE8 63 66 6F 6E 0183*  fn_Lat7_Terminus14: db "cfonts/Lat7_Terminus14.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       31 34 2E 64 
+       61 74 61 00 .data
+040D04 63 66 6F 6E 0184*  fn_Lat7_Terminus16: db "cfonts/Lat7_Terminus16.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       31 36 2E 64 
+       61 74 61 00 .data
+040D20 63 66 6F 6E 0185*  fn_Lat7_TerminusBold14: db "cfonts/Lat7_TerminusBold14.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       31 34 2E 64 
+       61 74 61 00 .data
+040D40 63 66 6F 6E 0186*  fn_Lat7_TerminusBold16: db "cfonts/Lat7_TerminusBold16.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       31 36 2E 64 
+       61 74 61 00 .data
+040D60 63 66 6F 6E 0187*  fn_Lat7_TerminusBoldVGA14: db "cfonts/Lat7_TerminusBoldVGA14.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       56 47 41 31 
+       34 2E 64 61 
+       74 61 00    .data
+040D83 63 66 6F 6E 0188*  fn_Lat7_TerminusBoldVGA16: db "cfonts/Lat7_TerminusBoldVGA16.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       56 47 41 31 
+       36 2E 64 61 
+       74 61 00    .data
+040DA6 63 66 6F 6E 0189*  fn_Lat7_VGA14: db "cfonts/Lat7_VGA14.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       56 47 41 31 
+       34 2E 64 61 
+       74 61 00    .data
+040DBD 63 66 6F 6E 0190*  fn_Lat7_VGA16: db "cfonts/Lat7_VGA16.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       56 47 41 31 
+       36 2E 64 61 
+       74 61 00    .data
+040DD4 63 66 6F 6E 0191*  fn_Lat7_VGA8: db "cfonts/Lat7_VGA8.data",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       56 47 41 38 
+       2E 64 61 74 
+       61 00       
+040DEA             0034       include "timer.inc"
+040DEA             0001*  ; Table 32. Timer Control Registers
+040DEA             0002*  ; this constant is the base address of the timer control registers
+040DEA             0003*  ; each timer takes three bytes:
+040DEA             0004*  ;   0: control register
+040DEA             0005*  ;   1: low byte of timer reset value
+040DEA             0006*  ;   2: high byte of timer reset value
+040DEA             0007*  ; note that the value is only 8-bits,so we use in0/out0 i/o calls,
+040DEA             0008*  ; which correctly force the high and upper bytes of the address bus to zero
+040DEA             0009*  TMR_CTL:     equ 80h
+040DEA             0010*  
+040DEA             0011*  ; Timer Control Register Bit Definitions
+040DEA             0012*  PRT_IRQ_0:    equ %00000000 ; The timer does not reach its end-of-count value.
+040DEA             0013*                              ; This bit is reset to 0 every time the TMRx_CTL register is read.
+040DEA             0014*  PRT_IRQ_1:    equ %10000000 ; The timer reaches its end-of-count value. If IRQ_EN is set to 1,
+040DEA             0015*                              ; an interrupt signal is sent to the CPU. This bit remains 1 until
+040DEA             0016*                              ; the TMRx_CTL register is read.
+040DEA             0017*  
+040DEA             0018*  IRQ_EN_0:     equ %00000000 ; Timer interrupt requests are disabled.
+040DEA             0019*  IRQ_EN_1:     equ %01000000 ; Timer interrupt requests are enabled.
+040DEA             0020*  
+040DEA             0021*  PRT_MODE_0:   equ %00000000 ; The timer operates in SINGLE PASS mode. PRT_EN (bit 0) is reset to
+040DEA             0022*                              ;  0,and counting stops when the end-of-count value is reached.
+040DEA             0023*  PRT_MODE_1:   equ %00010000 ; The timer operates in CONTINUOUS mode. The timer reload value is
+040DEA             0024*                              ; written to the counter when the end-of-count value is reached.
+040DEA             0025*  
+040DEA             0026*  ; CLK_DIV is a 2-bit mask that sets the timer input source clock divider
+040DEA             0027*  CLK_DIV_256:  equ %00001100 ;
+040DEA             0028*  CLK_DIV_64:   equ %00001000 ;
+040DEA             0029*  CLK_DIV_16:   equ %00000100 ;
+040DEA             0030*  CLK_DIV_4:    equ %00000000 ;
+040DEA             0031*  
+040DEA             0032*  RST_EN_0:     equ %00000000 ; The reload and restart function is disabled.
+040DEA             0033*  RST_EN_1:     equ %00000010 ; The reload and restart function is enabled.
+040DEA             0034*                              ; When a 1 is written to this bit,the values in the reload registers
+040DEA             0035*                              ;  are loaded into the downcounter when the timer restarts. The
+040DEA             0036*                              ; programmer must ensure that this bit is set to 1 each time
+040DEA             0037*                              ; SINGLE-PASS mode is used.
+040DEA             0038*  
+040DEA             0039*  ; disable/enable the programmable reload timer
+040DEA             0040*  PRT_EN_0:     equ %00000000 ;
+040DEA             0041*  PRT_EN_1:     equ %00000001 ;
+040DEA             0042*  
+040DEA             0043*  ; Table 37. Timer Input Source Select Register
+040DEA             0044*  ; Each of the 4 timers are allocated two bits of the 8-bit register
+040DEA             0045*  ; in little-endian order,with TMR0 using bits 0 and 1,TMR1 using bits 2 and 3,etc.
+040DEA             0046*  ;   00: System clock / CLK_DIV
+040DEA             0047*  ;   01: RTC / CLK_DIV
+040DEA             0048*  ;   NOTE: these are the values given in the manual,but it may be a typo
+040DEA             0049*  ;   10: GPIO port B pin 1.
+040DEA             0050*  ;   11: GPIO port B pin 1.
+040DEA             0051*  TMR_ISS:   equ 92h ; register address
+040DEA             0052*  
+040DEA             0053*  ; Table 51. Real-Time Clock Control Register
+040DEA             0054*  RTC_CTRL: equ EDh ; register address
+040DEA             0055*  
+040DEA             0056*  ; alarm interrupt disable/enable
+040DEA             0057*  RTC_ALARM_0:    equ %00000000
+040DEA             0058*  RTC_ALARM_1:    equ %10000000
+040DEA             0059*  
+040DEA             0060*  ; interrupt on alarm disable/enable
+040DEA             0061*  RTC_INT_ENT_0:  equ %00000000
+040DEA             0062*  RTC_INT_ENT_1:  equ %01000000
+040DEA             0063*  
+040DEA             0064*  RTC_BCD_EN_0:   equ %00000000   ; RTC count and alarm registers are binary
+040DEA             0065*  RTC_BCD_EN_1:   equ %00100000   ; RTC count and alarm registers are BCD
+040DEA             0066*  
+040DEA             0067*  RTC_CLK_SEL_0:  equ %00000000   ; RTC clock source is crystal oscillator output (32768 Hz).
+040DEA             0068*                                  ; On-chip 32768 Hz oscillator is enabled.
+040DEA             0069*  RTC_CLK_SEL_1:  equ %00010000   ; RTC clock source is power line frequency input as set by FREQ_SEL.
+040DEA             0070*                                  ; On-chip 32768 Hz oscillator is disabled.
+040DEA             0071*  
+040DEA             0072*  RTC_FREQ_SEL_0: equ %00000000   ; 60 Hz power line frequency.
+040DEA             0073*  RTC_FREQ_SEL_1: equ %00001000   ; 50 Hz power line frequency.
+040DEA             0074*  
+040DEA             0075*  RTC_SLP_WAKE_0: equ %00000000   ; RTC does not generate a sleep-mode recovery reset.
+040DEA             0076*  RTC_SLP_WAKE_1: equ %00000010   ; RTC generates a sleep-mode recovery reset.
+040DEA             0077*  
+040DEA             0078*  RTC_UNLOCK_0:   equ %00000000   ; RTC count registers are locked to prevent Write access.
+040DEA             0079*                                  ; RTC counter is enabled.
+040DEA             0080*  RTC_UNLOCK_1:   equ %00000001   ; RTC count registers are unlocked to allow Write access.
+040DEA             0081*                                  ; RTC counter is disabled.
+040DEA             0082*  
+040DEA             0083*  ; prt_reload_emulator: equ 11234 ; 1/102.4 seconds on emulator with 16 clock divider
+040DEA             0084*  
+040DEA             0085*  prt_reload_emulator: equ 11519 ; 1 centisecond on emulator with 16 clock divider
+040DEA             0086*  prt_reload_hardware: equ 11532 ; 1 centisecond on hardware with 16 clock divider
+040DEA 00 00 00    0087*  prt_reload: dl 0x000000
+040DED             0088*  
+040DED             0089*  ; ; returns: a = 0 if running on hardware,1 if running on emulator
+040DED             0090*  ; ;          de = number PRT interrupts during test interval
+040DED             0091*  ; prt_calibrate:
+040DED             0092*  ;     call vdu_vblank
+040DED             0093*  ; ; set a MOS timer
+040DED             0094*  ;     ld hl,120*1 ; 1 second
+040DED             0095*  ;     ld iy,tmr_test
+040DED             0096*  ;     call tmr_set
+040DED             0097*  ; ; set a PRT timer
+040DED             0098*  ;     ; ld hl,prt_reload_hardware
+040DED             0099*  ;     ; ld hl,prt_reload_emulator
+040DED             0100*  ;     ld hl,prt_reload_emulator + prt_reload_hardware / 2
+040DED             0101*  ;     ld (prt_reload),hl
+040DED             0102*  ;     call prt_set
+040DED             0103*  ; @loop:
+040DED             0104*  ; ; check time remaining on MOS timer
+040DED             0105*  ;     call tmr_get
+040DED             0106*  ;     jp z,@done ; time expired,so quit
+040DED             0107*  ;     jp m,@done ; time past expiration (negative),so quit
+040DED             0108*  ;     jr @loop
+040DED             0109*  ; @done:
+040DED             0110*  ;     ld de,(prt_irq_counter)
+040DED             0111*  ;     ld bc,prt_reload_hardware ; default value for running on hardware
+040DED             0112*  ;     ld (prt_reload),bc
+040DED             0113*  ;     ld hl,100 ; halfway between 101 for real hardware and 99 for emulator
+040DED             0114*  ;     xor a ; clear carry,zero is default value for running on hardware
+040DED             0115*  ;     ld (is_emulator),a
+040DED             0116*  ;     sbc hl,de
+040DED             0117*  ;     ld hl,on_hardware ; default message for running on hardware
+040DED             0118*  ;     jp z,prt_calibrate ; zero result is indeterminate so we try again
+040DED             0119*  ;     ret m ; negative result means we're on hardware
+040DED             0120*  ;     inc a ; we're on emulator
+040DED             0121*  ;     ld (is_emulator),a
+040DED             0122*  ;     ld bc,prt_reload_emulator
+040DED             0123*  ;     ld (prt_reload),bc
+040DED             0124*  ;     ld hl,on_emulator
+040DED             0125*  ;     ret
+040DED             0126*  
+040DED             0127*  ; calibrating_timer: defb "Calibrating timer\r\n",0
+040DED             0128*  
+040DED             0129*  ; set PRT timer
+040DED             0130*  prt_set:
+040DED 21 00 00 00 0131*      ld hl,0
+040DF1 22 3B 0E 04 0132*      ld (prt_irq_counter),hl
+040DF5 2A EA 0D 04 0133*      ld hl,(prt_reload)
+040DF9 ED 29 84    0134*      out0 ($84),l
+040DFC ED 21 85    0135*  	out0 ($85),h
+040DFF             0136*  ; disable timer
+040DFF 3E 06       0137*      ld a,PRT_IRQ_0 | IRQ_EN_0 | PRT_MODE_0 | CLK_DIV_16 | RST_EN_1 | PRT_EN_0
+040E01 ED 39 83    0138*  	out0 ($83),a
+040E04             0139*  ; enable timer,with interrupt and CONTINUOUS mode,clock divider 16
+040E04 3E 57       0140*      ld a,PRT_IRQ_0 | IRQ_EN_1 | PRT_MODE_1 | CLK_DIV_16 | RST_EN_1 | PRT_EN_1
+040E06 ED 39 83    0141*  	out0 ($83),a
+040E09 C9          0142*      ret
+040E0A             0143*  
+040E0A             0144*  ; ===============================================
+040E0A             0145*  ; PRT Timer Interrupt Handling
+040E0A             0146*  ; https://github.com/tomm/agon-cpu-emulator/blob/main/sdcard/regression_suite/timerirq.inc
+040E0A             0147*  ; -----------------------------------------------
+040E0A             0148*  prt_irq_init:
+040E0A             0149*      ; set up interrupt vector table 2
+040E0A 21 00 00 00 0150*  	ld hl,0
+040E0E 3A 0C 01 00 0151*  	ld a,($10c)
+040E12 6F          0152*  	ld l,a
+040E13 3A 0D 01 00 0153*  	ld a,($10d)
+040E17 67          0154*  	ld h,a
+040E18             0155*  
+040E18             0156*  	; skip over CALL ($c3)
+040E18 23          0157*  	inc hl
+040E19             0158*  	; load address of jump into vector table 2 (in ram)
+040E19 ED 27       0159*  	ld hl,(hl)
+040E1B             0160*  
+040E1B             0161*  	; write CALL prt_irq_handler to vector table 2
+040E1B 3E C3       0162*  	ld a,$c3
+040E1D 77          0163*  	ld (hl),a
+040E1E 23          0164*  	inc hl
+040E1F 11 26 0E 04 0165*  	ld de,prt_irq_handler
+040E23 ED 1F       0166*  	ld (hl),de
+040E25             0167*  
+040E25 C9          0168*      ret
+040E26             0169*  
+040E26             0170*  prt_irq_handler:
+040E26 F3          0171*  	di
+040E27 F5          0172*  	push af
+040E28 E5          0173*      push hl
+040E29 ED 38 83    0174*  	in0 a,($83)
+040E2C 2A 3B 0E 04 0175*  	ld hl,(prt_irq_counter)
+040E30 23          0176*  	inc hl
+040E31 22 3B 0E 04 0177*  	ld (prt_irq_counter),hl
+040E35 E1          0178*      pop hl
+040E36 F1          0179*  	pop af
+040E37 FB          0180*  	ei
+040E38 5B ED 4D    0181*  	reti.l
+040E3B             0182*  
+040E3B             0183*  prt_irq_counter:
+040E3B 00 00 00    0184*  	.dl 0
+040E3E             0185*  prt_irq_counter_saved:
+040E3E 00 00 00    0186*      .dl 0
+040E41             0187*  
+040E41             0188*  prt_loop_reset:
+040E41 E5          0189*      push hl
+040E42 21 00 00 00 0190*  	ld hl,0
+040E46 22 3B 0E 04 0191*  	ld (prt_irq_counter),hl
+040E4A 22 AC 0E 04 0192*      ld (prt_loop_counter),hl
+040E4E 22 AF 0E 04 0193*      ld (prt_loops),hl
+040E52 CD ED 0D 04 0194*      call prt_set
+040E56 E1          0195*      pop hl
+040E57 C9          0196*      ret
+040E58             0197*  
+040E58             0198*  prt_loop_start:
+040E58 E5          0199*      push hl
+040E59 21 00 00 00 0200*  	ld hl,0
+040E5D 22 3B 0E 04 0201*  	ld (prt_irq_counter),hl
+040E61 E1          0202*      pop hl
+040E62 C9          0203*      ret
+040E63             0204*  
+040E63             0205*  prt_loop_stop:
+040E63 E5          0206*      push hl
+040E64 D5          0207*      push de
+040E65 2A 3B 0E 04 0208*      ld hl,(prt_irq_counter)
+040E69 ED 5B AC 0E 0209*      ld de,(prt_loop_counter)
+       04          
+040E6E 19          0210*      add hl,de
+040E6F 22 AC 0E 04 0211*      ld (prt_loop_counter),hl
+040E73 21 00 00 00 0212*      ld hl,0
+040E77 22 3B 0E 04 0213*      ld (prt_irq_counter),hl
+040E7B 2A AF 0E 04 0214*      ld hl,(prt_loops)
+040E7F 23          0215*      inc hl
+040E80 22 AF 0E 04 0216*      ld (prt_loops),hl
+040E84 D1          0217*      pop de
+040E85 E1          0218*      pop hl
+040E86 C9          0219*      ret
+040E87             0220*  
+040E87             0221*  ; inputs: bc = y,x text coordinates to print
+040E87             0222*  prt_loop_print:
+040E87 F5          0223*      push af
+040E88 E5          0224*      push hl
+040E89 C5          0225*      push bc
+040E8A D5          0226*      push de
+040E8B DD E5       0227*      push ix
+040E8D FD E5       0228*      push iy
+040E8F CD A4 0F 04 0229*      call vdu_move_cursor
+040E93             0230*  
+040E93 2A AC 0E 04 0231*      ld hl,(prt_loop_counter)
+040E97 CD CC 00 04 0232*      call printDec
+040E9B             0233*  
+040E9B 2A AF 0E 04 0234*      ld hl,(prt_loops)
+040E9F CD CC 00 04 0235*      call printDec
+040EA3             0236*  
+040EA3 FD E1       0237*      pop iy
+040EA5 DD E1       0238*      pop ix
+040EA7 D1          0239*      pop de
+040EA8 C1          0240*      pop bc
+040EA9 E1          0241*      pop hl
+040EAA F1          0242*      pop af
+040EAB C9          0243*      ret
+040EAC             0244*  
+040EAC             0245*  prt_loop_counter:
+040EAC 00 00 00    0246*      .dl 0
+040EAF             0247*  prt_loops:
+040EAF 00 00 00    0248*      .dl 0
+040EB2             0249*  
+040EB2             0250*  ; ===============================================
+040EB2             0251*  ; Timer functions
+040EB2             0252*  ; -----------------------------------------------
+040EB2             0253*  ; set a countdown timer
+040EB2             0254*  ; inputs: hl = time to set in 1/120ths of a second; iy = pointer to 3-byte buffer holding start time,iy+3 = pointer to 3-byte buffer holding timer set value
+040EB2             0255*  ; returns: hl = current time
+040EB2             0256*  tmr_set:
+040EB2 FD 2F 03    0257*      ld (iy+3),hl            ; set time remaining
+040EB5             0258*      MOSCALL mos_sysvars     ; ix points to syvars table
+040EB5 3E 08       0001*M 			LD	A, function
+040EB7 5B CF       0002*M 			RST.LIL	08h
+040EB9 DD 27 00    0259*      ld hl,(ix+sysvar_time)  ; get current time
+040EBC FD 2F 00    0260*      ld (iy+0),hl            ; set start time
+040EBF C9          0261*      ret
+040EC0             0262*  
+040EC0             0263*  ; gets time remaining on a countdown timer
+040EC0             0264*  ; inputs: iy = pointer to 3-byte buffer holding start time,iy+3 = pointer to 3-byte buffer holding timer set value
+040EC0             0265*  ; returns: hl pos = time remaining in 1/120ths of a second,hl neg = time past expiration
+040EC0             0266*  ;          sign flags: pos = time not expired,zero or neg = time expired
+040EC0             0267*  tmr_get:
+040EC0             0268*      MOSCALL mos_sysvars     ; ix points to syvars table
+040EC0 3E 08       0001*M 			LD	A, function
+040EC2 5B CF       0002*M 			RST.LIL	08h
+040EC4 DD 17 00    0269*      ld de,(ix+sysvar_time)  ; get current time
+040EC7 FD 27 00    0270*      ld hl,(iy+0)            ; get start time
+040ECA AF          0271*      xor a                   ; clear carry
+040ECB ED 52       0272*      sbc hl,de               ; hl = time elapsed (will always be zero or negative)
+040ECD FD 17 03    0273*      ld de,(iy+3)            ; get timer set value
+040ED0 AF          0274*      xor a                   ; clear carry
+040ED1 ED 5A       0275*      adc hl,de               ; hl = time remaining
+040ED3             0276*                              ; (we do adc because add hl,rr doesn't set sign or zero flags)
+040ED3 C9          0277*      ret
+040ED4             0278*  
+040ED4 00 00 00    0279*  timestamp_now: dl 0
+040ED7 00 00 00    0280*  timestamp_old: dl 0
+040EDA 00 00 00    0281*  timestamp_chg: dl 0
+040EDD             0282*  
+040EDD             0283*  ; update the global timestamp from the system clock
+040EDD             0284*  ; inputs: none
+040EDD             0285*  ; returns: hl = time elapsed in 1/120ths of a second
+040EDD             0286*  ;          de = current time
+040EDD             0287*  ;          ix = pointer to syvars table
+040EDD             0288*  ; destroys: af,hl,de,ix
+040EDD             0289*  timestamp_tick:
+040EDD ED 5B D4 0E 0290*      ld de,(timestamp_now)   ; get previous time
+       04          
+040EE2 ED 53 D7 0E 0291*      ld (timestamp_old),de   ; save previous time
+       04          
+040EE7             0292*      MOSCALL mos_sysvars     ; ix points to syvars table
+040EE7 3E 08       0001*M 			LD	A, function
+040EE9 5B CF       0002*M 			RST.LIL	08h
+040EEB DD 27 00    0293*      ld hl,(ix+sysvar_time)  ; get current time
+040EEE 22 D4 0E 04 0294*      ld (timestamp_now),hl   ; save current time
+040EF2 AF          0295*      xor a                   ; clear carry
+040EF3 ED 52       0296*      sbc hl,de               ; hl = time elapsed
+040EF5 22 DA 0E 04 0297*      ld (timestamp_chg),hl   ; save elapsed time
+040EF9 C9          0298*      ret
+040EFA             0299*  
+040EFA             0300*  ; set a countdown timer
+040EFA             0301*  ; inputs: hl = time to set in 1/120ths of a second; iy = pointer to 3-byte buffer holding start time,iy+3 = pointer to 3-byte buffer holding timer set value
+040EFA             0302*  ; requires: timestamp_tick to be called at least once before this function
+040EFA             0303*  ; returns: hl = current time
+040EFA             0304*  ; destroys: hl
+040EFA             0305*  timestamp_tmr_set:
+040EFA FD 2F 03    0306*      ld (iy+3),hl            ; set time remaining
+040EFD 2A D4 0E 04 0307*      ld hl,(timestamp_now)   ; get current timestamp
+040F01 FD 2F 00    0308*      ld (iy+0),hl            ; set start time
+040F04 C9          0309*      ret
+040F05             0310*  
+040F05             0311*  ; gets time remaining on a countdown timer following the global timestamp
+040F05             0312*  ; inputs: iy = pointer to 3-byte buffer holding start time,iy+3 = pointer to 3-byte buffer holding timer set value
+040F05             0313*  ; requires: timestamp_tick to be called at least once before this function
+040F05             0314*  ; returns: hl pos = time remaining in 1/120ths of a second,hl neg = time past expiration
+040F05             0315*  ;          sign flags: pos = time not expired,zero or neg = time expired
+040F05             0316*  ; destroys: af,hl,de
+040F05             0317*  timestamp_tmr_get:
+040F05 ED 5B D4 0E 0318*      ld de,(timestamp_now)   ; get current timestamp
+       04          
+040F0A FD 27 00    0319*      ld hl,(iy+0)            ; get start time
+040F0D AF          0320*      xor a                   ; clear carry
+040F0E ED 52       0321*      sbc hl,de               ; hl = time elapsed (will always be zero or negative)
+040F10 FD 17 03    0322*      ld de,(iy+3)            ; get timer set value
+040F13 AF          0323*      xor a                   ; clear carry
+040F14 ED 5A       0324*      adc hl,de               ; hl = time remaining
+040F16             0325*                              ; (we do adc because add hl,rr doesn't set sign or zero flags)
+040F16 C9          0326*      ret
+040F17             0327*  
+040F17             0328*  ; main loop timer functions
+040F17             0329*  tmr_main_loop: ds 6 ; buffer to hold main loop timer
+040F1D             0330*  
+040F1D             0331*  ; set a countdown timer for the main loop using the timestamp timer
+040F1D             0332*  ; inputs: hl = time to set in 1/120ths of a second
+040F1D             0333*  ; returns: hl = current time
+040F1D             0334*  ; destroys: af,hl,de,ix,iy
+040F1D             0335*  tmr_main_loop_set:
+040F1D FD 21 17 0F 0336*      ld iy,tmr_main_loop
+       04          
+040F22 FD 2F 03    0337*      ld (iy+3),hl ; set time remaining
+040F25 CD DD 0E 04 0338*      call timestamp_tick
+040F29 2A D4 0E 04 0339*      ld hl,(timestamp_now)   ; get current timestamp
+040F2D FD 2F 00    0340*      ld (iy+0),hl ; set start time
+040F30 C9          0341*      ret
+040F31             0342*  
+040F31             0343*  ; gets time remaining on the main loop countdown timer following the global timestamp
+040F31             0344*  ; returns: hl pos = time remaining in 1/120ths of a second,hl neg = time past expiration
+040F31             0345*  ;          sign flags: pos = time not expired,zero or neg = time expired
+040F31             0346*  ; destroys: af,hl,de,ix,iy
+040F31             0347*  tmr_main_loop_get:
+040F31 CD DD 0E 04 0348*      call timestamp_tick
+040F35 FD 21 17 0F 0349*      ld iy,tmr_main_loop
+       04          
+040F3A CD 05 0F 04 0350*      call timestamp_tmr_get
+040F3E C9          0351*      ret
+040F3F             0352*  
+040F3F             0353*  ; set a stopwatch
+040F3F             0354*  ; returns: hl = start time
+040F3F             0355*  ; destroys: hl,ix
+040F3F             0356*  stopwatch_set:
+040F3F             0357*      MOSCALL mos_sysvars     ; ix points to syvars table
+040F3F 3E 08       0001*M 			LD	A, function
+040F41 5B CF       0002*M 			RST.LIL	08h
+040F43 DD 27 00    0358*      ld hl,(ix+sysvar_time)  ; get current time
+040F46 22 5B 0F 04 0359*      ld (stopwatch_started),hl            ; set start time
+040F4A C9          0360*      ret
+040F4B             0361*  
+040F4B             0362*  ; gets time elapsed on a stopwatch
+040F4B             0363*  ; returns: hl = time elapsed in 1/120ths of a second
+040F4B             0364*  ; destroys: af,hl,de,ix
+040F4B             0365*  stopwatch_get:
+040F4B             0366*      MOSCALL mos_sysvars     ; ix points to syvars table
+040F4B 3E 08       0001*M 			LD	A, function
+040F4D 5B CF       0002*M 			RST.LIL	08h
+040F4F DD 27 00    0367*      ld hl,(ix+sysvar_time)  ; get current time
+040F52 ED 5B 5B 0F 0368*      ld de,(stopwatch_started)            ; get start time
+       04          
+040F57 AF          0369*      xor a                   ; clear carry
+040F58 ED 52       0370*      sbc hl,de               ; hl = time elapsed (will always be zero or positive)
+040F5A C9          0371*      ret
+040F5B             0372*  
+040F5B             0373*  stopwatch_started: ds 3 ; buffer to hold stopwatch start time
+040F5E             0374*  
+040F5E             0375*  ; ------------------
+040F5E             0376*  ; delay routine
+040F5E             0377*  ; Author: Richard Turrnidge
+040F5E             0378*  ; https://github.com/richardturnnidge/lessons/blob/main/slowdown.inc
+040F5E             0379*  ; routine waits a fixed time,then returns
+040F5E             0380*  ; arrive with A =  the delay byte. One bit to be set only.
+040F5E             0381*  ; eg. ld A,00000100b
+040F5E             0382*  
+040F5E             0383*  multiPurposeDelay:
+040F5E F5          0384*      push af
+040F5F C5          0385*      push bc
+040F60 DD E5       0386*      push ix
+040F62 47          0387*      ld b,a
+040F63 3E 08       0388*      ld a,$08
+040F65 5B CF       0389*      RST.LIL	08h                 ; get IX pointer to sysvars
+040F67             0390*  
+040F67             0391*  waitLoop:
+040F67             0392*  
+040F67 DD 7E 00    0393*      ld a,(ix + 0)              ; ix+0h is lowest byte of clock timer
+040F6A             0394*  
+040F6A             0395*                                  ;   we check if bit set is same as last time we checked.
+040F6A             0396*                                  ;   bit 0 - don't use
+040F6A             0397*                                  ;   bit 1 - changes 64 times per second
+040F6A             0398*                                  ;   bit 2 - changes 32 times per second
+040F6A             0399*                                  ;   bit 3 - changes 16 times per second
+040F6A             0400*  
+040F6A             0401*                                  ;   bit 4 - changes 8 times per second
+040F6A             0402*                                  ;   bit 5 - changes 4 times per second
+040F6A             0403*                                  ;   bit 6 - changes 2 times per second
+040F6A             0404*                                  ;   bit 7 - changes 1 times per second
+040F6A A0          0405*      and b
+040F6B 4F          0406*      ld c,a
+040F6C 3A 7D 0F 04 0407*      ld a,(oldTimeStamp)
+040F70 B9          0408*      cp c                        ; is A same as last value?
+040F71 28 F4       0409*      jr z,waitLoop              ; loop here if it is
+040F73 79          0410*      ld a,c
+040F74 32 7D 0F 04 0411*      ld (oldTimeStamp),a        ; set new value
+040F78             0412*  
+040F78 DD E1       0413*      pop ix
+040F7A C1          0414*      pop bc
+040F7B F1          0415*      pop af
+040F7C C9          0416*      ret
+040F7D             0417*  
+040F7D 00          0418*  oldTimeStamp:   .db 00h
+040F7E             0035       include "vdu.inc"
+040F7E             0001*  ; &E8-&EF 	232-239 	Bitmap plot §
+040F7E             0002*  plot_bmp: equ 0xE8
+040F7E             0003*  ; 5 	Plot absolute in current foreground colour
+040F7E             0004*  dr_abs_fg: equ 5
+040F7E             0005*  
+040F7E             0006*  ; VDU 30: Home cursor
+040F7E             0007*  vdu_home_cursor:
+040F7E 3E 1E       0008*      ld a,30
+040F80 5B D7       0009*  	rst.lil $10
+040F82 C9          0010*  	ret
+040F83             0011*  
+040F83             0012*  cursor_on:
+040F83 21 8E 0F 04 0013*  	ld hl,@cmd
+040F87 01 03 00 00 0014*  	ld bc,@end-@cmd
+040F8B 5B DF       0015*  	rst.lil $18
+040F8D C9          0016*  	ret
+040F8E             0017*  @cmd:
+040F8E 17 01 01    0018*  	db 23,1,1
+040F91             0019*  @end:
+040F91             0020*  
+040F91             0021*  cursor_off:
+040F91 21 9C 0F 04 0022*  	ld hl,@cmd
+040F95 01 03 00 00 0023*  	ld bc,@end-@cmd
+040F99 5B DF       0024*  	rst.lil $18
+040F9B C9          0025*  	ret
+040F9C             0026*  @cmd:
+040F9C 17 01 00    0027*  	db 23,1,0
+040F9F             0028*  @end:
+040F9F             0029*  
+040F9F             0030*  ; VDU 9: Move cursor forward one character
+040F9F             0031*  vdu_cursor_forward:
+040F9F 3E 09       0032*      ld a,9
+040FA1 5B D7       0033*  	rst.lil $10
+040FA3 C9          0034*  	ret
+040FA4             0035*  
+040FA4             0036*  ; VDU 31, x, y: Move text cursor to x, y text position (TAB(x, y))
+040FA4             0037*  ; inputs: c=x, b=y 8-bit unsigned integers
+040FA4             0038*  vdu_move_cursor:
+040FA4 ED 43 B5 0F 0039*      ld (@x0),bc
+       04          
+040FA9 21 B4 0F 04 0040*  	ld hl,@cmd
+040FAD 01 03 00 00 0041*  	ld bc,@end-@cmd
+040FB1 5B DF       0042*  	rst.lil $18
+040FB3 C9          0043*  	ret
+040FB4 1F          0044*  @cmd: 	db 31
+040FB5 00          0045*  @x0:	db 0
+040FB6 00          0046*  @y0: 	db 0
+040FB7 00          0047*  @end: 	db 0 ; padding
+040FB8             0048*  
+040FB8             0049*  ; VDU 12: Clear text area (CLS)
+040FB8             0050*  vdu_cls:
+040FB8 3E 0C       0051*      ld a,12
+040FBA 5B D7       0052*  	rst.lil $10
+040FBC C9          0053*  	ret
+040FBD             0054*  
+040FBD             0055*  vdu_flip:
+040FBD 21 C8 0F 04 0056*  	ld hl,@cmd
+040FC1 01 03 00 00 0057*  	ld bc,@end-@cmd
+040FC5 5B DF       0058*  	rst.lil $18
+040FC7 C9          0059*  	ret
+040FC8 17 00 C3    0060*  @cmd: db 23,0,0xC3
+040FCB             0061*  @end:
+040FCB             0062*  
+040FCB             0063*  ; VDU 16: Clear graphics area (CLG)
+040FCB             0064*  vdu_clg:
+040FCB 3E 10       0065*      ld a,16
+040FCD 5B D7       0066*  	rst.lil $10
+040FCF C9          0067*  	ret
+040FD0             0068*  
+040FD0             0069*  ; VDU 17, colour: Define text colour (COLOUR)
+040FD0             0070*  vdu_colour_text:
+040FD0 32 E0 0F 04 0071*  	ld (@arg),a
+040FD4 21 DF 0F 04 0072*  	ld hl,@cmd
+040FD8 01 02 00 00 0073*  	ld bc,@end-@cmd
+040FDC 5B DF       0074*  	rst.lil $18
+040FDE C9          0075*  	ret
+040FDF 11          0076*  @cmd: db 17
+040FE0 00          0077*  @arg: db 0
+040FE1             0078*  @end:
+040FE1             0079*  
+040FE1             0080*  
+040FE1             0081*  vdu_gcol_bg:
+040FE1 32 F8 0F 04 0082*  	ld (@mode),a
+040FE5 79          0083*      ld a,c
+040FE6 C6 80       0084*      add a,128
+040FE8 32 F9 0F 04 0085*      ld (@col),a
+040FEC 21 F7 0F 04 0086*  	ld hl,@cmd
+040FF0 01 03 00 00 0087*  	ld bc,@end-@cmd
+040FF4 5B DF       0088*  	rst.lil $18
+040FF6 C9          0089*  	ret
+040FF7 12          0090*  @cmd:  db 18
+040FF8 00          0091*  @mode: db 0
+040FF9 00          0092*  @col:  db 0
+040FFA             0093*  @end:
+040FFA             0094*  
+040FFA             0095*  
+040FFA             0096*  ; VDU 28, left, bottom, right, top: Set text viewport **
+040FFA             0097*  ; MIND THE LITTLE-ENDIANESS
+040FFA             0098*  ; inputs: c=left,b=bottom,e=right,d=top
+040FFA             0099*  ; outputs; nothing
+040FFA             0100*  ; destroys: a might make it out alive
+040FFA             0101*  vdu_set_txt_viewport:
+040FFA ED 43 10 10 0102*      ld (@lb),bc
+       04          
+040FFF ED 53 12 10 0103*  	ld (@rt),de
+       04          
+041004 21 0F 10 04 0104*  	ld hl,@cmd
+041008 01 05 00 00 0105*  	ld bc,@end-@cmd
+04100C 5B DF       0106*  	rst.lil $18
+04100E C9          0107*  	ret
+04100F 1C          0108*  @cmd:   db 28 ; set text viewport command
+041010 00 00       0109*  @lb: 	dw 0x0000 ; set by bc
+041012 00 00       0110*  @rt: 	dw 0x0000 ; set by de
+041014 00          0111*  @end:   db 0x00	  ; padding
+041015             0112*  
+041015             0113*  ; Wait for VBLANK interrupt
+041015             0114*  vdu_vblank:
+041015 DD E5       0115*      PUSH 	IX
+041017             0116*  	MOSCALL	mos_sysvars
+041017 3E 08       0001*M 			LD	A, function
+041019 5B CF       0002*M 			RST.LIL	08h
+04101B DD 7E 00    0117*  	LD	A, (IX + sysvar_time + 0)
+04101E             0118*  @wait:
+04101E DD BE 00    0119*      CP 	A, (IX + sysvar_time + 0)
+041021 28 FB       0120*      JR	Z, @wait
+041023 DD E1       0121*      POP	IX
+041025 C9          0122*      RET
+041026             0123*  
+041026             0124*  ; VDU 24, left; bottom; right; top;: Set graphics viewport
+041026             0125*  ; NOTE: the order of the y-coordinate parameters are inverted
+041026             0126*  ; 	because we have turned off logical screen scaling
+041026             0127*  ; inputs: bc=x0,de=y0,ix=x1,iy=y1
+041026             0128*  ; outputs; nothing
+041026             0129*  ; destroys: a might make it out alive
+041026             0130*  vdu_set_gfx_viewport:
+041026 ED 43 46 10 0131*      ld (@x0),bc
+       04          
+04102B FD 22 48 10 0132*      ld (@y1),iy
+       04          
+041030 DD 22 4A 10 0133*  	ld (@x1),ix
+       04          
+041035 ED 53 4C 10 0134*  	ld (@y0),de
+       04          
+04103A 21 45 10 04 0135*  	ld hl,@cmd
+04103E 01 09 00 00 0136*  	ld bc,@end-@cmd
+041042 5B DF       0137*  	rst.lil $18
+041044 C9          0138*  	ret
+041045 18          0139*  @cmd:   db 24 ; set graphics viewport command
+041046 00 00       0140*  @x0: 	dw 0x0000 ; set by bc
+041048 00 00       0141*  @y1: 	dw 0x0000 ; set by iy
+04104A 00 00       0142*  @x1: 	dw 0x0000 ; set by ix
+04104C 00 00       0143*  @y0: 	dw 0x0000 ; set by de
+04104E 00          0144*  @end:   db 0x00	  ; padding
+04104F             0145*  
+04104F             0146*  ; SCREEN MODES
+04104F             0147*  ; ===============================
+04104F             0148*  ; Mode  Horz  Vert  Cols  Refresh
+04104F             0149*  ; ---   ----  ----  ----  -------
+04104F             0150*  ; 11    320   240   2     60hz
+04104F             0151*  ; 139   320   240   2     60hz
+04104F             0152*  ; 23    512   384   2     60hz
+04104F             0153*  ; 151   512   384   2     60hz
+04104F             0154*  ; 6     640   240   2     60hz
+04104F             0155*  ; 134   640   240   2     60hz
+04104F             0156*  ; 2     640   480   2     60hz
+04104F             0157*  ; 130   640   480   2     60hz
+04104F             0158*  ; 17    800   600   2     60hz
+04104F             0159*  ; 145   800   600   2     60hz
+04104F             0160*  ; 18    1024  768   2     60hz
+04104F             0161*  ; 146   1024  768   2     60hz
+04104F             0162*  ; ---   ----  ----  ----  -------
+04104F             0163*  ; 10    320   240   4     60hz
+04104F             0164*  ; 138   320   240   4     60hz
+04104F             0165*  ; 22    512   384   4     60hz
+04104F             0166*  ; 150   512   384   4     60hz
+04104F             0167*  ; 5     640   240   4     60hz
+04104F             0168*  ; 133   640   240   4     60hz
+04104F             0169*  ; 1     640   480   4     60hz
+04104F             0170*  ; 129   640   480   4     60hz
+04104F             0171*  ; 16    800   600   4     60hz
+04104F             0172*  ; 19    1024  768   4     60hz
+04104F             0173*  ; ---   ----  ----  ----  -------
+04104F             0174*  ; 9     320   240   16    60hz
+04104F             0175*  ; 137   320   240   16    60hz
+04104F             0176*  ; 21    512   384   16    60hz
+04104F             0177*  ; 149   512   384   16    60hz
+04104F             0178*  ; 4     640   240   16    60hz
+04104F             0179*  ; 132   640   240   16    60hz
+04104F             0180*  ; 0     640   480   16    60hz
+04104F             0181*  ; 7     n/a   n/a   16    60hz
+04104F             0182*  ; ---   ----  ----  ----  -------
+04104F             0183*  ; 8     320   240   64    60hz
+04104F             0184*  ; 136   320   240   64    60hz
+04104F             0185*  ; 20    512   384   64    60hz
+04104F             0186*  ; 3     640   240   64    60hz
+04104F             0187*  ; ---   ----  ----  ----  -------
+04104F             0188*  vdu_set_screen_mode:
+04104F 32 5F 10 04 0189*  	ld (@arg),a
+041053 21 5E 10 04 0190*  	ld hl,@cmd
+041057 01 02 00 00 0191*  	ld bc,@end-@cmd
+04105B 5B DF       0192*  	rst.lil $18
+04105D C9          0193*  	ret
+04105E 16          0194*  @cmd: db 22 ; set screen mode
+04105F 00          0195*  @arg: db 0  ; screen mode parameter
+041060             0196*  @end:
+041060             0197*  
+041060             0198*  ; VDU 23, 0, &C0, n: Turn logical screen scaling on and off *
+041060             0199*  ; inputs: a is scaling mode, 1=on, 0=off
+041060             0200*  ; note: default setting on boot is scaling ON
+041060             0201*  vdu_set_scaling:
+041060 32 72 10 04 0202*  	ld (@arg),a
+041064 21 6F 10 04 0203*  	ld hl,@cmd
+041068 01 04 00 00 0204*  	ld bc,@end-@cmd
+04106C 5B DF       0205*  	rst.lil $18
+04106E C9          0206*  	ret
+04106F 17 00 C0    0207*  @cmd: db 23,0,0xC0
+041072 00          0208*  @arg: db 0  ; scaling on/off
+041073             0209*  @end:
+041073             0210*  
+041073             0211*  ; VDU 23, 27, &20, bufferId; : Select bitmap (using a buffer ID)
+041073             0212*  ; inputs: hl=bufferId
+041073             0213*  vdu_buff_select:
+041073 22 85 10 04 0214*  	ld (@bufferId),hl
+041077 21 82 10 04 0215*  	ld hl,@cmd
+04107B 01 05 00 00 0216*  	ld bc,@end-@cmd
+04107F 5B DF       0217*  	rst.lil $18
+041081 C9          0218*  	ret
+041082 17 1B 20    0219*  @cmd: db 23,27,0x20
+041085 00 00       0220*  @bufferId: dw 0x0000
+041087 00          0221*  @end: db 0x00 ; padding
+041088             0222*  
+041088             0223*  ; VDU 23, 27, &21, w; h; format: Create bitmap from selected buffer
+041088             0224*  ; inputs: a=format; bc=width; de=height
+041088             0225*  ; prerequisites: buffer selected by vdu_bmp_select or vdu_buff_select
+041088             0226*  ; formats: https://agonconsole8.github.io/agon-docs/VDP---Bitmaps-API.html
+041088             0227*  ; 0 	RGBA8888 (4-bytes per pixel)
+041088             0228*  ; 1 	RGBA2222 (1-bytes per pixel)
+041088             0229*  ; 2 	Mono/Mask (1-bit per pixel)
+041088             0230*  ; 3 	Reserved for internal use by VDP (“native” format)
+041088             0231*  vdu_bmp_create:
+041088 ED 43 A4 10 0232*      ld (@width),bc
+       04          
+04108D ED 53 A6 10 0233*      ld (@height),de
+       04          
+041092 32 A8 10 04 0234*      ld (@fmt),a
+041096 21 A1 10 04 0235*  	ld hl,@cmd
+04109A 01 08 00 00 0236*  	ld bc,@end-@cmd
+04109E 5B DF       0237*  	rst.lil $18
+0410A0 C9          0238*  	ret
+0410A1 17 1B 21    0239*  @cmd:       db 23,27,0x21
+0410A4 00 00       0240*  @width:     dw 0x0000
+0410A6 00 00       0241*  @height:    dw 0x0000
+0410A8 00          0242*  @fmt:       db 0x00
+0410A9             0243*  @end:
+0410A9             0244*  
+0410A9             0245*  ; https://agonconsole8.github.io/agon-docs/VDP---PLOT-Commands.html
+0410A9             0246*  ; &E8-&EF 	232-239 	Bitmap plot §
+0410A9             0247*  ; VDU 25, mode, x; y;: PLOT command
+0410A9             0248*  ; inputs: bc=x0, de=y0
+0410A9             0249*  ; prerequisites: vdu_buff_select
+0410A9             0250*  vdu_plot_bmp:
+0410A9 ED 43 C0 10 0251*      ld (@x0),bc
+       04          
+0410AE ED 53 C2 10 0252*      ld (@y0),de
+       04          
+0410B3 21 BE 10 04 0253*  	ld hl,@cmd
+0410B7 01 06 00 00 0254*  	ld bc,@end-@cmd
+0410BB 5B DF       0255*  	rst.lil $18
+0410BD C9          0256*  	ret
+0410BE 19          0257*  @cmd:   db 25
+0410BF ED          0258*  @mode:  db plot_bmp+dr_abs_fg ; 0xED
+0410C0 00 00       0259*  @x0: 	dw 0x0000
+0410C2 00 00       0260*  @y0: 	dw 0x0000
+0410C4 00          0261*  @end:   db 0x00 ; padding
+0410C5             0262*  
+0410C5             0263*  ; load an rgba2222 image file to a working buffer and make it an rgba8888 bitmap in a target buffer
+0410C5             0264*  ; inputs: bc,de image width,height ; hl = targetBufferId ; ix = file size ; iy = pointer to filename
+0410C5             0265*  vdu_load_img_rgba2_to_8:
+0410C5             0266*  ; backup the target buffer id and image dimensions
+0410C5 E5          0267*      push hl
+0410C6 D5          0268*      push de
+0410C7 C5          0269*      push bc
+0410C8             0270*  ; load the rgba2 image to working buffer 65534
+0410C8 21 FE FF 00 0271*      ld hl,65534 ; temporary working buffer id
+0410CC CD CF 11 04 0272*  	call vdu_load_buffer_from_file
+0410D0             0273*  ; restore the image dimensions and target buffer id
+0410D0 C1          0274*      pop bc
+0410D1 D1          0275*      pop de
+0410D2 E1          0276*      pop hl
+0410D3             0277*  ; fall through to vdu_rgba2_to_8
+0410D3             0278*  
+0410D3             0279*  ; https://discord.com/channels/1158535358624039014/1158536711148675072/1257757461729771771
+0410D3             0280*  ; ok, so the "expand bitmap" can be used, when coupled with a "reverse" - the expanded bitmap _doesn't_ come out "right" otherwise, cos of endian-ness
+0410D3             0281*  ; the "expand bitmap" command is:
+0410D3             0282*  ; VDU 23,0,&A0,targetBufferID%;&48,2,sourceBufferId%;0,&7F,&BF,&FF
+0410D3             0283*  ; and then to reverse the byte order to fix endian-ness:
+0410D3             0284*  ; VDU 23,0,&A0,targetBufferID%;24,4,4;
+0410D3             0285*  ; finally you'd need to set that buffer to be an RGBA8888 format bitmap:
+0410D3             0286*  ; VDU 23,27,&20,targetBufferID%;
+0410D3             0287*  ; VDU 23,27,&21,width%;height%;0
+0410D3             0288*  ; -------------------------------------------------------------------
+0410D3             0289*  ; inputs: bc,de image width,height ; hl = targetBufferId
+0410D3             0290*  ; prerequisites: rgba2 image data loaded into workingBufferId 65534
+0410D3             0291*  vdu_rgba2_to_8:
+0410D3             0292*  ; load the image dimensions and buffer id parameters
+0410D3 ED 43 2F 11 0293*      ld (@width),bc
+       04          
+0410D8 ED 53 31 11 0294*      ld (@height),de
+       04          
+0410DD 22 14 11 04 0295*      ld (@bufferId0),hl
+0410E1 22 21 11 04 0296*      ld (@bufferId2),hl
+0410E5 22 2A 11 04 0297*      ld (@bufferId1),hl
+0410E9             0298*  ; clean up bytes that got stomped on by the ID loads
+0410E9 3E 48       0299*      ld a,0x48
+0410EB 32 16 11 04 0300*      ld (@bufferId0+2),a
+0410EF 3E 17       0301*      ld a,23
+0410F1 32 2C 11 04 0302*      ld (@bufferId1+2),a
+0410F5 3E 18       0303*      ld a,24
+0410F7 32 23 11 04 0304*      ld (@bufferId2+2),a
+0410FB AF          0305*      xor a
+0410FC 32 33 11 04 0306*      ld (@height+2),a
+041100             0307*  ; send the vdu command strings
+041100 21 0B 11 04 0308*      ld hl,@beg
+041104 01 29 00 00 0309*      ld bc,@end-@beg
+041108 5B DF       0310*      rst.lil $18
+04110A C9          0311*      ret
+04110B             0312*  @beg:
+04110B             0313*  ; Command 14: Consolidate blocks in a buffer
+04110B             0314*  ; VDU 23, 0, &A0, bufferId; 14
+04110B 17 00 A0    0315*      db 23,0,0xA0
+04110E FE FF       0316*      dw 65534 ; workingBufferId
+041110 0E          0317*      db 14 ; consolidate blocks
+041111             0318*  ; the "expand bitmap" command is:
+041111             0319*  ; VDU 23,0,&A0,targetBufferID%;&48,2,sourceBufferId%;0,&7F,&BF,&FF
+041111 17 00 A0    0320*      db 23,0,0xA0
+041114 00 00       0321*  @bufferId0: dw 0x0000 ; targetBufferId
+041116 48          0322*      db 0x48 ; given as decimal command 72 in the docs
+041117 02          0323*      db 2 ; options mask: %00000011 is the number of bits per pixel in the source bitmap
+041118 FE FF       0324*      dw 65534 ; sourceBufferId
+04111A 00 7F BF FF 0325*      db 0x00,0x7F,0xBF,0xFF ; expanding to bytes by bit-shifting?
+04111E             0326*  ; reverse the byte order to fix endian-ness:
+04111E             0327*  ; Command 24: Reverse the order of data of blocks within a buffer
+04111E             0328*  ; VDU 23, 0, &A0, bufferId; 24, options, [valueSize;] [chunkSize;]
+04111E             0329*  ; VDU 23,0,&A0,targetBufferID%;24,4,4;
+04111E 17 00 A0    0330*      db 23,0,0xA0
+041121 00 00       0331*  @bufferId2:    dw 0x0000 ; targetBufferId
+041123 18          0332*      db 24 ; reverse byte order
+041124 04          0333*      db 4 ; option: Reverse data of the value size within chunk of data of the specified size
+041125 04 00       0334*      dw 4 ; size (4 bytes)
+041127             0335*  ; finally you'd need to set that buffer to be an RGBA8888 format bitmap:
+041127             0336*  ; VDU 23,27,&20,targetBufferID%;
+041127 17 1B 20    0337*      db 23,27,0x20 ; select bitmap
+04112A 00 00       0338*  @bufferId1: dw 0x0000 ; targetBufferId
+04112C             0339*  ; VDU 23,27,&21,width%;height%;0
+04112C 17 1B 21    0340*      db 23,27,0x21 ; create bitmap from buffer
+04112F 00 00       0341*  @width: dw 0x0000
+041131 00 00       0342*  @height: dw 0x0000
+041133 00          0343*      db 0x00 ; rgba8888 format
+041134             0344*  @end:
+041134             0345*  
+041134             0346*  ; scratch variables
+041134 00 00 00    0347*  bufferId0: dl 0x000000
+041137 00 00 00    0348*  bufferId1: dl 0x000000
+04113A             0349*  
+04113A             0350*  ; load a vdu buffer from local memory
+04113A             0351*  ; inputs: hl = bufferId ; bc = length ; de = pointer to data
+04113A             0352*  vdu_load_buffer:
+04113A ED 43 63 11 0353*      ld (@length),bc
+       04          
+04113F D5          0354*      push de ; save data pointer
+041140             0355*  ; send the vdu command string
+041140 7D          0356*      ld a,l
+041141 32 60 11 04 0357*      ld (@bufferId),a
+041145 7C          0358*      ld a,h
+041146 32 61 11 04 0359*      ld (@bufferId+1),a
+04114A 21 5D 11 04 0360*      ld hl,@cmd
+04114E 01 08 00 00 0361*      ld bc,@end-@cmd
+041152 5B DF       0362*      rst.lil $18
+041154             0363*  ; send the buffer data
+041154 E1          0364*      pop hl ; pointer to data
+041155 ED 4B 63 11 0365*      ld bc,(@length)
+       04          
+04115A 5B DF       0366*      rst.lil $18 ; send it
+04115C C9          0367*      ret
+04115D             0368*  ; Upload data :: VDU 23, 0 &A0, bufferId; 0, length; <buffer-data>
+04115D 17 00 A0    0369*  @cmd:       db 23,0,0xA0
+041160 00 00       0370*  @bufferId:	dw 0x0000
+041162 00          0371*  		    db 0 ; load buffer
+041163 00 00       0372*  @length:	dw 0x0000
+041165 00          0373*  @end: db 0 ; padding
+041166             0374*  
+041166             0375*  ; clear a buffer
+041166             0376*  ; inputs: hl = bufferId
+041166             0377*  vdu_clear_buffer:
+041166 7D          0378*      ld a,l
+041167 32 7E 11 04 0379*      ld (@bufferId),a
+04116B 7C          0380*      ld a,h
+04116C 32 7F 11 04 0381*      ld (@bufferId+1),a
+041170 21 7B 11 04 0382*      ld hl,@cmd
+041174 01 06 00 00 0383*      ld bc,@end-@cmd
+041178 5B DF       0384*      rst.lil $18
+04117A C9          0385*      ret
+04117B 17 00 A0    0386*  @cmd:       db 23,0,0xA0
+04117E 00 00       0387*  @bufferId:	dw 0x0000
+041180 02          0388*  		    db 2 ; clear buffer
+041181             0389*  @end:
+041181             0390*  
+041181             0391*  vdu_clear_all_buffers:
+041181             0392*  ; clear all buffers
+041181 21 8C 11 04 0393*      ld hl,@beg
+041185 01 06 00 00 0394*      ld bc,@end-@beg
+041189 5B DF       0395*      rst.lil $18
+04118B C9          0396*      ret
+04118C 17 00 A0    0397*  @beg: db 23,0,$A0
+04118F FF FF       0398*        dw -1 ; clear all buffers
+041191 02          0399*        db 2  ; command 2: clear a buffer
+041192             0400*  @end:
+041192             0401*  
+041192             0402*  ; Command 14: Consolidate blocks in a buffer
+041192             0403*  vdu_consolidate_buffer:
+041192             0404*  ; set parameters for vdu call
+041192 7D          0405*      ld a,l
+041193 32 AA 11 04 0406*      ld (@bufferId),a
+041197 7C          0407*      ld a,h
+041198 32 AB 11 04 0408*      ld (@bufferId+1),a
+04119C 21 A7 11 04 0409*      ld hl,@beg
+0411A0 01 06 00 00 0410*      ld bc,@end-@beg
+0411A4 5B DF       0411*      rst.lil $18
+0411A6 C9          0412*      ret
+0411A7             0413*  ; VDU 23, 0, &A0, bufferId; 14
+0411A7 17 00 A0    0414*  @beg: db 23,0,0xA0
+0411AA 00 00       0415*  @bufferId: dw 0x0000
+0411AC 0E          0416*             db 14
+0411AD             0417*  @end:
+0411AD             0418*  
+0411AD             0419*  ; load an image file to a buffer and make it a bitmap
+0411AD             0420*  ; inputs: a = image type ; bc,de image width,height ; hl = bufferId ; ix = file size ; iy = pointer to filename
+0411AD             0421*  vdu_load_img:
+0411AD             0422*  ; back up image type and dimension parameters
+0411AD 22 34 11 04 0423*      ld (bufferId0),hl
+0411B1 F5          0424*      push af
+0411B2 C5          0425*  	push bc
+0411B3 D5          0426*  	push de
+0411B4             0427*  ; load the image
+0411B4 CD CF 11 04 0428*  	call vdu_load_buffer_from_file
+0411B8             0429*  ; now make it a bitmap
+0411B8 2A 34 11 04 0430*      ld hl,(bufferId0)
+0411BC CD 92 11 04 0431*      call vdu_consolidate_buffer
+0411C0 2A 34 11 04 0432*      ld hl,(bufferId0)
+0411C4 CD 73 10 04 0433*      call vdu_buff_select
+0411C8 D1          0434*  	pop de ; image height
+0411C9 C1          0435*  	pop bc ; image width
+0411CA F1          0436*  	pop af ; image type
+0411CB C3 88 10 04 0437*  	jp vdu_bmp_create ; will return to caller from there
+0411CF             0438*  
+0411CF             0439*  ; inputs: hl = bufferId; iy = pointer to filename
+0411CF             0440*  vdu_load_buffer_from_file:
+0411CF 22 34 11 04 0441*      ld (bufferId0),hl
+0411D3             0442*  
+0411D3             0443*  ; clear target buffer
+0411D3 CD 66 11 04 0444*      call vdu_clear_buffer
+0411D7             0445*  
+0411D7             0446*  ; open the file in read mode
+0411D7             0447*  ; Open a file
+0411D7             0448*  ; HLU: Filename
+0411D7             0449*  ;   C: Mode
+0411D7             0450*  ; Returns:
+0411D7             0451*  ;   A: Filehandle, or 0 if couldn't open
+0411D7 FD E5       0452*  	push iy ; pointer to filename
+0411D9 E1          0453*  	pop hl
+0411DA 0E 01       0454*  	ld c,fa_read
+0411DC             0455*      MOSCALL mos_fopen
+0411DC 3E 0A       0001*M 			LD	A, function
+0411DE 5B CF       0002*M 			RST.LIL	08h
+0411E0 32 29 12 04 0456*      ld (@filehandle),a
+0411E4             0457*  
+0411E4             0458*  @read_file:
+0411E4             0459*  ; Read a block of data from a file
+0411E4             0460*  ;   C: Filehandle
+0411E4             0461*  ; HLU: Pointer to where to write the data to
+0411E4             0462*  ; DEU: Number of bytes to read
+0411E4             0463*  ; Returns:
+0411E4             0464*  ; DEU: Number of bytes read
+0411E4 3A 29 12 04 0465*      ld a,(@filehandle)
+0411E8 4F          0466*      ld c,a
+0411E9 21 00 E0 B7 0467*      ld hl,filedata
+0411ED 11 00 20 00 0468*      ld de,8192 ; max we can read into onboard sram at one time
+0411F1             0469*      MOSCALL mos_fread
+0411F1 3E 1A       0001*M 			LD	A, function
+0411F3 5B CF       0002*M 			RST.LIL	08h
+0411F5             0470*  
+0411F5 D5          0471*      push de
+0411F6 E1          0472*      pop hl
+0411F7 CD CC 00 04 0473*      call printDec
+0411FB CD 91 00 04 0474*      call printNewLine
+0411FF             0475*  
+0411FF             0476*  ; test de for zero bytes read
+0411FF 21 00 00 00 0477*      ld hl,0
+041203 AF          0478*      xor a ; clear carry
+041204 ED 52       0479*      sbc hl,de
+041206 CA 20 12 04 0480*      jp z,@close_file
+04120A             0481*  
+04120A             0482*  ; load a vdu buffer from local memory
+04120A             0483*  ; inputs: hl = bufferId ; bc = length ; de = pointer to data
+04120A 2A 34 11 04 0484*      ld hl,(bufferId0)
+04120E D5          0485*      push de ; chunksize
+04120F C1          0486*      pop bc
+041210 11 00 E0 B7 0487*      ld de,filedata
+041214 CD 3A 11 04 0488*      call vdu_load_buffer
+041218             0489*  
+041218             0490*  ; print progress breadcrumbs
+041218 3E 2E       0491*      ld a,'.'
+04121A 5B D7       0492*      rst.lil 10h
+04121C             0493*  
+04121C             0494*  ; read the next block
+04121C C3 E4 11 04 0495*      jp @read_file
+041220             0496*  
+041220             0497*  ; close the file
+041220             0498*  @close_file:
+041220 3A 29 12 04 0499*      ld a,(@filehandle)
+041224             0500*      MOSCALL mos_fclose
+041224 3E 0B       0001*M 			LD	A, function
+041226 5B CF       0002*M 			RST.LIL	08h
+041228 C9          0501*      ret ; vdu_load_buffer_from_file
+041229             0502*  
+041229 00          0503*  @filehandle: db 0 ; file handle
+04122A 00 00 00    0504*  @fil: dl 0 ; pointer to FIL struct
+04122D             0505*  
+04122D 00 00 00    0506*  @chunkpointer: dl 0 ; pointer to current chunk
+041230             0507*  
+041230             0508*  ; File information structure (FILINFO)
+041230             0509*  @filinfo:
+041230 00 00 00 00 0510*  @filinfo_fsize:    blkb 4, 0   ; File size (4 bytes)
+041234 00 00       0511*  @filinfo_fdate:    blkb 2, 0   ; Modified date (2 bytes)
+041236 00 00       0512*  @filinfo_ftime:    blkb 2, 0   ; Modified time (2 bytes)
+041238 00          0513*  @filinfo_fattrib:  blkb 1, 0   ; File attribute (1 byte)
+041239 00 00 00 00 0514*  @filinfo_altname:  blkb 13, 0  ; Alternative file name (13 bytes)
+       00 00 00 00 
+       00 00 00 00 
+       00          
+041246 00 00 00 00 0515*  @filinfo_fname:    blkb 256, 0 ; Primary file name (256 bytes)
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+041346             0036       include "vdu_fonts.inc"
+041346             0001*  ; select font
+041346             0002*  ; inputs: hl = bufferId, a = font flags
+041346             0003*  ; Flags:
+041346             0004*  ; Bit	Description
+041346             0005*  ; 0	Adjust cursor position to ensure text baseline is aligned
+041346             0006*  ;   0: Do not adjust cursor position (best for changing font on a new line)
+041346             0007*  ;   1: Adjust cursor position (best for changing font in the middle of a line)
+041346             0008*  ; 1-7	Reserved for future use
+041346             0009*  ; VDU 23, 0, &95, 0, bufferId; flags: Select font
+041346             0010*  vdu_font_select:
+041346 22 5D 13 04 0011*      ld (@bufferId),hl
+04134A 32 5F 13 04 0012*      ld (@flags),a
+04134E 21 59 13 04 0013*      ld hl,@cmd
+041352 01 07 00 00 0014*      ld bc,@end-@cmd
+041356 5B DF       0015*      rst.lil $18
+041358 C9          0016*      ret
+041359 17 00 95 00 0017*  @cmd: db 23, 0, 0x95, 0
+04135D 00 00       0018*  @bufferId: dw 0x0000
+04135F 00          0019*  @flags: db 0x00
+041360             0020*  @end:
+041360             0021*  
+041360             0022*  ; create font from buffer
+041360             0023*  ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
+041360             0024*  ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
+041360             0025*  vdu_font_create:
+041360 22 85 13 04 0026*      ld (@bufferId),hl
+041364 ED 53 87 13 0027*      ld (@width),de ; also loads height
+       04          
+041369 32 8A 13 04 0028*      ld (@flags),a
+04136D 7A          0029*      ld a,d ; height
+04136E 32 89 13 04 0030*      ld (@ascent),a ; ascent = height
+041372             0031*  ; consolidate buffer
+041372 CD 92 11 04 0032*      call vdu_consolidate_buffer
+041376             0033*  ; create font
+041376 21 81 13 04 0034*      ld hl,@cmd
+04137A 01 0A 00 00 0035*      ld bc,@end-@cmd
+04137E 5B DF       0036*      rst.lil $18
+041380 C9          0037*      ret
+041381 17 00 95 01 0038*  @cmd: db 23, 0, 0x95, 1
+041385 00 00       0039*  @bufferId: dw 0x0000
+041387 00          0040*  @width: db 0x00
+041388 00          0041*  @height: db 0x00
+041389 00          0042*  @ascent: db 0x00
+04138A 00          0043*  @flags: db 0x00
+04138B             0044*  @end:
+04138B             0045*  
+04138B             0046*  ; set or adjust font property
+04138B             0047*  ; inputs: hl = bufferId, a = field, de = value
+04138B             0048*  ; VDU 23, 0, &95, 2, bufferId; field, value;: Set or adjust font property
+04138B             0049*  vdu_font_property:
+04138B 22 A7 13 04 0050*      ld (@bufferId),hl
+04138F 32 A9 13 04 0051*      ld (@field),a
+041393 ED 53 AA 13 0052*      ld (@value),de
+       04          
+041398 21 A3 13 04 0053*      ld hl,@cmd
+04139C 01 09 00 00 0054*      ld bc,@end-@cmd
+0413A0 5B DF       0055*      rst.lil $18
+0413A2 C9          0056*      ret
+0413A3 17 00 95 02 0057*  @cmd: db 23, 0, 0x95, 2
+0413A7 00 00       0058*  @bufferId: dw 0x0000
+0413A9 00          0059*  @field: db 0x00
+0413AA 00 00       0060*  @value: dw 0x0000
+0413AC 00          0061*  @end: db 0x00 ; padding
+0413AD             0062*  
+0413AD             0063*  ; VDU 23, 0, &95, 3, bufferId; [<args>]: Reserved
+0413AD             0064*  
+0413AD             0065*  ; Clear/Delete font
+0413AD             0066*  ; inputs: hl = bufferId
+0413AD             0067*  ; VDU 23, 0, &95, 4, bufferId;: Clear/Delete font
+0413AD             0068*  vdu_font_clear:
+0413AD 22 C0 13 04 0069*      ld (@bufferId),hl
+0413B1 21 BC 13 04 0070*      ld hl,@cmd
+0413B5 01 06 00 00 0071*      ld bc,@end-@cmd
+0413B9 5B DF       0072*      rst.lil $18
+0413BB C9          0073*      ret
+0413BC 17 00 95 04 0074*  @cmd: db 23, 0, 0x95, 4
+0413C0 00 00       0075*  @bufferId: dw 0x0000
+0413C2 00          0076*  @end: db 0x00 ; padding
+0413C3             0077*  
+0413C3             0078*  ; Copy system font to buffer
+0413C3             0079*  ; inputs: hl = bufferId
+0413C3             0080*  ; VDU 23, 0, &95, 5, bufferId;: Copy system font to buffer
+0413C3             0081*  vdu_font_copy_system:
+0413C3 22 D6 13 04 0082*      ld (@bufferId),hl
+0413C7 21 D2 13 04 0083*      ld hl,@cmd
+0413CB 01 06 00 00 0084*      ld bc,@end-@cmd
+0413CF 5B DF       0085*      rst.lil $18
+0413D1 C9          0086*      ret
+0413D2 17 00 95 05 0087*  @cmd: db 23, 0, 0x95, 5
+0413D6 00 00       0088*  @bufferId: dw 0x0000
+0413D8 00          0089*  @end: db 0x00 ; padding
+0413D9             0037   
+0413D9             0038   ; Application includes
+0413D9             0039   
+0413D9             0040   main:
+0413D9             0041   ; inputs: hl = bufferId; iy = pointer to filename
+0413D9 1E 16       0042       ld e,Lat2_Terminus16
+0413DB 16 0C       0043       ld d,12 ; bytes per font list record
+0413DD ED 5C       0044       mlt de
+0413DF FD 21 88 04 0045       ld iy,font_list
+       04          
+0413E4 FD 19       0046       add iy,de
+0413E6 FD E5       0047       push iy
+0413E8             0048   
+0413E8             0049   ; ; debug dump memory at iy
+0413E8             0050   ;     call printNewLine
+0413E8             0051   ;     push iy
+0413E8             0052   ;     pop hl
+0413E8             0053   ;     ld a,12
+0413E8             0054   ;     call dumpMemoryHex
+0413E8             0055   
+0413E8 FD 37 09    0056       ld iy,(iy+9)
+0413EB             0057   
+0413EB             0058   ; debug print filename at iy
+0413EB CD 91 00 04 0059       call printNewLine
+0413EF FD E5       0060       push iy
+0413F1 E1          0061       pop hl
+0413F2 CD 7C 00 04 0062       call printString
+0413F6 CD 91 00 04 0063       call printNewLine
+0413FA             0064   
+0413FA 21 00 40 00 0065       ld hl,0x4000
+0413FE E5          0066       push hl
+0413FF CD CF 11 04 0067       call vdu_load_buffer_from_file
+041403             0068   
+041403             0069       ; call printNewLine
+041403             0070       ; ld hl,filedata
+041403             0071       ; ld d,'A'
+041403             0072       ; ld e,8
+041403             0073       ; mlt de
+041403             0074       ; add hl,de
+041403             0075       ; ld a,8
+041403             0076       ; call dumpMemoryHex
+041403             0077       ; call printNewLine
+041403             0078   
+041403             0079   ; create font from buffer
+041403             0080   ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
+041403             0081   ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
+041403 E1          0082       pop hl ; bufferId
+041404 FD E1       0083       pop iy ; pointer to font list record
+041406 E5          0084       push hl
+041407 FD 7E 00    0085       ld a,(iy+0)
+04140A 5F          0086       ld e,a  ; width
+04140B FD 7E 03    0087       ld a,(iy+3)
+04140E 57          0088       ld d,a  ; height / ascent
+04140F 3E 00       0089       ld a,0 ; flags
+041411 CD 5C 02 04 0090       call dumpRegistersHex
+041415 CD 60 13 04 0091       call vdu_font_create
+041419             0092   
+041419             0093   ; select font
+041419             0094   ; inputs: hl = bufferId, a = font flags
+041419             0095   ; Flags:
+041419             0096   ; Bit	Description
+041419             0097   ; 0	Adjust cursor position to ensure text baseline is aligned
+041419             0098   ;   0: Do not adjust cursor position (best for changing font on a new line)
+041419             0099   ;   1: Adjust cursor position (best for changing font in the middle of a line)
+041419             0100   ; 1-7	Reserved for future use
+041419             0101   ; VDU 23, 0, &95, 0, bufferId; flags: Select font
+041419 E1          0102       pop hl
+04141A 3E 00       0103       ld a,0
+04141C CD 46 13 04 0104       call vdu_font_select
+041420             0105   
+041420             0106   ; print test string
+041420 CD 91 00 04 0107       call printNewLine
+041424 21 31 14 04 0108       ld hl,test_string
+041428 CD 7C 00 04 0109       call printString
+04142C CD 91 00 04 0110       call printNewLine
+041430             0111   
+041430             0112   ; all done
+041430 C9          0113       ret
+041431             0114   
+041431             0115   
+041431 54 68 65 20 0116   test_string: db "The quick brown fox jumps over the lazy dog.",0
+       71 75 69 63 
+       6B 20 62 72 
+       6F 77 6E 20 
+       66 6F 78 20 
+       6A 75 6D 70 
+       73 20 6F 76 
+       65 72 20 74 
+       68 65 20 6C 
+       61 7A 79 20 
+       64 6F 67 2E 
+       00          

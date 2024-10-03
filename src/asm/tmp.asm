@@ -15,10 +15,7 @@ start:
     push ix
     push iy
 
-; ###############################################
-	call	init			; Initialization code
-	call 	main			; Call the main function
-; ###############################################
+	call main
 
 exit:
     pop iy
@@ -33,17 +30,87 @@ exit:
     include "mos_api.inc"
     include "functions.inc"
 	include "files.inc"
-	include "fonts_bmp.inc"
+    include "fonts.inc"
     include "timer.inc"
     include "vdu.inc"
-    include "vdu_sound.inc"
     include "vdu_fonts.inc"
 
 ; Application includes
-	include "font_rc.inc"
-	include "input.inc"
-    include "images.inc"
-    include "images_sprites.inc"
-	include "images_ui.inc"
 
 main:
+; inputs: hl = bufferId; iy = pointer to filename
+    ld e,Lat2_Terminus16
+    ld d,12 ; bytes per font list record
+    mlt de
+    ld iy,font_list
+    add iy,de
+    push iy
+
+; ; debug dump memory at iy
+;     call printNewLine
+;     push iy
+;     pop hl
+;     ld a,12
+;     call dumpMemoryHex
+
+    ld iy,(iy+9)
+
+; debug print filename at iy
+    call printNewLine
+    push iy
+    pop hl
+    call printString
+    call printNewLine
+
+    ld hl,0x4000
+    push hl
+    call vdu_load_buffer_from_file
+
+    ; call printNewLine
+    ; ld hl,filedata
+    ; ld d,'A'
+    ; ld e,8
+    ; mlt de
+    ; add hl,de
+    ; ld a,8
+    ; call dumpMemoryHex
+    ; call printNewLine
+
+; create font from buffer
+; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
+; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
+    pop hl ; bufferId
+    pop iy ; pointer to font list record
+    push hl
+    ld a,(iy+0)
+    ld e,a  ; width
+    ld a,(iy+3)
+    ld d,a  ; height / ascent
+    ld a,0 ; flags
+    call dumpRegistersHex
+    call vdu_font_create
+
+; select font
+; inputs: hl = bufferId, a = font flags
+; Flags:
+; Bit	Description
+; 0	Adjust cursor position to ensure text baseline is aligned
+;   0: Do not adjust cursor position (best for changing font on a new line)
+;   1: Adjust cursor position (best for changing font in the middle of a line)
+; 1-7	Reserved for future use
+; VDU 23, 0, &95, 0, bufferId; flags: Select font
+    pop hl
+    ld a,0
+    call vdu_font_select
+
+; print test string
+    call printNewLine
+    ld hl,test_string
+    call printString
+    call printNewLine
+
+; all done
+    ret
+
+
+test_string: db "The quick brown fox jumps over the lazy dog.",0

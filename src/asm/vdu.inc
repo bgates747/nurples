@@ -468,6 +468,11 @@ vdu_load_buffer_from_file:
     ld de,8192 ; max we can read into onboard sram at one time
     MOSCALL mos_fread
 
+    push de
+    pop hl
+    call printDec
+    call printNewLine
+
 ; test de for zero bytes read
     ld hl,0
     xor a ; clear carry

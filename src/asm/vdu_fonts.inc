@@ -3,7 +3,7 @@
 ; Flags:
 ; Bit	Description
 ; 0	Adjust cursor position to ensure text baseline is aligned
-;   0: Do not adjust cursor position (best for changin font on a new line)
+;   0: Do not adjust cursor position (best for changing font on a new line)
 ;   1: Adjust cursor position (best for changing font in the middle of a line)
 ; 1-7	Reserved for future use
 ; VDU 23, 0, &95, 0, bufferId; flags: Select font
@@ -20,12 +20,17 @@ vdu_font_select:
 @end:
 
 ; create font from buffer
-; inputs: hl = bufferId, d = width, e = height, ude = ascent, a = flags
+; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
 ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
 vdu_font_create:
     ld (@bufferId),hl
-    ld (@width),de ; also loads height and acsent
+    ld (@width),de ; also loads height
     ld (@flags),a
+    ld a,d ; height
+    ld (@ascent),a ; ascent = height
+; consolidate buffer
+    call vdu_consolidate_buffer
+; create font
     ld hl,@cmd
     ld bc,@end-@cmd
     rst.lil $18

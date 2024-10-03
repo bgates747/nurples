@@ -96,7 +96,7 @@ def binary_to_image(binary_file, output_png, img_width, img_height):
 if __name__ == "__main__":
     # Example usage
     directory = "src/assets/img/orig/fonts/rc"  # Replace with the actual directory
-    output_file = f"{directory}/rc.font"  # Replace with the desired output file
+    output_file = f"{directory}/rc.data"  # Replace with the desired output file
     output_image = f"{directory}/rc.master.png"  # Output master image file
 
     # Find the maximum width and height of the character images

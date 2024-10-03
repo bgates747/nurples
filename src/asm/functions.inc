@@ -526,16 +526,24 @@ waitKeypress:
 ; outputs: values of each byte printed to screen separated by spaces
 ; destroys: nothing
 dumpMemoryHex:
-; save all registers to the stack
-    push af
+; save registers to the stack
     push bc
-    push de
     push hl
-    push ix
-    push iy
+    push af
+
+; print the address and separator
+    call printHex24
+    ld a,':'
+    rst.lil 10h
+    ld a,' '
+    rst.lil 10h
 
 ; set b to be our loop counter
+    pop af
     ld b,a
+    pop hl
+    push hl
+    push af
 @loop:
 ; print the byte
     ld a,(hl)
@@ -548,12 +556,10 @@ dumpMemoryHex:
     ; call printNewLine
 
 ; restore everything
-    pop iy
-    pop ix
-    pop hl
-    pop de
-    pop bc
     pop af
+    pop hl
+    pop bc
+
 ; all done
     ret
 
