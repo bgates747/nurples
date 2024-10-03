@@ -1,0 +1,3 @@
+Target width: 10
+Padded width: 16
+Height: 25
