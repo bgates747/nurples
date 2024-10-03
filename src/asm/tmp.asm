@@ -38,20 +38,17 @@ exit:
 ; Application includes
 
 main:
+; 19    1024  768   4     60hz
+    ld a,19
+    call vdu_set_screen_mode
+
 ; inputs: hl = bufferId; iy = pointer to filename
-    ld e,Lat2_Terminus16
+    ld e,Lat2_VGA16
     ld d,12 ; bytes per font list record
     mlt de
     ld iy,font_list
     add iy,de
     push iy
-
-; ; debug dump memory at iy
-;     call printNewLine
-;     push iy
-;     pop hl
-;     ld a,12
-;     call dumpMemoryHex
 
     ld iy,(iy+9)
 
@@ -66,16 +63,6 @@ main:
     push hl
     call vdu_load_buffer_from_file
 
-    ; call printNewLine
-    ; ld hl,filedata
-    ; ld d,'A'
-    ; ld e,8
-    ; mlt de
-    ; add hl,de
-    ; ld a,8
-    ; call dumpMemoryHex
-    ; call printNewLine
-
 ; create font from buffer
 ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
 ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
@@ -87,7 +74,6 @@ main:
     ld a,(iy+3)
     ld d,a  ; height / ascent
     ld a,0 ; flags
-    call dumpRegistersHex
     call vdu_font_create
 
 ; select font

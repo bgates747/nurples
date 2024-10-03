@@ -1,6 +1,5 @@
 PC     Output      Line
-
-040000             0001   	.assume adl=1
+040000             0001   	.assume adl=1
 040000             0002       .org 0x040000
 040000             0003   
 040000 C3 45 00 04 0004       jp start
@@ -31,7 +30,7 @@ PC     Output      Line
 040048 DD E5       0015       push ix
 04004A FD E5       0016       push iy
 04004C             0017   
-04004C CD D9 13 04 0018   	call main
+04004C CD CB 13 04 0018   	call main
 040050             0019   
 040050             0020   exit:
 040050 FD E1       0021       pop iy
@@ -1382,632 +1381,632 @@ PC     Output      Line
 040488             0067*  Lat7_VGA8: equ 59
 040488             0068*  
 040488             0069*  font_list: ; width; height; filesize; filename;:
-040488 08 00 00 0D 0070*  	dl 8, 13, 26624, fn_Lat15_Fixed13
-       00 00 00 68 
+040488 08 00 00 0D 0070*  	dl 8, 13, 3328, fn_Lat15_Fixed13
+       00 00 00 0D 
        00 58 07 04 
-040494 08 00 00 0E 0071*  	dl 8, 14, 28672, fn_Lat15_Fixed14
-       00 00 00 70 
+040494 08 00 00 0E 0071*  	dl 8, 14, 3584, fn_Lat15_Fixed14
+       00 00 00 0E 
        00 72 07 04 
-0404A0 08 00 00 0F 0072*  	dl 8, 15, 30720, fn_Lat15_Fixed15
-       00 00 00 78 
+0404A0 08 00 00 0F 0072*  	dl 8, 15, 3840, fn_Lat15_Fixed15
+       00 00 00 0F 
        00 8C 07 04 
-0404AC 08 00 00 10 0073*  	dl 8, 16, 32768, fn_Lat15_Fixed16
-       00 00 00 80 
+0404AC 08 00 00 10 0073*  	dl 8, 16, 4096, fn_Lat15_Fixed16
+       00 00 00 10 
        00 A6 07 04 
-0404B8 08 00 00 12 0074*  	dl 8, 18, 36864, fn_Lat15_Fixed18
-       00 00 00 90 
+0404B8 08 00 00 12 0074*  	dl 8, 18, 4608, fn_Lat15_Fixed18
+       00 00 00 12 
        00 C0 07 04 
-0404C4 08 00 00 0C 0075*  	dl 8, 12, 24576, fn_Lat15_Terminus12x6
-       00 00 00 60 
+0404C4 08 00 00 0C 0075*  	dl 8, 12, 3072, fn_Lat15_Terminus12x6
+       00 00 00 0C 
        00 DA 07 04 
-0404D0 08 00 00 0E 0076*  	dl 8, 14, 28672, fn_Lat15_Terminus14
-       00 00 00 70 
+0404D0 08 00 00 0E 0076*  	dl 8, 14, 3584, fn_Lat15_Terminus14
+       00 00 00 0E 
        00 F9 07 04 
-0404DC 08 00 00 10 0077*  	dl 8, 16, 32768, fn_Lat15_Terminus16
-       00 00 00 80 
+0404DC 08 00 00 10 0077*  	dl 8, 16, 4096, fn_Lat15_Terminus16
+       00 00 00 10 
        00 16 08 04 
-0404E8 08 00 00 0E 0078*  	dl 8, 14, 28672, fn_Lat15_TerminusBold14
-       00 00 00 70 
+0404E8 08 00 00 0E 0078*  	dl 8, 14, 3584, fn_Lat15_TerminusBold14
+       00 00 00 0E 
        00 33 08 04 
-0404F4 08 00 00 10 0079*  	dl 8, 16, 32768, fn_Lat15_TerminusBold16
-       00 00 00 80 
+0404F4 08 00 00 10 0079*  	dl 8, 16, 4096, fn_Lat15_TerminusBold16
+       00 00 00 10 
        00 54 08 04 
-040500 08 00 00 0E 0080*  	dl 8, 14, 28672, fn_Lat15_TerminusBoldVGA14
-       00 00 00 70 
+040500 08 00 00 0E 0080*  	dl 8, 14, 3584, fn_Lat15_TerminusBoldVGA14
+       00 00 00 0E 
        00 75 08 04 
-04050C 08 00 00 10 0081*  	dl 8, 16, 32768, fn_Lat15_TerminusBoldVGA16
-       00 00 00 80 
+04050C 08 00 00 10 0081*  	dl 8, 16, 4096, fn_Lat15_TerminusBoldVGA16
+       00 00 00 10 
        00 99 08 04 
-040518 08 00 00 0E 0082*  	dl 8, 14, 28672, fn_Lat15_VGA14
-       00 00 00 70 
+040518 08 00 00 0E 0082*  	dl 8, 14, 3584, fn_Lat15_VGA14
+       00 00 00 0E 
        00 BD 08 04 
-040524 08 00 00 10 0083*  	dl 8, 16, 32768, fn_Lat15_VGA16
-       00 00 00 80 
+040524 08 00 00 10 0083*  	dl 8, 16, 4096, fn_Lat15_VGA16
+       00 00 00 10 
        00 D5 08 04 
-040530 08 00 00 08 0084*  	dl 8, 8, 16384, fn_Lat15_VGA8
-       00 00 00 40 
+040530 08 00 00 08 0084*  	dl 8, 8, 2048, fn_Lat15_VGA8
+       00 00 00 08 
        00 ED 08 04 
-04053C 08 00 00 0D 0085*  	dl 8, 13, 26624, fn_Lat2_Fixed13
-       00 00 00 68 
+04053C 08 00 00 0D 0085*  	dl 8, 13, 3328, fn_Lat2_Fixed13
+       00 00 00 0D 
        00 04 09 04 
-040548 08 00 00 0E 0086*  	dl 8, 14, 28672, fn_Lat2_Fixed14
-       00 00 00 70 
+040548 08 00 00 0E 0086*  	dl 8, 14, 3584, fn_Lat2_Fixed14
+       00 00 00 0E 
        00 1D 09 04 
-040554 08 00 00 0F 0087*  	dl 8, 15, 30720, fn_Lat2_Fixed15
-       00 00 00 78 
+040554 08 00 00 0F 0087*  	dl 8, 15, 3840, fn_Lat2_Fixed15
+       00 00 00 0F 
        00 36 09 04 
-040560 08 00 00 10 0088*  	dl 8, 16, 32768, fn_Lat2_Fixed16
-       00 00 00 80 
+040560 08 00 00 10 0088*  	dl 8, 16, 4096, fn_Lat2_Fixed16
+       00 00 00 10 
        00 4F 09 04 
-04056C 08 00 00 12 0089*  	dl 8, 18, 36864, fn_Lat2_Fixed18
-       00 00 00 90 
+04056C 08 00 00 12 0089*  	dl 8, 18, 4608, fn_Lat2_Fixed18
+       00 00 00 12 
        00 68 09 04 
-040578 08 00 00 0C 0090*  	dl 8, 12, 24576, fn_Lat2_Terminus12x6
-       00 00 00 60 
+040578 08 00 00 0C 0090*  	dl 8, 12, 3072, fn_Lat2_Terminus12x6
+       00 00 00 0C 
        00 81 09 04 
-040584 08 00 00 0E 0091*  	dl 8, 14, 28672, fn_Lat2_Terminus14
-       00 00 00 70 
+040584 08 00 00 0E 0091*  	dl 8, 14, 3584, fn_Lat2_Terminus14
+       00 00 00 0E 
        00 9F 09 04 
-040590 08 00 00 10 0092*  	dl 8, 16, 32768, fn_Lat2_Terminus16
-       00 00 00 80 
+040590 08 00 00 10 0092*  	dl 8, 16, 4096, fn_Lat2_Terminus16
+       00 00 00 10 
        00 BB 09 04 
-04059C 08 00 00 0E 0093*  	dl 8, 14, 28672, fn_Lat2_TerminusBold14
-       00 00 00 70 
+04059C 08 00 00 0E 0093*  	dl 8, 14, 3584, fn_Lat2_TerminusBold14
+       00 00 00 0E 
        00 D7 09 04 
-0405A8 08 00 00 10 0094*  	dl 8, 16, 32768, fn_Lat2_TerminusBold16
-       00 00 00 80 
+0405A8 08 00 00 10 0094*  	dl 8, 16, 4096, fn_Lat2_TerminusBold16
+       00 00 00 10 
        00 F7 09 04 
-0405B4 08 00 00 0E 0095*  	dl 8, 14, 28672, fn_Lat2_TerminusBoldVGA14
-       00 00 00 70 
+0405B4 08 00 00 0E 0095*  	dl 8, 14, 3584, fn_Lat2_TerminusBoldVGA14
+       00 00 00 0E 
        00 17 0A 04 
-0405C0 08 00 00 10 0096*  	dl 8, 16, 32768, fn_Lat2_TerminusBoldVGA16
-       00 00 00 80 
+0405C0 08 00 00 10 0096*  	dl 8, 16, 4096, fn_Lat2_TerminusBoldVGA16
+       00 00 00 10 
        00 3A 0A 04 
-0405CC 08 00 00 0E 0097*  	dl 8, 14, 28672, fn_Lat2_VGA14
-       00 00 00 70 
+0405CC 08 00 00 0E 0097*  	dl 8, 14, 3584, fn_Lat2_VGA14
+       00 00 00 0E 
        00 5D 0A 04 
-0405D8 08 00 00 10 0098*  	dl 8, 16, 32768, fn_Lat2_VGA16
-       00 00 00 80 
+0405D8 08 00 00 10 0098*  	dl 8, 16, 4096, fn_Lat2_VGA16
+       00 00 00 10 
        00 74 0A 04 
-0405E4 08 00 00 08 0099*  	dl 8, 8, 16384, fn_Lat2_VGA8
-       00 00 00 40 
+0405E4 08 00 00 08 0099*  	dl 8, 8, 2048, fn_Lat2_VGA8
+       00 00 00 08 
        00 8B 0A 04 
-0405F0 08 00 00 0D 0100*  	dl 8, 13, 26624, fn_Lat38_Fixed13
-       00 00 00 68 
+0405F0 08 00 00 0D 0100*  	dl 8, 13, 3328, fn_Lat38_Fixed13
+       00 00 00 0D 
        00 A1 0A 04 
-0405FC 08 00 00 0E 0101*  	dl 8, 14, 28672, fn_Lat38_Fixed14
-       00 00 00 70 
+0405FC 08 00 00 0E 0101*  	dl 8, 14, 3584, fn_Lat38_Fixed14
+       00 00 00 0E 
        00 BB 0A 04 
-040608 08 00 00 0F 0102*  	dl 8, 15, 30720, fn_Lat38_Fixed15
-       00 00 00 78 
+040608 08 00 00 0F 0102*  	dl 8, 15, 3840, fn_Lat38_Fixed15
+       00 00 00 0F 
        00 D5 0A 04 
-040614 08 00 00 10 0103*  	dl 8, 16, 32768, fn_Lat38_Fixed16
-       00 00 00 80 
+040614 08 00 00 10 0103*  	dl 8, 16, 4096, fn_Lat38_Fixed16
+       00 00 00 10 
        00 EF 0A 04 
-040620 08 00 00 12 0104*  	dl 8, 18, 36864, fn_Lat38_Fixed18
-       00 00 00 90 
+040620 08 00 00 12 0104*  	dl 8, 18, 4608, fn_Lat38_Fixed18
+       00 00 00 12 
        00 09 0B 04 
-04062C 08 00 00 0C 0105*  	dl 8, 12, 24576, fn_Lat38_Terminus12x6
-       00 00 00 60 
+04062C 08 00 00 0C 0105*  	dl 8, 12, 3072, fn_Lat38_Terminus12x6
+       00 00 00 0C 
        00 23 0B 04 
-040638 08 00 00 0E 0106*  	dl 8, 14, 28672, fn_Lat38_Terminus14
-       00 00 00 70 
+040638 08 00 00 0E 0106*  	dl 8, 14, 3584, fn_Lat38_Terminus14
+       00 00 00 0E 
        00 42 0B 04 
-040644 08 00 00 10 0107*  	dl 8, 16, 32768, fn_Lat38_Terminus16
-       00 00 00 80 
+040644 08 00 00 10 0107*  	dl 8, 16, 4096, fn_Lat38_Terminus16
+       00 00 00 10 
        00 5F 0B 04 
-040650 08 00 00 0E 0108*  	dl 8, 14, 28672, fn_Lat38_TerminusBold14
-       00 00 00 70 
+040650 08 00 00 0E 0108*  	dl 8, 14, 3584, fn_Lat38_TerminusBold14
+       00 00 00 0E 
        00 7C 0B 04 
-04065C 08 00 00 10 0109*  	dl 8, 16, 32768, fn_Lat38_TerminusBold16
-       00 00 00 80 
+04065C 08 00 00 10 0109*  	dl 8, 16, 4096, fn_Lat38_TerminusBold16
+       00 00 00 10 
        00 9D 0B 04 
-040668 08 00 00 0E 0110*  	dl 8, 14, 28672, fn_Lat38_TerminusBoldVGA14
-       00 00 00 70 
+040668 08 00 00 0E 0110*  	dl 8, 14, 3584, fn_Lat38_TerminusBoldVGA14
+       00 00 00 0E 
        00 BE 0B 04 
-040674 08 00 00 10 0111*  	dl 8, 16, 32768, fn_Lat38_TerminusBoldVGA16
-       00 00 00 80 
+040674 08 00 00 10 0111*  	dl 8, 16, 4096, fn_Lat38_TerminusBoldVGA16
+       00 00 00 10 
        00 E2 0B 04 
-040680 08 00 00 0E 0112*  	dl 8, 14, 28672, fn_Lat38_VGA14
-       00 00 00 70 
+040680 08 00 00 0E 0112*  	dl 8, 14, 3584, fn_Lat38_VGA14
+       00 00 00 0E 
        00 06 0C 04 
-04068C 08 00 00 10 0113*  	dl 8, 16, 32768, fn_Lat38_VGA16
-       00 00 00 80 
+04068C 08 00 00 10 0113*  	dl 8, 16, 4096, fn_Lat38_VGA16
+       00 00 00 10 
        00 1E 0C 04 
-040698 08 00 00 08 0114*  	dl 8, 8, 16384, fn_Lat38_VGA8
-       00 00 00 40 
+040698 08 00 00 08 0114*  	dl 8, 8, 2048, fn_Lat38_VGA8
+       00 00 00 08 
        00 36 0C 04 
-0406A4 08 00 00 0D 0115*  	dl 8, 13, 26624, fn_Lat7_Fixed13
-       00 00 00 68 
+0406A4 08 00 00 0D 0115*  	dl 8, 13, 3328, fn_Lat7_Fixed13
+       00 00 00 0D 
        00 4D 0C 04 
-0406B0 08 00 00 0E 0116*  	dl 8, 14, 28672, fn_Lat7_Fixed14
-       00 00 00 70 
+0406B0 08 00 00 0E 0116*  	dl 8, 14, 3584, fn_Lat7_Fixed14
+       00 00 00 0E 
        00 66 0C 04 
-0406BC 08 00 00 0F 0117*  	dl 8, 15, 30720, fn_Lat7_Fixed15
-       00 00 00 78 
+0406BC 08 00 00 0F 0117*  	dl 8, 15, 3840, fn_Lat7_Fixed15
+       00 00 00 0F 
        00 7F 0C 04 
-0406C8 08 00 00 10 0118*  	dl 8, 16, 32768, fn_Lat7_Fixed16
-       00 00 00 80 
+0406C8 08 00 00 10 0118*  	dl 8, 16, 4096, fn_Lat7_Fixed16
+       00 00 00 10 
        00 98 0C 04 
-0406D4 08 00 00 12 0119*  	dl 8, 18, 36864, fn_Lat7_Fixed18
-       00 00 00 90 
+0406D4 08 00 00 12 0119*  	dl 8, 18, 4608, fn_Lat7_Fixed18
+       00 00 00 12 
        00 B1 0C 04 
-0406E0 08 00 00 0C 0120*  	dl 8, 12, 24576, fn_Lat7_Terminus12x6
-       00 00 00 60 
+0406E0 08 00 00 0C 0120*  	dl 8, 12, 3072, fn_Lat7_Terminus12x6
+       00 00 00 0C 
        00 CA 0C 04 
-0406EC 08 00 00 0E 0121*  	dl 8, 14, 28672, fn_Lat7_Terminus14
-       00 00 00 70 
+0406EC 08 00 00 0E 0121*  	dl 8, 14, 3584, fn_Lat7_Terminus14
+       00 00 00 0E 
        00 E8 0C 04 
-0406F8 08 00 00 10 0122*  	dl 8, 16, 32768, fn_Lat7_Terminus16
-       00 00 00 80 
+0406F8 08 00 00 10 0122*  	dl 8, 16, 4096, fn_Lat7_Terminus16
+       00 00 00 10 
        00 04 0D 04 
-040704 08 00 00 0E 0123*  	dl 8, 14, 28672, fn_Lat7_TerminusBold14
-       00 00 00 70 
+040704 08 00 00 0E 0123*  	dl 8, 14, 3584, fn_Lat7_TerminusBold14
+       00 00 00 0E 
        00 20 0D 04 
-040710 08 00 00 10 0124*  	dl 8, 16, 32768, fn_Lat7_TerminusBold16
-       00 00 00 80 
+040710 08 00 00 10 0124*  	dl 8, 16, 4096, fn_Lat7_TerminusBold16
+       00 00 00 10 
        00 40 0D 04 
-04071C 08 00 00 0E 0125*  	dl 8, 14, 28672, fn_Lat7_TerminusBoldVGA14
-       00 00 00 70 
+04071C 08 00 00 0E 0125*  	dl 8, 14, 3584, fn_Lat7_TerminusBoldVGA14
+       00 00 00 0E 
        00 60 0D 04 
-040728 08 00 00 10 0126*  	dl 8, 16, 32768, fn_Lat7_TerminusBoldVGA16
-       00 00 00 80 
+040728 08 00 00 10 0126*  	dl 8, 16, 4096, fn_Lat7_TerminusBoldVGA16
+       00 00 00 10 
        00 83 0D 04 
-040734 08 00 00 0E 0127*  	dl 8, 14, 28672, fn_Lat7_VGA14
-       00 00 00 70 
+040734 08 00 00 0E 0127*  	dl 8, 14, 3584, fn_Lat7_VGA14
+       00 00 00 0E 
        00 A6 0D 04 
-040740 08 00 00 10 0128*  	dl 8, 16, 32768, fn_Lat7_VGA16
-       00 00 00 80 
+040740 08 00 00 10 0128*  	dl 8, 16, 4096, fn_Lat7_VGA16
+       00 00 00 10 
        00 BD 0D 04 
-04074C 08 00 00 08 0129*  	dl 8, 8, 16384, fn_Lat7_VGA8
-       00 00 00 40 
+04074C 08 00 00 08 0129*  	dl 8, 8, 2048, fn_Lat7_VGA8
+       00 00 00 08 
        00 D4 0D 04 
 040758             0130*  
-040758             0131*  ; files_list: ; filename:.data
-040758 63 66 6F 6E 0132*  fn_Lat15_Fixed13: db "cfonts/Lat15_Fixed13.data",0
+040758             0131*  ; files_list: ; filename:
+040758 63 66 6F 6E 0132*  fn_Lat15_Fixed13: db "cfonts/Lat15_Fixed13.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 46 69 78 
        65 64 31 33 
-       2E 64 61 74 
-       61 00       .data
-040772 63 66 6F 6E 0133*  fn_Lat15_Fixed14: db "cfonts/Lat15_Fixed14.data",0
+       2E 66 6F 6E 
+       74 00       
+040772 63 66 6F 6E 0133*  fn_Lat15_Fixed14: db "cfonts/Lat15_Fixed14.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 46 69 78 
        65 64 31 34 
-       2E 64 61 74 
-       61 00       .data
-04078C 63 66 6F 6E 0134*  fn_Lat15_Fixed15: db "cfonts/Lat15_Fixed15.data",0
+       2E 66 6F 6E 
+       74 00       
+04078C 63 66 6F 6E 0134*  fn_Lat15_Fixed15: db "cfonts/Lat15_Fixed15.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 46 69 78 
        65 64 31 35 
-       2E 64 61 74 
-       61 00       .data
-0407A6 63 66 6F 6E 0135*  fn_Lat15_Fixed16: db "cfonts/Lat15_Fixed16.data",0
+       2E 66 6F 6E 
+       74 00       
+0407A6 63 66 6F 6E 0135*  fn_Lat15_Fixed16: db "cfonts/Lat15_Fixed16.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 46 69 78 
        65 64 31 36 
-       2E 64 61 74 
-       61 00       .data
-0407C0 63 66 6F 6E 0136*  fn_Lat15_Fixed18: db "cfonts/Lat15_Fixed18.data",0
+       2E 66 6F 6E 
+       74 00       
+0407C0 63 66 6F 6E 0136*  fn_Lat15_Fixed18: db "cfonts/Lat15_Fixed18.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 46 69 78 
        65 64 31 38 
-       2E 64 61 74 
-       61 00       .data
-0407DA 63 66 6F 6E 0137*  fn_Lat15_Terminus12x6: db "cfonts/Lat15_Terminus12x6.data",0
+       2E 66 6F 6E 
+       74 00       
+0407DA 63 66 6F 6E 0137*  fn_Lat15_Terminus12x6: db "cfonts/Lat15_Terminus12x6.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 31 32 78 
-       36 2E 64 61 
-       74 61 00    .data
-0407F9 63 66 6F 6E 0138*  fn_Lat15_Terminus14: db "cfonts/Lat15_Terminus14.data",0
+       36 2E 66 6F 
+       6E 74 00    
+0407F9 63 66 6F 6E 0138*  fn_Lat15_Terminus14: db "cfonts/Lat15_Terminus14.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 31 34 2E 
-       64 61 74 61 
-       00          .data
-040816 63 66 6F 6E 0139*  fn_Lat15_Terminus16: db "cfonts/Lat15_Terminus16.data",0
+       66 6F 6E 74 
+       00          
+040816 63 66 6F 6E 0139*  fn_Lat15_Terminus16: db "cfonts/Lat15_Terminus16.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 31 36 2E 
-       64 61 74 61 
-       00          .data
-040833 63 66 6F 6E 0140*  fn_Lat15_TerminusBold14: db "cfonts/Lat15_TerminusBold14.data",0
+       66 6F 6E 74 
+       00          
+040833 63 66 6F 6E 0140*  fn_Lat15_TerminusBold14: db "cfonts/Lat15_TerminusBold14.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 31 34 2E 
-       64 61 74 61 
-       00          .data
-040854 63 66 6F 6E 0141*  fn_Lat15_TerminusBold16: db "cfonts/Lat15_TerminusBold16.data",0
+       66 6F 6E 74 
+       00          
+040854 63 66 6F 6E 0141*  fn_Lat15_TerminusBold16: db "cfonts/Lat15_TerminusBold16.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 31 36 2E 
-       64 61 74 61 
-       00          .data
-040875 63 66 6F 6E 0142*  fn_Lat15_TerminusBoldVGA14: db "cfonts/Lat15_TerminusBoldVGA14.data",0
+       66 6F 6E 74 
+       00          
+040875 63 66 6F 6E 0142*  fn_Lat15_TerminusBoldVGA14: db "cfonts/Lat15_TerminusBoldVGA14.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 56 47 41 
-       31 34 2E 64 
-       61 74 61 00 .data
-040899 63 66 6F 6E 0143*  fn_Lat15_TerminusBoldVGA16: db "cfonts/Lat15_TerminusBoldVGA16.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+040899 63 66 6F 6E 0143*  fn_Lat15_TerminusBoldVGA16: db "cfonts/Lat15_TerminusBoldVGA16.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 56 47 41 
-       31 36 2E 64 
-       61 74 61 00 .data
-0408BD 63 66 6F 6E 0144*  fn_Lat15_VGA14: db "cfonts/Lat15_VGA14.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+0408BD 63 66 6F 6E 0144*  fn_Lat15_VGA14: db "cfonts/Lat15_VGA14.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 56 47 41 
-       31 34 2E 64 
-       61 74 61 00 .data
-0408D5 63 66 6F 6E 0145*  fn_Lat15_VGA16: db "cfonts/Lat15_VGA16.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+0408D5 63 66 6F 6E 0145*  fn_Lat15_VGA16: db "cfonts/Lat15_VGA16.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 56 47 41 
-       31 36 2E 64 
-       61 74 61 00 .data
-0408ED 63 66 6F 6E 0146*  fn_Lat15_VGA8: db "cfonts/Lat15_VGA8.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+0408ED 63 66 6F 6E 0146*  fn_Lat15_VGA8: db "cfonts/Lat15_VGA8.font",0
        74 73 2F 4C 
        61 74 31 35 
        5F 56 47 41 
-       38 2E 64 61 
-       74 61 00    .data
-040904 63 66 6F 6E 0147*  fn_Lat2_Fixed13: db "cfonts/Lat2_Fixed13.data",0
+       38 2E 66 6F 
+       6E 74 00    
+040904 63 66 6F 6E 0147*  fn_Lat2_Fixed13: db "cfonts/Lat2_Fixed13.font",0
        74 73 2F 4C 
        61 74 32 5F 
        46 69 78 65 
        64 31 33 2E 
-       64 61 74 61 
-       00          .data
-04091D 63 66 6F 6E 0148*  fn_Lat2_Fixed14: db "cfonts/Lat2_Fixed14.data",0
+       66 6F 6E 74 
+       00          
+04091D 63 66 6F 6E 0148*  fn_Lat2_Fixed14: db "cfonts/Lat2_Fixed14.font",0
        74 73 2F 4C 
        61 74 32 5F 
        46 69 78 65 
        64 31 34 2E 
-       64 61 74 61 
-       00          .data
-040936 63 66 6F 6E 0149*  fn_Lat2_Fixed15: db "cfonts/Lat2_Fixed15.data",0
+       66 6F 6E 74 
+       00          
+040936 63 66 6F 6E 0149*  fn_Lat2_Fixed15: db "cfonts/Lat2_Fixed15.font",0
        74 73 2F 4C 
        61 74 32 5F 
        46 69 78 65 
        64 31 35 2E 
-       64 61 74 61 
-       00          .data
-04094F 63 66 6F 6E 0150*  fn_Lat2_Fixed16: db "cfonts/Lat2_Fixed16.data",0
+       66 6F 6E 74 
+       00          
+04094F 63 66 6F 6E 0150*  fn_Lat2_Fixed16: db "cfonts/Lat2_Fixed16.font",0
        74 73 2F 4C 
        61 74 32 5F 
        46 69 78 65 
        64 31 36 2E 
-       64 61 74 61 
-       00          .data
-040968 63 66 6F 6E 0151*  fn_Lat2_Fixed18: db "cfonts/Lat2_Fixed18.data",0
+       66 6F 6E 74 
+       00          
+040968 63 66 6F 6E 0151*  fn_Lat2_Fixed18: db "cfonts/Lat2_Fixed18.font",0
        74 73 2F 4C 
        61 74 32 5F 
        46 69 78 65 
        64 31 38 2E 
-       64 61 74 61 
-       00          .data
-040981 63 66 6F 6E 0152*  fn_Lat2_Terminus12x6: db "cfonts/Lat2_Terminus12x6.data",0
+       66 6F 6E 74 
+       00          
+040981 63 66 6F 6E 0152*  fn_Lat2_Terminus12x6: db "cfonts/Lat2_Terminus12x6.font",0
        74 73 2F 4C 
        61 74 32 5F 
        54 65 72 6D 
        69 6E 75 73 
        31 32 78 36 
-       2E 64 61 74 
-       61 00       .data
-04099F 63 66 6F 6E 0153*  fn_Lat2_Terminus14: db "cfonts/Lat2_Terminus14.data",0
+       2E 66 6F 6E 
+       74 00       
+04099F 63 66 6F 6E 0153*  fn_Lat2_Terminus14: db "cfonts/Lat2_Terminus14.font",0
        74 73 2F 4C 
        61 74 32 5F 
        54 65 72 6D 
        69 6E 75 73 
-       31 34 2E 64 
-       61 74 61 00 .data
-0409BB 63 66 6F 6E 0154*  fn_Lat2_Terminus16: db "cfonts/Lat2_Terminus16.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+0409BB 63 66 6F 6E 0154*  fn_Lat2_Terminus16: db "cfonts/Lat2_Terminus16.font",0
        74 73 2F 4C 
        61 74 32 5F 
        54 65 72 6D 
        69 6E 75 73 
-       31 36 2E 64 
-       61 74 61 00 .data
-0409D7 63 66 6F 6E 0155*  fn_Lat2_TerminusBold14: db "cfonts/Lat2_TerminusBold14.data",0
-       74 73 2F 4C 
-       61 74 32 5F 
-       54 65 72 6D 
-       69 6E 75 73 
-       42 6F 6C 64 
-       31 34 2E 64 
-       61 74 61 00 .data
-0409F7 63 66 6F 6E 0156*  fn_Lat2_TerminusBold16: db "cfonts/Lat2_TerminusBold16.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+0409D7 63 66 6F 6E 0155*  fn_Lat2_TerminusBold14: db "cfonts/Lat2_TerminusBold14.font",0
        74 73 2F 4C 
        61 74 32 5F 
        54 65 72 6D 
        69 6E 75 73 
        42 6F 6C 64 
-       31 36 2E 64 
-       61 74 61 00 .data
-040A17 63 66 6F 6E 0157*  fn_Lat2_TerminusBoldVGA14: db "cfonts/Lat2_TerminusBoldVGA14.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+0409F7 63 66 6F 6E 0156*  fn_Lat2_TerminusBold16: db "cfonts/Lat2_TerminusBold16.font",0
        74 73 2F 4C 
        61 74 32 5F 
        54 65 72 6D 
        69 6E 75 73 
        42 6F 6C 64 
-       56 47 41 31 
-       34 2E 64 61 
-       74 61 00    .data
-040A3A 63 66 6F 6E 0158*  fn_Lat2_TerminusBoldVGA16: db "cfonts/Lat2_TerminusBoldVGA16.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+040A17 63 66 6F 6E 0157*  fn_Lat2_TerminusBoldVGA14: db "cfonts/Lat2_TerminusBoldVGA14.font",0
        74 73 2F 4C 
        61 74 32 5F 
        54 65 72 6D 
        69 6E 75 73 
        42 6F 6C 64 
        56 47 41 31 
-       36 2E 64 61 
-       74 61 00    .data
-040A5D 63 66 6F 6E 0159*  fn_Lat2_VGA14: db "cfonts/Lat2_VGA14.data",0
+       34 2E 66 6F 
+       6E 74 00    
+040A3A 63 66 6F 6E 0158*  fn_Lat2_TerminusBoldVGA16: db "cfonts/Lat2_TerminusBoldVGA16.font",0
+       74 73 2F 4C 
+       61 74 32 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       56 47 41 31 
+       36 2E 66 6F 
+       6E 74 00    
+040A5D 63 66 6F 6E 0159*  fn_Lat2_VGA14: db "cfonts/Lat2_VGA14.font",0
        74 73 2F 4C 
        61 74 32 5F 
        56 47 41 31 
-       34 2E 64 61 
-       74 61 00    .data
-040A74 63 66 6F 6E 0160*  fn_Lat2_VGA16: db "cfonts/Lat2_VGA16.data",0
+       34 2E 66 6F 
+       6E 74 00    
+040A74 63 66 6F 6E 0160*  fn_Lat2_VGA16: db "cfonts/Lat2_VGA16.font",0
        74 73 2F 4C 
        61 74 32 5F 
        56 47 41 31 
-       36 2E 64 61 
-       74 61 00    .data
-040A8B 63 66 6F 6E 0161*  fn_Lat2_VGA8: db "cfonts/Lat2_VGA8.data",0
+       36 2E 66 6F 
+       6E 74 00    
+040A8B 63 66 6F 6E 0161*  fn_Lat2_VGA8: db "cfonts/Lat2_VGA8.font",0
        74 73 2F 4C 
        61 74 32 5F 
        56 47 41 38 
-       2E 64 61 74 
-       61 00       .data
-040AA1 63 66 6F 6E 0162*  fn_Lat38_Fixed13: db "cfonts/Lat38_Fixed13.data",0
+       2E 66 6F 6E 
+       74 00       
+040AA1 63 66 6F 6E 0162*  fn_Lat38_Fixed13: db "cfonts/Lat38_Fixed13.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 46 69 78 
        65 64 31 33 
-       2E 64 61 74 
-       61 00       .data
-040ABB 63 66 6F 6E 0163*  fn_Lat38_Fixed14: db "cfonts/Lat38_Fixed14.data",0
+       2E 66 6F 6E 
+       74 00       
+040ABB 63 66 6F 6E 0163*  fn_Lat38_Fixed14: db "cfonts/Lat38_Fixed14.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 46 69 78 
        65 64 31 34 
-       2E 64 61 74 
-       61 00       .data
-040AD5 63 66 6F 6E 0164*  fn_Lat38_Fixed15: db "cfonts/Lat38_Fixed15.data",0
+       2E 66 6F 6E 
+       74 00       
+040AD5 63 66 6F 6E 0164*  fn_Lat38_Fixed15: db "cfonts/Lat38_Fixed15.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 46 69 78 
        65 64 31 35 
-       2E 64 61 74 
-       61 00       .data
-040AEF 63 66 6F 6E 0165*  fn_Lat38_Fixed16: db "cfonts/Lat38_Fixed16.data",0
+       2E 66 6F 6E 
+       74 00       
+040AEF 63 66 6F 6E 0165*  fn_Lat38_Fixed16: db "cfonts/Lat38_Fixed16.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 46 69 78 
        65 64 31 36 
-       2E 64 61 74 
-       61 00       .data
-040B09 63 66 6F 6E 0166*  fn_Lat38_Fixed18: db "cfonts/Lat38_Fixed18.data",0
+       2E 66 6F 6E 
+       74 00       
+040B09 63 66 6F 6E 0166*  fn_Lat38_Fixed18: db "cfonts/Lat38_Fixed18.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 46 69 78 
        65 64 31 38 
-       2E 64 61 74 
-       61 00       .data
-040B23 63 66 6F 6E 0167*  fn_Lat38_Terminus12x6: db "cfonts/Lat38_Terminus12x6.data",0
+       2E 66 6F 6E 
+       74 00       
+040B23 63 66 6F 6E 0167*  fn_Lat38_Terminus12x6: db "cfonts/Lat38_Terminus12x6.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 31 32 78 
-       36 2E 64 61 
-       74 61 00    .data
-040B42 63 66 6F 6E 0168*  fn_Lat38_Terminus14: db "cfonts/Lat38_Terminus14.data",0
+       36 2E 66 6F 
+       6E 74 00    
+040B42 63 66 6F 6E 0168*  fn_Lat38_Terminus14: db "cfonts/Lat38_Terminus14.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 31 34 2E 
-       64 61 74 61 
-       00          .data
-040B5F 63 66 6F 6E 0169*  fn_Lat38_Terminus16: db "cfonts/Lat38_Terminus16.data",0
+       66 6F 6E 74 
+       00          
+040B5F 63 66 6F 6E 0169*  fn_Lat38_Terminus16: db "cfonts/Lat38_Terminus16.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 31 36 2E 
-       64 61 74 61 
-       00          .data
-040B7C 63 66 6F 6E 0170*  fn_Lat38_TerminusBold14: db "cfonts/Lat38_TerminusBold14.data",0
+       66 6F 6E 74 
+       00          
+040B7C 63 66 6F 6E 0170*  fn_Lat38_TerminusBold14: db "cfonts/Lat38_TerminusBold14.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 31 34 2E 
-       64 61 74 61 
-       00          .data
-040B9D 63 66 6F 6E 0171*  fn_Lat38_TerminusBold16: db "cfonts/Lat38_TerminusBold16.data",0
+       66 6F 6E 74 
+       00          
+040B9D 63 66 6F 6E 0171*  fn_Lat38_TerminusBold16: db "cfonts/Lat38_TerminusBold16.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 31 36 2E 
-       64 61 74 61 
-       00          .data
-040BBE 63 66 6F 6E 0172*  fn_Lat38_TerminusBoldVGA14: db "cfonts/Lat38_TerminusBoldVGA14.data",0
+       66 6F 6E 74 
+       00          
+040BBE 63 66 6F 6E 0172*  fn_Lat38_TerminusBoldVGA14: db "cfonts/Lat38_TerminusBoldVGA14.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 56 47 41 
-       31 34 2E 64 
-       61 74 61 00 .data
-040BE2 63 66 6F 6E 0173*  fn_Lat38_TerminusBoldVGA16: db "cfonts/Lat38_TerminusBoldVGA16.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+040BE2 63 66 6F 6E 0173*  fn_Lat38_TerminusBoldVGA16: db "cfonts/Lat38_TerminusBoldVGA16.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 54 65 72 
        6D 69 6E 75 
        73 42 6F 6C 
        64 56 47 41 
-       31 36 2E 64 
-       61 74 61 00 .data
-040C06 63 66 6F 6E 0174*  fn_Lat38_VGA14: db "cfonts/Lat38_VGA14.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+040C06 63 66 6F 6E 0174*  fn_Lat38_VGA14: db "cfonts/Lat38_VGA14.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 56 47 41 
-       31 34 2E 64 
-       61 74 61 00 .data
-040C1E 63 66 6F 6E 0175*  fn_Lat38_VGA16: db "cfonts/Lat38_VGA16.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+040C1E 63 66 6F 6E 0175*  fn_Lat38_VGA16: db "cfonts/Lat38_VGA16.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 56 47 41 
-       31 36 2E 64 
-       61 74 61 00 .data
-040C36 63 66 6F 6E 0176*  fn_Lat38_VGA8: db "cfonts/Lat38_VGA8.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+040C36 63 66 6F 6E 0176*  fn_Lat38_VGA8: db "cfonts/Lat38_VGA8.font",0
        74 73 2F 4C 
        61 74 33 38 
        5F 56 47 41 
-       38 2E 64 61 
-       74 61 00    .data
-040C4D 63 66 6F 6E 0177*  fn_Lat7_Fixed13: db "cfonts/Lat7_Fixed13.data",0
+       38 2E 66 6F 
+       6E 74 00    
+040C4D 63 66 6F 6E 0177*  fn_Lat7_Fixed13: db "cfonts/Lat7_Fixed13.font",0
        74 73 2F 4C 
        61 74 37 5F 
        46 69 78 65 
        64 31 33 2E 
-       64 61 74 61 
-       00          .data
-040C66 63 66 6F 6E 0178*  fn_Lat7_Fixed14: db "cfonts/Lat7_Fixed14.data",0
+       66 6F 6E 74 
+       00          
+040C66 63 66 6F 6E 0178*  fn_Lat7_Fixed14: db "cfonts/Lat7_Fixed14.font",0
        74 73 2F 4C 
        61 74 37 5F 
        46 69 78 65 
        64 31 34 2E 
-       64 61 74 61 
-       00          .data
-040C7F 63 66 6F 6E 0179*  fn_Lat7_Fixed15: db "cfonts/Lat7_Fixed15.data",0
+       66 6F 6E 74 
+       00          
+040C7F 63 66 6F 6E 0179*  fn_Lat7_Fixed15: db "cfonts/Lat7_Fixed15.font",0
        74 73 2F 4C 
        61 74 37 5F 
        46 69 78 65 
        64 31 35 2E 
-       64 61 74 61 
-       00          .data
-040C98 63 66 6F 6E 0180*  fn_Lat7_Fixed16: db "cfonts/Lat7_Fixed16.data",0
+       66 6F 6E 74 
+       00          
+040C98 63 66 6F 6E 0180*  fn_Lat7_Fixed16: db "cfonts/Lat7_Fixed16.font",0
        74 73 2F 4C 
        61 74 37 5F 
        46 69 78 65 
        64 31 36 2E 
-       64 61 74 61 
-       00          .data
-040CB1 63 66 6F 6E 0181*  fn_Lat7_Fixed18: db "cfonts/Lat7_Fixed18.data",0
+       66 6F 6E 74 
+       00          
+040CB1 63 66 6F 6E 0181*  fn_Lat7_Fixed18: db "cfonts/Lat7_Fixed18.font",0
        74 73 2F 4C 
        61 74 37 5F 
        46 69 78 65 
        64 31 38 2E 
-       64 61 74 61 
-       00          .data
-040CCA 63 66 6F 6E 0182*  fn_Lat7_Terminus12x6: db "cfonts/Lat7_Terminus12x6.data",0
+       66 6F 6E 74 
+       00          
+040CCA 63 66 6F 6E 0182*  fn_Lat7_Terminus12x6: db "cfonts/Lat7_Terminus12x6.font",0
        74 73 2F 4C 
        61 74 37 5F 
        54 65 72 6D 
        69 6E 75 73 
        31 32 78 36 
-       2E 64 61 74 
-       61 00       .data
-040CE8 63 66 6F 6E 0183*  fn_Lat7_Terminus14: db "cfonts/Lat7_Terminus14.data",0
+       2E 66 6F 6E 
+       74 00       
+040CE8 63 66 6F 6E 0183*  fn_Lat7_Terminus14: db "cfonts/Lat7_Terminus14.font",0
        74 73 2F 4C 
        61 74 37 5F 
        54 65 72 6D 
        69 6E 75 73 
-       31 34 2E 64 
-       61 74 61 00 .data
-040D04 63 66 6F 6E 0184*  fn_Lat7_Terminus16: db "cfonts/Lat7_Terminus16.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+040D04 63 66 6F 6E 0184*  fn_Lat7_Terminus16: db "cfonts/Lat7_Terminus16.font",0
        74 73 2F 4C 
        61 74 37 5F 
        54 65 72 6D 
        69 6E 75 73 
-       31 36 2E 64 
-       61 74 61 00 .data
-040D20 63 66 6F 6E 0185*  fn_Lat7_TerminusBold14: db "cfonts/Lat7_TerminusBold14.data",0
-       74 73 2F 4C 
-       61 74 37 5F 
-       54 65 72 6D 
-       69 6E 75 73 
-       42 6F 6C 64 
-       31 34 2E 64 
-       61 74 61 00 .data
-040D40 63 66 6F 6E 0186*  fn_Lat7_TerminusBold16: db "cfonts/Lat7_TerminusBold16.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+040D20 63 66 6F 6E 0185*  fn_Lat7_TerminusBold14: db "cfonts/Lat7_TerminusBold14.font",0
        74 73 2F 4C 
        61 74 37 5F 
        54 65 72 6D 
        69 6E 75 73 
        42 6F 6C 64 
-       31 36 2E 64 
-       61 74 61 00 .data
-040D60 63 66 6F 6E 0187*  fn_Lat7_TerminusBoldVGA14: db "cfonts/Lat7_TerminusBoldVGA14.data",0
+       31 34 2E 66 
+       6F 6E 74 00 
+040D40 63 66 6F 6E 0186*  fn_Lat7_TerminusBold16: db "cfonts/Lat7_TerminusBold16.font",0
        74 73 2F 4C 
        61 74 37 5F 
        54 65 72 6D 
        69 6E 75 73 
        42 6F 6C 64 
-       56 47 41 31 
-       34 2E 64 61 
-       74 61 00    .data
-040D83 63 66 6F 6E 0188*  fn_Lat7_TerminusBoldVGA16: db "cfonts/Lat7_TerminusBoldVGA16.data",0
+       31 36 2E 66 
+       6F 6E 74 00 
+040D60 63 66 6F 6E 0187*  fn_Lat7_TerminusBoldVGA14: db "cfonts/Lat7_TerminusBoldVGA14.font",0
        74 73 2F 4C 
        61 74 37 5F 
        54 65 72 6D 
        69 6E 75 73 
        42 6F 6C 64 
        56 47 41 31 
-       36 2E 64 61 
-       74 61 00    .data
-040DA6 63 66 6F 6E 0189*  fn_Lat7_VGA14: db "cfonts/Lat7_VGA14.data",0
+       34 2E 66 6F 
+       6E 74 00    
+040D83 63 66 6F 6E 0188*  fn_Lat7_TerminusBoldVGA16: db "cfonts/Lat7_TerminusBoldVGA16.font",0
+       74 73 2F 4C 
+       61 74 37 5F 
+       54 65 72 6D 
+       69 6E 75 73 
+       42 6F 6C 64 
+       56 47 41 31 
+       36 2E 66 6F 
+       6E 74 00    
+040DA6 63 66 6F 6E 0189*  fn_Lat7_VGA14: db "cfonts/Lat7_VGA14.font",0
        74 73 2F 4C 
        61 74 37 5F 
        56 47 41 31 
-       34 2E 64 61 
-       74 61 00    .data
-040DBD 63 66 6F 6E 0190*  fn_Lat7_VGA16: db "cfonts/Lat7_VGA16.data",0
+       34 2E 66 6F 
+       6E 74 00    
+040DBD 63 66 6F 6E 0190*  fn_Lat7_VGA16: db "cfonts/Lat7_VGA16.font",0
        74 73 2F 4C 
        61 74 37 5F 
        56 47 41 31 
-       36 2E 64 61 
-       74 61 00    .data
-040DD4 63 66 6F 6E 0191*  fn_Lat7_VGA8: db "cfonts/Lat7_VGA8.data",0
+       36 2E 66 6F 
+       6E 74 00    
+040DD4 63 66 6F 6E 0191*  fn_Lat7_VGA8: db "cfonts/Lat7_VGA8.font",0
        74 73 2F 4C 
        61 74 37 5F 
        56 47 41 38 
-       2E 64 61 74 
-       61 00       
+       2E 66 6F 6E 
+       74 00       
 040DEA             0034       include "timer.inc"
 040DEA             0001*  ; Table 32. Timer Control Registers
 040DEA             0002*  ; this constant is the base address of the timer control registers
@@ -2919,7 +2918,7 @@ PC     Output      Line
 0411DC             0455*      MOSCALL mos_fopen
 0411DC 3E 0A       0001*M 			LD	A, function
 0411DE 5B CF       0002*M 			RST.LIL	08h
-0411E0 32 29 12 04 0456*      ld (@filehandle),a
+0411E0 32 1B 12 04 0456*      ld (@filehandle),a
 0411E4             0457*  
 0411E4             0458*  @read_file:
 0411E4             0459*  ; Read a block of data from a file
@@ -2928,7 +2927,7 @@ PC     Output      Line
 0411E4             0462*  ; DEU: Number of bytes to read
 0411E4             0463*  ; Returns:
 0411E4             0464*  ; DEU: Number of bytes read
-0411E4 3A 29 12 04 0465*      ld a,(@filehandle)
+0411E4 3A 1B 12 04 0465*      ld a,(@filehandle)
 0411E8 4F          0466*      ld c,a
 0411E9 21 00 E0 B7 0467*      ld hl,filedata
 0411ED 11 00 20 00 0468*      ld de,8192 ; max we can read into onboard sram at one time
@@ -2936,56 +2935,57 @@ PC     Output      Line
 0411F1 3E 1A       0001*M 			LD	A, function
 0411F3 5B CF       0002*M 			RST.LIL	08h
 0411F5             0470*  
-0411F5 D5          0471*      push de
-0411F6 E1          0472*      pop hl
-0411F7 CD CC 00 04 0473*      call printDec
-0411FB CD 91 00 04 0474*      call printNewLine
-0411FF             0475*  
-0411FF             0476*  ; test de for zero bytes read
-0411FF 21 00 00 00 0477*      ld hl,0
-041203 AF          0478*      xor a ; clear carry
-041204 ED 52       0479*      sbc hl,de
-041206 CA 20 12 04 0480*      jp z,@close_file
-04120A             0481*  
-04120A             0482*  ; load a vdu buffer from local memory
-04120A             0483*  ; inputs: hl = bufferId ; bc = length ; de = pointer to data
-04120A 2A 34 11 04 0484*      ld hl,(bufferId0)
-04120E D5          0485*      push de ; chunksize
-04120F C1          0486*      pop bc
-041210 11 00 E0 B7 0487*      ld de,filedata
-041214 CD 3A 11 04 0488*      call vdu_load_buffer
-041218             0489*  
-041218             0490*  ; print progress breadcrumbs
-041218 3E 2E       0491*      ld a,'.'
-04121A 5B D7       0492*      rst.lil 10h
-04121C             0493*  
-04121C             0494*  ; read the next block
-04121C C3 E4 11 04 0495*      jp @read_file
-041220             0496*  
-041220             0497*  ; close the file
-041220             0498*  @close_file:
-041220 3A 29 12 04 0499*      ld a,(@filehandle)
-041224             0500*      MOSCALL mos_fclose
-041224 3E 0B       0001*M 			LD	A, function
-041226 5B CF       0002*M 			RST.LIL	08h
-041228 C9          0501*      ret ; vdu_load_buffer_from_file
-041229             0502*  
-041229 00          0503*  @filehandle: db 0 ; file handle
-04122A 00 00 00    0504*  @fil: dl 0 ; pointer to FIL struct
-04122D             0505*  
-04122D 00 00 00    0506*  @chunkpointer: dl 0 ; pointer to current chunk
-041230             0507*  
-041230             0508*  ; File information structure (FILINFO)
-041230             0509*  @filinfo:
-041230 00 00 00 00 0510*  @filinfo_fsize:    blkb 4, 0   ; File size (4 bytes)
-041234 00 00       0511*  @filinfo_fdate:    blkb 2, 0   ; Modified date (2 bytes)
-041236 00 00       0512*  @filinfo_ftime:    blkb 2, 0   ; Modified time (2 bytes)
-041238 00          0513*  @filinfo_fattrib:  blkb 1, 0   ; File attribute (1 byte)
-041239 00 00 00 00 0514*  @filinfo_altname:  blkb 13, 0  ; Alternative file name (13 bytes)
+0411F5             0471*  ; ; DEBUG: print chunk size
+0411F5             0472*  ;     push de
+0411F5             0473*  ;     pop hl
+0411F5             0474*  ;     call printDec
+0411F5             0475*  ;     call printNewLine
+0411F5             0476*  
+0411F5             0477*  ; test de for zero bytes read
+0411F5 21 00 00 00 0478*      ld hl,0
+0411F9 AF          0479*      xor a ; clear carry
+0411FA ED 52       0480*      sbc hl,de
+0411FC CA 12 12 04 0481*      jp z,@close_file
+041200             0482*  
+041200             0483*  ; load a vdu buffer from local memory
+041200             0484*  ; inputs: hl = bufferId ; bc = length ; de = pointer to data
+041200 2A 34 11 04 0485*      ld hl,(bufferId0)
+041204 D5          0486*      push de ; chunksize
+041205 C1          0487*      pop bc
+041206 11 00 E0 B7 0488*      ld de,filedata
+04120A CD 3A 11 04 0489*      call vdu_load_buffer
+04120E             0490*  
+04120E             0491*  ; ; print progress breadcrumbs
+04120E             0492*  ;     ld a,'.'
+04120E             0493*  ;     rst.lil 10h
+04120E             0494*  
+04120E             0495*  ; read the next block
+04120E C3 E4 11 04 0496*      jp @read_file
+041212             0497*  
+041212             0498*  ; close the file
+041212             0499*  @close_file:
+041212 3A 1B 12 04 0500*      ld a,(@filehandle)
+041216             0501*      MOSCALL mos_fclose
+041216 3E 0B       0001*M 			LD	A, function
+041218 5B CF       0002*M 			RST.LIL	08h
+04121A C9          0502*      ret ; vdu_load_buffer_from_file
+04121B             0503*  
+04121B 00          0504*  @filehandle: db 0 ; file handle
+04121C 00 00 00    0505*  @fil: dl 0 ; pointer to FIL struct
+04121F             0506*  
+04121F 00 00 00    0507*  @chunkpointer: dl 0 ; pointer to current chunk
+041222             0508*  
+041222             0509*  ; File information structure (FILINFO)
+041222             0510*  @filinfo:
+041222 00 00 00 00 0511*  @filinfo_fsize:    blkb 4, 0   ; File size (4 bytes)
+041226 00 00       0512*  @filinfo_fdate:    blkb 2, 0   ; Modified date (2 bytes)
+041228 00 00       0513*  @filinfo_ftime:    blkb 2, 0   ; Modified time (2 bytes)
+04122A 00          0514*  @filinfo_fattrib:  blkb 1, 0   ; File attribute (1 byte)
+04122B 00 00 00 00 0515*  @filinfo_altname:  blkb 13, 0  ; Alternative file name (13 bytes)
        00 00 00 00 
        00 00 00 00 
        00          
-041246 00 00 00 00 0515*  @filinfo_fname:    blkb 256, 0 ; Primary file name (256 bytes)
+041238 00 00 00 00 0516*  @filinfo_fname:    blkb 256, 0 ; Primary file name (256 bytes)
        00 00 00 00 
        00 00 00 00 
        00 00 00 00 
@@ -3049,179 +3049,165 @@ PC     Output      Line
        00 00 00 00 
        00 00 00 00 
        00 00 00 00 
-041346             0036       include "vdu_fonts.inc"
-041346             0001*  ; select font
-041346             0002*  ; inputs: hl = bufferId, a = font flags
-041346             0003*  ; Flags:
-041346             0004*  ; Bit	Description
-041346             0005*  ; 0	Adjust cursor position to ensure text baseline is aligned
-041346             0006*  ;   0: Do not adjust cursor position (best for changing font on a new line)
-041346             0007*  ;   1: Adjust cursor position (best for changing font in the middle of a line)
-041346             0008*  ; 1-7	Reserved for future use
-041346             0009*  ; VDU 23, 0, &95, 0, bufferId; flags: Select font
-041346             0010*  vdu_font_select:
-041346 22 5D 13 04 0011*      ld (@bufferId),hl
-04134A 32 5F 13 04 0012*      ld (@flags),a
-04134E 21 59 13 04 0013*      ld hl,@cmd
-041352 01 07 00 00 0014*      ld bc,@end-@cmd
-041356 5B DF       0015*      rst.lil $18
-041358 C9          0016*      ret
-041359 17 00 95 00 0017*  @cmd: db 23, 0, 0x95, 0
-04135D 00 00       0018*  @bufferId: dw 0x0000
-04135F 00          0019*  @flags: db 0x00
-041360             0020*  @end:
-041360             0021*  
-041360             0022*  ; create font from buffer
-041360             0023*  ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
-041360             0024*  ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
-041360             0025*  vdu_font_create:
-041360 22 85 13 04 0026*      ld (@bufferId),hl
-041364 ED 53 87 13 0027*      ld (@width),de ; also loads height
+041338             0036       include "vdu_fonts.inc"
+041338             0001*  ; select font
+041338             0002*  ; inputs: hl = bufferId, a = font flags
+041338             0003*  ; Flags:
+041338             0004*  ; Bit	Description
+041338             0005*  ; 0	Adjust cursor position to ensure text baseline is aligned
+041338             0006*  ;   0: Do not adjust cursor position (best for changing font on a new line)
+041338             0007*  ;   1: Adjust cursor position (best for changing font in the middle of a line)
+041338             0008*  ; 1-7	Reserved for future use
+041338             0009*  ; VDU 23, 0, &95, 0, bufferId; flags: Select font
+041338             0010*  vdu_font_select:
+041338 22 4F 13 04 0011*      ld (@bufferId),hl
+04133C 32 51 13 04 0012*      ld (@flags),a
+041340 21 4B 13 04 0013*      ld hl,@cmd
+041344 01 07 00 00 0014*      ld bc,@end-@cmd
+041348 5B DF       0015*      rst.lil $18
+04134A C9          0016*      ret
+04134B 17 00 95 00 0017*  @cmd: db 23, 0, 0x95, 0
+04134F 00 00       0018*  @bufferId: dw 0x0000
+041351 00          0019*  @flags: db 0x00
+041352             0020*  @end:
+041352             0021*  
+041352             0022*  ; create font from buffer
+041352             0023*  ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
+041352             0024*  ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
+041352             0025*  vdu_font_create:
+041352 22 77 13 04 0026*      ld (@bufferId),hl
+041356 ED 53 79 13 0027*      ld (@width),de ; also loads height
        04          
-041369 32 8A 13 04 0028*      ld (@flags),a
-04136D 7A          0029*      ld a,d ; height
-04136E 32 89 13 04 0030*      ld (@ascent),a ; ascent = height
-041372             0031*  ; consolidate buffer
-041372 CD 92 11 04 0032*      call vdu_consolidate_buffer
-041376             0033*  ; create font
-041376 21 81 13 04 0034*      ld hl,@cmd
-04137A 01 0A 00 00 0035*      ld bc,@end-@cmd
-04137E 5B DF       0036*      rst.lil $18
-041380 C9          0037*      ret
-041381 17 00 95 01 0038*  @cmd: db 23, 0, 0x95, 1
-041385 00 00       0039*  @bufferId: dw 0x0000
-041387 00          0040*  @width: db 0x00
-041388 00          0041*  @height: db 0x00
-041389 00          0042*  @ascent: db 0x00
-04138A 00          0043*  @flags: db 0x00
-04138B             0044*  @end:
-04138B             0045*  
-04138B             0046*  ; set or adjust font property
-04138B             0047*  ; inputs: hl = bufferId, a = field, de = value
-04138B             0048*  ; VDU 23, 0, &95, 2, bufferId; field, value;: Set or adjust font property
-04138B             0049*  vdu_font_property:
-04138B 22 A7 13 04 0050*      ld (@bufferId),hl
-04138F 32 A9 13 04 0051*      ld (@field),a
-041393 ED 53 AA 13 0052*      ld (@value),de
+04135B 32 7C 13 04 0028*      ld (@flags),a
+04135F 7A          0029*      ld a,d ; height
+041360 32 7B 13 04 0030*      ld (@ascent),a ; ascent = height
+041364             0031*  ; consolidate buffer
+041364 CD 92 11 04 0032*      call vdu_consolidate_buffer
+041368             0033*  ; create font
+041368 21 73 13 04 0034*      ld hl,@cmd
+04136C 01 0A 00 00 0035*      ld bc,@end-@cmd
+041370 5B DF       0036*      rst.lil $18
+041372 C9          0037*      ret
+041373 17 00 95 01 0038*  @cmd: db 23, 0, 0x95, 1
+041377 00 00       0039*  @bufferId: dw 0x0000
+041379 00          0040*  @width: db 0x00
+04137A 00          0041*  @height: db 0x00
+04137B 00          0042*  @ascent: db 0x00
+04137C 00          0043*  @flags: db 0x00
+04137D             0044*  @end:
+04137D             0045*  
+04137D             0046*  ; set or adjust font property
+04137D             0047*  ; inputs: hl = bufferId, a = field, de = value
+04137D             0048*  ; VDU 23, 0, &95, 2, bufferId; field, value;: Set or adjust font property
+04137D             0049*  vdu_font_property:
+04137D 22 99 13 04 0050*      ld (@bufferId),hl
+041381 32 9B 13 04 0051*      ld (@field),a
+041385 ED 53 9C 13 0052*      ld (@value),de
        04          
-041398 21 A3 13 04 0053*      ld hl,@cmd
-04139C 01 09 00 00 0054*      ld bc,@end-@cmd
-0413A0 5B DF       0055*      rst.lil $18
-0413A2 C9          0056*      ret
-0413A3 17 00 95 02 0057*  @cmd: db 23, 0, 0x95, 2
-0413A7 00 00       0058*  @bufferId: dw 0x0000
-0413A9 00          0059*  @field: db 0x00
-0413AA 00 00       0060*  @value: dw 0x0000
-0413AC 00          0061*  @end: db 0x00 ; padding
-0413AD             0062*  
-0413AD             0063*  ; VDU 23, 0, &95, 3, bufferId; [<args>]: Reserved
-0413AD             0064*  
-0413AD             0065*  ; Clear/Delete font
-0413AD             0066*  ; inputs: hl = bufferId
-0413AD             0067*  ; VDU 23, 0, &95, 4, bufferId;: Clear/Delete font
-0413AD             0068*  vdu_font_clear:
-0413AD 22 C0 13 04 0069*      ld (@bufferId),hl
-0413B1 21 BC 13 04 0070*      ld hl,@cmd
-0413B5 01 06 00 00 0071*      ld bc,@end-@cmd
-0413B9 5B DF       0072*      rst.lil $18
-0413BB C9          0073*      ret
-0413BC 17 00 95 04 0074*  @cmd: db 23, 0, 0x95, 4
-0413C0 00 00       0075*  @bufferId: dw 0x0000
-0413C2 00          0076*  @end: db 0x00 ; padding
-0413C3             0077*  
-0413C3             0078*  ; Copy system font to buffer
-0413C3             0079*  ; inputs: hl = bufferId
-0413C3             0080*  ; VDU 23, 0, &95, 5, bufferId;: Copy system font to buffer
-0413C3             0081*  vdu_font_copy_system:
-0413C3 22 D6 13 04 0082*      ld (@bufferId),hl
-0413C7 21 D2 13 04 0083*      ld hl,@cmd
-0413CB 01 06 00 00 0084*      ld bc,@end-@cmd
-0413CF 5B DF       0085*      rst.lil $18
-0413D1 C9          0086*      ret
-0413D2 17 00 95 05 0087*  @cmd: db 23, 0, 0x95, 5
-0413D6 00 00       0088*  @bufferId: dw 0x0000
-0413D8 00          0089*  @end: db 0x00 ; padding
-0413D9             0037   
-0413D9             0038   ; Application includes
-0413D9             0039   
-0413D9             0040   main:
-0413D9             0041   ; inputs: hl = bufferId; iy = pointer to filename
-0413D9 1E 16       0042       ld e,Lat2_Terminus16
-0413DB 16 0C       0043       ld d,12 ; bytes per font list record
-0413DD ED 5C       0044       mlt de
-0413DF FD 21 88 04 0045       ld iy,font_list
+04138A 21 95 13 04 0053*      ld hl,@cmd
+04138E 01 09 00 00 0054*      ld bc,@end-@cmd
+041392 5B DF       0055*      rst.lil $18
+041394 C9          0056*      ret
+041395 17 00 95 02 0057*  @cmd: db 23, 0, 0x95, 2
+041399 00 00       0058*  @bufferId: dw 0x0000
+04139B 00          0059*  @field: db 0x00
+04139C 00 00       0060*  @value: dw 0x0000
+04139E 00          0061*  @end: db 0x00 ; padding
+04139F             0062*  
+04139F             0063*  ; VDU 23, 0, &95, 3, bufferId; [<args>]: Reserved
+04139F             0064*  
+04139F             0065*  ; Clear/Delete font
+04139F             0066*  ; inputs: hl = bufferId
+04139F             0067*  ; VDU 23, 0, &95, 4, bufferId;: Clear/Delete font
+04139F             0068*  vdu_font_clear:
+04139F 22 B2 13 04 0069*      ld (@bufferId),hl
+0413A3 21 AE 13 04 0070*      ld hl,@cmd
+0413A7 01 06 00 00 0071*      ld bc,@end-@cmd
+0413AB 5B DF       0072*      rst.lil $18
+0413AD C9          0073*      ret
+0413AE 17 00 95 04 0074*  @cmd: db 23, 0, 0x95, 4
+0413B2 00 00       0075*  @bufferId: dw 0x0000
+0413B4 00          0076*  @end: db 0x00 ; padding
+0413B5             0077*  
+0413B5             0078*  ; Copy system font to buffer
+0413B5             0079*  ; inputs: hl = bufferId
+0413B5             0080*  ; VDU 23, 0, &95, 5, bufferId;: Copy system font to buffer
+0413B5             0081*  vdu_font_copy_system:
+0413B5 22 C8 13 04 0082*      ld (@bufferId),hl
+0413B9 21 C4 13 04 0083*      ld hl,@cmd
+0413BD 01 06 00 00 0084*      ld bc,@end-@cmd
+0413C1 5B DF       0085*      rst.lil $18
+0413C3 C9          0086*      ret
+0413C4 17 00 95 05 0087*  @cmd: db 23, 0, 0x95, 5
+0413C8 00 00       0088*  @bufferId: dw 0x0000
+0413CA 00          0089*  @end: db 0x00 ; padding
+0413CB             0037   
+0413CB             0038   ; Application includes
+0413CB             0039   
+0413CB             0040   main:
+0413CB             0041   ; 19    1024  768   4     60hz
+0413CB 3E 13       0042       ld a,19
+0413CD CD 4F 10 04 0043       call vdu_set_screen_mode
+0413D1             0044   
+0413D1             0045   ; inputs: hl = bufferId; iy = pointer to filename
+0413D1 1E 1C       0046       ld e,Lat2_VGA16
+0413D3 16 0C       0047       ld d,12 ; bytes per font list record
+0413D5 ED 5C       0048       mlt de
+0413D7 FD 21 88 04 0049       ld iy,font_list
        04          
-0413E4 FD 19       0046       add iy,de
-0413E6 FD E5       0047       push iy
-0413E8             0048   
-0413E8             0049   ; ; debug dump memory at iy
-0413E8             0050   ;     call printNewLine
-0413E8             0051   ;     push iy
-0413E8             0052   ;     pop hl
-0413E8             0053   ;     ld a,12
-0413E8             0054   ;     call dumpMemoryHex
-0413E8             0055   
-0413E8 FD 37 09    0056       ld iy,(iy+9)
-0413EB             0057   
-0413EB             0058   ; debug print filename at iy
-0413EB CD 91 00 04 0059       call printNewLine
-0413EF FD E5       0060       push iy
-0413F1 E1          0061       pop hl
-0413F2 CD 7C 00 04 0062       call printString
-0413F6 CD 91 00 04 0063       call printNewLine
-0413FA             0064   
-0413FA 21 00 40 00 0065       ld hl,0x4000
-0413FE E5          0066       push hl
-0413FF CD CF 11 04 0067       call vdu_load_buffer_from_file
-041403             0068   
-041403             0069       ; call printNewLine
-041403             0070       ; ld hl,filedata
-041403             0071       ; ld d,'A'
-041403             0072       ; ld e,8
-041403             0073       ; mlt de
-041403             0074       ; add hl,de
-041403             0075       ; ld a,8
-041403             0076       ; call dumpMemoryHex
-041403             0077       ; call printNewLine
-041403             0078   
-041403             0079   ; create font from buffer
-041403             0080   ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
-041403             0081   ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
-041403 E1          0082       pop hl ; bufferId
-041404 FD E1       0083       pop iy ; pointer to font list record
-041406 E5          0084       push hl
-041407 FD 7E 00    0085       ld a,(iy+0)
-04140A 5F          0086       ld e,a  ; width
-04140B FD 7E 03    0087       ld a,(iy+3)
-04140E 57          0088       ld d,a  ; height / ascent
-04140F 3E 00       0089       ld a,0 ; flags
-041411 CD 5C 02 04 0090       call dumpRegistersHex
-041415 CD 60 13 04 0091       call vdu_font_create
-041419             0092   
-041419             0093   ; select font
-041419             0094   ; inputs: hl = bufferId, a = font flags
-041419             0095   ; Flags:
-041419             0096   ; Bit	Description
-041419             0097   ; 0	Adjust cursor position to ensure text baseline is aligned
-041419             0098   ;   0: Do not adjust cursor position (best for changing font on a new line)
-041419             0099   ;   1: Adjust cursor position (best for changing font in the middle of a line)
-041419             0100   ; 1-7	Reserved for future use
-041419             0101   ; VDU 23, 0, &95, 0, bufferId; flags: Select font
-041419 E1          0102       pop hl
-04141A 3E 00       0103       ld a,0
-04141C CD 46 13 04 0104       call vdu_font_select
-041420             0105   
-041420             0106   ; print test string
-041420 CD 91 00 04 0107       call printNewLine
-041424 21 31 14 04 0108       ld hl,test_string
-041428 CD 7C 00 04 0109       call printString
-04142C CD 91 00 04 0110       call printNewLine
-041430             0111   
-041430             0112   ; all done
-041430 C9          0113       ret
-041431             0114   
-041431             0115   
-041431 54 68 65 20 0116   test_string: db "The quick brown fox jumps over the lazy dog.",0
+0413DC FD 19       0050       add iy,de
+0413DE FD E5       0051       push iy
+0413E0             0052   
+0413E0 FD 37 09    0053       ld iy,(iy+9)
+0413E3             0054   
+0413E3             0055   ; debug print filename at iy
+0413E3 CD 91 00 04 0056       call printNewLine
+0413E7 FD E5       0057       push iy
+0413E9 E1          0058       pop hl
+0413EA CD 7C 00 04 0059       call printString
+0413EE CD 91 00 04 0060       call printNewLine
+0413F2             0061   
+0413F2 21 00 40 00 0062       ld hl,0x4000
+0413F6 E5          0063       push hl
+0413F7 CD CF 11 04 0064       call vdu_load_buffer_from_file
+0413FB             0065   
+0413FB             0066   ; create font from buffer
+0413FB             0067   ; inputs: hl = bufferId, e = width, d = height, d = ascent, a = flags
+0413FB             0068   ; VDU 23, 0, &95, 1, bufferId; width, height, ascent, flags: Create font from buffer
+0413FB E1          0069       pop hl ; bufferId
+0413FC FD E1       0070       pop iy ; pointer to font list record
+0413FE E5          0071       push hl
+0413FF FD 7E 00    0072       ld a,(iy+0)
+041402 5F          0073       ld e,a  ; width
+041403 FD 7E 03    0074       ld a,(iy+3)
+041406 57          0075       ld d,a  ; height / ascent
+041407 3E 00       0076       ld a,0 ; flags
+041409 CD 52 13 04 0077       call vdu_font_create
+04140D             0078   
+04140D             0079   ; select font
+04140D             0080   ; inputs: hl = bufferId, a = font flags
+04140D             0081   ; Flags:
+04140D             0082   ; Bit	Description
+04140D             0083   ; 0	Adjust cursor position to ensure text baseline is aligned
+04140D             0084   ;   0: Do not adjust cursor position (best for changing font on a new line)
+04140D             0085   ;   1: Adjust cursor position (best for changing font in the middle of a line)
+04140D             0086   ; 1-7	Reserved for future use
+04140D             0087   ; VDU 23, 0, &95, 0, bufferId; flags: Select font
+04140D E1          0088       pop hl
+04140E 3E 00       0089       ld a,0
+041410 CD 38 13 04 0090       call vdu_font_select
+041414             0091   
+041414             0092   ; print test string
+041414 CD 91 00 04 0093       call printNewLine
+041418 21 25 14 04 0094       ld hl,test_string
+04141C CD 7C 00 04 0095       call printString
+041420 CD 91 00 04 0096       call printNewLine
+041424             0097   
+041424             0098   ; all done
+041424 C9          0099       ret
+041425             0100   
+041425             0101   
+041425 54 68 65 20 0102   test_string: db "The quick brown fox jumps over the lazy dog.",0
        71 75 69 63 
        6B 20 62 72 
        6F 77 6E 20 

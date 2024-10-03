@@ -468,10 +468,11 @@ vdu_load_buffer_from_file:
     ld de,8192 ; max we can read into onboard sram at one time
     MOSCALL mos_fread
 
-    push de
-    pop hl
-    call printDec
-    call printNewLine
+; ; DEBUG: print chunk size
+;     push de
+;     pop hl
+;     call printDec
+;     call printNewLine
 
 ; test de for zero bytes read
     ld hl,0
@@ -487,9 +488,9 @@ vdu_load_buffer_from_file:
     ld de,filedata
     call vdu_load_buffer
 
-; print progress breadcrumbs
-    ld a,'.'
-    rst.lil 10h
+; ; print progress breadcrumbs
+;     ld a,'.'
+;     rst.lil 10h
 
 ; read the next block
     jp @read_file
