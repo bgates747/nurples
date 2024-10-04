@@ -1,0 +1,3 @@
+Max width: 57
+Padded width: 64
+Height: 66

@@ -126,8 +126,8 @@ def scale_and_create_composite(tgt_dir, font_full_name, num_cols, num_rows, targ
     source_img = Image.open(source_img_path).convert('L')  # Open as grayscale
 
     # Calculate the original width and height of each character (true dimensions)
-    orig_width = source_img.width // num_cols
-    orig_height = source_img.height // num_rows
+    orig_width = source_img.width / num_cols
+    orig_height = source_img.height / num_rows
 
     # Create a new blank image for the composite with the new target dimensions
     composite_width = padded_width * num_cols
@@ -296,6 +296,7 @@ def draw_bounding_boxes(img, row_start_coords, col_start_coords, save_dir):
             # Draw the bounding box in cyan (1 pixel wide)
             draw.rectangle([x0, y0, x1, y1], outline="cyan", width=1)
 
+    # img.show()
     return img
 
 def crop_font_image(crop_box, src_img_filepath):
@@ -453,8 +454,16 @@ if __name__ == '__main__':
     # font_variant = 'bold'
     # font_full_name = f'{font_name}_{font_variant}'
 
-    crop_box = (0, 100, 1680, 952)  # (left, upper, right, lower)
-    font_name = 'monospace'
+    char_width = 58.25
+    char_height = 67.1428571428571428571
+
+    crop_box_left = 0
+    crop_box_top = 100
+    crop_box_right = char_width * 16 + crop_box_left - 1
+    crop_box_bottom = char_height * 14 + crop_box_top - 1
+
+    crop_box = (crop_box_left, crop_box_top, crop_box_right, crop_box_bottom)
+    font_name = 'notosansmono'
     font_variant = 'regular'
     font_full_name = f'{font_name}_{font_variant}'
 
@@ -472,7 +481,7 @@ if __name__ == '__main__':
         make_font_master(crop_box, src_img_filepath, tgt_master_img_filepath, gridded_img_filepath, metadata_filepath, background_level)
         print(f"Master font created at: {tgt_master_img_filepath}")
 
-        
+
 
     # List of character resolutions to process
     character_resolutions = [
@@ -498,5 +507,5 @@ if __name__ == '__main__':
         
         print(f"Generated scaled font for {target_width}x{target_height} at {scaled_img_filepath}")
 
-    img = Image.open('src/assets/img/proc/fonts/monospace/regular/16x20/scaled.png')
-    # img.show()
+    img = Image.open('src/assets/img/proc/fonts/notosansmono/regular/16x20/scaled.png')
+    img.show()

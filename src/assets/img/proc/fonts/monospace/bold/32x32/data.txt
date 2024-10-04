@@ -1,3 +1,0 @@
-Target width: 32
-Padded width: 32
-Height: 32

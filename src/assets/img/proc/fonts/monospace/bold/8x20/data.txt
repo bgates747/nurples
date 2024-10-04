@@ -1,3 +1,0 @@
-Target width: 8
-Padded width: 8
-Height: 20
