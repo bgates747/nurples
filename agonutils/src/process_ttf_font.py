@@ -125,12 +125,12 @@ def quantize_image(img, palette=(0, 85, 170, 255)):
 def render_and_measure_characters(font_path, point_size, char_range=(32, 127)):
     """
     Renders each character once, measures its bounding box, and returns a dictionary
-    with character images and their dimensions (from origin). Also computes the max width and height.
+    with character images (keyed by ASCII code). Also computes the max width and height.
 
     :param font_path: Path to the .ttf font file.
     :param point_size: Point size to use for rendering the characters.
     :param char_range: Range of characters to render (default is from ASCII 32 to 127).
-    :return: A dictionary of character images with their dimensions and max width/height.
+    :return: A dictionary of character images keyed by ASCII code, and the max width and height.
     """
     char_images = {}
     max_width, max_height = 0, 0  # To track the maximum dimensions of the characters
@@ -158,24 +158,23 @@ def render_and_measure_characters(font_path, point_size, char_range=(32, 127)):
                 # Track the maximum width and height across all characters
                 max_width = max(max_width, width)
                 max_height = max(max_height, height)
-            else:
-                width, height = 0,0
 
-            # Save the character image and dimensions in the dictionary
-            char_images[char_code] = (char_img, width, height)
+            # Store the character image keyed by its ASCII code
+            char_images[char_code] = char_img
 
     return char_images, max_width, max_height
 
-def create_master_image(char_images, max_width, max_height):
-    """
-    Creates a master image from the character images and saves it.
 
-    :param char_images: Dictionary of character images with their dimensions.
+def create_master_image(char_images, max_width, max_height, char_range=(32, 127)):
+    """
+    Creates a master image from the character images, iterating through the specified character range.
+    If a character image is missing from the char_images dictionary, it uses a blank (black) image.
+
+    :param char_images: Dictionary of character images keyed by ASCII code.
     :param max_width: Maximum character width.
     :param max_height: Maximum character height.
-    :param font_name: The font name used for directory structure and naming.
-    :param font_variant: The font variant used for directory structure and naming.
-    :return: Path to the saved master image.
+    :param char_range: Range of characters to render (default is from ASCII 32 to 127).
+    :return: The master image.
     """
     num_cols, num_rows = 16, 6
     master_width = num_cols * max_width
@@ -184,11 +183,17 @@ def create_master_image(char_images, max_width, max_height):
     # Create the master image (black background)
     master_img = Image.new("L", (master_width, master_height), color=0)  # Black background
 
-    # Paste each character image into the master image
-    for idx, (char_code, (img, width, height)) in enumerate(char_images.items()):
+    # Iterate through the specified character range
+    for idx, char_code in enumerate(range(char_range[0], char_range[1] + 1)):
         row, col = divmod(idx, num_cols)
         x_offset = col * max_width
         y_offset = row * max_height
+
+        # Get the character image from the dictionary, or use a blank black image if not found
+        img = char_images.get(char_code, Image.new("L", (max_width, max_height), color=0))
+
+        # Find the actual width and height of the character image (or assume max if blank)
+        width, height = img.size
 
         # Crop the character image from the origin (0,0) to max_width and max_height
         cropped_img = img.crop((0, 0, width, height))
@@ -201,6 +206,7 @@ def create_master_image(char_images, max_width, max_height):
         master_img.paste(final_img, (x_offset, y_offset))
 
     return master_img
+
 
 def generate_metadata_file(max_width, max_height, point_size, metadata_dir):
     """
@@ -281,8 +287,6 @@ def save_scaled_metadata(filepath, target_width, target_height):
         f.write(f"Target height: {target_height}\n")
     print(f"Metadata saved as {filepath}")
 
-import os
-
 def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold, char_range=(32, 127)):
     """
     Loops through a range of point sizes and creates a font image for each size that passes the anti-aliasing threshold test.
@@ -301,22 +305,29 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
     # Loop through a range of point sizes and generate images
     for point_size in np.arange(6, 65, 0.5):
         point_size = round(point_size, 1)
+        
         # Render and measure characters at the current point size
         char_images, max_width, max_height = render_and_measure_characters(font_path, point_size, char_range)
 
         anti_aliased = False
 
         # Check if the font size passes the anti-aliasing threshold
-        for char_code, (image, width, height) in char_images.items():
+        for char_code in range(char_range[0], char_range[1] + 1):
+            # Get the character image by its ASCII code, fallback to a blank black image if None
+            image = char_images.get(char_code, Image.new("L", (max_width, max_height), color=0))  # Black blank image
+
+            # Quantize the image to reduce it to a limited palette
             quant_img = quantize_image(image, palette=(0, threshold, 255))
+
+            # Check for anti-aliasing by searching for gray pixels
             if has_gray_pixels(quant_img):
                 anti_aliased = True
                 break
 
         # If no anti-aliasing was found, generate the font image and save it
         if not anti_aliased:
-            # Create the master image
-            master_img = create_master_image(char_images, max_width, max_height)
+            # Create the master image by assembling character images
+            master_img = create_master_image(char_images, max_width, max_height, char_range)
 
             # Quantize and apply threshold to the master image
             master_img = quantize_image(master_img, palette=(0, threshold, 255))
@@ -328,9 +339,6 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
             # Save the master image
             master_img.save(os.path.join(output_dir, output_file))
             print(f'Saved: {output_file}')
-
-            # Optionally show the image (can be removed in batch processing)
-            # master_img.show()
 
             # Generate metadata file with max width, height, and point size
             metadata_path = generate_metadata_file(max_width, max_height, point_size, metadata_dir)
@@ -379,7 +387,7 @@ def char_is_defined(image, bbox):
 
 if __name__ == '__main__':
     # Define parameters for creating the master font
-    threshold = 255  # Threshold for binarizing the image
+    threshold = 255-0  # Threshold for binarizing the image
     font_name = 'mbf_pexo'
     font_variant = 'Regular'
 
