@@ -377,8 +377,8 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
 
 if __name__ == '__main__':
     # Define parameters for creating the master font
-    threshold = 255-0  # Threshold for binarizing the image
-    font_name = 'baby_boomer'
+    threshold = 255-2  # Threshold for binarizing the image
+    font_name = 'bm_army'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
