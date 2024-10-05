@@ -386,9 +386,10 @@ def char_is_defined(image, bbox):
 
 
 if __name__ == '__main__':
+    # https://www.dafont.com/
     # Define parameters for creating the master font
-    threshold = 255-16  # Threshold for binarizing the image
-    font_name = 'wolvesymbol'
+    threshold = 255  # Threshold for binarizing the image
+    font_name = 'computerfont'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
