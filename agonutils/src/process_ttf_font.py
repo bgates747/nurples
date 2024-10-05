@@ -387,8 +387,8 @@ def char_is_defined(image, bbox):
 
 if __name__ == '__main__':
     # Define parameters for creating the master font
-    threshold = 255-1  # Threshold for binarizing the image
-    font_name = 'computer_pixel_7'
+    threshold = 255  # Threshold for binarizing the image
+    font_name = 'dopecre'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
