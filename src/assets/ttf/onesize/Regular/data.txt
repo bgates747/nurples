@@ -1,0 +1,3 @@
+Max width: 60
+Max height: 66
+Point size: 72
