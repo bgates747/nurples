@@ -303,7 +303,7 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
     os.makedirs(metadata_dir, exist_ok=True)
 
     # Loop through a range of point sizes and generate images
-    for point_size in np.arange(6, 65, 0.5):
+    for point_size in np.arange(6, 65, 0.25):
         point_size = round(point_size, 1)
         
         # Render and measure characters at the current point size
@@ -388,7 +388,7 @@ def char_is_defined(image, bbox):
 if __name__ == '__main__':
     # Define parameters for creating the master font
     threshold = 255-0  # Threshold for binarizing the image
-    font_name = 'mbf_pexo'
+    font_name = '8_bit_fortress'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
