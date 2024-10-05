@@ -1,0 +1,14 @@
+TTF Metadata:
+================
+Name ID 0: © 2001 by ck! -- http://www.freakyfonts.de
+Name ID 1: Amiga Forever
+Name ID 2: Regular
+Name ID 3: FontMonger:Amiga4ever
+Name ID 4: Amiga Forever
+Name ID 5: 1.01
+Name ID 6: AmigaForever
+Name ID 7: ck!, mail: ck@freakyfonts.de
+Name ID 9: .:ck!:.
+Name ID 10: <: Amiga1000 :>
+Name ID 11: http://come.to/freakyfonts
+Name ID 12: ck@freakyfonts.de

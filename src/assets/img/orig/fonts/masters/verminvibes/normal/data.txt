@@ -1,0 +1,7 @@
+Min left: 2
+Min top: 12
+Max right: 25
+Max bottom: 46
+Original width: 23px
+Padded width: 24px
+Height: 34px

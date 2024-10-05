@@ -1,0 +1,14 @@
+TTF Metadata:
+================
+Name ID 0: Copyright (c) 2012 by Style-7. All rights reserved. http://www.styleseven.com
+Name ID 1: Advanced Pixel LCD-7
+Name ID 2: Regular
+Name ID 3: Style-7: Advanced Pixel LCD-7: 2012
+Name ID 4: Advanced Pixel LCD-7
+Name ID 5: Version 1.000
+Name ID 6: AdvancedPixelLCD-7
+Name ID 8: Style-7
+Name ID 9: Sizenko Alexander
+Name ID 12: http://www.styleseven.com
+Name ID 13: Freeware for personal use only.
+Name ID 18: Advanced Pixel LCD-7
