@@ -122,44 +122,6 @@ def quantize_image(img, palette=(0, 85, 170, 255)):
     quantized_img = Image.fromarray(quantized_img_np, mode="L")
     return quantized_img
 
-def char_is_defined(image, bbox):
-    """
-    Checks whether the character image (cropped to its bounding box) is empty by inspecting the 
-    outermost pixels (top row, bottom row, leftmost column, and rightmost column). If any of these
-    pixels are black, the character is considered defined.
-
-    :param image: The original PIL Image object representing the character.
-    :param bbox: The bounding box (left, upper, right, lower) for the character.
-    :return: False if the character image is empty, True otherwise.
-    """
-    # Crop the image to the bounding box
-    cropped_image = image.crop(bbox)
-    pixels = cropped_image.load()  # Get pixel data from the cropped image
-    width, height = cropped_image.size
-
-    # Check top row
-    for x in range(width):
-        if pixels[x, 0] == 0: 
-            return True
-
-    # Check bottom row
-    for x in range(width):
-        if pixels[x, height - 1] == 0:  
-            return True
-
-    # Check leftmost column
-    for y in range(height):
-        if pixels[0, y] == 0:  
-            return True
-
-    # Check rightmost column
-    for y in range(height):
-        if pixels[width - 1, y] == 0:
-            return True
-
-    # If all edge pixels are white, the character is considered undefined
-    return False
-
 def render_and_measure_characters(font_path, point_size, char_range=(32, 127)):
     """
     Renders each character once, measures its bounding box, and returns a dictionary
@@ -337,7 +299,7 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
     os.makedirs(metadata_dir, exist_ok=True)
 
     # Loop through a range of point sizes and generate images
-    for point_size in np.arange(6, 65, 0.2):
+    for point_size in np.arange(6, 65, 0.5):
         point_size = round(point_size, 1)
         # Render and measure characters at the current point size
         char_images, max_width, max_height = render_and_measure_characters(font_path, point_size, char_range)
@@ -375,10 +337,50 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
             print(f'Metadata saved: {metadata_path}')
 
 
+def char_is_defined(image, bbox):
+    """
+    Checks whether the character image (cropped to its bounding box) is empty by inspecting the 
+    outermost pixels (top row, bottom row, leftmost column, and rightmost column). If any of these
+    pixels are black, the character is considered defined.
+
+    :param image: The original PIL Image object representing the character.
+    :param bbox: The bounding box (left, upper, right, lower) for the character.
+    :return: False if the character image is empty, True otherwise.
+    """
+    # Crop the image to the bounding box
+    cropped_image = image.crop(bbox)
+    pixels = cropped_image.load()  # Get pixel data from the cropped image
+    width, height = cropped_image.size
+
+    # Check top row
+    for x in range(width):
+        if pixels[x, 0] == 0: 
+            return True
+
+    # Check bottom row
+    for x in range(width):
+        if pixels[x, height - 1] == 0:  
+            return True
+
+    # Check leftmost column
+    for y in range(height):
+        if pixels[0, y] == 0:  
+            return True
+
+    # Check rightmost column
+    for y in range(height):
+        if pixels[width - 1, y] == 0:
+            return True
+
+    # If all edge pixels are white, the character is considered undefined
+    return False
+    return True
+
+
 if __name__ == '__main__':
     # Define parameters for creating the master font
-    threshold = 255-1  # Threshold for binarizing the image
-    font_name = 'firearmencyclope'
+    threshold = 255  # Threshold for binarizing the image
+    font_name = 'mbf_pexo'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
@@ -394,15 +396,7 @@ if __name__ == '__main__':
     os.system(f'rm -rf {output_dir}/*')
 
     if True:
-        # Extract bitmap glyphs from the font
-        char_images = extract_bitmap_glyphs(font_path)
-        if char_images:
-            max_width, max_height = 0, 0
-            for char_name, char_img in char_images:
-                max_width = max(max_width, char_img.width)
-                max_height = max(max_height, char_img.height)
-        else:
-            generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold)
+        generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold)
 
     # img = Image.open('src/assets/ttf/8_bit_fortress/Regular/master.png')
     # # img = quantize_image(img, palette=(0, 255-20, 255))
