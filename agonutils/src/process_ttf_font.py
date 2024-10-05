@@ -303,7 +303,7 @@ def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold,
     os.makedirs(metadata_dir, exist_ok=True)
 
     # Loop through a range of point sizes and generate images
-    for point_size in np.arange(6, 73, 0.1):
+    for point_size in np.arange(6, 73, 1):
         point_size = round(point_size, 1)
         
         # Render and measure characters at the current point size
@@ -387,8 +387,8 @@ def char_is_defined(image, bbox):
 
 if __name__ == '__main__':
     # Define parameters for creating the master font
-    threshold = 255-16  # Threshold for binarizing the image
-    font_name = 'super_mario_bros_2'
+    threshold = 255  # Threshold for binarizing the image
+    font_name = 'vermin_vibes_1989'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
