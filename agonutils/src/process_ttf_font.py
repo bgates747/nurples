@@ -101,7 +101,7 @@ def extract_bitmap_glyphs(ttf_path):
 
     return images
 
-def quantize_to_palette(img, palette=(0, 85, 170, 255)):
+def quantize_image(img, palette=(0, 85, 170, 255)):
     """
     Quantizes a grayscale image to a limited palette.
     
@@ -160,7 +160,7 @@ def char_is_defined(image, bbox):
     # If all edge pixels are white, the character is considered undefined
     return False
 
-def render_and_measure_characters(font_path, point_size, threshold, char_range=(32, 127)):
+def render_and_measure_characters(font_path, point_size, char_range=(32, 127)):
     """
     Renders each character once, measures its bounding box, and returns a dictionary
     with character images and their dimensions (from origin). Also computes the max width and height.
@@ -170,34 +170,26 @@ def render_and_measure_characters(font_path, point_size, threshold, char_range=(
     :param char_range: Range of characters to render (default is from ASCII 32 to 127).
     :return: A dictionary of character images with their dimensions and max width/height.
     """
-    # Load the font
-    font = ImageFont.truetype(font_path, point_size)
-    
     char_images = {}
     max_width, max_height = 0, 0  # To track the maximum dimensions of the characters
+    font = ImageFont.truetype(font_path, point_size)
 
     # Loop through each character in the specified range
     for char_code in range(char_range[0], char_range[1] + 1):
         char = chr(char_code)
 
-        # Create a temporary image to render the character (black background, white text)
-        temp_img = Image.new("L", (256, 256), color=0)  # "L" mode for grayscale, black background
-        draw = ImageDraw.Draw(temp_img)
+        # Create an image to render the character (black background, white text)
+        char_img = Image.new("L", (256, 256), color=0)  # Black background
 
-        draw.text((0, 0), char, font=font, fill=255)
-
-        # invert colors for bounding box calculation
-        inverted_img = Image.new("L", (256, 256), color=255)
-        inverted_img.paste(temp_img)
-
-        # Threshhold the image
-        inverted_img = quantize_to_palette(inverted_img, palette=(0, threshold, 255))
+        # Use PIL's ImageDraw and ImageFont to render the character
+        draw = ImageDraw.Draw(char_img)
+        draw.text((0, 0), char, font=font, fill=255)  # White character
 
         # Find the character's bounding box
-        bbox = inverted_img.getbbox()  # Returns (left, upper, right, lower) bounding box
+        bbox = char_img.getbbox()
 
         if bbox:
-            if char_is_defined(temp_img, bbox):
+            if char_is_defined(char_img, bbox):
                 width = bbox[2]  # Lower right corner x-coordinate gives the width from the origin
                 height = bbox[3]  # Lower right corner y-coordinate gives the height from the origin
 
@@ -208,11 +200,11 @@ def render_and_measure_characters(font_path, point_size, threshold, char_range=(
                 width, height = 0,0
 
             # Save the character image and dimensions in the dictionary
-            char_images[char_code] = (temp_img, width, height)
+            char_images[char_code] = (char_img, width, height)
 
     return char_images, max_width, max_height
 
-def create_master_image(char_images, max_width, max_height, output_dir):
+def create_master_image(char_images, max_width, max_height):
     """
     Creates a master image from the character images and saves it.
 
@@ -246,15 +238,6 @@ def create_master_image(char_images, max_width, max_height, output_dir):
         # Paste the final character image into the master image
         master_img.paste(final_img, (x_offset, y_offset))
 
-    # Create directory for saving
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # Save the master image
-    master_img_path = os.path.join(output_dir, 'master.png')
-    master_img.save(master_img_path)
-    print(f"Master image saved as {master_img_path}")
-
     return master_img
 
 def generate_metadata_file(max_width, max_height, point_size, metadata_dir):
@@ -278,7 +261,7 @@ def generate_metadata_file(max_width, max_height, point_size, metadata_dir):
     print(f"Metadata file saved as {metadata_path}")
     return metadata_path
 
-def create_single_char_image(char, font_path, point_size, metadata_filepath):
+def create_scaled_char(char, font_path, point_size, metadata_filepath):
     # Read metadata to get the max width, max height, and point size
     max_width_master, max_height_master, point_size = read_metadata(metadata_filepath)
 
@@ -300,110 +283,9 @@ def create_single_char_image(char, font_path, point_size, metadata_filepath):
     draw.text((0, 0), char, font=font, fill=255)  # White character
 
     # Quantize the image to the specified 4-level grayscale palette
-    quantized_img = quantize_to_palette(char_img)
+    quantized_img = quantize_image(char_img)
 
     return quantized_img
-
-def create_scaled_font(font_path, target_width, target_height, font_name, font_variant, point_size, metadata_filepath, scaled_output_dir):
-    """
-    Creates a scaled font by rendering at a calculated point size, scaling it to fit the target width and height,
-    and maintaining aspect ratio without cropping. All characters are uniformly scaled.
-    
-    :param font_path: Path to the .ttf font file.
-    :param target_width: Target width in pixels for each character.
-    :param target_height: Target height in pixels for each character.
-    :param font_name: The font name used for directory structure and naming.
-    :param font_variant: The font variant used for directory structure and naming.
-    :param point_size: The point size used for creating the master font.
-    :return: Path to the saved scaled font image.
-    """
-    # Read the master font metadata (max dimensions in pixels)
-    max_width_master, max_height_master, _ = read_metadata(metadata_filepath)
-
-    # Determine the scaling factors based on both axes
-    width_ratio = target_width / max_width_master
-    height_ratio = target_height / max_height_master
-
-    print(f"Width, height ratios: {width_ratio}, {height_ratio}")
-
-    # Use the larger scaling factor to ensure the character fits within the target dimensions
-    scaling_factor = max(width_ratio, height_ratio)
-
-    # Calculate the point size for rendering based on the scaling factor
-    target_point_size = int(point_size * scaling_factor)
-
-    # Precompute the scaled width and height for all characters
-    scaled_width = int(max_width_master * scaling_factor)
-    scaled_height = int(max_height_master * scaling_factor)
-
-    print(f"Scaled width, height: {scaled_width}, {scaled_height}")
-
-    # Create a blank image for the final composite
-    num_cols, num_rows = 16, 6  # Grid size for ASCII 32 to 127
-    scaled_img = Image.new("L", (num_cols * target_width, num_rows * target_height), color=0)
-
-    # Loop through characters and paste each one into the composite image
-    for idx, char_code in enumerate(range(32, 256)):
-        row, col = divmod(idx, num_cols)
-        x_offset = col * target_width
-        y_offset = row * target_height
-
-        img = create_single_char_image(chr(char_code), font_path, target_point_size, metadata_filepath)
-        
-        # Resize the character image to the precomputed uniform size (scaled_width, scaled_height)
-        scaled_char = img.resize((target_width, target_height), Image.BICUBIC)
-
-        # Paste the scaled character into the final image, top-left aligned (no centering)
-        scaled_img.paste(scaled_char, (x_offset, y_offset))
-
-    # Create the output directory
-    if not os.path.exists(scaled_output_dir):
-        os.makedirs(scaled_output_dir)
-
-    # Save the scaled font image
-    scaled_img_path = os.path.join(scaled_output_dir, f'{font_name}_{font_variant}_{target_width}x{target_height}.png')
-    scaled_img.save(scaled_img_path)
-    print(f"Scaled font saved as {scaled_img_path}")
-
-    # Save metadata
-    scaled_metadata_filepath = os.path.join(scaled_output_dir, 'data.txt')
-    save_scaled_metadata(scaled_metadata_filepath, target_width, target_height)
-
-    return scaled_img_path
-
-def render_font_at_point_size(font_path, point_size, threshold, char_range=(32, 127)):
-    """
-    Renders each character at the specified point size and returns a dictionary
-    with character images and their dimensions.
-    
-    :param font_path: Path to the .ttf font file.
-    :param point_size: Point size to use for rendering the characters.
-    :param char_range: Range of characters to render (default is from ASCII 32 to 127).
-    :return: A dictionary with character images and their dimensions.
-    """
-    font = ImageFont.truetype(font_path, point_size)
-    
-    char_images = {}
-    max_width, max_height = 0, 0
-
-    for char_code in range(char_range[0], char_range[1] + 1):
-        char = chr(char_code)
-        temp_img = Image.new("L", (256, 256), color=0)
-        draw = ImageDraw.Draw(temp_img)
-        draw.text((0, 0), char, font=font, fill=255)
-
-        temp_img = quantize_to_palette(temp_img, palette=(0, threshold, 255))
-
-        bbox = temp_img.getbbox()
-
-        if bbox:
-            width = bbox[2]  # Lower right corner x-coordinate gives the width from the origin
-            height = bbox[3]  # Lower right corner y-coordinate gives the height from the origin
-            max_width = max(max_width, width)
-            max_height = max(max_height, height)
-            char_images[char_code] = (temp_img, width, height)
-
-    return char_images, max_width, max_height
 
 def read_metadata(metadata_filepath):
     """
@@ -437,12 +319,66 @@ def save_scaled_metadata(filepath, target_width, target_height):
         f.write(f"Target height: {target_height}\n")
     print(f"Metadata saved as {filepath}")
 
+import os
+
+def generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold, char_range=(32, 127)):
+    """
+    Loops through a range of point sizes and creates a font image for each size that passes the anti-aliasing threshold test.
+    Saves each image with the format 'fontname_widthxheight.png'.
+    
+    :param font_path: Path to the .ttf font file.
+    :param output_dir: Directory to save the generated font images.
+    :param metadata_dir: Directory to save the metadata files.
+    :param threshold: Threshold for detecting anti-aliasing in grayscale images.
+    :param char_range: Range of characters to render (default is from ASCII 32 to 127).
+    """
+    # Ensure the output and metadata directories exist
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(metadata_dir, exist_ok=True)
+
+    # Loop through a range of point sizes and generate images
+    for point_size in np.arange(6, 33, 1):
+        point_size = round(point_size, 1)
+        # Render and measure characters at the current point size
+        char_images, max_width, max_height = render_and_measure_characters(font_path, point_size, char_range)
+
+        anti_aliased = False
+
+        # Check if the font size passes the anti-aliasing threshold
+        for char_code, (image, width, height) in char_images.items():
+            quant_img = quantize_image(image, palette=(0, threshold, 255))
+            if has_gray_pixels(quant_img):
+                anti_aliased = True
+                break
+
+        # If no anti-aliasing was found, generate the font image and save it
+        if not anti_aliased:
+            # Create the master image
+            master_img = create_master_image(char_images, max_width, max_height)
+
+            # Quantize and apply threshold to the master image
+            master_img = quantize_image(master_img, palette=(0, threshold, 255))
+
+            # Generate the output file name in the format 'fontname_widthxheight.png'
+            font_name = os.path.splitext(os.path.basename(font_path))[0]
+            output_file = f'{font_name}_{max_width}x{max_height}.png'
+
+            # Save the master image
+            master_img.save(os.path.join(output_dir, output_file))
+            print(f'Saved: {output_file}')
+
+            # Optionally show the image (can be removed in batch processing)
+            # master_img.show()
+
+            # Generate metadata file with max width, height, and point size
+            metadata_path = generate_metadata_file(max_width, max_height, point_size, metadata_dir)
+            print(f'Metadata saved: {metadata_path}')
+
 
 if __name__ == '__main__':
     # Define parameters for creating the master font
-    point_size = 70  # Point size for the font rendering
-    threshold = 128  # Threshold for binarizing the image
-    font_name = '8_bit_fortress'
+    threshold = 255  # Threshold for binarizing the image
+    font_name = 'advanced_pixel_lcd_7'
     font_variant = 'Regular'
 
     sources_dir = 'src/assets/ttf'
@@ -450,6 +386,12 @@ if __name__ == '__main__':
     output_dir = f'{sources_dir}/{font_name}/{font_variant}'
     metadata_dir = f'{sources_dir}/{font_name}/{font_variant}'
     metadata_filepath = f'{sources_dir}/{font_name}/{font_variant}/data.txt'
+
+    # Create directory for saving
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    # Delete existing files
+    os.system(f'rm -rf {output_dir}/*')
 
     if True:
         # Extract bitmap glyphs from the font
@@ -460,46 +402,14 @@ if __name__ == '__main__':
                 max_width = max(max_width, char_img.width)
                 max_height = max(max_height, char_img.height)
         else:
-            # Loop through a range of point sizes until finding one that generates images with no anti-aliasing
-            for point_size in range(6, 73):
-                char_images, max_width, max_height = render_and_measure_characters(font_path, point_size, threshold)
-                anti_aliased = False
-                for char_code, (image, width, height) in char_images.items():
-                    if has_gray_pixels(image):
-                        anti_aliased = True
-                        break
-                if not anti_aliased:
-                    break
+            generate_fonts_by_point_size(font_path, output_dir, metadata_dir, threshold)
 
-        # Create and save the master image
-        master_img = create_master_image(char_images, max_width, max_height, output_dir)
-        master_img = white_to_black(master_img)
-        master_img.show()
-
-        # Generate metadata file with max width, height, and point_size
-        metadata_path = generate_metadata_file(max_width, max_height, point_size, metadata_dir)
-
-    if False:
-        # List of character resolutions to process
-        character_resolutions = [
-            (12, 16), (16, 16), (16, 20), (16, 24), (24, 24), (24, 32), (32, 32), (32, 40),
-        ]
-
-        # Loop through the character resolutions and scale the master font
-        for target_width, target_height in character_resolutions:
-            # Create the scaled font using the master font's point size as reference
-            scaled_output_dir = f'src/assets/img/proc/fonts/{font_name}/{font_variant}/{target_width}x{target_height}'
-
-            create_scaled_font(font_path, target_width, target_height, font_name, font_variant, point_size, metadata_filepath, scaled_output_dir)
-
-    img = Image.open('src/assets/ttf/8_bit_fortress/Regular/master.png')
-    # img = quantize_to_palette(img, palette=(0, 255-20, 255))
-    print(has_gray_pixels(img))
-    img = white_to_black(img)
-    img.show()
-    hist = grayscale_histogram(img)
-    plt.plot(hist)
-    plt.title("Grayscale Histogram")
-    plt.xlabel("Pixel Intensity")
-    plt.ylabel("Frequency")
-    plt.show()
+    # img = Image.open('src/assets/ttf/8_bit_fortress/Regular/master.png')
+    # # img = quantize_image(img, palette=(0, 255-20, 255))
+    # print(has_gray_pixels(img))
+    # hist = grayscale_histogram(img)
+    # plt.plot(hist)
+    # plt.title("Grayscale Histogram")
+    # plt.xlabel("Pixel Intensity")
+    # plt.ylabel("Frequency")
+    # plt.show()
