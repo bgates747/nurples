@@ -1,3 +1,0 @@
-Max width: 58
-Max height: 122
-Point size: 143
