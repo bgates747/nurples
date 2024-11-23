@@ -86,8 +86,8 @@ init:
 
 ; set gfx bg color
 	xor a ; plotting mode 0
-	ld c,4 ; dark blue
-	call vdu_gcol_bg
+	ld c,4+128 ; dark blue bg
+	call vdu_gcol
 	call vdu_clg
 
 ; set the cursor off again since we changed screen modes

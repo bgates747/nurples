@@ -5930,5 +5930,127 @@ PC     Output      Line
 042BC9             0086   
 042BC9             0087   ; set gfx bg color
 042BC9 AF          0088   	xor a ; plotting mode 0
-042BCA 0E 04       0089   	ld c,4 ; dark blue
-042BCC CD 00 00 00 0090   	call vdu_gcol_bg
+042BCA 0E 84       0089   	ld c,4+128 ; dark blue bg
+042BCC CD C9 08 04 0090   	call vdu_gcol
+042BD0 CD B3 08 04 0091   	call vdu_clg
+042BD4             0092   
+042BD4             0093   ; set the cursor off again since we changed screen modes
+042BD4 CD 79 08 04 0094   	call cursor_off
+042BD8             0095   
+042BD8             0096   ; print loading ui message
+042BD8 21 65 2B 04 0097   	ld hl,loading_ui
+042BDC CD 77 00 04 0098   	call printString
+042BE0             0099   
+042BE0             0100   ; load UI images
+042BE0 CD A5 1A 04 0101   	call load_ui_images
+042BE4             0102   
+042BE4             0103   ; ; VDU 28, left, bottom, right, top: Set text viewport **
+042BE4             0104   ; ; MIND THE LITTLE-ENDIANESS
+042BE4             0105   ; ; inputs: c=left,b=bottom,e=right,d=top
+042BE4             0106   ; 	ld c,0 ; left
+042BE4             0107   ; 	ld d,20 ; top
+042BE4             0108   ; 	ld e,39 ; right
+042BE4             0109   ; 	ld b,29; bottom
+042BE4             0110   ; 	call vdu_set_txt_viewport
+042BE4             0111   
+042BE4             0112   ; ; load fonts ; TODO
+042BE4             0113   ; 	call load_font_rc
+042BE4             0114   
+042BE4             0115   ; ; load images ; TODO
+042BE4             0116   ; 	call img_load_init
+042BE4             0117   
+042BE4             0118   ; ; load sprites
+042BE4             0119   ; 	ld bc,sprites_num_images
+042BE4             0120   ; 	ld hl,sprites_image_list
+042BE4             0121   ; 	ld (cur_image_list),hl
+042BE4             0122   ; 	call img_load_main
+042BE4             0123   
+042BE4             0124   ; ; load sound effects ; TODO
+042BE4             0125   ; 	ld bc,SFX_num_buffers
+042BE4             0126   ; 	ld hl,SFX_buffer_id_lut
+042BE4             0127   ; 	ld (cur_buffer_id_lut),hl
+042BE4             0128   ; 	ld hl,SFX_load_routines_table
+042BE4             0129   ; 	ld (cur_load_jump_table),hl
+042BE4             0130   ; 	call sfx_load_main
+042BE4             0131   
+042BE4             0132   ; DEBUG: plot ui images
+042BE4 21 00 00 00 0133   	ld hl,BUF_SPLASH_BG
+042BE8 CD 74 09 04 0134   	call vdu_buff_select
+042BEC 01 00 00 00 0135   	ld bc,0
+042BF0 11 00 00 00 0136   	ld de,0
+042BF4 CD 5C 0C 04 0137   	call vdu_plot_bmp
+042BF8             0138   
+042BF8 21 01 00 00 0139   	ld hl,BUF_SPLASH_LOGO
+042BFC CD 74 09 04 0140   	call vdu_buff_select
+042C00 01 00 00 00 0141   	ld bc,0
+042C04 11 00 00 00 0142   	ld de,0
+042C08 CD 5C 0C 04 0143   	call vdu_plot_bmp
+042C0C             0144   
+042C0C             0145   ; print loading complete message and wait for user keypress
+042C0C 21 7E 2B 04 0146   	ld hl,loading_complete
+042C10 CD 77 00 04 0147   	call printString
+042C14 CD A5 08 04 0148   	call vdu_flip
+042C18 CD 15 06 04 0149   	call waitKeypress
+042C1C             0150   
+042C1C             0151   ; initialization done
+042C1C C9          0152   	ret
+042C1D             0153   
+042C1D             0154   main_loop_tmr: ds 6
+042C23             0155   framerate: equ 30
+042C23             0156   
+042C23             0157   new_game:
+042C23             0158   
+042C23 C9          0159   	ret
+042C24             0160   
+042C24             0161   main:
+042C24             0162   
+042C24             0163   
+042C24             0164   main_loop:
+042C24             0165   ; update global timestamp
+042C24 CD C5 07 04 0166       call timestamp_tick
+042C28             0167   
+042C28             0168   ; move player
+042C28             0169   
+042C28             0170   
+042C28             0171   ; move enemies
+042C28             0172   
+042C28             0173   
+042C28             0174   ; render frame
+042C28             0175   
+042C28             0176   @wait:
+042C28 CD 54 1A 04 0177   	call set_keys
+042C2C FD 21 1D 2C 0178   	ld iy,main_loop_tmr
+       04          
+042C31 CD A8 07 04 0179   	call tmr_get
+042C35 CA 41 2C 04 0180   	jp z,@continue
+042C39 FA 41 2C 04 0181   	jp m,@continue
+042C3D C3 28 2C 04 0182   	jp @wait
+042C41             0183   @continue:
+042C41             0184   
+042C41             0185   ; reset main loop timer
+042C41 FD 21 1D 2C 0186   	ld iy,main_loop_tmr
+       04          
+042C46 21 04 00 00 0187   	ld hl,120/framerate
+042C4A CD 9A 07 04 0188   	call tmr_set
+042C4E             0189   
+042C4E             0190   ; check for escape key and quit if pressed
+042C4E             0191   	MOSCALL mos_getkbmap
+042C4E 3E 1E       0001M  			LD	A, function
+042C50 49 CF       0002M  			RST.LIS	08h
+042C52             0192   ; 113 Escape
+042C52 DD CB 0E 46 0193       bit 0,(ix+14)
+042C56 20 02       0194   	jr nz,main_end
+042C58             0195   @Escape:
+042C58 18 CA       0196   	jr main_loop
+042C5A             0197   
+042C5A             0198   main_end:
+042C5A             0199   	; call do_outro
+042C5A             0200   
+042C5A CD 66 0A 04 0201       call vdu_clear_all_buffers
+042C5E CD 99 0D 04 0202   	call vdu_disable_channels
+042C62             0203   
+042C62             0204   ; restore screen to something normalish
+042C62 AF          0205   	xor a
+042C63 CD 50 09 04 0206   	call vdu_set_screen_mode
+042C67 CD 6B 08 04 0207   	call cursor_on
+042C6B C9          0208   	ret
