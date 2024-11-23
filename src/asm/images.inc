@@ -63,9 +63,8 @@ img_load_main_loop:
 	ld hl,(cur_filename)
 	call printString
 
-; ; flip screen 
+; wait for vblank to mitigate flicker
 	call vdu_vblank
-    ; call vdu_flip 
 
 ; decrement loop counter
     pop bc
@@ -102,23 +101,18 @@ load_next_image:
 img_load_init:
 ; initialize logo's position parameters
 	ld hl,0
-	ld (logo_yvel),hl
-
-	ld hl,45
-	ld (logo_y_cur),hl
-	ld (logo_y_min),hl
-	ld (logo_y_max),hl
-
-	ld hl,1
 	ld (logo_xvel),hl
-
-	ld hl,10
-	ld (logo_x_cur),hl
-	ld (logo_x_min),hl
-
-	ld hl,320-120
-	ld (logo_x_max),hl
-
+	ld (logo_xpos),hl
+; begin 16.8 maths to determine logo's y position and velocity
+	ld hl,240-16*256 ; allow space for text at bottom of screen
+	ld (logo_ypos),hl
+	ex de,hl
+	ld hl,-8*256 ; 8 pixels from top of screen
+	add hl,de ; distance for logo to travel
+	ld de,-sprites_num_images*256
+	call sdiv168 ; ud.e = distance / num images = y velocity
+	ld (logo_yvel),de
+; all done
     ret
 
 move_logo:
@@ -126,45 +120,18 @@ move_logo:
 	ld hl, BUF_SPLASH_LOGO
 	call vdu_buff_select
 ; update position based on velocity parameters
-	ld hl, (logo_x_cur)
-	ld de, (logo_xvel)
-	add hl, de
-	ld (logo_x_cur), hl
-	ex de,hl ; store x_cur in de
-; ; check if we're < x_min
-; 	ld hl,(logo_x_min)
-; 	xor a ; clear carry
-; 	sbc hl,de ; x_min - x_cur
-; 	jp p, move_logo_x_min
-; ; check if we're > x_max
-; 	ld hl,(logo_x_max)
-; 	xor a ; clear carry
-; 	sbc hl,de ; x_max - x_cur
-; 	jp m, move_logo_x_max
-; ; if not at either boundary, fall through to draw logo
-draw_logo:
-	ld bc,(logo_x_cur)
-	ld de,(logo_y_cur)
-	call vdu_plot_bmp
+	ld hl,(logo_ypos)
+	ld de,(logo_yvel)
+	add hl,de
+	ld (logo_ypos),hl
+; draw logo
+	ld bc,(logo_xpos)
+	ld de,(logo_ypos)
+	call vdu_plot_bmp168
 	ret
-move_logo_x_min:
-	ld hl,1
-	ld (logo_xvel),hl
-	ld hl,(logo_x_min)
-	ld (logo_x_cur),hl
-	jr draw_logo
-move_logo_x_max:
-	ld hl,-1
-	ld (logo_xvel),hl
-	ld hl,(logo_x_max)
-	ld (logo_x_cur),hl
-	jr draw_logo
+
 logo_xvel: dl 0
-logo_x_cur: dl 0
-logo_x_min: dl 0
-logo_x_max: dl 0
+logo_xpos: dl 0
 
 logo_yvel: dl 0
-logo_y_cur: dl 0
-logo_y_min: dl 0
-logo_y_max: dl 0
+logo_ypos: dl 0

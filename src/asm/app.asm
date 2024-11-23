@@ -39,6 +39,8 @@ exit:
 	include "vdu_plot.inc"
     include "vdu_sound.inc"
 	include "maths.inc"
+	include "arith24.inc"
+	include "fixed24.inc"
 
 ; Application includes
 	include "font_rc.inc"
