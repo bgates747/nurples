@@ -26,31 +26,88 @@ load_ui_images:
 	djnz @loop
 	ret
 
+; inputs: bc is the number of images to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
+img_load_main:
+	xor a
+    ld (cur_file_idx),a
+
+img_load_main_loop:
+; back up loop counter
+    push bc
+
+; plot the background
+	call vdu_cls
+    ld hl,BUF_SPLASH_BG
+    call vdu_buff_select
+    ld bc,0
+    ld de,0
+    call vdu_plot_bmp
+
+; load the next image
+    call load_next_image
+
+; ; draw the most recently loaded image
+; 	ld hl,(cur_buffer_id)
+; 	call vdu_buff_select
+; 	ld bc,0
+; 	ld de,0
+; 	call vdu_plot_bmp
+
+; move logo
+	call move_logo
+
+; print current filename
+	ld c,3 ; x
+	ld b,0 ; y
+	call vdu_move_cursor
+	ld hl,(cur_filename)
+	call printString
+
+; ; flip screen 
+	call vdu_vblank
+    ; call vdu_flip 
+
+; decrement loop counter
+    pop bc
+	dec bc
+    ld a,c
+    or a
+    jp nz,img_load_main_loop
+    ld a,b
+    or a
+    jp nz,img_load_main_loop
+    ret
+
 load_next_image:
-    ld (cur_file_idx),de
     ld d,image_record_size
+	ld a,(cur_file_idx)
+	ld e,a
     mlt de
     ld iy,(cur_image_list)
     add iy,de
+
     ld a,(iy+image_type) ; get image type
     ld bc,(iy+image_width) ; get image width
     ld de,(iy+image_height) ; get image height
     ld ix,(iy+image_filesize) ; get image file size
 	ld hl,(iy+image_bufferId) ; get image bufferId
+	ld (cur_buffer_id),hl
     ld iy,(iy+image_filename) ; get image filename
+	ld (cur_filename),iy
     call vdu_load_img
     ld iy,cur_file_idx
 	inc (iy)
 	ret
+
 img_load_init:
 ; initialize logo's position parameters
 	ld hl,0
 	ld (logo_yvel),hl
 
-    ld hl,45
+	ld hl,45
 	ld (logo_y_cur),hl
 	ld (logo_y_min),hl
-    ld (logo_y_max),hl
+	ld (logo_y_max),hl
 
 	ld hl,1
 	ld (logo_xvel),hl
@@ -64,56 +121,6 @@ img_load_init:
 
     ret
 
-; inputs: bc is the number of images to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
-img_load_main:
-    ld hl,0
-    ld (cur_file_idx),hl
-img_load_main_loop:
-; back up loop counter
-    push bc
-; load the next image
-    call load_next_image
-; draw all the things
-    call draw_all_the_things
-; draw the most recently loaded image
-	ld hl,(cur_buffer_id)
-	call vdu_buff_select
-	ld bc,0
-	ld de,0
-	call vdu_plot_bmp
-; move logo
-	call move_logo
-; print welcome message
-	ld ix,font_rc
-	ld hl,hello_world
-	ld bc,32
-	ld de,2
-	call font_bmp_print
-; print current filename
-	call vdu_cls
-	ld hl,(cur_filename)
-	call printString
-	call printNewLine
-	
-; print current load stopwatch
-	ld hl,loading_time
-	call printString
-	call stopwatch_get ; hl = elapsed time in 120ths of a second
-	call printDec
-
-; flip screen 
-    call vdu_flip 
-; decrement loop counter
-    pop bc
-	dec bc
-    ld a,c
-    or a
-    jp nz,img_load_main_loop
-    ld a,b
-    or a
-    jp nz,img_load_main_loop
-    ret
-
 move_logo:
 ; activate logo bitmap
 	ld hl, BUF_SPLASH_LOGO
@@ -124,17 +131,17 @@ move_logo:
 	add hl, de
 	ld (logo_x_cur), hl
 	ex de,hl ; store x_cur in de
-; check if we're < x_min
-	ld hl,(logo_x_min)
-	xor a ; clear carry
-	sbc hl,de ; x_min - x_cur
-	jp p, move_logo_x_min
-; check if we're > x_max
-	ld hl,(logo_x_max)
-	xor a ; clear carry
-	sbc hl,de ; x_max - x_cur
-	jp m, move_logo_x_max
-; if not at either boundary, fall through to draw logo's
+; ; check if we're < x_min
+; 	ld hl,(logo_x_min)
+; 	xor a ; clear carry
+; 	sbc hl,de ; x_min - x_cur
+; 	jp p, move_logo_x_min
+; ; check if we're > x_max
+; 	ld hl,(logo_x_max)
+; 	xor a ; clear carry
+; 	sbc hl,de ; x_max - x_cur
+; 	jp m, move_logo_x_max
+; ; if not at either boundary, fall through to draw logo
 draw_logo:
 	ld bc,(logo_x_cur)
 	ld de,(logo_y_cur)
@@ -161,11 +168,3 @@ logo_yvel: dl 0
 logo_y_cur: dl 0
 logo_y_min: dl 0
 logo_y_max: dl 0
-
-draw_all_the_things:
-    ld hl,BUF_SPLASH_BG
-    call vdu_buff_select
-    ld bc,0
-    ld de,0
-    call vdu_plot_bmp
-	ret

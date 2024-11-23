@@ -31,8 +31,8 @@ PC     Output      Line
 04004A FD E5       0016       push iy
 04004C             0017   
 04004C             0018   ; ###############################################
-04004C CD 9B 2B 04 0019   	call	init			; Initialization code
-040050 CD 24 2C 04 0020   	call 	main			; Call the main function
+04004C CD 4F 2B 04 0019   	call	init			; Initialization code
+040050 CD D4 2B 04 0020   	call 	main			; Call the main function
 040054             0021   ; ###############################################
 040054             0022   
 040054             0023   exit:
@@ -4481,7 +4481,7 @@ PC     Output      Line
 041A76             0040*  ; ------ QUIT ------
 041A76             0041*  ; 113 Escape
 041A76 DD CB 0E 46 0042*      bit 0,(ix+14)
-041A7A C2 5A 2C 04 0043*  	jp nz,main_end
+041A7A C2 0A 2C 04 0043*  	jp nz,main_end
 041A7E             0044*  
 041A7E             0045*  ; 99 Space fire zee missiles
 041A7E DD CB 0C 56 0046*      bit 2,(ix+12)
@@ -4523,1534 +4523,1519 @@ PC     Output      Line
 041AA5             0015*  ; initialize image loading variables
 041AA5 21 00 00 00 0016*  	ld hl,0
 041AA9 22 9C 1A 04 0017*  	ld (cur_file_idx),hl
-041AAD 21 FE 2A 04 0018*  	ld hl,ui_image_list
+041AAD 21 B4 2A 04 0018*  	ld hl,ui_image_list
 041AB1 22 99 1A 04 0019*  	ld (cur_image_list),hl
 041AB5             0020*  ; load images
 041AB5 06 02       0021*  	ld b,ui_num_images
 041AB7             0022*  @loop:
 041AB7 C5          0023*  	push bc
-041AB8 CD C0 1A 04 0024*  	call load_next_image
+041AB8 CD 09 1B 04 0024*  	call load_next_image
 041ABC C1          0025*  	pop bc
 041ABD 10 F8       0026*  	djnz @loop
 041ABF C9          0027*  	ret
 041AC0             0028*  
-041AC0             0029*  load_next_image:
-041AC0 ED 53 9C 1A 0030*      ld (cur_file_idx),de
+041AC0             0029*  ; inputs: bc is the number of images to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
+041AC0             0030*  img_load_main:
+041AC0 AF          0031*  	xor a
+041AC1 32 9C 1A 04 0032*      ld (cur_file_idx),a
+041AC5             0033*  
+041AC5             0034*  img_load_main_loop:
+041AC5             0035*  ; back up loop counter
+041AC5 C5          0036*      push bc
+041AC6             0037*  
+041AC6             0038*  ; plot the background
+041AC6 CD A0 08 04 0039*  	call vdu_cls
+041ACA 21 00 00 00 0040*      ld hl,BUF_SPLASH_BG
+041ACE CD 74 09 04 0041*      call vdu_buff_select
+041AD2 01 00 00 00 0042*      ld bc,0
+041AD6 11 00 00 00 0043*      ld de,0
+041ADA CD 5C 0C 04 0044*      call vdu_plot_bmp
+041ADE             0045*  
+041ADE             0046*  ; load the next image
+041ADE CD 09 1B 04 0047*      call load_next_image
+041AE2             0048*  
+041AE2             0049*  ; ; draw the most recently loaded image
+041AE2             0050*  ; 	ld hl,(cur_buffer_id)
+041AE2             0051*  ; 	call vdu_buff_select
+041AE2             0052*  ; 	ld bc,0
+041AE2             0053*  ; 	ld de,0
+041AE2             0054*  ; 	call vdu_plot_bmp
+041AE2             0055*  
+041AE2             0056*  ; move logo
+041AE2 CD 76 1B 04 0057*  	call move_logo
+041AE6             0058*  
+041AE6             0059*  ; print current filename
+041AE6 0E 03       0060*  	ld c,3 ; x
+041AE8 06 00       0061*  	ld b,0 ; y
+041AEA CD 8C 08 04 0062*  	call vdu_move_cursor
+041AEE 2A 9F 1A 04 0063*  	ld hl,(cur_filename)
+041AF2 CD 77 00 04 0064*  	call printString
+041AF6             0065*  
+041AF6             0066*  ; ; flip screen
+041AF6 CD FB 08 04 0067*  	call vdu_vblank
+041AFA             0068*      ; call vdu_flip
+041AFA             0069*  
+041AFA             0070*  ; decrement loop counter
+041AFA C1          0071*      pop bc
+041AFB 0B          0072*  	dec bc
+041AFC 79          0073*      ld a,c
+041AFD B7          0074*      or a
+041AFE C2 C5 1A 04 0075*      jp nz,img_load_main_loop
+041B02 78          0076*      ld a,b
+041B03 B7          0077*      or a
+041B04 C2 C5 1A 04 0078*      jp nz,img_load_main_loop
+041B08 C9          0079*      ret
+041B09             0080*  
+041B09             0081*  load_next_image:
+041B09 16 12       0082*      ld d,image_record_size
+041B0B 3A 9C 1A 04 0083*  	ld a,(cur_file_idx)
+041B0F 5F          0084*  	ld e,a
+041B10 ED 5C       0085*      mlt de
+041B12 FD 2A 99 1A 0086*      ld iy,(cur_image_list)
        04          
-041AC5 16 12       0031*      ld d,image_record_size
-041AC7 ED 5C       0032*      mlt de
-041AC9 FD 2A 99 1A 0033*      ld iy,(cur_image_list)
+041B17 FD 19       0087*      add iy,de
+041B19             0088*  
+041B19 FD 7E 00    0089*      ld a,(iy+image_type) ; get image type
+041B1C FD 07 03    0090*      ld bc,(iy+image_width) ; get image width
+041B1F FD 17 06    0091*      ld de,(iy+image_height) ; get image height
+041B22 FD 31 09    0092*      ld ix,(iy+image_filesize) ; get image file size
+041B25 FD 27 0F    0093*  	ld hl,(iy+image_bufferId) ; get image bufferId
+041B28 22 A2 1A 04 0094*  	ld (cur_buffer_id),hl
+041B2C FD 37 0C    0095*      ld iy,(iy+image_filename) ; get image filename
+041B2F FD 22 9F 1A 0096*  	ld (cur_filename),iy
        04          
-041ACE FD 19       0034*      add iy,de
-041AD0 FD 7E 00    0035*      ld a,(iy+image_type) ; get image type
-041AD3 FD 07 03    0036*      ld bc,(iy+image_width) ; get image width
-041AD6 FD 17 06    0037*      ld de,(iy+image_height) ; get image height
-041AD9 FD 31 09    0038*      ld ix,(iy+image_filesize) ; get image file size
-041ADC FD 27 0F    0039*  	ld hl,(iy+image_bufferId) ; get image bufferId
-041ADF FD 37 0C    0040*      ld iy,(iy+image_filename) ; get image filename
-041AE2 CD 92 0A 04 0041*      call vdu_load_img
-041AE6 FD 21 9C 1A 0042*      ld iy,cur_file_idx
+041B34 CD 92 0A 04 0097*      call vdu_load_img
+041B38 FD 21 9C 1A 0098*      ld iy,cur_file_idx
        04          
-041AEB FD 34 00    0043*  	inc (iy)
-041AEE C9          0044*  	ret
-041AEF             0045*  img_load_init:
-041AEF             0046*  ; initialize logo's position parameters
-041AEF 21 00 00 00 0047*  	ld hl,0
-041AF3 22 01 1C 04 0048*  	ld (logo_yvel),hl
-041AF7             0049*  
-041AF7 21 2D 00 00 0050*      ld hl,45
-041AFB 22 04 1C 04 0051*  	ld (logo_y_cur),hl
-041AFF 22 07 1C 04 0052*  	ld (logo_y_min),hl
-041B03 22 0A 1C 04 0053*      ld (logo_y_max),hl
-041B07             0054*  
-041B07 21 01 00 00 0055*  	ld hl,1
-041B0B 22 F5 1B 04 0056*  	ld (logo_xvel),hl
-041B0F             0057*  
-041B0F 21 0A 00 00 0058*  	ld hl,10
-041B13 22 F8 1B 04 0059*  	ld (logo_x_cur),hl
-041B17 22 FB 1B 04 0060*  	ld (logo_x_min),hl
-041B1B             0061*  
-041B1B 21 C8 00 00 0062*  	ld hl,320-120
-041B1F 22 FE 1B 04 0063*  	ld (logo_x_max),hl
-041B23             0064*  
-041B23 C9          0065*      ret
-041B24             0066*  
-041B24             0067*  ; inputs: bc is the number of images to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
-041B24             0068*  img_load_main:
-041B24 21 00 00 00 0069*      ld hl,0
-041B28 22 9C 1A 04 0070*      ld (cur_file_idx),hl
-041B2C             0071*  img_load_main_loop:
-041B2C             0072*  ; back up loop counter
-041B2C C5          0073*      push bc
-041B2D             0074*  ; load the next image
-041B2D CD C0 1A 04 0075*      call load_next_image
-041B31             0076*  ; draw all the things
-041B31 CD 0D 1C 04 0077*      call draw_all_the_things
-041B35             0078*  ; draw the most recently loaded image
-041B35 2A A2 1A 04 0079*  	ld hl,(cur_buffer_id)
-041B39 CD 74 09 04 0080*  	call vdu_buff_select
-041B3D 01 00 00 00 0081*  	ld bc,0
-041B41 11 00 00 00 0082*  	ld de,0
-041B45 CD 5C 0C 04 0083*  	call vdu_plot_bmp
-041B49             0084*  ; move logo
-041B49 CD 95 1B 04 0085*  	call move_logo
-041B4D             0086*  ; print welcome message
-041B4D DD 21 89 0F 0087*  	ld ix,font_rc
+041B3D FD 34 00    0099*  	inc (iy)
+041B40 C9          0100*  	ret
+041B41             0101*  
+041B41             0102*  img_load_init:
+041B41             0103*  ; initialize logo's position parameters
+041B41 21 00 00 00 0104*  	ld hl,0
+041B45 22 CC 1B 04 0105*  	ld (logo_yvel),hl
+041B49             0106*  
+041B49 21 2D 00 00 0107*  	ld hl,45
+041B4D 22 CF 1B 04 0108*  	ld (logo_y_cur),hl
+041B51 22 D2 1B 04 0109*  	ld (logo_y_min),hl
+041B55 22 D5 1B 04 0110*  	ld (logo_y_max),hl
+041B59             0111*  
+041B59 21 01 00 00 0112*  	ld hl,1
+041B5D 22 C0 1B 04 0113*  	ld (logo_xvel),hl
+041B61             0114*  
+041B61 21 0A 00 00 0115*  	ld hl,10
+041B65 22 C3 1B 04 0116*  	ld (logo_x_cur),hl
+041B69 22 C6 1B 04 0117*  	ld (logo_x_min),hl
+041B6D             0118*  
+041B6D 21 C8 00 00 0119*  	ld hl,320-120
+041B71 22 C9 1B 04 0120*  	ld (logo_x_max),hl
+041B75             0121*  
+041B75 C9          0122*      ret
+041B76             0123*  
+041B76             0124*  move_logo:
+041B76             0125*  ; activate logo bitmap
+041B76 21 01 00 00 0126*  	ld hl, BUF_SPLASH_LOGO
+041B7A CD 74 09 04 0127*  	call vdu_buff_select
+041B7E             0128*  ; update position based on velocity parameters
+041B7E 2A C3 1B 04 0129*  	ld hl, (logo_x_cur)
+041B82 ED 5B C0 1B 0130*  	ld de, (logo_xvel)
        04          
-041B52 21 4A 2B 04 0088*  	ld hl,hello_world
-041B56 01 20 00 00 0089*  	ld bc,32
-041B5A 11 02 00 00 0090*  	ld de,2
-041B5E CD BD 06 04 0091*  	call font_bmp_print
-041B62             0092*  ; print current filename
-041B62 CD A0 08 04 0093*  	call vdu_cls
-041B66 2A 9F 1A 04 0094*  	ld hl,(cur_filename)
-041B6A CD 77 00 04 0095*  	call printString
-041B6E CD 8C 00 04 0096*  	call printNewLine
-041B72             0097*  
-041B72             0098*  ; print current load stopwatch
-041B72 21 70 2B 04 0099*  	ld hl,loading_time
-041B76 CD 77 00 04 0100*  	call printString
-041B7A CD 33 08 04 0101*  	call stopwatch_get ; hl = elapsed time in 120ths of a second
-041B7E CD 76 01 04 0102*  	call printDec
-041B82             0103*  
-041B82             0104*  ; flip screen
-041B82 CD A5 08 04 0105*      call vdu_flip
-041B86             0106*  ; decrement loop counter
-041B86 C1          0107*      pop bc
-041B87 0B          0108*  	dec bc
-041B88 79          0109*      ld a,c
-041B89 B7          0110*      or a
-041B8A C2 2C 1B 04 0111*      jp nz,img_load_main_loop
-041B8E 78          0112*      ld a,b
-041B8F B7          0113*      or a
-041B90 C2 2C 1B 04 0114*      jp nz,img_load_main_loop
-041B94 C9          0115*      ret
-041B95             0116*  
-041B95             0117*  move_logo:
-041B95             0118*  ; activate logo bitmap
-041B95 21 01 00 00 0119*  	ld hl, BUF_SPLASH_LOGO
-041B99 CD 74 09 04 0120*  	call vdu_buff_select
-041B9D             0121*  ; update position based on velocity parameters
-041B9D 2A F8 1B 04 0122*  	ld hl, (logo_x_cur)
-041BA1 ED 5B F5 1B 0123*  	ld de, (logo_xvel)
+041B87 19          0131*  	add hl, de
+041B88 22 C3 1B 04 0132*  	ld (logo_x_cur), hl
+041B8C EB          0133*  	ex de,hl ; store x_cur in de
+041B8D             0134*  ; ; check if we're < x_min
+041B8D             0135*  ; 	ld hl,(logo_x_min)
+041B8D             0136*  ; 	xor a ; clear carry
+041B8D             0137*  ; 	sbc hl,de ; x_min - x_cur
+041B8D             0138*  ; 	jp p, move_logo_x_min
+041B8D             0139*  ; ; check if we're > x_max
+041B8D             0140*  ; 	ld hl,(logo_x_max)
+041B8D             0141*  ; 	xor a ; clear carry
+041B8D             0142*  ; 	sbc hl,de ; x_max - x_cur
+041B8D             0143*  ; 	jp m, move_logo_x_max
+041B8D             0144*  ; ; if not at either boundary, fall through to draw logo
+041B8D             0145*  draw_logo:
+041B8D ED 4B C3 1B 0146*  	ld bc,(logo_x_cur)
        04          
-041BA6 19          0124*  	add hl, de
-041BA7 22 F8 1B 04 0125*  	ld (logo_x_cur), hl
-041BAB EB          0126*  	ex de,hl ; store x_cur in de
-041BAC             0127*  ; check if we're < x_min
-041BAC 2A FB 1B 04 0128*  	ld hl,(logo_x_min)
-041BB0 AF          0129*  	xor a ; clear carry
-041BB1 ED 52       0130*  	sbc hl,de ; x_min - x_cur
-041BB3 F2 D1 1B 04 0131*  	jp p, move_logo_x_min
-041BB7             0132*  ; check if we're > x_max
-041BB7 2A FE 1B 04 0133*  	ld hl,(logo_x_max)
-041BBB AF          0134*  	xor a ; clear carry
-041BBC ED 52       0135*  	sbc hl,de ; x_max - x_cur
-041BBE FA E3 1B 04 0136*  	jp m, move_logo_x_max
-041BC2             0137*  ; if not at either boundary, fall through to draw logo's
-041BC2             0138*  draw_logo:
-041BC2 ED 4B F8 1B 0139*  	ld bc,(logo_x_cur)
+041B92 ED 5B CF 1B 0147*  	ld de,(logo_y_cur)
        04          
-041BC7 ED 5B 04 1C 0140*  	ld de,(logo_y_cur)
-       04          
-041BCC CD 5C 0C 04 0141*  	call vdu_plot_bmp
-041BD0 C9          0142*  	ret
-041BD1             0143*  move_logo_x_min:
-041BD1 21 01 00 00 0144*  	ld hl,1
-041BD5 22 F5 1B 04 0145*  	ld (logo_xvel),hl
-041BD9 2A FB 1B 04 0146*  	ld hl,(logo_x_min)
-041BDD 22 F8 1B 04 0147*  	ld (logo_x_cur),hl
-041BE1 18 DF       0148*  	jr draw_logo
-041BE3             0149*  move_logo_x_max:
-041BE3 21 FF FF FF 0150*  	ld hl,-1
-041BE7 22 F5 1B 04 0151*  	ld (logo_xvel),hl
-041BEB 2A FE 1B 04 0152*  	ld hl,(logo_x_max)
-041BEF 22 F8 1B 04 0153*  	ld (logo_x_cur),hl
-041BF3 18 CD       0154*  	jr draw_logo
-041BF5 00 00 00    0155*  logo_xvel: dl 0
-041BF8 00 00 00    0156*  logo_x_cur: dl 0
-041BFB 00 00 00    0157*  logo_x_min: dl 0
-041BFE 00 00 00    0158*  logo_x_max: dl 0
-041C01             0159*  
-041C01 00 00 00    0160*  logo_yvel: dl 0
-041C04 00 00 00    0161*  logo_y_cur: dl 0
-041C07 00 00 00    0162*  logo_y_min: dl 0
-041C0A 00 00 00    0163*  logo_y_max: dl 0
-041C0D             0164*  
-041C0D             0165*  draw_all_the_things:
-041C0D 21 00 00 00 0166*      ld hl,BUF_SPLASH_BG
-041C11 CD 74 09 04 0167*      call vdu_buff_select
-041C15 01 00 00 00 0168*      ld bc,0
-041C19 11 00 00 00 0169*      ld de,0
-041C1D CD 5C 0C 04 0170*      call vdu_plot_bmp
-041C21 C9          0171*  	ret
-041C22             0047       include "images_sprites.inc"
-041C22             0001*  ; Generated by make_images.py
-041C22             0002*  
-041C22             0003*  sprites_num_images: equ 89
-041C22             0004*  
-041C22             0005*  ; buffer_ids:
-041C22             0006*  BUF_0TILE_EMPTY: equ 256
-041C22             0007*  BUF_1TILE_CROSS: equ 257
-041C22             0008*  BUF_2TILE_HORIZ: equ 258
-041C22             0009*  BUF_3TILE_VERT: equ 259
-041C22             0010*  BUF_4TILE_SQUARE: equ 260
-041C22             0011*  BUF_5TILE_CIRCLE: equ 261
-041C22             0012*  BUF_6TILE_PAD: equ 262
-041C22             0013*  BUF_7TILE_TURRET: equ 263
-041C22             0014*  BUF_CIRCLE: equ 264
-041C22             0015*  BUF_CRATER: equ 265
-041C22             0016*  BUF_EXPLOSION_A: equ 266
-041C22             0017*  BUF_EXPLOSION_B: equ 267
-041C22             0018*  BUF_EXPLOSION_C: equ 268
-041C22             0019*  BUF_EXPLOSION_D: equ 269
-041C22             0020*  BUF_EXPLOSION_E: equ 270
-041C22             0021*  BUF_FIREBALL_A: equ 271
-041C22             0022*  BUF_FIREBALL_B: equ 272
-041C22             0023*  BUF_LASER_A: equ 273
-041C22             0024*  BUF_LASER_B: equ 274
-041C22             0025*  BUF_PAD: equ 275
-041C22             0026*  BUF_SEEKER_000: equ 276
-041C22             0027*  BUF_SEEKER_008: equ 277
-041C22             0028*  BUF_SEEKER_016: equ 278
-041C22             0029*  BUF_SEEKER_024: equ 279
-041C22             0030*  BUF_SEEKER_032: equ 280
-041C22             0031*  BUF_SEEKER_040: equ 281
-041C22             0032*  BUF_SEEKER_048: equ 282
-041C22             0033*  BUF_SEEKER_056: equ 283
-041C22             0034*  BUF_SEEKER_064: equ 284
-041C22             0035*  BUF_SEEKER_072: equ 285
-041C22             0036*  BUF_SEEKER_080: equ 286
-041C22             0037*  BUF_SEEKER_088: equ 287
-041C22             0038*  BUF_SEEKER_096: equ 288
-041C22             0039*  BUF_SEEKER_104: equ 289
-041C22             0040*  BUF_SEEKER_112: equ 290
-041C22             0041*  BUF_SEEKER_120: equ 291
-041C22             0042*  BUF_SEEKER_128: equ 292
-041C22             0043*  BUF_SEEKER_136: equ 293
-041C22             0044*  BUF_SEEKER_144: equ 294
-041C22             0045*  BUF_SEEKER_152: equ 295
-041C22             0046*  BUF_SEEKER_160: equ 296
-041C22             0047*  BUF_SEEKER_168: equ 297
-041C22             0048*  BUF_SEEKER_176: equ 298
-041C22             0049*  BUF_SEEKER_184: equ 299
-041C22             0050*  BUF_SEEKER_192: equ 300
-041C22             0051*  BUF_SEEKER_200: equ 301
-041C22             0052*  BUF_SEEKER_208: equ 302
-041C22             0053*  BUF_SEEKER_216: equ 303
-041C22             0054*  BUF_SEEKER_224: equ 304
-041C22             0055*  BUF_SEEKER_232: equ 305
-041C22             0056*  BUF_SEEKER_240: equ 306
-041C22             0057*  BUF_SEEKER_248: equ 307
-041C22             0058*  BUF_SHIP_0L: equ 308
-041C22             0059*  BUF_SHIP_1C: equ 309
-041C22             0060*  BUF_SHIP_2R: equ 310
-041C22             0061*  BUF_SHIP_SMALL: equ 311
-041C22             0062*  BUF_STAR: equ 312
-041C22             0063*  BUF_TURRET_000: equ 313
-041C22             0064*  BUF_TURRET_008: equ 314
-041C22             0065*  BUF_TURRET_016: equ 315
-041C22             0066*  BUF_TURRET_024: equ 316
-041C22             0067*  BUF_TURRET_032: equ 317
-041C22             0068*  BUF_TURRET_040: equ 318
-041C22             0069*  BUF_TURRET_048: equ 319
-041C22             0070*  BUF_TURRET_056: equ 320
-041C22             0071*  BUF_TURRET_064: equ 321
-041C22             0072*  BUF_TURRET_072: equ 322
-041C22             0073*  BUF_TURRET_080: equ 323
-041C22             0074*  BUF_TURRET_088: equ 324
-041C22             0075*  BUF_TURRET_096: equ 325
-041C22             0076*  BUF_TURRET_104: equ 326
-041C22             0077*  BUF_TURRET_112: equ 327
-041C22             0078*  BUF_TURRET_120: equ 328
-041C22             0079*  BUF_TURRET_128: equ 329
-041C22             0080*  BUF_TURRET_136: equ 330
-041C22             0081*  BUF_TURRET_144: equ 331
-041C22             0082*  BUF_TURRET_152: equ 332
-041C22             0083*  BUF_TURRET_160: equ 333
-041C22             0084*  BUF_TURRET_168: equ 334
-041C22             0085*  BUF_TURRET_176: equ 335
-041C22             0086*  BUF_TURRET_184: equ 336
-041C22             0087*  BUF_TURRET_192: equ 337
-041C22             0088*  BUF_TURRET_200: equ 338
-041C22             0089*  BUF_TURRET_208: equ 339
-041C22             0090*  BUF_TURRET_216: equ 340
-041C22             0091*  BUF_TURRET_224: equ 341
-041C22             0092*  BUF_TURRET_232: equ 342
-041C22             0093*  BUF_TURRET_240: equ 343
-041C22             0094*  BUF_TURRET_248: equ 344
-041C22             0095*  
-041C22             0096*  sprites_image_list: ; type; width; height; filename; bufferId:
-041C22 01 00 00 10 0097*  	dl 1, 16, 16, 256, fn_0tile_empty, 256
+041B97 CD 5C 0C 04 0148*  	call vdu_plot_bmp
+041B9B C9          0149*  	ret
+041B9C             0150*  move_logo_x_min:
+041B9C 21 01 00 00 0151*  	ld hl,1
+041BA0 22 C0 1B 04 0152*  	ld (logo_xvel),hl
+041BA4 2A C6 1B 04 0153*  	ld hl,(logo_x_min)
+041BA8 22 C3 1B 04 0154*  	ld (logo_x_cur),hl
+041BAC 18 DF       0155*  	jr draw_logo
+041BAE             0156*  move_logo_x_max:
+041BAE 21 FF FF FF 0157*  	ld hl,-1
+041BB2 22 C0 1B 04 0158*  	ld (logo_xvel),hl
+041BB6 2A C9 1B 04 0159*  	ld hl,(logo_x_max)
+041BBA 22 C3 1B 04 0160*  	ld (logo_x_cur),hl
+041BBE 18 CD       0161*  	jr draw_logo
+041BC0 00 00 00    0162*  logo_xvel: dl 0
+041BC3 00 00 00    0163*  logo_x_cur: dl 0
+041BC6 00 00 00    0164*  logo_x_min: dl 0
+041BC9 00 00 00    0165*  logo_x_max: dl 0
+041BCC             0166*  
+041BCC 00 00 00    0167*  logo_yvel: dl 0
+041BCF 00 00 00    0168*  logo_y_cur: dl 0
+041BD2 00 00 00    0169*  logo_y_min: dl 0
+041BD5 00 00 00    0170*  logo_y_max: dl 0
+041BD8             0047       include "images_sprites.inc"
+041BD8             0001*  ; Generated by make_images.py
+041BD8             0002*  
+041BD8             0003*  sprites_num_images: equ 89
+041BD8             0004*  
+041BD8             0005*  ; buffer_ids:
+041BD8             0006*  BUF_0TILE_EMPTY: equ 256
+041BD8             0007*  BUF_1TILE_CROSS: equ 257
+041BD8             0008*  BUF_2TILE_HORIZ: equ 258
+041BD8             0009*  BUF_3TILE_VERT: equ 259
+041BD8             0010*  BUF_4TILE_SQUARE: equ 260
+041BD8             0011*  BUF_5TILE_CIRCLE: equ 261
+041BD8             0012*  BUF_6TILE_PAD: equ 262
+041BD8             0013*  BUF_7TILE_TURRET: equ 263
+041BD8             0014*  BUF_CIRCLE: equ 264
+041BD8             0015*  BUF_CRATER: equ 265
+041BD8             0016*  BUF_EXPLOSION_A: equ 266
+041BD8             0017*  BUF_EXPLOSION_B: equ 267
+041BD8             0018*  BUF_EXPLOSION_C: equ 268
+041BD8             0019*  BUF_EXPLOSION_D: equ 269
+041BD8             0020*  BUF_EXPLOSION_E: equ 270
+041BD8             0021*  BUF_FIREBALL_A: equ 271
+041BD8             0022*  BUF_FIREBALL_B: equ 272
+041BD8             0023*  BUF_LASER_A: equ 273
+041BD8             0024*  BUF_LASER_B: equ 274
+041BD8             0025*  BUF_PAD: equ 275
+041BD8             0026*  BUF_SEEKER_000: equ 276
+041BD8             0027*  BUF_SEEKER_008: equ 277
+041BD8             0028*  BUF_SEEKER_016: equ 278
+041BD8             0029*  BUF_SEEKER_024: equ 279
+041BD8             0030*  BUF_SEEKER_032: equ 280
+041BD8             0031*  BUF_SEEKER_040: equ 281
+041BD8             0032*  BUF_SEEKER_048: equ 282
+041BD8             0033*  BUF_SEEKER_056: equ 283
+041BD8             0034*  BUF_SEEKER_064: equ 284
+041BD8             0035*  BUF_SEEKER_072: equ 285
+041BD8             0036*  BUF_SEEKER_080: equ 286
+041BD8             0037*  BUF_SEEKER_088: equ 287
+041BD8             0038*  BUF_SEEKER_096: equ 288
+041BD8             0039*  BUF_SEEKER_104: equ 289
+041BD8             0040*  BUF_SEEKER_112: equ 290
+041BD8             0041*  BUF_SEEKER_120: equ 291
+041BD8             0042*  BUF_SEEKER_128: equ 292
+041BD8             0043*  BUF_SEEKER_136: equ 293
+041BD8             0044*  BUF_SEEKER_144: equ 294
+041BD8             0045*  BUF_SEEKER_152: equ 295
+041BD8             0046*  BUF_SEEKER_160: equ 296
+041BD8             0047*  BUF_SEEKER_168: equ 297
+041BD8             0048*  BUF_SEEKER_176: equ 298
+041BD8             0049*  BUF_SEEKER_184: equ 299
+041BD8             0050*  BUF_SEEKER_192: equ 300
+041BD8             0051*  BUF_SEEKER_200: equ 301
+041BD8             0052*  BUF_SEEKER_208: equ 302
+041BD8             0053*  BUF_SEEKER_216: equ 303
+041BD8             0054*  BUF_SEEKER_224: equ 304
+041BD8             0055*  BUF_SEEKER_232: equ 305
+041BD8             0056*  BUF_SEEKER_240: equ 306
+041BD8             0057*  BUF_SEEKER_248: equ 307
+041BD8             0058*  BUF_SHIP_0L: equ 308
+041BD8             0059*  BUF_SHIP_1C: equ 309
+041BD8             0060*  BUF_SHIP_2R: equ 310
+041BD8             0061*  BUF_SHIP_SMALL: equ 311
+041BD8             0062*  BUF_STAR: equ 312
+041BD8             0063*  BUF_TURRET_000: equ 313
+041BD8             0064*  BUF_TURRET_008: equ 314
+041BD8             0065*  BUF_TURRET_016: equ 315
+041BD8             0066*  BUF_TURRET_024: equ 316
+041BD8             0067*  BUF_TURRET_032: equ 317
+041BD8             0068*  BUF_TURRET_040: equ 318
+041BD8             0069*  BUF_TURRET_048: equ 319
+041BD8             0070*  BUF_TURRET_056: equ 320
+041BD8             0071*  BUF_TURRET_064: equ 321
+041BD8             0072*  BUF_TURRET_072: equ 322
+041BD8             0073*  BUF_TURRET_080: equ 323
+041BD8             0074*  BUF_TURRET_088: equ 324
+041BD8             0075*  BUF_TURRET_096: equ 325
+041BD8             0076*  BUF_TURRET_104: equ 326
+041BD8             0077*  BUF_TURRET_112: equ 327
+041BD8             0078*  BUF_TURRET_120: equ 328
+041BD8             0079*  BUF_TURRET_128: equ 329
+041BD8             0080*  BUF_TURRET_136: equ 330
+041BD8             0081*  BUF_TURRET_144: equ 331
+041BD8             0082*  BUF_TURRET_152: equ 332
+041BD8             0083*  BUF_TURRET_160: equ 333
+041BD8             0084*  BUF_TURRET_168: equ 334
+041BD8             0085*  BUF_TURRET_176: equ 335
+041BD8             0086*  BUF_TURRET_184: equ 336
+041BD8             0087*  BUF_TURRET_192: equ 337
+041BD8             0088*  BUF_TURRET_200: equ 338
+041BD8             0089*  BUF_TURRET_208: equ 339
+041BD8             0090*  BUF_TURRET_216: equ 340
+041BD8             0091*  BUF_TURRET_224: equ 341
+041BD8             0092*  BUF_TURRET_232: equ 342
+041BD8             0093*  BUF_TURRET_240: equ 343
+041BD8             0094*  BUF_TURRET_248: equ 344
+041BD8             0095*  
+041BD8             0096*  sprites_image_list: ; type; width; height; filename; bufferId:
+041BD8 01 00 00 10 0097*  	dl 1, 16, 16, 256, fn_0tile_empty, 256
        00 00 10 00 
        00 00 01 00 
-       64 22 04 00 
+       1A 22 04 00 
        01 00       
-041C34 01 00 00 10 0098*  	dl 1, 16, 16, 256, fn_1tile_cross, 257
+041BEA 01 00 00 10 0098*  	dl 1, 16, 16, 256, fn_1tile_cross, 257
        00 00 10 00 
        00 00 01 00 
-       7E 22 04 01 
+       34 22 04 01 
        01 00       
-041C46 01 00 00 10 0099*  	dl 1, 16, 16, 256, fn_2tile_horiz, 258
+041BFC 01 00 00 10 0099*  	dl 1, 16, 16, 256, fn_2tile_horiz, 258
        00 00 10 00 
        00 00 01 00 
-       98 22 04 02 
+       4E 22 04 02 
        01 00       
-041C58 01 00 00 10 0100*  	dl 1, 16, 16, 256, fn_3tile_vert, 259
+041C0E 01 00 00 10 0100*  	dl 1, 16, 16, 256, fn_3tile_vert, 259
        00 00 10 00 
        00 00 01 00 
-       B2 22 04 03 
+       68 22 04 03 
        01 00       
-041C6A 01 00 00 10 0101*  	dl 1, 16, 16, 256, fn_4tile_square, 260
+041C20 01 00 00 10 0101*  	dl 1, 16, 16, 256, fn_4tile_square, 260
        00 00 10 00 
        00 00 01 00 
-       CB 22 04 04 
+       81 22 04 04 
        01 00       
-041C7C 01 00 00 10 0102*  	dl 1, 16, 16, 256, fn_5tile_circle, 261
+041C32 01 00 00 10 0102*  	dl 1, 16, 16, 256, fn_5tile_circle, 261
        00 00 10 00 
        00 00 01 00 
-       E6 22 04 05 
+       9C 22 04 05 
        01 00       
-041C8E 01 00 00 10 0103*  	dl 1, 16, 16, 256, fn_6tile_pad, 262
+041C44 01 00 00 10 0103*  	dl 1, 16, 16, 256, fn_6tile_pad, 262
        00 00 10 00 
        00 00 01 00 
-       01 23 04 06 
+       B7 22 04 06 
        01 00       
-041CA0 01 00 00 10 0104*  	dl 1, 16, 16, 256, fn_7tile_turret, 263
+041C56 01 00 00 10 0104*  	dl 1, 16, 16, 256, fn_7tile_turret, 263
        00 00 10 00 
        00 00 01 00 
-       19 23 04 07 
+       CF 22 04 07 
        01 00       
-041CB2 01 00 00 10 0105*  	dl 1, 16, 16, 256, fn_circle, 264
+041C68 01 00 00 10 0105*  	dl 1, 16, 16, 256, fn_circle, 264
        00 00 10 00 
        00 00 01 00 
-       34 23 04 08 
+       EA 22 04 08 
        01 00       
-041CC4 01 00 00 10 0106*  	dl 1, 16, 16, 256, fn_crater, 265
+041C7A 01 00 00 10 0106*  	dl 1, 16, 16, 256, fn_crater, 265
        00 00 10 00 
        00 00 01 00 
-       49 23 04 09 
+       FF 22 04 09 
        01 00       
-041CD6 01 00 00 10 0107*  	dl 1, 16, 16, 256, fn_explosion_a, 266
+041C8C 01 00 00 10 0107*  	dl 1, 16, 16, 256, fn_explosion_a, 266
        00 00 10 00 
        00 00 01 00 
-       5E 23 04 0A 
+       14 23 04 0A 
        01 00       
-041CE8 01 00 00 10 0108*  	dl 1, 16, 16, 256, fn_explosion_b, 267
+041C9E 01 00 00 10 0108*  	dl 1, 16, 16, 256, fn_explosion_b, 267
        00 00 10 00 
        00 00 01 00 
-       78 23 04 0B 
+       2E 23 04 0B 
        01 00       
-041CFA 01 00 00 10 0109*  	dl 1, 16, 16, 256, fn_explosion_c, 268
+041CB0 01 00 00 10 0109*  	dl 1, 16, 16, 256, fn_explosion_c, 268
        00 00 10 00 
        00 00 01 00 
-       92 23 04 0C 
+       48 23 04 0C 
        01 00       
-041D0C 01 00 00 10 0110*  	dl 1, 16, 16, 256, fn_explosion_d, 269
+041CC2 01 00 00 10 0110*  	dl 1, 16, 16, 256, fn_explosion_d, 269
        00 00 10 00 
        00 00 01 00 
-       AC 23 04 0D 
+       62 23 04 0D 
        01 00       
-041D1E 01 00 00 10 0111*  	dl 1, 16, 16, 256, fn_explosion_e, 270
+041CD4 01 00 00 10 0111*  	dl 1, 16, 16, 256, fn_explosion_e, 270
        00 00 10 00 
        00 00 01 00 
-       C6 23 04 0E 
+       7C 23 04 0E 
        01 00       
-041D30 01 00 00 07 0112*  	dl 1, 7, 7, 49, fn_fireball_a, 271
+041CE6 01 00 00 07 0112*  	dl 1, 7, 7, 49, fn_fireball_a, 271
        00 00 07 00 
        00 31 00 00 
-       E0 23 04 0F 
+       96 23 04 0F 
        01 00       
-041D42 01 00 00 07 0113*  	dl 1, 7, 7, 49, fn_fireball_b, 272
+041CF8 01 00 00 07 0113*  	dl 1, 7, 7, 49, fn_fireball_b, 272
        00 00 07 00 
        00 31 00 00 
-       F9 23 04 10 
+       AF 23 04 10 
        01 00       
-041D54 01 00 00 05 0114*  	dl 1, 5, 13, 65, fn_laser_a, 273
+041D0A 01 00 00 05 0114*  	dl 1, 5, 13, 65, fn_laser_a, 273
        00 00 0D 00 
        00 41 00 00 
-       12 24 04 11 
+       C8 23 04 11 
        01 00       
-041D66 01 00 00 05 0115*  	dl 1, 5, 13, 65, fn_laser_b, 274
+041D1C 01 00 00 05 0115*  	dl 1, 5, 13, 65, fn_laser_b, 274
        00 00 0D 00 
        00 41 00 00 
-       28 24 04 12 
+       DE 23 04 12 
        01 00       
-041D78 01 00 00 10 0116*  	dl 1, 16, 16, 256, fn_pad, 275
+041D2E 01 00 00 10 0116*  	dl 1, 16, 16, 256, fn_pad, 275
        00 00 10 00 
        00 00 01 00 
-       3E 24 04 13 
+       F4 23 04 13 
        01 00       
-041D8A 01 00 00 10 0117*  	dl 1, 16, 16, 256, fn_seeker_000, 276
+041D40 01 00 00 10 0117*  	dl 1, 16, 16, 256, fn_seeker_000, 276
        00 00 10 00 
        00 00 01 00 
-       50 24 04 14 
+       06 24 04 14 
        01 00       
-041D9C 01 00 00 10 0118*  	dl 1, 16, 16, 256, fn_seeker_008, 277
+041D52 01 00 00 10 0118*  	dl 1, 16, 16, 256, fn_seeker_008, 277
        00 00 10 00 
        00 00 01 00 
-       69 24 04 15 
+       1F 24 04 15 
        01 00       
-041DAE 01 00 00 10 0119*  	dl 1, 16, 16, 256, fn_seeker_016, 278
+041D64 01 00 00 10 0119*  	dl 1, 16, 16, 256, fn_seeker_016, 278
        00 00 10 00 
        00 00 01 00 
-       82 24 04 16 
+       38 24 04 16 
        01 00       
-041DC0 01 00 00 10 0120*  	dl 1, 16, 16, 256, fn_seeker_024, 279
+041D76 01 00 00 10 0120*  	dl 1, 16, 16, 256, fn_seeker_024, 279
        00 00 10 00 
        00 00 01 00 
-       9B 24 04 17 
+       51 24 04 17 
        01 00       
-041DD2 01 00 00 10 0121*  	dl 1, 16, 16, 256, fn_seeker_032, 280
+041D88 01 00 00 10 0121*  	dl 1, 16, 16, 256, fn_seeker_032, 280
        00 00 10 00 
        00 00 01 00 
-       B4 24 04 18 
+       6A 24 04 18 
        01 00       
-041DE4 01 00 00 10 0122*  	dl 1, 16, 16, 256, fn_seeker_040, 281
+041D9A 01 00 00 10 0122*  	dl 1, 16, 16, 256, fn_seeker_040, 281
        00 00 10 00 
        00 00 01 00 
-       CD 24 04 19 
+       83 24 04 19 
        01 00       
-041DF6 01 00 00 10 0123*  	dl 1, 16, 16, 256, fn_seeker_048, 282
+041DAC 01 00 00 10 0123*  	dl 1, 16, 16, 256, fn_seeker_048, 282
        00 00 10 00 
        00 00 01 00 
-       E6 24 04 1A 
+       9C 24 04 1A 
        01 00       
-041E08 01 00 00 10 0124*  	dl 1, 16, 16, 256, fn_seeker_056, 283
+041DBE 01 00 00 10 0124*  	dl 1, 16, 16, 256, fn_seeker_056, 283
        00 00 10 00 
        00 00 01 00 
-       FF 24 04 1B 
+       B5 24 04 1B 
        01 00       
-041E1A 01 00 00 10 0125*  	dl 1, 16, 16, 256, fn_seeker_064, 284
+041DD0 01 00 00 10 0125*  	dl 1, 16, 16, 256, fn_seeker_064, 284
        00 00 10 00 
        00 00 01 00 
-       18 25 04 1C 
+       CE 24 04 1C 
        01 00       
-041E2C 01 00 00 10 0126*  	dl 1, 16, 16, 256, fn_seeker_072, 285
+041DE2 01 00 00 10 0126*  	dl 1, 16, 16, 256, fn_seeker_072, 285
        00 00 10 00 
        00 00 01 00 
-       31 25 04 1D 
+       E7 24 04 1D 
        01 00       
-041E3E 01 00 00 10 0127*  	dl 1, 16, 16, 256, fn_seeker_080, 286
+041DF4 01 00 00 10 0127*  	dl 1, 16, 16, 256, fn_seeker_080, 286
        00 00 10 00 
        00 00 01 00 
-       4A 25 04 1E 
+       00 25 04 1E 
        01 00       
-041E50 01 00 00 10 0128*  	dl 1, 16, 16, 256, fn_seeker_088, 287
+041E06 01 00 00 10 0128*  	dl 1, 16, 16, 256, fn_seeker_088, 287
        00 00 10 00 
        00 00 01 00 
-       63 25 04 1F 
+       19 25 04 1F 
        01 00       
-041E62 01 00 00 10 0129*  	dl 1, 16, 16, 256, fn_seeker_096, 288
+041E18 01 00 00 10 0129*  	dl 1, 16, 16, 256, fn_seeker_096, 288
        00 00 10 00 
        00 00 01 00 
-       7C 25 04 20 
+       32 25 04 20 
        01 00       
-041E74 01 00 00 10 0130*  	dl 1, 16, 16, 256, fn_seeker_104, 289
+041E2A 01 00 00 10 0130*  	dl 1, 16, 16, 256, fn_seeker_104, 289
        00 00 10 00 
        00 00 01 00 
-       95 25 04 21 
+       4B 25 04 21 
        01 00       
-041E86 01 00 00 10 0131*  	dl 1, 16, 16, 256, fn_seeker_112, 290
+041E3C 01 00 00 10 0131*  	dl 1, 16, 16, 256, fn_seeker_112, 290
        00 00 10 00 
        00 00 01 00 
-       AE 25 04 22 
+       64 25 04 22 
        01 00       
-041E98 01 00 00 10 0132*  	dl 1, 16, 16, 256, fn_seeker_120, 291
+041E4E 01 00 00 10 0132*  	dl 1, 16, 16, 256, fn_seeker_120, 291
        00 00 10 00 
        00 00 01 00 
-       C7 25 04 23 
+       7D 25 04 23 
        01 00       
-041EAA 01 00 00 10 0133*  	dl 1, 16, 16, 256, fn_seeker_128, 292
+041E60 01 00 00 10 0133*  	dl 1, 16, 16, 256, fn_seeker_128, 292
        00 00 10 00 
        00 00 01 00 
-       E0 25 04 24 
+       96 25 04 24 
        01 00       
-041EBC 01 00 00 10 0134*  	dl 1, 16, 16, 256, fn_seeker_136, 293
+041E72 01 00 00 10 0134*  	dl 1, 16, 16, 256, fn_seeker_136, 293
        00 00 10 00 
        00 00 01 00 
-       F9 25 04 25 
+       AF 25 04 25 
        01 00       
-041ECE 01 00 00 10 0135*  	dl 1, 16, 16, 256, fn_seeker_144, 294
+041E84 01 00 00 10 0135*  	dl 1, 16, 16, 256, fn_seeker_144, 294
        00 00 10 00 
        00 00 01 00 
-       12 26 04 26 
+       C8 25 04 26 
        01 00       
-041EE0 01 00 00 10 0136*  	dl 1, 16, 16, 256, fn_seeker_152, 295
+041E96 01 00 00 10 0136*  	dl 1, 16, 16, 256, fn_seeker_152, 295
        00 00 10 00 
        00 00 01 00 
-       2B 26 04 27 
+       E1 25 04 27 
        01 00       
-041EF2 01 00 00 10 0137*  	dl 1, 16, 16, 256, fn_seeker_160, 296
+041EA8 01 00 00 10 0137*  	dl 1, 16, 16, 256, fn_seeker_160, 296
        00 00 10 00 
        00 00 01 00 
-       44 26 04 28 
+       FA 25 04 28 
        01 00       
-041F04 01 00 00 10 0138*  	dl 1, 16, 16, 256, fn_seeker_168, 297
+041EBA 01 00 00 10 0138*  	dl 1, 16, 16, 256, fn_seeker_168, 297
        00 00 10 00 
        00 00 01 00 
-       5D 26 04 29 
+       13 26 04 29 
        01 00       
-041F16 01 00 00 10 0139*  	dl 1, 16, 16, 256, fn_seeker_176, 298
+041ECC 01 00 00 10 0139*  	dl 1, 16, 16, 256, fn_seeker_176, 298
        00 00 10 00 
        00 00 01 00 
-       76 26 04 2A 
+       2C 26 04 2A 
        01 00       
-041F28 01 00 00 10 0140*  	dl 1, 16, 16, 256, fn_seeker_184, 299
+041EDE 01 00 00 10 0140*  	dl 1, 16, 16, 256, fn_seeker_184, 299
        00 00 10 00 
        00 00 01 00 
-       8F 26 04 2B 
+       45 26 04 2B 
        01 00       
-041F3A 01 00 00 10 0141*  	dl 1, 16, 16, 256, fn_seeker_192, 300
+041EF0 01 00 00 10 0141*  	dl 1, 16, 16, 256, fn_seeker_192, 300
        00 00 10 00 
        00 00 01 00 
-       A8 26 04 2C 
+       5E 26 04 2C 
        01 00       
-041F4C 01 00 00 10 0142*  	dl 1, 16, 16, 256, fn_seeker_200, 301
+041F02 01 00 00 10 0142*  	dl 1, 16, 16, 256, fn_seeker_200, 301
        00 00 10 00 
        00 00 01 00 
-       C1 26 04 2D 
+       77 26 04 2D 
        01 00       
-041F5E 01 00 00 10 0143*  	dl 1, 16, 16, 256, fn_seeker_208, 302
+041F14 01 00 00 10 0143*  	dl 1, 16, 16, 256, fn_seeker_208, 302
        00 00 10 00 
        00 00 01 00 
-       DA 26 04 2E 
+       90 26 04 2E 
        01 00       
-041F70 01 00 00 10 0144*  	dl 1, 16, 16, 256, fn_seeker_216, 303
+041F26 01 00 00 10 0144*  	dl 1, 16, 16, 256, fn_seeker_216, 303
        00 00 10 00 
        00 00 01 00 
-       F3 26 04 2F 
+       A9 26 04 2F 
        01 00       
-041F82 01 00 00 10 0145*  	dl 1, 16, 16, 256, fn_seeker_224, 304
+041F38 01 00 00 10 0145*  	dl 1, 16, 16, 256, fn_seeker_224, 304
        00 00 10 00 
        00 00 01 00 
-       0C 27 04 30 
+       C2 26 04 30 
        01 00       
-041F94 01 00 00 10 0146*  	dl 1, 16, 16, 256, fn_seeker_232, 305
+041F4A 01 00 00 10 0146*  	dl 1, 16, 16, 256, fn_seeker_232, 305
        00 00 10 00 
        00 00 01 00 
-       25 27 04 31 
+       DB 26 04 31 
        01 00       
-041FA6 01 00 00 10 0147*  	dl 1, 16, 16, 256, fn_seeker_240, 306
+041F5C 01 00 00 10 0147*  	dl 1, 16, 16, 256, fn_seeker_240, 306
        00 00 10 00 
        00 00 01 00 
-       3E 27 04 32 
+       F4 26 04 32 
        01 00       
-041FB8 01 00 00 10 0148*  	dl 1, 16, 16, 256, fn_seeker_248, 307
+041F6E 01 00 00 10 0148*  	dl 1, 16, 16, 256, fn_seeker_248, 307
        00 00 10 00 
        00 00 01 00 
-       57 27 04 33 
+       0D 27 04 33 
        01 00       
-041FCA 01 00 00 10 0149*  	dl 1, 16, 16, 256, fn_ship_0l, 308
+041F80 01 00 00 10 0149*  	dl 1, 16, 16, 256, fn_ship_0l, 308
        00 00 10 00 
        00 00 01 00 
-       70 27 04 34 
+       26 27 04 34 
        01 00       
-041FDC 01 00 00 10 0150*  	dl 1, 16, 16, 256, fn_ship_1c, 309
+041F92 01 00 00 10 0150*  	dl 1, 16, 16, 256, fn_ship_1c, 309
        00 00 10 00 
        00 00 01 00 
-       86 27 04 35 
+       3C 27 04 35 
        01 00       
-041FEE 01 00 00 10 0151*  	dl 1, 16, 16, 256, fn_ship_2r, 310
+041FA4 01 00 00 10 0151*  	dl 1, 16, 16, 256, fn_ship_2r, 310
        00 00 10 00 
        00 00 01 00 
-       9C 27 04 36 
+       52 27 04 36 
        01 00       
-042000 01 00 00 08 0152*  	dl 1, 8, 8, 64, fn_ship_small, 311
+041FB6 01 00 00 08 0152*  	dl 1, 8, 8, 64, fn_ship_small, 311
        00 00 08 00 
        00 40 00 00 
-       B2 27 04 37 
+       68 27 04 37 
        01 00       
-042012 01 00 00 05 0153*  	dl 1, 5, 5, 25, fn_star, 312
+041FC8 01 00 00 05 0153*  	dl 1, 5, 5, 25, fn_star, 312
        00 00 05 00 
        00 19 00 00 
-       CB 27 04 38 
+       81 27 04 38 
        01 00       
-042024 01 00 00 10 0154*  	dl 1, 16, 16, 256, fn_turret_000, 313
+041FDA 01 00 00 10 0154*  	dl 1, 16, 16, 256, fn_turret_000, 313
        00 00 10 00 
        00 00 01 00 
-       DE 27 04 39 
+       94 27 04 39 
        01 00       
-042036 01 00 00 10 0155*  	dl 1, 16, 16, 256, fn_turret_008, 314
+041FEC 01 00 00 10 0155*  	dl 1, 16, 16, 256, fn_turret_008, 314
        00 00 10 00 
        00 00 01 00 
-       F7 27 04 3A 
+       AD 27 04 3A 
        01 00       
-042048 01 00 00 10 0156*  	dl 1, 16, 16, 256, fn_turret_016, 315
+041FFE 01 00 00 10 0156*  	dl 1, 16, 16, 256, fn_turret_016, 315
        00 00 10 00 
        00 00 01 00 
-       10 28 04 3B 
+       C6 27 04 3B 
        01 00       
-04205A 01 00 00 10 0157*  	dl 1, 16, 16, 256, fn_turret_024, 316
+042010 01 00 00 10 0157*  	dl 1, 16, 16, 256, fn_turret_024, 316
        00 00 10 00 
        00 00 01 00 
-       29 28 04 3C 
+       DF 27 04 3C 
        01 00       
-04206C 01 00 00 10 0158*  	dl 1, 16, 16, 256, fn_turret_032, 317
+042022 01 00 00 10 0158*  	dl 1, 16, 16, 256, fn_turret_032, 317
        00 00 10 00 
        00 00 01 00 
-       42 28 04 3D 
+       F8 27 04 3D 
        01 00       
-04207E 01 00 00 10 0159*  	dl 1, 16, 16, 256, fn_turret_040, 318
+042034 01 00 00 10 0159*  	dl 1, 16, 16, 256, fn_turret_040, 318
        00 00 10 00 
        00 00 01 00 
-       5B 28 04 3E 
+       11 28 04 3E 
        01 00       
-042090 01 00 00 10 0160*  	dl 1, 16, 16, 256, fn_turret_048, 319
+042046 01 00 00 10 0160*  	dl 1, 16, 16, 256, fn_turret_048, 319
        00 00 10 00 
        00 00 01 00 
-       74 28 04 3F 
+       2A 28 04 3F 
        01 00       
-0420A2 01 00 00 10 0161*  	dl 1, 16, 16, 256, fn_turret_056, 320
+042058 01 00 00 10 0161*  	dl 1, 16, 16, 256, fn_turret_056, 320
        00 00 10 00 
        00 00 01 00 
-       8D 28 04 40 
+       43 28 04 40 
        01 00       
-0420B4 01 00 00 10 0162*  	dl 1, 16, 16, 256, fn_turret_064, 321
+04206A 01 00 00 10 0162*  	dl 1, 16, 16, 256, fn_turret_064, 321
        00 00 10 00 
        00 00 01 00 
-       A6 28 04 41 
+       5C 28 04 41 
        01 00       
-0420C6 01 00 00 10 0163*  	dl 1, 16, 16, 256, fn_turret_072, 322
+04207C 01 00 00 10 0163*  	dl 1, 16, 16, 256, fn_turret_072, 322
        00 00 10 00 
        00 00 01 00 
-       BF 28 04 42 
+       75 28 04 42 
        01 00       
-0420D8 01 00 00 10 0164*  	dl 1, 16, 16, 256, fn_turret_080, 323
+04208E 01 00 00 10 0164*  	dl 1, 16, 16, 256, fn_turret_080, 323
        00 00 10 00 
        00 00 01 00 
-       D8 28 04 43 
+       8E 28 04 43 
        01 00       
-0420EA 01 00 00 10 0165*  	dl 1, 16, 16, 256, fn_turret_088, 324
+0420A0 01 00 00 10 0165*  	dl 1, 16, 16, 256, fn_turret_088, 324
        00 00 10 00 
        00 00 01 00 
-       F1 28 04 44 
+       A7 28 04 44 
        01 00       
-0420FC 01 00 00 10 0166*  	dl 1, 16, 16, 256, fn_turret_096, 325
+0420B2 01 00 00 10 0166*  	dl 1, 16, 16, 256, fn_turret_096, 325
        00 00 10 00 
        00 00 01 00 
-       0A 29 04 45 
+       C0 28 04 45 
        01 00       
-04210E 01 00 00 10 0167*  	dl 1, 16, 16, 256, fn_turret_104, 326
+0420C4 01 00 00 10 0167*  	dl 1, 16, 16, 256, fn_turret_104, 326
        00 00 10 00 
        00 00 01 00 
-       23 29 04 46 
+       D9 28 04 46 
        01 00       
-042120 01 00 00 10 0168*  	dl 1, 16, 16, 256, fn_turret_112, 327
+0420D6 01 00 00 10 0168*  	dl 1, 16, 16, 256, fn_turret_112, 327
        00 00 10 00 
        00 00 01 00 
-       3C 29 04 47 
+       F2 28 04 47 
        01 00       
-042132 01 00 00 10 0169*  	dl 1, 16, 16, 256, fn_turret_120, 328
+0420E8 01 00 00 10 0169*  	dl 1, 16, 16, 256, fn_turret_120, 328
        00 00 10 00 
        00 00 01 00 
-       55 29 04 48 
+       0B 29 04 48 
        01 00       
-042144 01 00 00 10 0170*  	dl 1, 16, 16, 256, fn_turret_128, 329
+0420FA 01 00 00 10 0170*  	dl 1, 16, 16, 256, fn_turret_128, 329
        00 00 10 00 
        00 00 01 00 
-       6E 29 04 49 
+       24 29 04 49 
        01 00       
-042156 01 00 00 10 0171*  	dl 1, 16, 16, 256, fn_turret_136, 330
+04210C 01 00 00 10 0171*  	dl 1, 16, 16, 256, fn_turret_136, 330
        00 00 10 00 
        00 00 01 00 
-       87 29 04 4A 
+       3D 29 04 4A 
        01 00       
-042168 01 00 00 10 0172*  	dl 1, 16, 16, 256, fn_turret_144, 331
+04211E 01 00 00 10 0172*  	dl 1, 16, 16, 256, fn_turret_144, 331
        00 00 10 00 
        00 00 01 00 
-       A0 29 04 4B 
+       56 29 04 4B 
        01 00       
-04217A 01 00 00 10 0173*  	dl 1, 16, 16, 256, fn_turret_152, 332
+042130 01 00 00 10 0173*  	dl 1, 16, 16, 256, fn_turret_152, 332
        00 00 10 00 
        00 00 01 00 
-       B9 29 04 4C 
+       6F 29 04 4C 
        01 00       
-04218C 01 00 00 10 0174*  	dl 1, 16, 16, 256, fn_turret_160, 333
+042142 01 00 00 10 0174*  	dl 1, 16, 16, 256, fn_turret_160, 333
        00 00 10 00 
        00 00 01 00 
-       D2 29 04 4D 
+       88 29 04 4D 
        01 00       
-04219E 01 00 00 10 0175*  	dl 1, 16, 16, 256, fn_turret_168, 334
+042154 01 00 00 10 0175*  	dl 1, 16, 16, 256, fn_turret_168, 334
        00 00 10 00 
        00 00 01 00 
-       EB 29 04 4E 
+       A1 29 04 4E 
        01 00       
-0421B0 01 00 00 10 0176*  	dl 1, 16, 16, 256, fn_turret_176, 335
+042166 01 00 00 10 0176*  	dl 1, 16, 16, 256, fn_turret_176, 335
        00 00 10 00 
        00 00 01 00 
-       04 2A 04 4F 
+       BA 29 04 4F 
        01 00       
-0421C2 01 00 00 10 0177*  	dl 1, 16, 16, 256, fn_turret_184, 336
+042178 01 00 00 10 0177*  	dl 1, 16, 16, 256, fn_turret_184, 336
        00 00 10 00 
        00 00 01 00 
-       1D 2A 04 50 
+       D3 29 04 50 
        01 00       
-0421D4 01 00 00 10 0178*  	dl 1, 16, 16, 256, fn_turret_192, 337
+04218A 01 00 00 10 0178*  	dl 1, 16, 16, 256, fn_turret_192, 337
        00 00 10 00 
        00 00 01 00 
-       36 2A 04 51 
+       EC 29 04 51 
        01 00       
-0421E6 01 00 00 10 0179*  	dl 1, 16, 16, 256, fn_turret_200, 338
+04219C 01 00 00 10 0179*  	dl 1, 16, 16, 256, fn_turret_200, 338
        00 00 10 00 
        00 00 01 00 
-       4F 2A 04 52 
+       05 2A 04 52 
        01 00       
-0421F8 01 00 00 10 0180*  	dl 1, 16, 16, 256, fn_turret_208, 339
+0421AE 01 00 00 10 0180*  	dl 1, 16, 16, 256, fn_turret_208, 339
        00 00 10 00 
        00 00 01 00 
-       68 2A 04 53 
+       1E 2A 04 53 
        01 00       
-04220A 01 00 00 10 0181*  	dl 1, 16, 16, 256, fn_turret_216, 340
+0421C0 01 00 00 10 0181*  	dl 1, 16, 16, 256, fn_turret_216, 340
        00 00 10 00 
        00 00 01 00 
-       81 2A 04 54 
+       37 2A 04 54 
        01 00       
-04221C 01 00 00 10 0182*  	dl 1, 16, 16, 256, fn_turret_224, 341
+0421D2 01 00 00 10 0182*  	dl 1, 16, 16, 256, fn_turret_224, 341
        00 00 10 00 
        00 00 01 00 
-       9A 2A 04 55 
+       50 2A 04 55 
        01 00       
-04222E 01 00 00 10 0183*  	dl 1, 16, 16, 256, fn_turret_232, 342
+0421E4 01 00 00 10 0183*  	dl 1, 16, 16, 256, fn_turret_232, 342
        00 00 10 00 
        00 00 01 00 
-       B3 2A 04 56 
+       69 2A 04 56 
        01 00       
-042240 01 00 00 10 0184*  	dl 1, 16, 16, 256, fn_turret_240, 343
+0421F6 01 00 00 10 0184*  	dl 1, 16, 16, 256, fn_turret_240, 343
        00 00 10 00 
        00 00 01 00 
-       CC 2A 04 57 
+       82 2A 04 57 
        01 00       
-042252 01 00 00 10 0185*  	dl 1, 16, 16, 256, fn_turret_248, 344
+042208 01 00 00 10 0185*  	dl 1, 16, 16, 256, fn_turret_248, 344
        00 00 10 00 
        00 00 01 00 
-       E5 2A 04 58 
+       9B 2A 04 58 
        01 00       
-042264             0186*  
-042264             0187*  ; files_list: ; filename:
-042264 73 70 72 69 0188*  fn_0tile_empty: db "sprites/0tile_empty.rgba2",0
+04221A             0186*  
+04221A             0187*  ; files_list: ; filename:
+04221A 73 70 72 69 0188*  fn_0tile_empty: db "sprites/0tile_empty.rgba2",0
        74 65 73 2F 
        30 74 69 6C 
        65 5F 65 6D 
        70 74 79 2E 
        72 67 62 61 
        32 00       
-04227E 73 70 72 69 0189*  fn_1tile_cross: db "sprites/1tile_cross.rgba2",0
+042234 73 70 72 69 0189*  fn_1tile_cross: db "sprites/1tile_cross.rgba2",0
        74 65 73 2F 
        31 74 69 6C 
        65 5F 63 72 
        6F 73 73 2E 
        72 67 62 61 
        32 00       
-042298 73 70 72 69 0190*  fn_2tile_horiz: db "sprites/2tile_horiz.rgba2",0
+04224E 73 70 72 69 0190*  fn_2tile_horiz: db "sprites/2tile_horiz.rgba2",0
        74 65 73 2F 
        32 74 69 6C 
        65 5F 68 6F 
        72 69 7A 2E 
        72 67 62 61 
        32 00       
-0422B2 73 70 72 69 0191*  fn_3tile_vert: db "sprites/3tile_vert.rgba2",0
+042268 73 70 72 69 0191*  fn_3tile_vert: db "sprites/3tile_vert.rgba2",0
        74 65 73 2F 
        33 74 69 6C 
        65 5F 76 65 
        72 74 2E 72 
        67 62 61 32 
        00          
-0422CB 73 70 72 69 0192*  fn_4tile_square: db "sprites/4tile_square.rgba2",0
+042281 73 70 72 69 0192*  fn_4tile_square: db "sprites/4tile_square.rgba2",0
        74 65 73 2F 
        34 74 69 6C 
        65 5F 73 71 
        75 61 72 65 
        2E 72 67 62 
        61 32 00    
-0422E6 73 70 72 69 0193*  fn_5tile_circle: db "sprites/5tile_circle.rgba2",0
+04229C 73 70 72 69 0193*  fn_5tile_circle: db "sprites/5tile_circle.rgba2",0
        74 65 73 2F 
        35 74 69 6C 
        65 5F 63 69 
        72 63 6C 65 
        2E 72 67 62 
        61 32 00    
-042301 73 70 72 69 0194*  fn_6tile_pad: db "sprites/6tile_pad.rgba2",0
+0422B7 73 70 72 69 0194*  fn_6tile_pad: db "sprites/6tile_pad.rgba2",0
        74 65 73 2F 
        36 74 69 6C 
        65 5F 70 61 
        64 2E 72 67 
        62 61 32 00 
-042319 73 70 72 69 0195*  fn_7tile_turret: db "sprites/7tile_turret.rgba2",0
+0422CF 73 70 72 69 0195*  fn_7tile_turret: db "sprites/7tile_turret.rgba2",0
        74 65 73 2F 
        37 74 69 6C 
        65 5F 74 75 
        72 72 65 74 
        2E 72 67 62 
        61 32 00    
-042334 73 70 72 69 0196*  fn_circle: db "sprites/circle.rgba2",0
+0422EA 73 70 72 69 0196*  fn_circle: db "sprites/circle.rgba2",0
        74 65 73 2F 
        63 69 72 63 
        6C 65 2E 72 
        67 62 61 32 
        00          
-042349 73 70 72 69 0197*  fn_crater: db "sprites/crater.rgba2",0
+0422FF 73 70 72 69 0197*  fn_crater: db "sprites/crater.rgba2",0
        74 65 73 2F 
        63 72 61 74 
        65 72 2E 72 
        67 62 61 32 
        00          
-04235E 73 70 72 69 0198*  fn_explosion_a: db "sprites/explosion_a.rgba2",0
+042314 73 70 72 69 0198*  fn_explosion_a: db "sprites/explosion_a.rgba2",0
        74 65 73 2F 
        65 78 70 6C 
        6F 73 69 6F 
        6E 5F 61 2E 
        72 67 62 61 
        32 00       
-042378 73 70 72 69 0199*  fn_explosion_b: db "sprites/explosion_b.rgba2",0
+04232E 73 70 72 69 0199*  fn_explosion_b: db "sprites/explosion_b.rgba2",0
        74 65 73 2F 
        65 78 70 6C 
        6F 73 69 6F 
        6E 5F 62 2E 
        72 67 62 61 
        32 00       
-042392 73 70 72 69 0200*  fn_explosion_c: db "sprites/explosion_c.rgba2",0
+042348 73 70 72 69 0200*  fn_explosion_c: db "sprites/explosion_c.rgba2",0
        74 65 73 2F 
        65 78 70 6C 
        6F 73 69 6F 
        6E 5F 63 2E 
        72 67 62 61 
        32 00       
-0423AC 73 70 72 69 0201*  fn_explosion_d: db "sprites/explosion_d.rgba2",0
+042362 73 70 72 69 0201*  fn_explosion_d: db "sprites/explosion_d.rgba2",0
        74 65 73 2F 
        65 78 70 6C 
        6F 73 69 6F 
        6E 5F 64 2E 
        72 67 62 61 
        32 00       
-0423C6 73 70 72 69 0202*  fn_explosion_e: db "sprites/explosion_e.rgba2",0
+04237C 73 70 72 69 0202*  fn_explosion_e: db "sprites/explosion_e.rgba2",0
        74 65 73 2F 
        65 78 70 6C 
        6F 73 69 6F 
        6E 5F 65 2E 
        72 67 62 61 
        32 00       
-0423E0 73 70 72 69 0203*  fn_fireball_a: db "sprites/fireball_a.rgba2",0
+042396 73 70 72 69 0203*  fn_fireball_a: db "sprites/fireball_a.rgba2",0
        74 65 73 2F 
        66 69 72 65 
        62 61 6C 6C 
        5F 61 2E 72 
        67 62 61 32 
        00          
-0423F9 73 70 72 69 0204*  fn_fireball_b: db "sprites/fireball_b.rgba2",0
+0423AF 73 70 72 69 0204*  fn_fireball_b: db "sprites/fireball_b.rgba2",0
        74 65 73 2F 
        66 69 72 65 
        62 61 6C 6C 
        5F 62 2E 72 
        67 62 61 32 
        00          
-042412 73 70 72 69 0205*  fn_laser_a: db "sprites/laser_a.rgba2",0
+0423C8 73 70 72 69 0205*  fn_laser_a: db "sprites/laser_a.rgba2",0
        74 65 73 2F 
        6C 61 73 65 
        72 5F 61 2E 
        72 67 62 61 
        32 00       
-042428 73 70 72 69 0206*  fn_laser_b: db "sprites/laser_b.rgba2",0
+0423DE 73 70 72 69 0206*  fn_laser_b: db "sprites/laser_b.rgba2",0
        74 65 73 2F 
        6C 61 73 65 
        72 5F 62 2E 
        72 67 62 61 
        32 00       
-04243E 73 70 72 69 0207*  fn_pad: db "sprites/pad.rgba2",0
+0423F4 73 70 72 69 0207*  fn_pad: db "sprites/pad.rgba2",0
        74 65 73 2F 
        70 61 64 2E 
        72 67 62 61 
        32 00       
-042450 73 70 72 69 0208*  fn_seeker_000: db "sprites/seeker_000.rgba2",0
+042406 73 70 72 69 0208*  fn_seeker_000: db "sprites/seeker_000.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        30 30 2E 72 
        67 62 61 32 
        00          
-042469 73 70 72 69 0209*  fn_seeker_008: db "sprites/seeker_008.rgba2",0
+04241F 73 70 72 69 0209*  fn_seeker_008: db "sprites/seeker_008.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        30 38 2E 72 
        67 62 61 32 
        00          
-042482 73 70 72 69 0210*  fn_seeker_016: db "sprites/seeker_016.rgba2",0
+042438 73 70 72 69 0210*  fn_seeker_016: db "sprites/seeker_016.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        31 36 2E 72 
        67 62 61 32 
        00          
-04249B 73 70 72 69 0211*  fn_seeker_024: db "sprites/seeker_024.rgba2",0
+042451 73 70 72 69 0211*  fn_seeker_024: db "sprites/seeker_024.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        32 34 2E 72 
        67 62 61 32 
        00          
-0424B4 73 70 72 69 0212*  fn_seeker_032: db "sprites/seeker_032.rgba2",0
+04246A 73 70 72 69 0212*  fn_seeker_032: db "sprites/seeker_032.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        33 32 2E 72 
        67 62 61 32 
        00          
-0424CD 73 70 72 69 0213*  fn_seeker_040: db "sprites/seeker_040.rgba2",0
+042483 73 70 72 69 0213*  fn_seeker_040: db "sprites/seeker_040.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        34 30 2E 72 
        67 62 61 32 
        00          
-0424E6 73 70 72 69 0214*  fn_seeker_048: db "sprites/seeker_048.rgba2",0
+04249C 73 70 72 69 0214*  fn_seeker_048: db "sprites/seeker_048.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        34 38 2E 72 
        67 62 61 32 
        00          
-0424FF 73 70 72 69 0215*  fn_seeker_056: db "sprites/seeker_056.rgba2",0
+0424B5 73 70 72 69 0215*  fn_seeker_056: db "sprites/seeker_056.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        35 36 2E 72 
        67 62 61 32 
        00          
-042518 73 70 72 69 0216*  fn_seeker_064: db "sprites/seeker_064.rgba2",0
+0424CE 73 70 72 69 0216*  fn_seeker_064: db "sprites/seeker_064.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        36 34 2E 72 
        67 62 61 32 
        00          
-042531 73 70 72 69 0217*  fn_seeker_072: db "sprites/seeker_072.rgba2",0
+0424E7 73 70 72 69 0217*  fn_seeker_072: db "sprites/seeker_072.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        37 32 2E 72 
        67 62 61 32 
        00          
-04254A 73 70 72 69 0218*  fn_seeker_080: db "sprites/seeker_080.rgba2",0
+042500 73 70 72 69 0218*  fn_seeker_080: db "sprites/seeker_080.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        38 30 2E 72 
        67 62 61 32 
        00          
-042563 73 70 72 69 0219*  fn_seeker_088: db "sprites/seeker_088.rgba2",0
+042519 73 70 72 69 0219*  fn_seeker_088: db "sprites/seeker_088.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        38 38 2E 72 
        67 62 61 32 
        00          
-04257C 73 70 72 69 0220*  fn_seeker_096: db "sprites/seeker_096.rgba2",0
+042532 73 70 72 69 0220*  fn_seeker_096: db "sprites/seeker_096.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 30 
        39 36 2E 72 
        67 62 61 32 
        00          
-042595 73 70 72 69 0221*  fn_seeker_104: db "sprites/seeker_104.rgba2",0
+04254B 73 70 72 69 0221*  fn_seeker_104: db "sprites/seeker_104.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        30 34 2E 72 
        67 62 61 32 
        00          
-0425AE 73 70 72 69 0222*  fn_seeker_112: db "sprites/seeker_112.rgba2",0
+042564 73 70 72 69 0222*  fn_seeker_112: db "sprites/seeker_112.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        31 32 2E 72 
        67 62 61 32 
        00          
-0425C7 73 70 72 69 0223*  fn_seeker_120: db "sprites/seeker_120.rgba2",0
+04257D 73 70 72 69 0223*  fn_seeker_120: db "sprites/seeker_120.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        32 30 2E 72 
        67 62 61 32 
        00          
-0425E0 73 70 72 69 0224*  fn_seeker_128: db "sprites/seeker_128.rgba2",0
+042596 73 70 72 69 0224*  fn_seeker_128: db "sprites/seeker_128.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        32 38 2E 72 
        67 62 61 32 
        00          
-0425F9 73 70 72 69 0225*  fn_seeker_136: db "sprites/seeker_136.rgba2",0
+0425AF 73 70 72 69 0225*  fn_seeker_136: db "sprites/seeker_136.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        33 36 2E 72 
        67 62 61 32 
        00          
-042612 73 70 72 69 0226*  fn_seeker_144: db "sprites/seeker_144.rgba2",0
+0425C8 73 70 72 69 0226*  fn_seeker_144: db "sprites/seeker_144.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        34 34 2E 72 
        67 62 61 32 
        00          
-04262B 73 70 72 69 0227*  fn_seeker_152: db "sprites/seeker_152.rgba2",0
+0425E1 73 70 72 69 0227*  fn_seeker_152: db "sprites/seeker_152.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        35 32 2E 72 
        67 62 61 32 
        00          
-042644 73 70 72 69 0228*  fn_seeker_160: db "sprites/seeker_160.rgba2",0
+0425FA 73 70 72 69 0228*  fn_seeker_160: db "sprites/seeker_160.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        36 30 2E 72 
        67 62 61 32 
        00          
-04265D 73 70 72 69 0229*  fn_seeker_168: db "sprites/seeker_168.rgba2",0
+042613 73 70 72 69 0229*  fn_seeker_168: db "sprites/seeker_168.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        36 38 2E 72 
        67 62 61 32 
        00          
-042676 73 70 72 69 0230*  fn_seeker_176: db "sprites/seeker_176.rgba2",0
+04262C 73 70 72 69 0230*  fn_seeker_176: db "sprites/seeker_176.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        37 36 2E 72 
        67 62 61 32 
        00          
-04268F 73 70 72 69 0231*  fn_seeker_184: db "sprites/seeker_184.rgba2",0
+042645 73 70 72 69 0231*  fn_seeker_184: db "sprites/seeker_184.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        38 34 2E 72 
        67 62 61 32 
        00          
-0426A8 73 70 72 69 0232*  fn_seeker_192: db "sprites/seeker_192.rgba2",0
+04265E 73 70 72 69 0232*  fn_seeker_192: db "sprites/seeker_192.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 31 
        39 32 2E 72 
        67 62 61 32 
        00          
-0426C1 73 70 72 69 0233*  fn_seeker_200: db "sprites/seeker_200.rgba2",0
+042677 73 70 72 69 0233*  fn_seeker_200: db "sprites/seeker_200.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        30 30 2E 72 
        67 62 61 32 
        00          
-0426DA 73 70 72 69 0234*  fn_seeker_208: db "sprites/seeker_208.rgba2",0
+042690 73 70 72 69 0234*  fn_seeker_208: db "sprites/seeker_208.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        30 38 2E 72 
        67 62 61 32 
        00          
-0426F3 73 70 72 69 0235*  fn_seeker_216: db "sprites/seeker_216.rgba2",0
+0426A9 73 70 72 69 0235*  fn_seeker_216: db "sprites/seeker_216.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        31 36 2E 72 
        67 62 61 32 
        00          
-04270C 73 70 72 69 0236*  fn_seeker_224: db "sprites/seeker_224.rgba2",0
+0426C2 73 70 72 69 0236*  fn_seeker_224: db "sprites/seeker_224.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        32 34 2E 72 
        67 62 61 32 
        00          
-042725 73 70 72 69 0237*  fn_seeker_232: db "sprites/seeker_232.rgba2",0
+0426DB 73 70 72 69 0237*  fn_seeker_232: db "sprites/seeker_232.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        33 32 2E 72 
        67 62 61 32 
        00          
-04273E 73 70 72 69 0238*  fn_seeker_240: db "sprites/seeker_240.rgba2",0
+0426F4 73 70 72 69 0238*  fn_seeker_240: db "sprites/seeker_240.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        34 30 2E 72 
        67 62 61 32 
        00          
-042757 73 70 72 69 0239*  fn_seeker_248: db "sprites/seeker_248.rgba2",0
+04270D 73 70 72 69 0239*  fn_seeker_248: db "sprites/seeker_248.rgba2",0
        74 65 73 2F 
        73 65 65 6B 
        65 72 5F 32 
        34 38 2E 72 
        67 62 61 32 
        00          
-042770 73 70 72 69 0240*  fn_ship_0l: db "sprites/ship_0l.rgba2",0
+042726 73 70 72 69 0240*  fn_ship_0l: db "sprites/ship_0l.rgba2",0
        74 65 73 2F 
        73 68 69 70 
        5F 30 6C 2E 
        72 67 62 61 
        32 00       
-042786 73 70 72 69 0241*  fn_ship_1c: db "sprites/ship_1c.rgba2",0
+04273C 73 70 72 69 0241*  fn_ship_1c: db "sprites/ship_1c.rgba2",0
        74 65 73 2F 
        73 68 69 70 
        5F 31 63 2E 
        72 67 62 61 
        32 00       
-04279C 73 70 72 69 0242*  fn_ship_2r: db "sprites/ship_2r.rgba2",0
+042752 73 70 72 69 0242*  fn_ship_2r: db "sprites/ship_2r.rgba2",0
        74 65 73 2F 
        73 68 69 70 
        5F 32 72 2E 
        72 67 62 61 
        32 00       
-0427B2 73 70 72 69 0243*  fn_ship_small: db "sprites/ship_small.rgba2",0
+042768 73 70 72 69 0243*  fn_ship_small: db "sprites/ship_small.rgba2",0
        74 65 73 2F 
        73 68 69 70 
        5F 73 6D 61 
        6C 6C 2E 72 
        67 62 61 32 
        00          
-0427CB 73 70 72 69 0244*  fn_star: db "sprites/star.rgba2",0
+042781 73 70 72 69 0244*  fn_star: db "sprites/star.rgba2",0
        74 65 73 2F 
        73 74 61 72 
        2E 72 67 62 
        61 32 00    
-0427DE 73 70 72 69 0245*  fn_turret_000: db "sprites/turret_000.rgba2",0
+042794 73 70 72 69 0245*  fn_turret_000: db "sprites/turret_000.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        30 30 2E 72 
        67 62 61 32 
        00          
-0427F7 73 70 72 69 0246*  fn_turret_008: db "sprites/turret_008.rgba2",0
+0427AD 73 70 72 69 0246*  fn_turret_008: db "sprites/turret_008.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        30 38 2E 72 
        67 62 61 32 
        00          
-042810 73 70 72 69 0247*  fn_turret_016: db "sprites/turret_016.rgba2",0
+0427C6 73 70 72 69 0247*  fn_turret_016: db "sprites/turret_016.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        31 36 2E 72 
        67 62 61 32 
        00          
-042829 73 70 72 69 0248*  fn_turret_024: db "sprites/turret_024.rgba2",0
+0427DF 73 70 72 69 0248*  fn_turret_024: db "sprites/turret_024.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        32 34 2E 72 
        67 62 61 32 
        00          
-042842 73 70 72 69 0249*  fn_turret_032: db "sprites/turret_032.rgba2",0
+0427F8 73 70 72 69 0249*  fn_turret_032: db "sprites/turret_032.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        33 32 2E 72 
        67 62 61 32 
        00          
-04285B 73 70 72 69 0250*  fn_turret_040: db "sprites/turret_040.rgba2",0
+042811 73 70 72 69 0250*  fn_turret_040: db "sprites/turret_040.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        34 30 2E 72 
        67 62 61 32 
        00          
-042874 73 70 72 69 0251*  fn_turret_048: db "sprites/turret_048.rgba2",0
+04282A 73 70 72 69 0251*  fn_turret_048: db "sprites/turret_048.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        34 38 2E 72 
        67 62 61 32 
        00          
-04288D 73 70 72 69 0252*  fn_turret_056: db "sprites/turret_056.rgba2",0
+042843 73 70 72 69 0252*  fn_turret_056: db "sprites/turret_056.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        35 36 2E 72 
        67 62 61 32 
        00          
-0428A6 73 70 72 69 0253*  fn_turret_064: db "sprites/turret_064.rgba2",0
+04285C 73 70 72 69 0253*  fn_turret_064: db "sprites/turret_064.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        36 34 2E 72 
        67 62 61 32 
        00          
-0428BF 73 70 72 69 0254*  fn_turret_072: db "sprites/turret_072.rgba2",0
+042875 73 70 72 69 0254*  fn_turret_072: db "sprites/turret_072.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        37 32 2E 72 
        67 62 61 32 
        00          
-0428D8 73 70 72 69 0255*  fn_turret_080: db "sprites/turret_080.rgba2",0
+04288E 73 70 72 69 0255*  fn_turret_080: db "sprites/turret_080.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        38 30 2E 72 
        67 62 61 32 
        00          
-0428F1 73 70 72 69 0256*  fn_turret_088: db "sprites/turret_088.rgba2",0
+0428A7 73 70 72 69 0256*  fn_turret_088: db "sprites/turret_088.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        38 38 2E 72 
        67 62 61 32 
        00          
-04290A 73 70 72 69 0257*  fn_turret_096: db "sprites/turret_096.rgba2",0
+0428C0 73 70 72 69 0257*  fn_turret_096: db "sprites/turret_096.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 30 
        39 36 2E 72 
        67 62 61 32 
        00          
-042923 73 70 72 69 0258*  fn_turret_104: db "sprites/turret_104.rgba2",0
+0428D9 73 70 72 69 0258*  fn_turret_104: db "sprites/turret_104.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        30 34 2E 72 
        67 62 61 32 
        00          
-04293C 73 70 72 69 0259*  fn_turret_112: db "sprites/turret_112.rgba2",0
+0428F2 73 70 72 69 0259*  fn_turret_112: db "sprites/turret_112.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        31 32 2E 72 
        67 62 61 32 
        00          
-042955 73 70 72 69 0260*  fn_turret_120: db "sprites/turret_120.rgba2",0
+04290B 73 70 72 69 0260*  fn_turret_120: db "sprites/turret_120.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        32 30 2E 72 
        67 62 61 32 
        00          
-04296E 73 70 72 69 0261*  fn_turret_128: db "sprites/turret_128.rgba2",0
+042924 73 70 72 69 0261*  fn_turret_128: db "sprites/turret_128.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        32 38 2E 72 
        67 62 61 32 
        00          
-042987 73 70 72 69 0262*  fn_turret_136: db "sprites/turret_136.rgba2",0
+04293D 73 70 72 69 0262*  fn_turret_136: db "sprites/turret_136.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        33 36 2E 72 
        67 62 61 32 
        00          
-0429A0 73 70 72 69 0263*  fn_turret_144: db "sprites/turret_144.rgba2",0
+042956 73 70 72 69 0263*  fn_turret_144: db "sprites/turret_144.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        34 34 2E 72 
        67 62 61 32 
        00          
-0429B9 73 70 72 69 0264*  fn_turret_152: db "sprites/turret_152.rgba2",0
+04296F 73 70 72 69 0264*  fn_turret_152: db "sprites/turret_152.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        35 32 2E 72 
        67 62 61 32 
        00          
-0429D2 73 70 72 69 0265*  fn_turret_160: db "sprites/turret_160.rgba2",0
+042988 73 70 72 69 0265*  fn_turret_160: db "sprites/turret_160.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        36 30 2E 72 
        67 62 61 32 
        00          
-0429EB 73 70 72 69 0266*  fn_turret_168: db "sprites/turret_168.rgba2",0
+0429A1 73 70 72 69 0266*  fn_turret_168: db "sprites/turret_168.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        36 38 2E 72 
        67 62 61 32 
        00          
-042A04 73 70 72 69 0267*  fn_turret_176: db "sprites/turret_176.rgba2",0
+0429BA 73 70 72 69 0267*  fn_turret_176: db "sprites/turret_176.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        37 36 2E 72 
        67 62 61 32 
        00          
-042A1D 73 70 72 69 0268*  fn_turret_184: db "sprites/turret_184.rgba2",0
+0429D3 73 70 72 69 0268*  fn_turret_184: db "sprites/turret_184.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        38 34 2E 72 
        67 62 61 32 
        00          
-042A36 73 70 72 69 0269*  fn_turret_192: db "sprites/turret_192.rgba2",0
+0429EC 73 70 72 69 0269*  fn_turret_192: db "sprites/turret_192.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 31 
        39 32 2E 72 
        67 62 61 32 
        00          
-042A4F 73 70 72 69 0270*  fn_turret_200: db "sprites/turret_200.rgba2",0
+042A05 73 70 72 69 0270*  fn_turret_200: db "sprites/turret_200.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        30 30 2E 72 
        67 62 61 32 
        00          
-042A68 73 70 72 69 0271*  fn_turret_208: db "sprites/turret_208.rgba2",0
+042A1E 73 70 72 69 0271*  fn_turret_208: db "sprites/turret_208.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        30 38 2E 72 
        67 62 61 32 
        00          
-042A81 73 70 72 69 0272*  fn_turret_216: db "sprites/turret_216.rgba2",0
+042A37 73 70 72 69 0272*  fn_turret_216: db "sprites/turret_216.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        31 36 2E 72 
        67 62 61 32 
        00          
-042A9A 73 70 72 69 0273*  fn_turret_224: db "sprites/turret_224.rgba2",0
+042A50 73 70 72 69 0273*  fn_turret_224: db "sprites/turret_224.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        32 34 2E 72 
        67 62 61 32 
        00          
-042AB3 73 70 72 69 0274*  fn_turret_232: db "sprites/turret_232.rgba2",0
+042A69 73 70 72 69 0274*  fn_turret_232: db "sprites/turret_232.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        33 32 2E 72 
        67 62 61 32 
        00          
-042ACC 73 70 72 69 0275*  fn_turret_240: db "sprites/turret_240.rgba2",0
+042A82 73 70 72 69 0275*  fn_turret_240: db "sprites/turret_240.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        34 30 2E 72 
        67 62 61 32 
        00          
-042AE5 73 70 72 69 0276*  fn_turret_248: db "sprites/turret_248.rgba2",0
+042A9B 73 70 72 69 0276*  fn_turret_248: db "sprites/turret_248.rgba2",0
        74 65 73 2F 
        74 75 72 72 
        65 74 5F 32 
        34 38 2E 72 
        67 62 61 32 
        00          
-042AFE             0048   	include "images_ui.inc"
-042AFE             0001*  ; Generated by make_images.py
-042AFE             0002*  
-042AFE             0003*  ui_num_images: equ 2
-042AFE             0004*  
-042AFE             0005*  ; buffer_ids:
-042AFE             0006*  BUF_SPLASH_BG: equ 0
-042AFE             0007*  BUF_SPLASH_LOGO: equ 1
-042AFE             0008*  
-042AFE             0009*  ui_image_list: ; type; width; height; filename; bufferId:
-042AFE 01 00 00 40 0010*  	dl 1, 320, 240, 76800, fn_splash_bg, 0
+042AB4             0048   	include "images_ui.inc"
+042AB4             0001*  ; Generated by make_images.py
+042AB4             0002*  
+042AB4             0003*  ui_num_images: equ 2
+042AB4             0004*  
+042AB4             0005*  ; buffer_ids:
+042AB4             0006*  BUF_SPLASH_BG: equ 0
+042AB4             0007*  BUF_SPLASH_LOGO: equ 1
+042AB4             0008*  
+042AB4             0009*  ui_image_list: ; type; width; height; filename; bufferId:
+042AB4 01 00 00 40 0010*  	dl 1, 320, 240, 76800, fn_splash_bg, 0
        01 00 F0 00 
        00 00 2C 01 
-       22 2B 04 00 
+       D8 2A 04 00 
        00 00       
-042B10 01 00 00 40 0011*  	dl 1, 320, 212, 67840, fn_splash_logo, 1
+042AC6 01 00 00 40 0011*  	dl 1, 320, 212, 67840, fn_splash_logo, 1
        01 00 D4 00 
        00 00 09 01 
-       35 2B 04 01 
+       EB 2A 04 01 
        00 00       
-042B22             0012*  
-042B22             0013*  ; files_list: ; filename:
-042B22 75 69 2F 73 0014*  fn_splash_bg: db "ui/splash_bg.rgba2",0
+042AD8             0012*  
+042AD8             0013*  ; files_list: ; filename:
+042AD8 75 69 2F 73 0014*  fn_splash_bg: db "ui/splash_bg.rgba2",0
        70 6C 61 73 
        68 5F 62 67 
        2E 72 67 62 
        61 32 00    
-042B35 75 69 2F 73 0015*  fn_splash_logo: db "ui/splash_logo.rgba2",0
+042AEB 75 69 2F 73 0015*  fn_splash_logo: db "ui/splash_logo.rgba2",0
        70 6C 61 73 
        68 5F 6C 6F 
        67 6F 2E 72 
        67 62 61 32 
        00          
-042B4A             0049   
-042B4A 57 65 6C 63 0050   hello_world: defb "Welcome to Purple Nurples!",0
+042B00             0049   
+042B00 57 65 6C 63 0050   hello_world: asciz "Welcome to Purple Nurples!"
        6F 6D 65 20 
        74 6F 20 50 
        75 72 70 6C 
        65 20 4E 75 
        72 70 6C 65 
        73 21 00    
-042B65 4C 6F 61 64 0051   loading_ui: defb "Loading UI",0
+042B1B 4C 6F 61 64 0051   loading_ui: asciz "Loading UI"
        69 6E 67 20 
        55 49 00    
-042B70 4C 6F 61 64 0052   loading_time: defb "Loading time:",0
+042B26 4C 6F 61 64 0052   loading_time: asciz "Loading time:"
        69 6E 67 20 
        74 69 6D 65 
        3A 00       
-042B7E 50 72 65 73 0053   loading_complete: defb "Press any key to continue.\r\n",0
+042B34 50 72 65 73 0053   loading_complete: asciz "Press any key to continue."
        73 20 61 6E 
        79 20 6B 65 
        79 20 74 6F 
        20 63 6F 6E 
        74 69 6E 75 
-       65 2E 0D 0A 
-       00          
-042B9B             0054   
-042B9B             0055   init:
-042B9B             0056   ; clear all buffers
-042B9B CD 66 0A 04 0057       call vdu_clear_all_buffers
-042B9F             0058   
-042B9F             0059   ; set up the display
-042B9F 3E 08       0060       ld a,8 ; 320x240x64 single-buffered
-042BA1 CD 50 09 04 0061       call vdu_set_screen_mode
-042BA5 AF          0062       xor a
-042BA6 CD 61 09 04 0063       call vdu_set_scaling
-042BAA             0064   
-042BAA             0065   ; start generic stopwatch to time setup loop
-042BAA             0066   ; so we can determine if we're running on emulator or hardware
-042BAA CD 27 08 04 0067   	call stopwatch_set
-042BAE             0068   
-042BAE             0069   ; initialize global timestamp
-042BAE DD 27 00    0070       ld hl,(ix+sysvar_time) ; ix was set by stopwatch_start
-042BB1 22 BC 07 04 0071       ld (timestamp_now),hl
-042BB5             0072   
-042BB5             0073   ; enable additional audio channels
-042BB5 CD 71 0D 04 0074   	call vdu_enable_channels
-042BB9             0075   
-042BB9             0076   ; set the cursor off
-042BB9 CD 79 08 04 0077   	call cursor_off
-042BBD             0078   
-042BBD             0079   ; set text background color
-042BBD 3E 84       0080   	ld a,4 + 128
-042BBF CD B8 08 04 0081   	call vdu_colour_text
-042BC3             0082   
-042BC3             0083   ; set text foreground color
-042BC3 3E 2F       0084   	ld a,47 ; aaaaff lavenderish
-042BC5 CD B8 08 04 0085   	call vdu_colour_text
-042BC9             0086   
-042BC9             0087   ; set gfx bg color
-042BC9 AF          0088   	xor a ; plotting mode 0
-042BCA 0E 84       0089   	ld c,4+128 ; dark blue bg
-042BCC CD C9 08 04 0090   	call vdu_gcol
-042BD0 CD B3 08 04 0091   	call vdu_clg
-042BD4             0092   
-042BD4             0093   ; set the cursor off again since we changed screen modes
-042BD4 CD 79 08 04 0094   	call cursor_off
-042BD8             0095   
-042BD8             0096   ; print loading ui message
-042BD8 21 65 2B 04 0097   	ld hl,loading_ui
-042BDC CD 77 00 04 0098   	call printString
-042BE0             0099   
-042BE0             0100   ; load UI images
-042BE0 CD A5 1A 04 0101   	call load_ui_images
-042BE4             0102   
-042BE4             0103   ; ; VDU 28, left, bottom, right, top: Set text viewport **
-042BE4             0104   ; ; MIND THE LITTLE-ENDIANESS
-042BE4             0105   ; ; inputs: c=left,b=bottom,e=right,d=top
-042BE4             0106   ; 	ld c,0 ; left
-042BE4             0107   ; 	ld d,20 ; top
-042BE4             0108   ; 	ld e,39 ; right
-042BE4             0109   ; 	ld b,29; bottom
-042BE4             0110   ; 	call vdu_set_txt_viewport
-042BE4             0111   
-042BE4             0112   ; ; load fonts ; TODO
-042BE4             0113   ; 	call load_font_rc
-042BE4             0114   
-042BE4             0115   ; ; load images ; TODO
-042BE4             0116   ; 	call img_load_init
-042BE4             0117   
-042BE4             0118   ; ; load sprites
-042BE4             0119   ; 	ld bc,sprites_num_images
-042BE4             0120   ; 	ld hl,sprites_image_list
-042BE4             0121   ; 	ld (cur_image_list),hl
-042BE4             0122   ; 	call img_load_main
-042BE4             0123   
-042BE4             0124   ; ; load sound effects ; TODO
-042BE4             0125   ; 	ld bc,SFX_num_buffers
-042BE4             0126   ; 	ld hl,SFX_buffer_id_lut
-042BE4             0127   ; 	ld (cur_buffer_id_lut),hl
-042BE4             0128   ; 	ld hl,SFX_load_routines_table
-042BE4             0129   ; 	ld (cur_load_jump_table),hl
-042BE4             0130   ; 	call sfx_load_main
-042BE4             0131   
-042BE4             0132   ; DEBUG: plot ui images
-042BE4 21 00 00 00 0133   	ld hl,BUF_SPLASH_BG
-042BE8 CD 74 09 04 0134   	call vdu_buff_select
-042BEC 01 00 00 00 0135   	ld bc,0
-042BF0 11 00 00 00 0136   	ld de,0
-042BF4 CD 5C 0C 04 0137   	call vdu_plot_bmp
-042BF8             0138   
-042BF8 21 01 00 00 0139   	ld hl,BUF_SPLASH_LOGO
-042BFC CD 74 09 04 0140   	call vdu_buff_select
-042C00 01 00 00 00 0141   	ld bc,0
-042C04 11 00 00 00 0142   	ld de,0
-042C08 CD 5C 0C 04 0143   	call vdu_plot_bmp
-042C0C             0144   
-042C0C             0145   ; print loading complete message and wait for user keypress
-042C0C 21 7E 2B 04 0146   	ld hl,loading_complete
-042C10 CD 77 00 04 0147   	call printString
-042C14 CD A5 08 04 0148   	call vdu_flip
-042C18 CD 15 06 04 0149   	call waitKeypress
-042C1C             0150   
-042C1C             0151   ; initialization done
-042C1C C9          0152   	ret
-042C1D             0153   
-042C1D             0154   main_loop_tmr: ds 6
-042C23             0155   framerate: equ 30
-042C23             0156   
-042C23             0157   new_game:
-042C23             0158   
-042C23 C9          0159   	ret
-042C24             0160   
-042C24             0161   main:
-042C24             0162   
-042C24             0163   
-042C24             0164   main_loop:
-042C24             0165   ; update global timestamp
-042C24 CD C5 07 04 0166       call timestamp_tick
-042C28             0167   
-042C28             0168   ; move player
-042C28             0169   
-042C28             0170   
-042C28             0171   ; move enemies
-042C28             0172   
-042C28             0173   
-042C28             0174   ; render frame
-042C28             0175   
-042C28             0176   @wait:
-042C28 CD 54 1A 04 0177   	call set_keys
-042C2C FD 21 1D 2C 0178   	ld iy,main_loop_tmr
+       65 2E 00    
+042B4F             0054   
+042B4F             0055   init:
+042B4F             0056   ; clear all buffers
+042B4F CD 66 0A 04 0057       call vdu_clear_all_buffers
+042B53             0058   
+042B53             0059   ; set up the display
+042B53 3E 08       0060       ld a,8 ; 320x240x64 single-buffered
+042B55 CD 50 09 04 0061       call vdu_set_screen_mode
+042B59 AF          0062       xor a
+042B5A CD 61 09 04 0063       call vdu_set_scaling
+042B5E             0064   
+042B5E             0065   ; start generic stopwatch to time setup loop
+042B5E             0066   ; so we can determine if we're running on emulator or hardware
+042B5E CD 27 08 04 0067   	call stopwatch_set
+042B62             0068   
+042B62             0069   ; initialize global timestamp
+042B62 DD 27 00    0070       ld hl,(ix+sysvar_time) ; ix was set by stopwatch_start
+042B65 22 BC 07 04 0071       ld (timestamp_now),hl
+042B69             0072   
+042B69             0073   ; enable additional audio channels
+042B69 CD 71 0D 04 0074   	call vdu_enable_channels
+042B6D             0075   
+042B6D             0076   ; set the cursor off
+042B6D CD 79 08 04 0077   	call cursor_off
+042B71             0078   
+042B71             0079   ; set text background color
+042B71 3E 84       0080   	ld a,4 + 128
+042B73 CD B8 08 04 0081   	call vdu_colour_text
+042B77             0082   
+042B77             0083   ; set text foreground color
+042B77 3E 2F       0084   	ld a,47 ; aaaaff lavenderish
+042B79 CD B8 08 04 0085   	call vdu_colour_text
+042B7D             0086   
+042B7D             0087   ; set gfx bg color
+042B7D AF          0088   	xor a ; plotting mode 0
+042B7E 0E 84       0089   	ld c,4+128 ; dark blue bg
+042B80 CD C9 08 04 0090   	call vdu_gcol
+042B84 CD B3 08 04 0091   	call vdu_clg
+042B88             0092   
+042B88             0093   ; set the cursor off again since we changed screen modes
+042B88 CD 79 08 04 0094   	call cursor_off
+042B8C             0095   
+042B8C             0096   ; VDU 28, left, bottom, right, top: Set text viewport **
+042B8C             0097   ; MIND THE LITTLE-ENDIANESS
+042B8C             0098   ; inputs: c=left,b=bottom,e=right,d=top
+042B8C 0E 00       0099   	ld c,0 ; left
+042B8E 16 1D       0100   	ld d,29 ; top
+042B90 1E 27       0101   	ld e,39 ; right
+042B92 06 1D       0102   	ld b,29; bottom
+042B94 CD E0 08 04 0103   	call vdu_set_txt_viewport
+042B98             0104   
+042B98             0105   ; print loading ui message
+042B98 21 1B 2B 04 0106   	ld hl,loading_ui
+042B9C CD 77 00 04 0107   	call printString
+042BA0             0108   
+042BA0             0109   ; load UI images
+042BA0 CD A5 1A 04 0110   	call load_ui_images
+042BA4             0111   
+042BA4             0112   ; ; load fonts ; TODO
+042BA4             0113   ; 	call load_font_rc
+042BA4             0114   
+042BA4             0115   ; load images
+042BA4 CD 41 1B 04 0116   	call img_load_init
+042BA8             0117   
+042BA8             0118   ; load sprites
+042BA8 01 59 00 00 0119   	ld bc,sprites_num_images
+042BAC 21 D8 1B 04 0120   	ld hl,sprites_image_list
+042BB0 22 99 1A 04 0121   	ld (cur_image_list),hl
+042BB4 CD C0 1A 04 0122   	call img_load_main
+042BB8             0123   
+042BB8             0124   ; ; load sound effects ; TODO
+042BB8             0125   ; 	ld bc,SFX_num_buffers
+042BB8             0126   ; 	ld hl,SFX_buffer_id_lut
+042BB8             0127   ; 	ld (cur_buffer_id_lut),hl
+042BB8             0128   ; 	ld hl,SFX_load_routines_table
+042BB8             0129   ; 	ld (cur_load_jump_table),hl
+042BB8             0130   ; 	call sfx_load_main
+042BB8             0131   
+042BB8             0132   ; print loading complete message and wait for user keypress
+042BB8 CD A0 08 04 0133   	call vdu_cls
+042BBC 21 34 2B 04 0134   	ld hl,loading_complete
+042BC0 CD 77 00 04 0135   	call printString
+042BC4 CD A5 08 04 0136   	call vdu_flip
+042BC8 CD 15 06 04 0137   	call waitKeypress
+042BCC             0138   
+042BCC             0139   ; initialization done
+042BCC C9          0140   	ret
+042BCD             0141   
+042BCD             0142   main_loop_tmr: ds 6
+042BD3             0143   framerate: equ 30
+042BD3             0144   
+042BD3             0145   new_game:
+042BD3             0146   
+042BD3 C9          0147   	ret
+042BD4             0148   
+042BD4             0149   main:
+042BD4             0150   
+042BD4             0151   
+042BD4             0152   main_loop:
+042BD4             0153   ; update global timestamp
+042BD4 CD C5 07 04 0154       call timestamp_tick
+042BD8             0155   
+042BD8             0156   ; move player
+042BD8             0157   
+042BD8             0158   
+042BD8             0159   ; move enemies
+042BD8             0160   
+042BD8             0161   
+042BD8             0162   ; render frame
+042BD8             0163   
+042BD8             0164   @wait:
+042BD8 CD 54 1A 04 0165   	call set_keys
+042BDC FD 21 CD 2B 0166   	ld iy,main_loop_tmr
        04          
-042C31 CD A8 07 04 0179   	call tmr_get
-042C35 CA 41 2C 04 0180   	jp z,@continue
-042C39 FA 41 2C 04 0181   	jp m,@continue
-042C3D C3 28 2C 04 0182   	jp @wait
-042C41             0183   @continue:
-042C41             0184   
-042C41             0185   ; reset main loop timer
-042C41 FD 21 1D 2C 0186   	ld iy,main_loop_tmr
+042BE1 CD A8 07 04 0167   	call tmr_get
+042BE5 CA F1 2B 04 0168   	jp z,@continue
+042BE9 FA F1 2B 04 0169   	jp m,@continue
+042BED C3 D8 2B 04 0170   	jp @wait
+042BF1             0171   @continue:
+042BF1             0172   
+042BF1             0173   ; reset main loop timer
+042BF1 FD 21 CD 2B 0174   	ld iy,main_loop_tmr
        04          
-042C46 21 04 00 00 0187   	ld hl,120/framerate
-042C4A CD 9A 07 04 0188   	call tmr_set
-042C4E             0189   
-042C4E             0190   ; check for escape key and quit if pressed
-042C4E             0191   	MOSCALL mos_getkbmap
-042C4E 3E 1E       0001M  			LD	A, function
-042C50 49 CF       0002M  			RST.LIS	08h
-042C52             0192   ; 113 Escape
-042C52 DD CB 0E 46 0193       bit 0,(ix+14)
-042C56 20 02       0194   	jr nz,main_end
-042C58             0195   @Escape:
-042C58 18 CA       0196   	jr main_loop
-042C5A             0197   
-042C5A             0198   main_end:
-042C5A             0199   	; call do_outro
-042C5A             0200   
-042C5A CD 66 0A 04 0201       call vdu_clear_all_buffers
-042C5E CD 99 0D 04 0202   	call vdu_disable_channels
-042C62             0203   
-042C62             0204   ; restore screen to something normalish
-042C62 AF          0205   	xor a
-042C63 CD 50 09 04 0206   	call vdu_set_screen_mode
-042C67 CD 6B 08 04 0207   	call cursor_on
-042C6B C9          0208   	ret
+042BF6 21 04 00 00 0175   	ld hl,120/framerate
+042BFA CD 9A 07 04 0176   	call tmr_set
+042BFE             0177   
+042BFE             0178   ; check for escape key and quit if pressed
+042BFE             0179   	MOSCALL mos_getkbmap
+042BFE 3E 1E       0001M  			LD	A, function
+042C00 49 CF       0002M  			RST.LIS	08h
+042C02             0180   ; 113 Escape
+042C02 DD CB 0E 46 0181       bit 0,(ix+14)
+042C06 20 02       0182   	jr nz,main_end
+042C08             0183   @Escape:
+042C08 18 CA       0184   	jr main_loop
+042C0A             0185   
+042C0A             0186   main_end:
+042C0A             0187   	; call do_outro
+042C0A             0188   
+042C0A CD 66 0A 04 0189       call vdu_clear_all_buffers
+042C0E CD 99 0D 04 0190   	call vdu_disable_channels
+042C12             0191   
+042C12             0192   ; restore screen to something normalish
+042C12 AF          0193   	xor a
+042C13 CD 50 09 04 0194   	call vdu_set_screen_mode
+042C17 CD 6B 08 04 0195   	call cursor_on
+042C1B C9          0196   	ret

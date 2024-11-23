@@ -47,10 +47,10 @@ exit:
     include "images_sprites.inc"
 	include "images_ui.inc"
 
-hello_world: defb "Welcome to Purple Nurples!",0
-loading_ui: defb "Loading UI",0
-loading_time: defb "Loading time:",0
-loading_complete: defb "Press any key to continue.\r\n",0
+hello_world: asciz "Welcome to Purple Nurples!"
+loading_ui: asciz "Loading UI"
+loading_time: asciz "Loading time:"
+loading_complete: asciz "Press any key to continue."
 
 init:
 ; clear all buffers
@@ -93,6 +93,15 @@ init:
 ; set the cursor off again since we changed screen modes
 	call cursor_off
 
+; VDU 28, left, bottom, right, top: Set text viewport **
+; MIND THE LITTLE-ENDIANESS
+; inputs: c=left,b=bottom,e=right,d=top
+	ld c,0 ; left
+	ld d,29 ; top
+	ld e,39 ; right
+	ld b,29; bottom
+	call vdu_set_txt_viewport
+
 ; print loading ui message
 	ld hl,loading_ui
 	call printString
@@ -100,26 +109,17 @@ init:
 ; load UI images
 	call load_ui_images
 
-; ; VDU 28, left, bottom, right, top: Set text viewport **
-; ; MIND THE LITTLE-ENDIANESS
-; ; inputs: c=left,b=bottom,e=right,d=top
-; 	ld c,0 ; left
-; 	ld d,20 ; top
-; 	ld e,39 ; right
-; 	ld b,29; bottom
-; 	call vdu_set_txt_viewport
-
 ; ; load fonts ; TODO
 ; 	call load_font_rc
 
-; ; load images ; TODO
-; 	call img_load_init
+; load images
+	call img_load_init
 
-; ; load sprites
-; 	ld bc,sprites_num_images
-; 	ld hl,sprites_image_list
-; 	ld (cur_image_list),hl
-; 	call img_load_main
+; load sprites
+	ld bc,sprites_num_images
+	ld hl,sprites_image_list
+	ld (cur_image_list),hl
+	call img_load_main
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers
@@ -129,20 +129,8 @@ init:
 ; 	ld (cur_load_jump_table),hl
 ; 	call sfx_load_main
 
-; DEBUG: plot ui images
-	ld hl,BUF_SPLASH_BG
-	call vdu_buff_select
-	ld bc,0
-	ld de,0
-	call vdu_plot_bmp
-
-	ld hl,BUF_SPLASH_LOGO
-	call vdu_buff_select
-	ld bc,0
-	ld de,0
-	call vdu_plot_bmp
-
 ; print loading complete message and wait for user keypress
+	call vdu_cls
 	ld hl,loading_complete
 	call printString
 	call vdu_flip 
