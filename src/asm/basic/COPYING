@@ -1,0 +1,30 @@
+Copyright (c) 1984-2000 R.T. Russell
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+
+-----------------------------------------------
+## License Addendum for agon-bbc-basic-adl-ez80asm
+
+ALL TERMS OF THE ORIGINAL LICENSE AND COPYRIGHT CLAIMS APPLY. THIS ADDENDUM DOES NOT ALTER, EXTEND, MAKE NEW CLAIMS, OR OTHERWISE MODIFY THE ORIGINAL CLAIMS AND TERMS CONTAINED HERIN.
+
+This is a derivative work of the original BBC BASIC for Z80 created by R.T. Russell, and further modified by Dean Belfield for use on the Agon Light family of retrocomputers. The code in this repository further modifies the source to be compatible with the Agon's native assembler, agon-ez80asm by Jeroen Venema. (See README.md for further details.)
+
+#### Disclaimer
+All modifications in this repository, including those necessary for `ez80asm` compatibility are provided "as-is" with no implied warranty, in alignment with the terms of the original license.
+
+#### Author Information
+This fork of BBC BASIC for Z80 is maintained by Brandon R. Gates (Discord: BeeGee747). The full source code for this fork is available at https://github.com/bgates747/agon-bbc-basic-adl-ez80asm

@@ -36,7 +36,9 @@ exit:
 	include "fonts_bmp.inc"
     include "timer.inc"
     include "vdu.inc"
+	include "vdu_plot.inc"
     include "vdu_sound.inc"
+	include "maths.inc"
 
 ; Application includes
 	include "font_rc.inc"
