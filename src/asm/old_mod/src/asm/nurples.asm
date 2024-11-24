@@ -260,7 +260,7 @@ main:
 ; move enemies
 	call move_enemies
 
-; wait for the next vsync
+; wait for the next vblank mitigate flicker and for loop timing
 	call vdu_vblank
 
 ; poll keyboard

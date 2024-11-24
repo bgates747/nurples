@@ -316,7 +316,7 @@ dumpRegistersHex:
     call printHex24
     call printNewLine
 
-    call vdu_vblank
+    ; call vdu_vblank
 
     call printNewLine
 ; restore everything
