@@ -3,7 +3,7 @@ PC     Output      Line
 040000             0002   ; which call the macro, otherwise the assembler won't have the macro
 040000             0003   ; available to run when it is called, and will fail with something
 040000             0004   ; along the lines of 'invalid label' at such and such a line
-040000             0005       include "src/asm/macros.inc"
+040000             0005       include "macros.inc"
 040000             0001*  
 040000             0002*  ; https://agonconsole8.github.io/agon-docs/VDP---Bitmaps-API.html
 040000             0003*  ; Macro for loading bitmaps to VDP buffers
@@ -121,8 +121,8 @@ PC     Output      Line
 040060             0044   
 040060             0045   ; after this we can put includes in any order we wish, even in between
 040060             0046   ; code blocks if there is any program-dependent or asethetic reason to do so
-040060             0047   	; include "src/asm/images2.inc" ; deprecated in favor of images.inc, images_sprites.inc, images_ui.inc
-040060             0048   	include "src/asm/fonts.inc"
+040060             0047   	; include "images2.inc" ; deprecated in favor of images.inc, images_sprites.inc, images_ui.inc
+040060             0048   	include "fonts.inc"
 040060             0001*  font_nurples:
 040060 00 00 00 00 0002*      db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 ;   #20 32
        00 00 00 00 
@@ -412,7 +412,7 @@ PC     Output      Line
        A8 54 A8 54 
 0404D8 54 FC 54 FC 0145*      db 0x54,0xFC,0x54,0xFC,0x54,0xFC,0x54,0xFC ; ▓ #AF 175
        54 FC 54 FC 
-0404E0             0049   	include "src/asm/levels.inc"
+0404E0             0049   	include "levels.inc"
 0404E0 00          0001*  tiles_level_00: db  0 ; number of rows, 0 is max of 256
 0404E1 00 00 00 00 0002*  	db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02,0x02,0x01,0x02,0x02,0x01 ; row 0
        00 00 00 00 
@@ -1506,7 +1506,7 @@ PC     Output      Line
        00 00 00 00 
        00 00 00 00 
 0415E2             0277*  
-0415E2             0050   	include "src/asm/sprites.inc"
+0415E2             0050   	include "sprites.inc"
 0415E2             0001*  ; ###### SPRITE TABLE FIELD INDICES ######
 0415E2             0002*  table_bytes_per_record: equ 38 ; 38 bytes per sprite record
 0415E2             0003*  sprite_id:              equ 00 ; 1 bytes unique spriteId, zero-based
@@ -1665,7 +1665,7 @@ PC     Output      Line
 0416E9 DD 35 00    0116*      dec (ix)
 0416EC C9          0117*      ret
 0416ED             0051   ; API includes
-0416ED             0052       include "src/asm/mos_api.inc"
+0416ED             0052       include "mos_api.inc"
 0416ED             0001*  ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/mos_api.inc
 0416ED             0002*  ; Title:	AGON MOS - API for user projects
 0416ED             0003*  ; Author:	Dean Belfield
@@ -1920,7 +1920,7 @@ PC     Output      Line
 0416ED             0252*  			LD	A, function
 0416ED             0253*  			RST.LIL	08h
 0416ED             0254*  	ENDMACRO
-0416ED             0053       include "src/asm/functions.inc"
+0416ED             0053       include "functions.inc"
 0416ED             0001*  ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/functions.s
 0416ED             0002*  ; Print a zero-terminated string
 0416ED             0003*  ; HL: Pointer to string
@@ -2546,7 +2546,7 @@ PC     Output      Line
 041AE4 F1          0581*      pop af
 041AE5             0582*  ; all done
 041AE5 C9          0583*      ret
-041AE6             0054       include "src/asm/vdu.inc"
+041AE6             0054       include "vdu.inc"
 041AE6             0001*  
 041AE6             0002*  ; VDU 30: Home cursor
 041AE6             0003*  vdu_home_cursor:
@@ -3190,7 +3190,7 @@ PC     Output      Line
        00 00 00 00 
        00 00 00 00 
        00 00 00 00 
-041EC7             0055       include "src/asm/vdu_buff.inc"
+041EC7             0055       include "vdu_buff.inc"
 041EC7             0001*  ; VDP Buffered Commands API
 041EC7             0002*  ; https://agonconsole8.github.io/agon-docs/VDP---Buffered-Commands-API.html
 041EC7             0003*  
@@ -4084,7 +4084,7 @@ PC     Output      Line
 041EC7             0891*  ; Command 26: Copy blocks from multiple buffers and consolidate
 041EC7             0892*  
 041EC7             0893*  ; VDU 23, 0, &A0, targetBufferId; 26, sourceBufferId1; sourceBufferId2; ...; 65535;
-041EC7             0056       include "src/asm/vdu_plot.inc"
+041EC7             0056       include "vdu_plot.inc"
 041EC7             0001*  ; https://agonconsole8.github.io/agon-docs/VDP---PLOT-Commands.html
 041EC7             0002*  ; PLOT code 	(Decimal) 	Effect
 041EC7             0003*  ; &00-&07 	0-7 	Solid line, includes both ends
@@ -4329,7 +4329,7 @@ PC     Output      Line
 041F83 00 00       0228*  @x1:    dw 0x0000
 041F85 00 00       0229*  @y1:    dw 0x0000
 041F87 00          0230*  @end:   db 0x00 ; padding
-041F88             0057   	include "src/asm/vdu_sprites.inc"
+041F88             0057   	include "vdu_sprites.inc"
 041F88             0001*  ; ; https://github.com/AgonConsole8/agon-docs/blob/main/VDP---Bitmaps-API.md
 041F88             0002*  ; the VDP can support up to 256 sprites. They must be defined
 041F88             0003*  ; contiguously, and so the first sprite is sprite 0.
@@ -4609,7 +4609,7 @@ PC     Output      Line
 0420E4 17 1B 26    0269*  @cmd:      db 23,27,0x26
 0420E7 00 00       0270*  @bufferId: dw 0x0000
 0420E9 00          0271*  @end:      db 0x00 ; padding
-0420EA             0058   	include "src/asm/div_168_signed.inc"
+0420EA             0058   	include "div_168_signed.inc"
 0420EA             0001*  ; 24-bit integer and 16.8 fixed point division routines
 0420EA             0002*  ; by Brandon R. Gates (BeeGee747)
 0420EA             0003*  ; have undergone cursory testing and seem to be generating
@@ -5270,7 +5270,7 @@ PC     Output      Line
 042337             0650*                      ; sets pv flag which we might not (zero is parity even)
 042337             0651*                      ; resets all others which is okay
 042337 C9          0652*      ret
-042338             0059   	include "src/asm/maths24.inc"
+042338             0059   	include "maths24.inc"
 042338             0001*  ; http://www.z80.info/pseudo-random.txt
 042338             0002*  rand_8:
 042338 C5          0003*      push bc
@@ -6392,7 +6392,7 @@ PC     Output      Line
 042BAA EB 1F 00    1114*  	dl 0x001FEB ; 0000FF, 44.888
 042BAD 00 20 00    1115*  	dl 0x002000 ; 000100, 45.000 only needed for interpolation
 042BB0             0060   ; App-specific includes
-042BB0             0061   	include "src/asm/player.inc"
+042BB0             0061   	include "player.inc"
 042BB0             0001*  ; ######## GAME STATE VARIABLES #######
 042BB0             0002*  ; THESE MUST BE IN THIS ORDER FOR new_game TO WORK PROPERLY
 042BB0 00 00 00    0003*  player_score: db 0x00,#00,#00 ; bcd
@@ -6738,7 +6738,7 @@ PC     Output      Line
 042CAE             0335*  ;     ld hl,(sprite_y)
 042CAE             0336*  ;     ld (player_y),hl
 042CAE             0337*  ;     ret
-042CAE             0062   	include "src/asm/tiles.inc"
+042CAE             0062   	include "tiles.inc"
 042CAE             0001*  ; ######### TILES #########
 042CAE             0002*  ; TODO: implement buffering of tiles here when there isn't other stuff to do
 042CAE             0003*  ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
@@ -6960,7 +6960,7 @@ PC     Output      Line
 042D73             0213*      ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 042D73             0214*      ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
 042D73 C9          0215*      ret ; and done
-042D74             0063   	include "src/asm/enemies.inc"
+042D74             0063   	include "enemies.inc"
 042D74 10          0001*  max_enemy_sprites: db 16
 042D75             0002*  
 042D75             0003*  ; sprite_type
@@ -7725,7 +7725,7 @@ PC     Output      Line
 042FCA 32 DB 2F 04 0744*      ld (laser_collisions),a
 042FCE CD 46 2F 04 0745*      call kill_nurple ; yes there was a collision,so kill enemy
 042FD2 C9          0746*      ret ; we're outta' here
-042FD3             0064   	include "src/asm/laser.inc"
+042FD3             0064   	include "laser.inc"
 042FD3             0001*  ; ##### LASER SPRITE PARAMETERS #####
 042FD3             0002*  ; uses the same offsets from its table base as the main sprite table:
 042FD3             0003*  laser_start_variables: ; label marking beginning of table
@@ -7820,7 +7820,7 @@ PC     Output      Line
 042FF9             0092*  ;     xor a ; zero out a
 042FF9             0093*  ;     ld (laser_collisions),a
 042FF9             0094*  ;     ret
-042FF9             0065   	include "src/asm/timer.inc"
+042FF9             0065   	include "timer.inc"
 042FF9             0001*  ; Table 32. Timer Control Registers
 042FF9             0002*  ; this constant is the base address of the timer control registers
 042FF9             0003*  ; each timer takes three bytes:
@@ -8241,7 +8241,7 @@ PC     Output      Line
 0431DE 00          0395*  oldTimeStamp:   .db 00h
 0431DF             0066   
 0431DF             0067   ; new includes
-0431DF             0068   	include "src/asm/images.inc"
+0431DF             0068   	include "images.inc"
 0431DF             0001*  image_type: equ 0
 0431DF             0002*  image_width: equ image_type+3
 0431DF             0003*  image_height: equ image_width+3
@@ -8394,7 +8394,7 @@ PC     Output      Line
 0432E7             0143*  
 0432E7 00 00 00    0144*  logo_yvel: dl 0
 0432EA 00 00 00    0145*  logo_ypos: dl 0
-0432ED             0069   	include "src/asm/images_sprites.inc"
+0432ED             0069   	include "images_sprites.inc"
 0432ED             0001*  ; Generated by make_images.py
 0432ED             0002*  
 0432ED             0003*  sprites_num_images: equ 89
@@ -9549,7 +9549,7 @@ PC     Output      Line
        34 38 2E 72 
        67 62 61 32 
        00          
-0441C9             0070   	include "src/asm/images_ui.inc"
+0441C9             0070   	include "images_ui.inc"
 0441C9             0001*  ; Generated by make_images.py
 0441C9             0002*  
 0441C9             0003*  ui_num_images: equ 2
@@ -9582,7 +9582,7 @@ PC     Output      Line
        67 6F 2E 72 
        67 62 61 32 
        00          
-044215             0071   	include "src/asm/files.inc"
+044215             0071   	include "files.inc"
 044215             0001*  ; load to onboard 8k sram
 044215             0002*  filedata: equ 0xB7E000; Directory object structure (DIR)
 044215             0072   
