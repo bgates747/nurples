@@ -35,6 +35,9 @@ img_load_main_loop:
 ; back up loop counter
     push bc
 
+; load the next image
+    call load_next_image
+
 ; plot the background
 	call vdu_cls
     ld hl,BUF_SPLASH_BG
@@ -42,9 +45,6 @@ img_load_main_loop:
     ld bc,0
     ld de,0
     call vdu_plot_bmp
-
-; load the next image
-    call load_next_image
 
 ; ; draw the most recently loaded image
 ; 	ld hl,(cur_buffer_id)
@@ -63,8 +63,8 @@ img_load_main_loop:
 	ld hl,(cur_filename)
 	call printString
 
-; wait for vblank to mitigate flicker
-	call vdu_vblank
+; flip the framebuffer
+	call vdu_flip
 
 ; decrement loop counter
     pop bc

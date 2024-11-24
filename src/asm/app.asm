@@ -59,7 +59,7 @@ init:
     call vdu_clear_all_buffers
 
 ; set up the display
-    ld a,8 ; 320x240x64 single-buffered
+    ld a,8+128 ; 136   320   240   64    60hz double-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
@@ -75,9 +75,6 @@ init:
 ; enable additional audio channels
 	call vdu_enable_channels
 
-; set the cursor off
-	call cursor_off
-
 ; set text background color
 	ld a,4 + 128
 	call vdu_colour_text
@@ -92,7 +89,7 @@ init:
 	call vdu_gcol
 	call vdu_clg
 
-; set the cursor off again since we changed screen modes
+; set the cursor off
 	call cursor_off
 
 ; VDU 28, left, bottom, right, top: Set text viewport **
@@ -107,6 +104,7 @@ init:
 ; print loading ui message
 	ld hl,loading_ui
 	call printString
+	call vdu_flip
 
 ; load UI images
 	call load_ui_images
@@ -114,7 +112,7 @@ init:
 ; ; load fonts ; TODO
 ; 	call load_font_rc
 
-; load images
+; initialize animated splash screen during assets loading
 	call img_load_init
 
 ; load sprites

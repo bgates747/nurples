@@ -5449,16 +5449,16 @@ PC     Output      Line
 041ED2             0035*  ; back up loop counter
 041ED2 C5          0036*      push bc
 041ED3             0037*  
-041ED3             0038*  ; plot the background
-041ED3 CD A0 08 04 0039*  	call vdu_cls
-041ED7 21 00 00 00 0040*      ld hl,BUF_SPLASH_BG
-041EDB CD 74 09 04 0041*      call vdu_buff_select
-041EDF 01 00 00 00 0042*      ld bc,0
-041EE3 11 00 00 00 0043*      ld de,0
-041EE7 CD 5C 0C 04 0044*      call vdu_plot_bmp
-041EEB             0045*  
-041EEB             0046*  ; load the next image
-041EEB CD 16 1F 04 0047*      call load_next_image
+041ED3             0038*  ; load the next image
+041ED3 CD 16 1F 04 0039*      call load_next_image
+041ED7             0040*  
+041ED7             0041*  ; plot the background
+041ED7 CD A0 08 04 0042*  	call vdu_cls
+041EDB 21 00 00 00 0043*      ld hl,BUF_SPLASH_BG
+041EDF CD 74 09 04 0044*      call vdu_buff_select
+041EE3 01 00 00 00 0045*      ld bc,0
+041EE7 11 00 00 00 0046*      ld de,0
+041EEB CD 5C 0C 04 0047*      call vdu_plot_bmp
 041EEF             0048*  
 041EEF             0049*  ; ; draw the most recently loaded image
 041EEF             0050*  ; 	ld hl,(cur_buffer_id)
@@ -5478,84 +5478,85 @@ PC     Output      Line
 041EFF CD 77 00 04 0064*  	call printString
 041F03             0065*  
 041F03             0066*  ; wait for vblank to mitigate flicker
-041F03 CD FB 08 04 0067*  	call vdu_vblank
-041F07             0068*  
-041F07             0069*  ; decrement loop counter
-041F07 C1          0070*      pop bc
-041F08 0B          0071*  	dec bc
-041F09 79          0072*      ld a,c
-041F0A B7          0073*      or a
-041F0B C2 D2 1E 04 0074*      jp nz,img_load_main_loop
-041F0F 78          0075*      ld a,b
-041F10 B7          0076*      or a
-041F11 C2 D2 1E 04 0077*      jp nz,img_load_main_loop
-041F15 C9          0078*      ret
-041F16             0079*  
-041F16             0080*  load_next_image:
-041F16 16 12       0081*      ld d,image_record_size
-041F18 3A A9 1E 04 0082*  	ld a,(cur_file_idx)
-041F1C 5F          0083*  	ld e,a
-041F1D ED 5C       0084*      mlt de
-041F1F FD 2A A6 1E 0085*      ld iy,(cur_image_list)
+041F03             0067*  	; call vdu_vblank
+041F03 CD A5 08 04 0068*  	call vdu_flip
+041F07             0069*  
+041F07             0070*  ; decrement loop counter
+041F07 C1          0071*      pop bc
+041F08 0B          0072*  	dec bc
+041F09 79          0073*      ld a,c
+041F0A B7          0074*      or a
+041F0B C2 D2 1E 04 0075*      jp nz,img_load_main_loop
+041F0F 78          0076*      ld a,b
+041F10 B7          0077*      or a
+041F11 C2 D2 1E 04 0078*      jp nz,img_load_main_loop
+041F15 C9          0079*      ret
+041F16             0080*  
+041F16             0081*  load_next_image:
+041F16 16 12       0082*      ld d,image_record_size
+041F18 3A A9 1E 04 0083*  	ld a,(cur_file_idx)
+041F1C 5F          0084*  	ld e,a
+041F1D ED 5C       0085*      mlt de
+041F1F FD 2A A6 1E 0086*      ld iy,(cur_image_list)
        04          
-041F24 FD 19       0086*      add iy,de
-041F26             0087*  
-041F26 FD 7E 00    0088*      ld a,(iy+image_type) ; get image type
-041F29 FD 07 03    0089*      ld bc,(iy+image_width) ; get image width
-041F2C FD 17 06    0090*      ld de,(iy+image_height) ; get image height
-041F2F FD 31 09    0091*      ld ix,(iy+image_filesize) ; get image file size
-041F32 FD 27 0F    0092*  	ld hl,(iy+image_bufferId) ; get image bufferId
-041F35 22 AF 1E 04 0093*  	ld (cur_buffer_id),hl
-041F39 FD 37 0C    0094*      ld iy,(iy+image_filename) ; get image filename
-041F3C FD 22 AC 1E 0095*  	ld (cur_filename),iy
+041F24 FD 19       0087*      add iy,de
+041F26             0088*  
+041F26 FD 7E 00    0089*      ld a,(iy+image_type) ; get image type
+041F29 FD 07 03    0090*      ld bc,(iy+image_width) ; get image width
+041F2C FD 17 06    0091*      ld de,(iy+image_height) ; get image height
+041F2F FD 31 09    0092*      ld ix,(iy+image_filesize) ; get image file size
+041F32 FD 27 0F    0093*  	ld hl,(iy+image_bufferId) ; get image bufferId
+041F35 22 AF 1E 04 0094*  	ld (cur_buffer_id),hl
+041F39 FD 37 0C    0095*      ld iy,(iy+image_filename) ; get image filename
+041F3C FD 22 AC 1E 0096*  	ld (cur_filename),iy
        04          
-041F41 CD 92 0A 04 0096*      call vdu_load_img
-041F45 FD 21 A9 1E 0097*      ld iy,cur_file_idx
+041F41 CD 92 0A 04 0097*      call vdu_load_img
+041F45 FD 21 A9 1E 0098*      ld iy,cur_file_idx
        04          
-041F4A FD 34 00    0098*  	inc (iy)
-041F4D C9          0099*  	ret
-041F4E             0100*  
-041F4E             0101*  img_load_init:
-041F4E             0102*  ; initialize logo's position parameters
-041F4E 21 00 00 00 0103*  	ld hl,0
-041F52 22 9B 1F 04 0104*  	ld (logo_xvel),hl
-041F56 22 9E 1F 04 0105*  	ld (logo_xpos),hl
-041F5A             0106*  ; begin 16.8 maths to determine logo's y position and velocity
-041F5A 21 00 E0 00 0107*  	ld hl,240-16*256 ; allow space for text at bottom of screen
-041F5E 22 A4 1F 04 0108*  	ld (logo_ypos),hl
-041F62 EB          0109*  	ex de,hl
-041F63 21 00 F8 FF 0110*  	ld hl,-8*256 ; 8 pixels from top of screen
-041F67 19          0111*  	add hl,de ; distance for logo to travel
-041F68 11 00 A7 FF 0112*  	ld de,-sprites_num_images*256
-041F6C CD 84 12 04 0113*  	call sdiv168 ; ud.e = distance / num images = y velocity
-041F70 ED 53 A1 1F 0114*  	ld (logo_yvel),de
+041F4A FD 34 00    0099*  	inc (iy)
+041F4D C9          0100*  	ret
+041F4E             0101*  
+041F4E             0102*  img_load_init:
+041F4E             0103*  ; initialize logo's position parameters
+041F4E 21 00 00 00 0104*  	ld hl,0
+041F52 22 9B 1F 04 0105*  	ld (logo_xvel),hl
+041F56 22 9E 1F 04 0106*  	ld (logo_xpos),hl
+041F5A             0107*  ; begin 16.8 maths to determine logo's y position and velocity
+041F5A 21 00 E0 00 0108*  	ld hl,240-16*256 ; allow space for text at bottom of screen
+041F5E 22 A4 1F 04 0109*  	ld (logo_ypos),hl
+041F62 EB          0110*  	ex de,hl
+041F63 21 00 F8 FF 0111*  	ld hl,-8*256 ; 8 pixels from top of screen
+041F67 19          0112*  	add hl,de ; distance for logo to travel
+041F68 11 00 A7 FF 0113*  	ld de,-sprites_num_images*256
+041F6C CD 84 12 04 0114*  	call sdiv168 ; ud.e = distance / num images = y velocity
+041F70 ED 53 A1 1F 0115*  	ld (logo_yvel),de
        04          
-041F75             0115*  ; all done
-041F75 C9          0116*      ret
-041F76             0117*  
-041F76             0118*  move_logo:
-041F76             0119*  ; activate logo bitmap
-041F76 21 01 00 00 0120*  	ld hl, BUF_SPLASH_LOGO
-041F7A CD 74 09 04 0121*  	call vdu_buff_select
-041F7E             0122*  ; update position based on velocity parameters
-041F7E 2A A4 1F 04 0123*  	ld hl,(logo_ypos)
-041F82 ED 5B A1 1F 0124*  	ld de,(logo_yvel)
+041F75             0116*  ; all done
+041F75 C9          0117*      ret
+041F76             0118*  
+041F76             0119*  move_logo:
+041F76             0120*  ; activate logo bitmap
+041F76 21 01 00 00 0121*  	ld hl, BUF_SPLASH_LOGO
+041F7A CD 74 09 04 0122*  	call vdu_buff_select
+041F7E             0123*  ; update position based on velocity parameters
+041F7E 2A A4 1F 04 0124*  	ld hl,(logo_ypos)
+041F82 ED 5B A1 1F 0125*  	ld de,(logo_yvel)
        04          
-041F87 19          0125*  	add hl,de
-041F88 22 A4 1F 04 0126*  	ld (logo_ypos),hl
-041F8C             0127*  ; draw logo
-041F8C ED 4B 9E 1F 0128*  	ld bc,(logo_xpos)
+041F87 19          0126*  	add hl,de
+041F88 22 A4 1F 04 0127*  	ld (logo_ypos),hl
+041F8C             0128*  ; draw logo
+041F8C ED 4B 9E 1F 0129*  	ld bc,(logo_xpos)
        04          
-041F91 ED 5B A4 1F 0129*  	ld de,(logo_ypos)
+041F91 ED 5B A4 1F 0130*  	ld de,(logo_ypos)
        04          
-041F96 CD 78 0C 04 0130*  	call vdu_plot_bmp168
-041F9A C9          0131*  	ret
-041F9B             0132*  
-041F9B 00 00 00    0133*  logo_xvel: dl 0
-041F9E 00 00 00    0134*  logo_xpos: dl 0
-041FA1             0135*  
-041FA1 00 00 00    0136*  logo_yvel: dl 0
-041FA4 00 00 00    0137*  logo_ypos: dl 0
+041F96 CD 78 0C 04 0131*  	call vdu_plot_bmp168
+041F9A C9          0132*  	ret
+041F9B             0133*  
+041F9B 00 00 00    0134*  logo_xvel: dl 0
+041F9E 00 00 00    0135*  logo_xpos: dl 0
+041FA1             0136*  
+041FA1 00 00 00    0137*  logo_yvel: dl 0
+041FA4 00 00 00    0138*  logo_ypos: dl 0
 041FA7             0049       include "images_sprites.inc"
 041FA7             0001*  ; Generated by make_images.py
 041FA7             0002*  
@@ -6772,7 +6773,7 @@ PC     Output      Line
 042F1E CD 66 0A 04 0059       call vdu_clear_all_buffers
 042F22             0060   
 042F22             0061   ; set up the display
-042F22 3E 08       0062       ld a,8 ; 320x240x64 single-buffered
+042F22 3E 88       0062       ld a,8+128 ; 136   320   240   64    60hz double-buffered
 042F24 CD 50 09 04 0063       call vdu_set_screen_mode
 042F28 AF          0064       xor a
 042F29 CD 61 09 04 0065       call vdu_set_scaling
@@ -6788,128 +6789,126 @@ PC     Output      Line
 042F38             0075   ; enable additional audio channels
 042F38 CD 71 0D 04 0076   	call vdu_enable_channels
 042F3C             0077   
-042F3C             0078   ; set the cursor off
-042F3C CD 79 08 04 0079   	call cursor_off
-042F40             0080   
-042F40             0081   ; set text background color
-042F40 3E 84       0082   	ld a,4 + 128
-042F42 CD B8 08 04 0083   	call vdu_colour_text
-042F46             0084   
-042F46             0085   ; set text foreground color
-042F46 3E 2F       0086   	ld a,47 ; aaaaff lavenderish
-042F48 CD B8 08 04 0087   	call vdu_colour_text
-042F4C             0088   
-042F4C             0089   ; set gfx bg color
-042F4C AF          0090   	xor a ; plotting mode 0
-042F4D 0E 84       0091   	ld c,4+128 ; dark blue bg
-042F4F CD C9 08 04 0092   	call vdu_gcol
-042F53 CD B3 08 04 0093   	call vdu_clg
+042F3C             0078   ; set text background color
+042F3C 3E 84       0079   	ld a,4 + 128
+042F3E CD B8 08 04 0080   	call vdu_colour_text
+042F42             0081   
+042F42             0082   ; set text foreground color
+042F42 3E 2F       0083   	ld a,47 ; aaaaff lavenderish
+042F44 CD B8 08 04 0084   	call vdu_colour_text
+042F48             0085   
+042F48             0086   ; set gfx bg color
+042F48 AF          0087   	xor a ; plotting mode 0
+042F49 0E 84       0088   	ld c,4+128 ; dark blue bg
+042F4B CD C9 08 04 0089   	call vdu_gcol
+042F4F CD B3 08 04 0090   	call vdu_clg
+042F53             0091   
+042F53             0092   ; set the cursor off
+042F53 CD 79 08 04 0093   	call cursor_off
 042F57             0094   
-042F57             0095   ; set the cursor off again since we changed screen modes
-042F57 CD 79 08 04 0096   	call cursor_off
-042F5B             0097   
-042F5B             0098   ; VDU 28, left, bottom, right, top: Set text viewport **
-042F5B             0099   ; MIND THE LITTLE-ENDIANESS
-042F5B             0100   ; inputs: c=left,b=bottom,e=right,d=top
-042F5B 0E 00       0101   	ld c,0 ; left
-042F5D 16 1D       0102   	ld d,29 ; top
-042F5F 1E 27       0103   	ld e,39 ; right
-042F61 06 1D       0104   	ld b,29; bottom
-042F63 CD E0 08 04 0105   	call vdu_set_txt_viewport
-042F67             0106   
-042F67             0107   ; print loading ui message
-042F67 21 EA 2E 04 0108   	ld hl,loading_ui
-042F6B CD 77 00 04 0109   	call printString
-042F6F             0110   
-042F6F             0111   ; load UI images
-042F6F CD B2 1E 04 0112   	call load_ui_images
-042F73             0113   
-042F73             0114   ; ; load fonts ; TODO
-042F73             0115   ; 	call load_font_rc
-042F73             0116   
-042F73             0117   ; load images
-042F73 CD 4E 1F 04 0118   	call img_load_init
-042F77             0119   
-042F77             0120   ; load sprites
-042F77 01 59 00 00 0121   	ld bc,sprites_num_images
-042F7B 21 A7 1F 04 0122   	ld hl,sprites_image_list
-042F7F 22 A6 1E 04 0123   	ld (cur_image_list),hl
-042F83 CD CD 1E 04 0124   	call img_load_main
-042F87             0125   
-042F87             0126   ; ; load sound effects ; TODO
-042F87             0127   ; 	ld bc,SFX_num_buffers
-042F87             0128   ; 	ld hl,SFX_buffer_id_lut
-042F87             0129   ; 	ld (cur_buffer_id_lut),hl
-042F87             0130   ; 	ld hl,SFX_load_routines_table
-042F87             0131   ; 	ld (cur_load_jump_table),hl
-042F87             0132   ; 	call sfx_load_main
-042F87             0133   
-042F87             0134   ; print loading complete message and wait for user keypress
-042F87 CD A0 08 04 0135   	call vdu_cls
-042F8B 21 03 2F 04 0136   	ld hl,loading_complete
-042F8F CD 77 00 04 0137   	call printString
-042F93 CD A5 08 04 0138   	call vdu_flip
-042F97 CD 15 06 04 0139   	call waitKeypress
-042F9B             0140   
-042F9B             0141   ; initialization done
-042F9B C9          0142   	ret
-042F9C             0143   
-042F9C             0144   main_loop_tmr: ds 6
-042FA2             0145   framerate: equ 30
+042F57             0095   ; VDU 28, left, bottom, right, top: Set text viewport **
+042F57             0096   ; MIND THE LITTLE-ENDIANESS
+042F57             0097   ; inputs: c=left,b=bottom,e=right,d=top
+042F57 0E 00       0098   	ld c,0 ; left
+042F59 16 1D       0099   	ld d,29 ; top
+042F5B 1E 27       0100   	ld e,39 ; right
+042F5D 06 1D       0101   	ld b,29; bottom
+042F5F CD E0 08 04 0102   	call vdu_set_txt_viewport
+042F63             0103   
+042F63             0104   ; print loading ui message
+042F63 21 EA 2E 04 0105   	ld hl,loading_ui
+042F67 CD 77 00 04 0106   	call printString
+042F6B CD A5 08 04 0107   	call vdu_flip
+042F6F             0108   
+042F6F             0109   ; load UI images
+042F6F CD B2 1E 04 0110   	call load_ui_images
+042F73             0111   
+042F73             0112   ; ; load fonts ; TODO
+042F73             0113   ; 	call load_font_rc
+042F73             0114   
+042F73             0115   ; initialize animated splash screen during assets loading
+042F73 CD 4E 1F 04 0116   	call img_load_init
+042F77             0117   
+042F77             0118   ; load sprites
+042F77 01 59 00 00 0119   	ld bc,sprites_num_images
+042F7B 21 A7 1F 04 0120   	ld hl,sprites_image_list
+042F7F 22 A6 1E 04 0121   	ld (cur_image_list),hl
+042F83 CD CD 1E 04 0122   	call img_load_main
+042F87             0123   
+042F87             0124   ; ; load sound effects ; TODO
+042F87             0125   ; 	ld bc,SFX_num_buffers
+042F87             0126   ; 	ld hl,SFX_buffer_id_lut
+042F87             0127   ; 	ld (cur_buffer_id_lut),hl
+042F87             0128   ; 	ld hl,SFX_load_routines_table
+042F87             0129   ; 	ld (cur_load_jump_table),hl
+042F87             0130   ; 	call sfx_load_main
+042F87             0131   
+042F87             0132   ; print loading complete message and wait for user keypress
+042F87 CD A0 08 04 0133   	call vdu_cls
+042F8B 21 03 2F 04 0134   	ld hl,loading_complete
+042F8F CD 77 00 04 0135   	call printString
+042F93 CD A5 08 04 0136   	call vdu_flip
+042F97 CD 15 06 04 0137   	call waitKeypress
+042F9B             0138   
+042F9B             0139   ; initialization done
+042F9B C9          0140   	ret
+042F9C             0141   
+042F9C             0142   main_loop_tmr: ds 6
+042FA2             0143   framerate: equ 30
+042FA2             0144   
+042FA2             0145   new_game:
 042FA2             0146   
-042FA2             0147   new_game:
-042FA2             0148   
-042FA2 C9          0149   	ret
+042FA2 C9          0147   	ret
+042FA3             0148   
+042FA3             0149   main:
 042FA3             0150   
-042FA3             0151   main:
-042FA3             0152   
-042FA3             0153   
-042FA3             0154   main_loop:
-042FA3             0155   ; update global timestamp
-042FA3 CD C5 07 04 0156       call timestamp_tick
+042FA3             0151   
+042FA3             0152   main_loop:
+042FA3             0153   ; update global timestamp
+042FA3 CD C5 07 04 0154       call timestamp_tick
+042FA7             0155   
+042FA7             0156   ; move player
 042FA7             0157   
-042FA7             0158   ; move player
-042FA7             0159   
+042FA7             0158   
+042FA7             0159   ; move enemies
 042FA7             0160   
-042FA7             0161   ; move enemies
-042FA7             0162   
+042FA7             0161   
+042FA7             0162   ; render frame
 042FA7             0163   
-042FA7             0164   ; render frame
-042FA7             0165   
-042FA7             0166   @wait:
-042FA7 CD 61 1E 04 0167   	call set_keys
-042FAB FD 21 9C 2F 0168   	ld iy,main_loop_tmr
+042FA7             0164   @wait:
+042FA7 CD 61 1E 04 0165   	call set_keys
+042FAB FD 21 9C 2F 0166   	ld iy,main_loop_tmr
        04          
-042FB0 CD A8 07 04 0169   	call tmr_get
-042FB4 CA C0 2F 04 0170   	jp z,@continue
-042FB8 FA C0 2F 04 0171   	jp m,@continue
-042FBC C3 A7 2F 04 0172   	jp @wait
-042FC0             0173   @continue:
-042FC0             0174   
-042FC0             0175   ; reset main loop timer
-042FC0 FD 21 9C 2F 0176   	ld iy,main_loop_tmr
+042FB0 CD A8 07 04 0167   	call tmr_get
+042FB4 CA C0 2F 04 0168   	jp z,@continue
+042FB8 FA C0 2F 04 0169   	jp m,@continue
+042FBC C3 A7 2F 04 0170   	jp @wait
+042FC0             0171   @continue:
+042FC0             0172   
+042FC0             0173   ; reset main loop timer
+042FC0 FD 21 9C 2F 0174   	ld iy,main_loop_tmr
        04          
-042FC5 21 04 00 00 0177   	ld hl,120/framerate
-042FC9 CD 9A 07 04 0178   	call tmr_set
-042FCD             0179   
-042FCD             0180   ; check for escape key and quit if pressed
-042FCD             0181   	MOSCALL mos_getkbmap
+042FC5 21 04 00 00 0175   	ld hl,120/framerate
+042FC9 CD 9A 07 04 0176   	call tmr_set
+042FCD             0177   
+042FCD             0178   ; check for escape key and quit if pressed
+042FCD             0179   	MOSCALL mos_getkbmap
 042FCD 3E 1E       0001M  			LD	A, function
 042FCF 49 CF       0002M  			RST.LIS	08h
-042FD1             0182   ; 113 Escape
-042FD1 DD CB 0E 46 0183       bit 0,(ix+14)
-042FD5 20 02       0184   	jr nz,main_end
-042FD7             0185   @Escape:
-042FD7 18 CA       0186   	jr main_loop
-042FD9             0187   
-042FD9             0188   main_end:
-042FD9             0189   	; call do_outro
-042FD9             0190   
-042FD9 CD 66 0A 04 0191       call vdu_clear_all_buffers
-042FDD CD 99 0D 04 0192   	call vdu_disable_channels
-042FE1             0193   
-042FE1             0194   ; restore screen to something normalish
-042FE1 AF          0195   	xor a
-042FE2 CD 50 09 04 0196   	call vdu_set_screen_mode
-042FE6 CD 6B 08 04 0197   	call cursor_on
-042FEA C9          0198   	ret
+042FD1             0180   ; 113 Escape
+042FD1 DD CB 0E 46 0181       bit 0,(ix+14)
+042FD5 20 02       0182   	jr nz,main_end
+042FD7             0183   @Escape:
+042FD7 18 CA       0184   	jr main_loop
+042FD9             0185   
+042FD9             0186   main_end:
+042FD9             0187   	; call do_outro
+042FD9             0188   
+042FD9 CD 66 0A 04 0189       call vdu_clear_all_buffers
+042FDD CD 99 0D 04 0190   	call vdu_disable_channels
+042FE1             0191   
+042FE1             0192   ; restore screen to something normalish
+042FE1 AF          0193   	xor a
+042FE2 CD 50 09 04 0194   	call vdu_set_screen_mode
+042FE6 CD 6B 08 04 0195   	call cursor_on
+042FEA C9          0196   	ret
