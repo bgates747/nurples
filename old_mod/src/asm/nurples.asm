@@ -54,7 +54,7 @@ exit:
     include "vdu_buff.inc"
     include "vdu_plot.inc"
 	include "vdu_sprites.inc"
-	include "div_168_signed.inc"
+	include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
 	include "maths24.inc"
 ; App-specific includes
 	include "player.inc"
@@ -68,31 +68,83 @@ exit:
 	include "images_sprites.inc"
 	include "images_ui.inc"
 	include "files.inc"
+	; include "fixed24.inc"
 
-hello_world: defb "Hello, World!\n\r",0
-is_emulator: defb 0
-on_emulator: defb "Running on emulator.\r\n",0
-on_hardware: defb "Running on hardware.\r\n",0
+hello_world: asciz "Welcome to Purple Nurples!"
+loading_ui: asciz "Loading UI"
+loading_time: asciz "Loading time:"
+loading_complete: asciz "Press any key to continue."
 
 init:
-; ; set fonts
-; 	ld hl,font_nurples
-; 	ld b,144 ; loop counter for 96 chars
-; 	ld a,32 ; first char to define (space)
-; @loop:
-; 	push bc
-; 	push hl
-; 	push af
-; 	call vdu_define_character
-; 	pop af
-; 	inc a
-; 	pop hl
-; 	ld de,8
-; 	add hl,de
-; 	pop bc
-; 	djnz @loop
+; clear all buffers
+    call vdu_clear_all_buffers
 
 ; set up the display
+    ld a,8+128 ; 136   320   240   64    60hz double-buffered
+    call vdu_set_screen_mode
+    xor a
+    call vdu_set_scaling
+
+; ; enable additional audio channels
+; 	call vdu_enable_channels
+
+; set text background color
+	ld a,4 + 128
+	call vdu_colour_text
+
+; set text foreground color
+	ld a,47 ; aaaaff lavenderish
+	call vdu_colour_text
+
+; set gfx bg color
+	xor a ; plotting mode 0
+	ld c,4+128 ; dark blue bg
+	call vdu_gcol
+	call vdu_clg
+
+; set the cursor off
+	call vdu_cursor_off
+
+; VDU 28, left, bottom, right, top: Set text viewport **
+; MIND THE LITTLE-ENDIANESS
+; inputs: c=left,b=bottom,e=right,d=top
+	ld c,0 ; left
+	ld d,29 ; top
+	ld e,39 ; right
+	ld b,29; bottom
+	call vdu_set_txt_viewport
+
+; print loading ui message
+	ld hl,loading_ui
+	call printString
+	call vdu_flip
+
+; load UI images
+	call load_ui_images
+
+; ; load fonts ; TODO
+; 	call load_font_rc
+
+; load sprites
+	call img_load_init ; sets up the animated load screen
+	call load_sprite_images
+
+; ; load sound effects ; TODO
+; 	ld bc,SFX_num_buffers
+; 	ld hl,SFX_buffer_id_lut
+; 	ld (cur_buffer_id_lut),hl
+; 	ld hl,SFX_load_routines_table
+; 	ld (cur_load_jump_table),hl
+; 	call sfx_load_main
+
+; print loading complete message and wait for user keypress
+	call vdu_cls
+	ld hl,loading_complete
+	call printString
+	call vdu_flip 
+	call waitKeypress
+
+; set up display for gameplay
     ld a,8
     call vdu_set_screen_mode
     xor a
@@ -100,36 +152,7 @@ init:
 	ld bc,32
 	ld de,16
 	call vdu_set_gfx_origin
-
-	; call vdu_init ; grab a bunch of sysvars and stuff ; TODO: DEPRECATE
 	call vdu_cursor_off
-
-; ; TESTING SOME MATHS
-; 	ld bc,0x00A000 ; 160
-; 	ld de,0x007800 ; 120
-; 	ld ix,0x011F80 ; 287.5
-; 	ld iy,0xFF9B2A ; -100.836
-; 	;  hl=0x00FF00 255
-; 	call distance168
-; 	call dumpRegistersHex
-; 	halt
-; ; END TESTING SOME MATHS
-
-; ; print a hello message
-; 	ld hl,hello_world
-; 	call printString
-
-; load the bitmaps
-; 	call bmp2_init
-	call load_ui_images
-	call img_load_init ; sets up the animated load screen
-	call load_sprite_images
-
-; initialize the first level
-	xor a
-	ld (cur_level),a
-	call init_level
-
 ; set gfx viewport to scrolling window
 	ld bc,0
 	ld de,0
@@ -137,36 +160,16 @@ init:
 	ld iy,239-16
 	call vdu_set_gfx_viewport
 
-; initialize sprites
-	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
-	xor a
-@sprite_loop:
-	push af
-	call vdu_sprite_select
-	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
-	call vdu_sprite_add_buff
-	pop af
-	inc a
-	cp table_max_records+1 ; tack on sprites for player and laser
-	jr nz,@sprite_loop
-	inc a
-	call vdu_sprite_activate
+	ret
 
-; define player sprite
-	ld a,16
-	call vdu_sprite_select
-	call vdu_sprite_clear_frames
-	ld hl,BUF_SHIP_0L
-	ld bc,3 ; three bitmaps for player ship
-@sprite_player_loop:
-	push bc
-	push hl
-	call vdu_sprite_add_buff
-	pop hl
-	inc hl
-	pop bc
-	djnz @sprite_player_loop
-	call vdu_sprite_show
+new_game:
+; initialize sprites
+	call sprites_init
+
+; initialize the first level
+	xor a
+	ld (cur_level),a
+	call init_level
 
 ; initialize player
 	call player_init
@@ -181,7 +184,6 @@ init:
 
 	ret
 
-; new_game:
 ; ; ###### INITIALIZE GAME #######
 ; ; clear the screen
 ;     ld a,3
@@ -250,6 +252,10 @@ speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 speed_player: equ 0x000300 ; 3 pixels per frame
 
 main:
+; start a new game
+	call new_game
+
+main_loop:
 ; move the background down one pixel
 	ld a,2 ; current gfx viewport
 	ld l,2 ; direction=down
@@ -276,7 +282,7 @@ main:
     cp 27                               ; check if 27 (ascii code for ESC)   
     jp z, main_end                     ; if pressed, jump to exit
 
-    jp main
+    jp main_loop
 
 main_end:
     call vdu_cursor_on

@@ -1,3 +1,128 @@
+;------------------------------------------------------------------------
+; Scratch area for calculations
+;------------------------------------------------------------------------
+scratch1:	dw24	0	;bit manipulation buffer 1
+scratch2:	dw24	0	;bit manipulation buffer 2
+
+; absolute value of hlu
+; returns: abs(hlu), flags set according to the incoming sign of hlu:
+;         s1,z0,pv0,n1,c0 if hlu was negative
+;         s0,z1,pv0,n1,c0 if hlu was zero
+;         s0,z0,pv0,n1,c0 if hlu was positive
+; destroys: a
+hlu_abs:
+    add hl,de
+    or a
+    sbc hl,de 
+    jp m,@is_neg
+    ret         ; hlu is positive or zero so we're done
+@is_neg:
+    push af     ; otherwise, save current flags for return
+    call neg_hlu ; negate hlu
+    pop af      ; get back flags
+    ret
+
+; flip the sign of hlu
+; inputs: hlu
+; returns: 0-hlu, flags set appropriately for the result:
+;         s1,z0,pv0,n1,c1 if result is negative
+;         s0,z1,pv0,n1,c0 if result is zero
+;         s0,z0,pv0,n1,c1 if result is positive
+; destroys a
+neg_hlu:
+    push de     ; save de
+    ex de,hl    ; put hl into de
+    ld hl,0     ; clear hl
+    xor a       ; clear carry
+    sbc hl,de   ; 0-hlu = -hlu
+    pop de      ; get de back
+    ret         ; easy peasy
+
+;------------------------------------------------------------------------
+; divide hlu by 2, inspired by above
+;------------------------------------------------------------------------
+hlu_div2:
+	ld		(scratch1),hl
+	ld		hl,scratch1+2
+	rr		(hl)
+	dec		hl
+	rr		(hl)
+	dec		hl
+	rr		(hl)
+	inc		hl
+	inc		hl
+    ld hl,(scratch1)
+    ret
+
+; this is my little hack to divide by 16
+hlu_div16:
+    xor a
+    add hl,hl
+    rla
+    add hl,hl
+    rla
+    add hl,hl
+    rla
+    add hl,hl
+    rla
+    ld (@scratch),hl
+    ld (@scratch+3),a
+    ld hl,(@scratch+1) 
+    ret
+@scratch: ds 4
+
+; hlu signed division by 256
+; returns: hlu / 256
+; destroys: af
+hlu_sdiv256:
+    xor a ; assume hl is positive
+    ld (@buffer),hl
+    sign_hlu
+    jp p,@hl_pos
+    dec a
+@hl_pos:
+    ld (@buffer+3),a
+    ld hl,(@buffer+1)
+    ret
+@buffer: ds 4
+
+; hlu 1 byte right shift, unsigned
+; returns: hlu / 256, fractional portion in a
+; destroys: af
+hlu_udiv256:
+	xor a
+	ld (@buffer+3),a
+	ld a,l ; save the fractional portion
+	ld (@buffer),hl
+	ld hl,(@buffer+1)
+	ret
+@buffer: ds 4
+
+    MACRO hlu_mul256
+        add hl,hl ; * 2
+        add hl,hl ; * 4
+        add hl,hl ; * 8
+        add hl,hl ; * 16 
+        add hl,hl ; * 32
+        add hl,hl ; * 64
+        add hl,hl ; * 128
+        add hl,hl ; * 256
+    ENDMACRO
+
+; compute the modulo of hlu by deu
+; outputs: hlu = hlu % deu
+; destroys: f, hl
+hlu_mod:
+	or a ; clear carry
+@loop:
+    sbc hl,de
+    jp c, @end 
+    jp @loop
+@end:
+    add hl,de 
+	ret
+
+
 add_bcd_arg1: db #00,#00,#00,#00
 add_bcd_arg2: db #00,#00,#00,#00
 

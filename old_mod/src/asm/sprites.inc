@@ -115,3 +115,38 @@ table_deactivate_sprite:
     ld ix,table_active_sprites
     dec (ix)
     ret
+
+sprites_init:
+; initialize sprites
+	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
+	xor a
+@sprite_loop:
+	push af
+	call vdu_sprite_select
+	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
+	call vdu_sprite_add_buff
+	pop af
+	inc a
+	cp table_max_records+1 ; tack on sprites for player and laser
+	jr nz,@sprite_loop
+	inc a
+	call vdu_sprite_activate
+
+; define player sprite
+	ld a,(player_id)
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_SHIP_0L
+	ld bc,3 ; three bitmaps for player ship
+@sprite_player_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @sprite_player_loop
+	call vdu_sprite_show
+
+; all done
+    ret
