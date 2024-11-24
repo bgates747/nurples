@@ -31,6 +31,7 @@ exit:
 
 ; API includes
     include "mos_api.inc"
+	include "macros.inc" ; DEBUG
     include "functions.inc"
 	include "files.inc"
 	include "fonts_bmp.inc"
@@ -46,8 +47,9 @@ exit:
 
 ; Application includes
 	include "font_rc.inc"
-    include "images.inc"
-    include "images_sprites.inc"
+    ; include "images.inc"
+    ; include "images_sprites.inc"
+	include "images2.asm" ; DEBUG
 	include "images_ui.inc"
 	include "player.inc"
 	include "laser.inc"
@@ -100,25 +102,25 @@ init:
 ; 	ld b,29; bottom
 ; 	call vdu_set_txt_viewport
 
-; print loading ui message
-	ld hl,loading_ui
-	call printString
-	call vdu_flip
+; ; print loading ui message
+; 	ld hl,loading_ui
+; 	call printString
+; 	call vdu_flip
 
-; load UI images
-	call load_ui_images
+; ; load UI images
+; 	call load_ui_images
 
-; ; load fonts ; TODO
-; 	call load_font_rc
+; ; ; load fonts ; TODO
+; ; 	call load_font_rc
 
-; initialize animated splash screen during assets loading
-	call img_load_init
+; ; initialize animated splash screen during assets loading
+; 	call img_load_init
 
-; load sprites
-	ld bc,sprites_num_images
-	ld hl,sprites_image_list
-	ld (cur_image_list),hl
-	call img_load_main
+; ; load sprites
+; 	ld bc,sprites_num_images
+; 	ld hl,sprites_image_list
+; 	ld (cur_image_list),hl
+; 	call img_load_main
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers
@@ -128,47 +130,12 @@ init:
 ; 	ld (cur_load_jump_table),hl
 ; 	call sfx_load_main
 
-; initialize sprites
-	call vdu_sprite_reset
-	xor a ; start at spriteId 0
-@sprite_loop:
-	push af
-	call vdu_sprite_select
-	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
-	call vdu_sprite_add_buff
-	pop af ; spriteId
-	; call printHexA ; DEBUG
-	inc a ; bump it
-	cp table_max_records ; done?
-	jr nz,@sprite_loop
-
-	; call waitKeypress ; DEBUG
-
-; define player sprite
-	ld a,(player_id) ; this is always player spriteId
-	call vdu_sprite_select
-	call vdu_sprite_clear_frames
-	ld hl,BUF_SHIP_0L
-	ld bc,3 ; three bitmaps for player ship
-@sprite_player_loop:
-	push bc
-	push hl
-	call vdu_sprite_add_buff
-	pop hl
-	inc hl
-	pop bc
-	djnz @sprite_player_loop
-
-; activate sprites
-	ld a,table_max_records
-	call vdu_sprite_activate
-
-; print loading complete message and wait for user keypress
-	call vdu_cls
-	ld hl,loading_complete
-	call printString
-	call vdu_flip 
-	call waitKeypress
+; ; print loading complete message and wait for user keypress
+; 	call vdu_cls
+; 	ld hl,loading_complete
+; 	call printString
+; 	call vdu_flip 
+; 	call waitKeypress
 
 ; set up display for gameplay
     ld a,8
@@ -186,11 +153,56 @@ init:
 	ld iy,239-16
 	call vdu_set_gfx_viewport
 
+; load sprite bitmaps
+	call bmp2_init
+	
+; initialize sprites
+	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
+	xor a
+@sprite_loop:
+	push af
+	call vdu_sprite_select
+	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
+	call vdu_sprite_add_buff
+	pop af
+	inc a
+	cp table_max_records+1 ; tack on sprites for player and laser
+	jr nz,@sprite_loop
+	inc a
+	call vdu_sprite_activate
+
+; define player sprite
+	ld a,16
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_SHIP_0L
+	ld bc,3 ; three bitmaps for player ship
+@sprite_player_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @sprite_player_loop
+
 ; initialization done
 	ret
 
 main:
-	call new_game
+	; call new_game
+
+; initialize player
+	call player_init
+	call vdu_sprite_show
+
+; spawn an enemy sprite
+	ld b,table_max_records
+@spawn_enemy_loop:
+	push bc
+	call enemy_init_from_landing_pad
+	pop bc
+	djnz @spawn_enemy_loop
 
 main_loop:
 ; move player

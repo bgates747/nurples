@@ -1,6 +1,3 @@
-; ######## PLAYER CONSTANTS ########
-speed_player: equ 0x000300 ; 3 pixels per frame
-
 ; ######## GAME STATE VARIABLES #######
 ; THESE MUST BE IN THIS ORDER FOR new_game TO WORK PROPERLY
 player_score: db 0x00,#00,#00 ; bcd
@@ -40,7 +37,6 @@ player_points:           db     0x00 ; 1 bytes not currently used
 player_shield_damage:    db     0x00 ; 1 bytes not currently used
 player_end_variables: ; for when we want to traverse this table in reverse
 
-
 ; set initial player position
 ; inputs: none,everything is hardcoded
 ; outputs: player_x/y set to bottom-left corner of screen
@@ -76,7 +72,7 @@ player_input:
 	ld (player_xvel),hl
 	ld (player_yvel),hl
 ; make ship the active sprite
-    ld a,(player_id)
+    ld a,table_max_records ; this is always player spriteId
     call vdu_sprite_select
 ; check for keypresses and branch accordingly
 ; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
@@ -256,7 +252,7 @@ player_input:
 ; @y_ok:
 ;     ld (player_y),hl
 ; ; draw player at updated position
-;     ld a,(player_id)
+;     ld a,table_max_records ; this is always player spriteId
 ;     call vdu_sprite_select
 ;     ld hl,(player_xvel) ; we do a cheeky little hack
 ;     call get_sign_hlu ; to set the proper animation
@@ -287,7 +283,7 @@ player_input:
 ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
 ;     ld (player_move_timer),a
 ; kill_player_loop:
-;     call vdu_vblank
+;     call vsync
 ;     ld a,(player_move_timer)
 ;     dec a
 ;     ld (player_move_timer),a
@@ -330,8 +326,8 @@ player_input:
 ; ; move it
 ;     call player_move_calc
 ; player_draw:
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
-;     call vdu_bmp_draw ; TODO: convert to vdu_bmp_plot
+;     call vdu_bmp_select
+;     call vdu_bmp_draw
 ; player_move_done:
 ;     ; write updated x,y coordinates back to player table
 ;     ld hl,(sprite_x)
