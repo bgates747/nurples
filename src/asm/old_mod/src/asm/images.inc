@@ -26,7 +26,18 @@ load_ui_images:
 	djnz @loop
 	ret
 
-; inputs: bc is the number of images to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
+load_sprite_images:
+; initialize image loading variables
+	ld hl,0
+	ld (cur_file_idx),hl
+	ld hl,sprites_image_list
+	ld (cur_image_list),hl
+	ld bc,sprites_num_images
+; load images
+	call img_load_main
+	ret
+
+; inputs: bc is the number of images to load, cur_image_list set
 img_load_main:
 	xor a
     ld (cur_file_idx),a

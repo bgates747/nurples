@@ -44,7 +44,7 @@ exit:
 
 ; after this we can put includes in any order we wish, even in between
 ; code blocks if there is any program-dependent or asethetic reason to do so
-	include "src/asm/images2.inc" ; deprecated in favor of images.inc, images_sprites.inc, images_ui.inc
+	; include "src/asm/images2.inc" ; deprecated in favor of images.inc, images_sprites.inc, images_ui.inc
 	include "src/asm/fonts.inc"
 	include "src/asm/levels.inc"
 	include "src/asm/sprites.inc"
@@ -65,9 +65,9 @@ exit:
 	include "src/asm/timer.inc"
 
 ; new includes
-	; include "src/asm/images.inc"
-	; include "src/asm/images_sprites.inc"
-	; include "src/asm/images_ui.inc"
+	include "src/asm/images.inc"
+	include "src/asm/images_sprites.inc"
+	include "src/asm/images_ui.inc"
 	include "src/asm/files.inc"
 
 hello_world: defb "Hello, World!\n\r",0
@@ -121,7 +121,10 @@ init:
 ; 	call printString
 
 ; load the bitmaps
-	call bmp2_init
+; 	call bmp2_init
+	call load_ui_images
+	call img_load_init ; sets up the animated load screen
+	call load_sprite_images
 
 ; initialize the first level
 	xor a
