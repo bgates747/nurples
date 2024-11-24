@@ -44,19 +44,17 @@ exit:
 
 ; after this we can put includes in any order we wish, even in between
 ; code blocks if there is any program-dependent or asethetic reason to do so
-	include "src/asm/images2.inc"
+	include "src/asm/images2.inc" ; deprecated in favor of images.inc, images_sprites.inc, images_ui.inc
 	include "src/asm/fonts.inc"
 	include "src/asm/levels.inc"
-
 	include "src/asm/sprites.inc"
 ; API includes
     include "src/asm/mos_api.inc"
     include "src/asm/functions.inc"
     include "src/asm/vdu.inc"
     include "src/asm/vdu_buff.inc"
-    ; include "src/asm/vdu_plot.inc"
-	; include "src/asm/vdu_sprites.inc"
-	; include "src/asm/vdp.inc"
+    include "src/asm/vdu_plot.inc"
+	include "src/asm/vdu_sprites.inc"
 	include "src/asm/div_168_signed.inc"
 	include "src/asm/maths24.inc"
 ; App-specific includes
@@ -64,8 +62,13 @@ exit:
 	include "src/asm/tiles.inc"
 	include "src/asm/enemies.inc"
 	include "src/asm/laser.inc"
-
 	include "src/asm/timer.inc"
+
+; new includes
+	; include "src/asm/images.inc"
+	; include "src/asm/images_sprites.inc"
+	; include "src/asm/images_ui.inc"
+	include "src/asm/files.inc"
 
 hello_world: defb "Hello, World!\n\r",0
 is_emulator: defb 0
@@ -100,7 +103,7 @@ init:
 	call vdu_set_gfx_origin
 
 	; call vdu_init ; grab a bunch of sysvars and stuff ; TODO: DEPRECATE
-	call cursor_off
+	call vdu_cursor_off
 
 ; ; TESTING SOME MATHS
 ; 	ld bc,0x00A000 ; 160
@@ -274,7 +277,7 @@ main:
     jp main
 
 main_end:
-    call cursor_on
+    call vdu_cursor_on
 	ret
 
 
@@ -374,7 +377,7 @@ main_end:
 ;     ld (sprite_animation),a
 ;     ld a,#56 ; top of visible screen
 ;     ld (sprite_y+1),a
-;     call vdu_bmp_select
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 ;     ld a,(player_ships)
 ;     dec a ; we draw one fewer ships than lives
 ;     ret z ; nothing to draw here, move along
@@ -384,7 +387,7 @@ main_end:
 ;     ld (sprite_x+1),a
 ;     push af
 ;     push bc
-;     call vdu_bmp_draw
+;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ;     pop bc
 ;     pop af
 ;     sub 10

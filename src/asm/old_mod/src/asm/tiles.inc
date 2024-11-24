@@ -138,7 +138,7 @@ init_level:
 ;     ld a,#48 ; top of screen + 1/2 tile height
 ;     ld (sprite_y+1),a ; just the integer part
 ;     ld (sprite_base_bufferId),hl
-;     call vdu_bmp_select
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 ;     call table_add_record
 ;     call sprite_variables_from_stack
 ;     ld a,#FF ; lets calling proc know we loaded an active tile
@@ -210,6 +210,6 @@ move_active_tiles:
     ret ; debug
 move_active_tiles_draw_sprite:
     ld (sprite_y+1),a ; update tile y position integer part
-    call vdu_bmp_select
-    call vdu_bmp_draw ; draw it
+    ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+    ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
     ret ; and done

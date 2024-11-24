@@ -34,99 +34,6 @@
 ; position on-screen until either another drawing operation is 
 ; performed or an explicit VDU 23, 27, 15 command is performed.
 
-; Here are the sprite commands:
-;
-; VDU 23, 27, 4,  n: Select sprite n
-; inputs: a is the 8-bit sprite id
-; vdu_sprite_select:
-
-; VDU 23, 27, 5:  Clear frames in current sprite
-; inputs: none
-; prerequisites: vdu_sprite_select
-; vdu_sprite_clear_frames:
-
-; VDU 23, 27, 6,  n: Add bitmap n as a frame to current sprite (where bitmap's buffer ID is 64000+n)
-; inputs: a is the 8-bit bitmap number
-; prerequisites: vdu_sprite_select
-; vdu_sprite_add_bmp:
-
-; VDU 23, 27, 7,  n: Activate n sprites
-; inputs: a is the number of sprites to activate
-; vdu_sprite_activate:
-
-; VDU 23, 27, 8:  Select next frame of current sprite
-; inputs: none
-; prerequisites: vdu_sprite_select
-; vdu_sprite_next_frame:
-
-; VDU 23, 27, 9:  Select previous frame of current sprite
-; inputs: none
-; prerequisites: vdu_sprite_select
-; vdu_sprite_prev_frame:
-
-; VDU 23, 27, 10, n: Select the nth frame of current sprite
-; inputs: a is frame number to select
-; prerequisites: vdu_sprite_select
-; vdu_sprite_select_frame:
-
-; VDU 23, 27, 11: Show current sprite
-; inputs: none
-; prerequisites: vdu_sprite_select
-; vdu_sprite_show:
-
-; VDU 23, 27, 12: Hide current sprite
-; inputs: none
-; prerequisites: vdu_sprite_select
-; vdu_sprite_hide:
-
-; VDU 23, 27, 13, x; y;: Move current sprite to pixel position x, y
-; inputs: bc is x coordinate, de is y coordinate
-; prerequisites: vdu_sprite_select
-; vdu_sprite_move_abs:
-;
-; USING 16.8 FIXED POINT COORDINATES
-; inputs: ub.c is x coordinate, ud.e is y coordinate
-;   the fractional portiion of the inputs are truncated
-;   leaving only the 16-bit integer portion
-; prerequisites: vdu_sprite_select
-; vdu_sprite_move_abs168:
-
-; VDU 23, 27, 14, x; y;: Move current sprite by x, y pixels
-; inputs: bc is x coordinate, de is y coordinate
-; prerequisites: vdu_sprite_select
-; vdu_sprite_move_rel:
-;
-; USING 16.8 FIXED POINT COORDINATES
-; inputs: ub.c is dx, ud.e is dy
-;   the fractional portiion of the inputs are truncated
-;   leaving only the 16-bit integer portion
-; prerequisites: vdu_sprite_select
-; vdu_sprite_move_rel168:
-
-; VDU 23, 27, 15: Update the sprites in the GPU
-; inputs: none
-; vdu_sprite_update:
-
-; VDU 23, 27, 16: Reset bitmaps and sprites and clear all data
-; inputs: none
-; vdu_sprite_bmp_reset:
-
-; VDU 23, 27, 17: Reset sprites (only) and clear all data
-; inputs: none
-; vdu_sprite_reset:
-
-; VDU 23, 27, 18, n: Set the current sprite GCOL paint mode to n **
-; inputs: a is the GCOL paint mode
-; prerequisites: vdu_sprite_select
-; vdu_sprite_set_gcol:
-
-; VDU 23, 27, &26, n;: Add bitmap n as a frame to current sprite using a 16-bit buffer ID
-; inputs: hl=bufferId
-; prerequisites: vdu_sprite_select
-; vdu_sprite_add_buff:
-
-@dummy_label: ; dummy label to serve as a break from the above comments and the below code
-
 ; VDU 23, 27, 4, n: Select sprite n
 ; inputs: a is the 8-bit sprite id
 vdu_sprite_select:
@@ -165,6 +72,7 @@ vdu_sprite_add_bmp:
 
 ; VDU 23, 27, 7, n: Activate n sprites
 ; inputs: a is the number of sprites to activate
+; prerequisites: each sprite activated must have at least one frame attached to it
 vdu_sprite_activate:
     ld (@num),a        
     ld hl,@cmd         
@@ -349,8 +257,7 @@ vdu_sprite_set_gcol:
 @mode: db 0x00 
 @end:
 
-; VDU 23, 27, &26, n;: Add bitmap bufferId 
-;     as a frame to current sprite using a 16-bit buffer ID
+; VDU 23, 27, &26, n;: Add bitmap n as a frame to current sprite using a 16-bit buffer ID
 ; inputs: hl=bufferId
 ; prerequisites: vdu_sprite_select
 vdu_sprite_add_buff:

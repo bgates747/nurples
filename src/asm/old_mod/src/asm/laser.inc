@@ -82,8 +82,8 @@ laser_end_variables: ; for when we want to traverse this table in reverse
 ;     ret
 ; ; otherwise,finally draw the frikken laser
 ; finally_draw_the_frikken_laser:
-;     call vdu_bmp_select
-;     call vdu_bmp_draw
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ; ; all done
 ;     ret
 

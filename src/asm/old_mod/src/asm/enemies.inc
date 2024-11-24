@@ -443,8 +443,8 @@ enemy_init_from_landing_pad:
 ;     ; fall through
 
 ; move_fireballs_draw:
-;     call vdu_bmp_select
-;     call vdu_bmp_draw
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ;     call check_collisions
 ;     jp move_enemies_loop_return
 
@@ -572,7 +572,7 @@ kill_nurple:
 ;     ld (sprite_animation_timer),a
 ;     xor a
 ;     ld (sprite_move_timer),a
-;     call vdu_bmp_select
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 ; ; fall through to next_explosion
 ; next_explosion:
 ;     ld a,(sprite_animation)
@@ -590,8 +590,8 @@ kill_nurple:
 ;     dec (hl) ; if timer is zero,we do next animation
 ;     jr z,next_explosion
 ;     ;otherwise we fall through to draw the current one
-;     call vdu_bmp_select
-;     call vdu_bmp_draw
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ;     ret ; now we go back to caller
 ; done_explosion:
     ld a,%10000000 ; high bit set is non-specific kill-me flag

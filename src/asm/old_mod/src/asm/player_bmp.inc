@@ -313,8 +313,8 @@ player_input:
 ; ; move it
 ;     call player_move_calc
 ; player_draw:
-;     call vdu_bmp_select
-;     call vdu_bmp_draw
+;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ; player_move_done:
 ;     ; write updated x,y coordinates back to player table
 ;     ld hl,(sprite_x)
