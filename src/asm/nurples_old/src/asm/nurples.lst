@@ -1,0 +1,107 @@
+PC     Output      Line
+040000             0001   ; macro files generally want to go here, before any of the other includes
+040000             0002   ; which call the macro, otherwise the assembler won't have the macro
+040000             0003   ; available to run when it is called, and will fail with something
+040000             0004   ; along the lines of 'invalid label' at such and such a line
+040000             0005       include "../agon_api/asm/macros.inc"
+040000             0001*  
+040000             0002*  ; https://agonconsole8.github.io/agon-docs/VDP---Bitmaps-API.html
+040000             0003*  ; Macro for loading bitmaps to VDP buffers
+040000             0004*  	macro LOADBMP n,width,height,file
+040000             0005*  	db 23,27,0  ; VDU 23, 27, 0 select bitmap
+040000             0006*  	db n      ; specify target bitmap number (8-bits)
+040000             0007*  	db 23,27,1  ; load bitmap data
+040000             0008*      dw width    ; in pixels
+040000             0009*      dw height   ; in pixels
+040000             0010*  	incbin file ; path to file containing binary bitmap data
+040000             0011*  	endmacro
+040000             0012*  
+040000             0013*  ; https://discord.com/channels/1158535358624039014/1158536809916149831/1208492884861653145
+040000             0014*  	; load an rgba2222 bitmap to a 16-bit bufferId
+040000             0015*  	macro LOADBMPBUFFER2 bufferId,width,height,file
+040000             0016*  
+040000             0017*      ; Clear buffer
+040000             0018*      db 23,0,0xA0
+040000             0019*      dw bufferId
+040000             0020*      db 2
+040000             0021*  
+040000             0022*      db 23,27,0x20 ; select buffer VDU 23, 27, &20, bufferId;
+040000             0023*      dw bufferId
+040000             0024*  
+040000             0025*      ; Upload data :: VDU 23, 0 &A0, bufferId; 0, length; <buffer-data>
+040000             0026*      db 23,0,0xA0
+040000             0027*      dw bufferId
+040000             0028*      db 0
+040000             0029*  	dw width * height ; length of data in bytes
+040000             0030*      incbin file ; bitmap data
+040000             0031*  
+040000             0032*      ;Create bitmap from selected buffer :: VDU 23, 27, &21, w; h; format
+040000             0033*      db 23,27,0x21
+040000             0034*      dw width ; in pixels
+040000             0035*      dw height ; in pixels
+040000             0036*      db 1 ; bitmap format: 1 = RGBA2222 (1-bytes per pixel)
+040000             0037*      endmacro
+040000             0038*  
+040000             0039*  	; load an rgba8888 bitmap to a 16-bit bufferId
+040000             0040*  	macro LOADBMPBUFFER8 bufferId,width,height,file
+040000             0041*  
+040000             0042*      ; Clear buffer
+040000             0043*      db 23,0,0xA0
+040000             0044*      dw bufferId
+040000             0045*      db 2
+040000             0046*  
+040000             0047*      db 23,27,0x20 ; select buffer VDU 23, 27, &20, bufferId;
+040000             0048*      dw bufferId
+040000             0049*  
+040000             0050*      ; Upload data :: VDU 23, 0 &A0, bufferId; 0, length; <buffer-data>
+040000             0051*      db 23,0,0xA0
+040000             0052*      dw bufferId
+040000             0053*      db 0
+040000             0054*  	dw width * height * 4 ; length of data in bytes
+040000             0055*      incbin file ; bitmap data
+040000             0056*  
+040000             0057*      ;Create bitmap from selected buffer :: VDU 23, 27, &21, w; h; format
+040000             0058*      db 23,27,0x21
+040000             0059*      dw width ; in pixels
+040000             0060*      dw height ; in pixels
+040000             0061*      db 0 ; bitmap format: 0 = RGBA8888 (4-bytes per pixel)
+040000             0062*      endmacro
+040000             0006   
+040000             0007   ;MOS INITIALIATION MUST GO HERE BEFORE ANY OTHER CODE
+040000             0008       .assume adl=1
+040000             0009       .org 0x040000
+040000             0010   
+040000 C3 45 00 04 0011       jp start
+040004             0012   
+040004 FF FF FF FF 0013       .align 64
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+040040 4D 4F 53    0014       .db "MOS"
+040043 00          0015       .db 00h
+040044 01          0016       .db 01h
+040045             0017   
+040045             0018   start:
+040045 F5          0019       push af
+040046 C5          0020       push bc
+040047 D5          0021       push de
+040048 DD E5       0022       push ix
+04004A FD E5       0023       push iy
+04004C             0024   
+04004C             0025   ; ###############################################
+04004C             0026   ; ez80asmLinker.py loader code goes here if used.
+04004C             0027   ; ###############################################
+04004C             0028   
+04004C             0029   ; ###############################################
+04004C CD 00 00 00 0030   	call	init			; Initialization code

@@ -1,0 +1,23 @@
+PC     Output      Line
+040000             0001      macro multiply width,height
+040000             0002      ld b, width
+040000             0003      ld c, height
+040000             0004      mlt bc
+040000             0005      ld a,b
+040000             0006      ld (@size), a
+040000             0007      ld a,c
+040000             0008      ld (@size+1), a
+040000             0009  @size: dw 0x0000
+040000             0010      endmacro
+040000             0011  
+040000             0012  main:
+040000             0013      multiply 3,4
+040000 06 03       0001M     ld b, width
+040002 0E 04       0002M     ld c, height
+040004 ED 4C       0003M     mlt bc
+040006 78          0004M     ld a,b
+040007 32 10 00 04 0005M     ld (@size), a
+04000B 79          0006M     ld a,c
+04000C 32 11 00 04 0007M     ld (@size+1), a
+040010 00 00       0008M @size: dw 0x0000
+040012 C3 00 00 04 0014      jp main
