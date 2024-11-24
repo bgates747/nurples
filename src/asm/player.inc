@@ -45,18 +45,11 @@ player_end_variables: ; for when we want to traverse this table in reverse
 ; outputs: player_x/y set to bottom-left corner of screen
 ; destroys: a
 player_init:
-	ld a,table_max_records ; this is always player spriteId
+	ld a,(player_id)
 	call vdu_sprite_select
-    call vdu_sprite_clear_frames
-    ld hl,BUF_SHIP_0L
-    call vdu_sprite_add_buff
-    ld hl,BUF_SHIP_1C
-    call vdu_sprite_add_buff
-    ld hl,BUF_SHIP_2R
-    call vdu_sprite_add_buff
     ld bc,0
     ld (player_x),bc
-    ld de,0x00DF00
+    ld de,223*256
     ld (player_y),de
     call vdu_sprite_move_abs168
     call vdu_sprite_show
@@ -75,7 +68,7 @@ player_input:
 	ld (player_xvel),hl
 	ld (player_yvel),hl
 ; make ship the active sprite
-    ld a,table_max_records ; this is always player spriteId
+    ld a,(player_id)
     call vdu_sprite_select
 ; check for keypresses and branch accordingly
 ; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
@@ -255,7 +248,7 @@ player_input:
 ; @y_ok:
 ;     ld (player_y),hl
 ; ; draw player at updated position
-;     ld a,table_max_records ; this is always player spriteId
+;     ld a,(player_id)
 ;     call vdu_sprite_select
 ;     ld hl,(player_xvel) ; we do a cheeky little hack
 ;     call get_sign_hlu ; to set the proper animation

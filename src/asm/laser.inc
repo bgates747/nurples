@@ -1,7 +1,7 @@
 ; ##### LASER SPRITE PARAMETERS #####
 ; uses the same offsets from its table base as the main sprite table:
 laser_start_variables: ; label marking beginning of table
-laser_id:               db table_max_records+1
+laser_id:               db table_max_records-1
 laser_type:             db     0x00 ; 1 bytes currently not used
 laser_base_bufferId:    dl BUF_LASER_A ; 3 bytes bitmap bufferId
 laser_move_program:     dl 0x000000 ; 3 bytes not currently used

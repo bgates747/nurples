@@ -57,14 +57,11 @@ img_load_main_loop:
 	call move_logo
 
 ; print current filename
-	ld c,3 ; x
-	ld b,0 ; y
-	call vdu_move_cursor
 	ld hl,(cur_filename)
 	call printString
 
 ; flip the framebuffer
-	call vdu_flip
+	; call vdu_flip
 
 ; decrement loop counter
     pop bc

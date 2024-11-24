@@ -22,7 +22,7 @@ respawn_countdown:
     or a
     sbc hl,de 
     ret nz
-    ld b,table_max_records
+    ld b,table_max_records-1
 @respawn_loop:
     push bc
     call enemy_init_from_landing_pad
@@ -49,7 +49,7 @@ move_enemies:
 move_enemies_do:
 ; initialize pointers and loop counter
     ld iy,table_base ; set iy to first record in table
-    ld b,table_max_records ; loop counter
+    ld b,table_max_records-1 ; loop counter
 move_enemies_loop:
     ld (table_pointer),iy ; update table pointer
     push bc ; backup loop counter

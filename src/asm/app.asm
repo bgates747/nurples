@@ -66,18 +66,10 @@ init:
     call vdu_clear_all_buffers
 
 ; set up the display
-    ld a,8+128 ; 136   320   240   64    60hz double-buffered
+    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
-	
-; start generic stopwatch to time setup loop 
-; so we can determine if we're running on emulator or hardware
-	call stopwatch_set
-
-; initialize global timestamp
-    ld hl,(ix+sysvar_time) ; ix was set by stopwatch_start
-    ld (timestamp_now),hl
 
 ; enable additional audio channels
 	call vdu_enable_channels
@@ -99,14 +91,14 @@ init:
 ; set the cursor off
 	call vdu_cursor_off
 
-; VDU 28, left, bottom, right, top: Set text viewport **
-; MIND THE LITTLE-ENDIANESS
-; inputs: c=left,b=bottom,e=right,d=top
-	ld c,0 ; left
-	ld d,29 ; top
-	ld e,39 ; right
-	ld b,29; bottom
-	call vdu_set_txt_viewport
+; ; VDU 28, left, bottom, right, top: Set text viewport **
+; ; MIND THE LITTLE-ENDIANESS
+; ; inputs: c=left,b=bottom,e=right,d=top
+; 	ld c,0 ; left
+; 	ld d,29 ; top
+; 	ld e,39 ; right
+; 	ld b,29; bottom
+; 	call vdu_set_txt_viewport
 
 ; print loading ui message
 	ld hl,loading_ui
@@ -136,24 +128,24 @@ init:
 ; 	ld (cur_load_jump_table),hl
 ; 	call sfx_load_main
 
-
 ; initialize sprites
 	call vdu_sprite_reset
-	xor a
+	xor a ; start at spriteId 0
 @sprite_loop:
 	push af
 	call vdu_sprite_select
 	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
 	call vdu_sprite_add_buff
-	pop af
-	inc a
-	cp table_max_records+1 ; tack on sprites for player and laser
+	pop af ; spriteId
+	; call printHexA ; DEBUG
+	inc a ; bump it
+	cp table_max_records ; done?
 	jr nz,@sprite_loop
-	inc a
-	call vdu_sprite_activate
+
+	; call waitKeypress ; DEBUG
 
 ; define player sprite
-	ld a,16
+	ld a,(player_id) ; this is always player spriteId
 	call vdu_sprite_select
 	call vdu_sprite_clear_frames
 	ld hl,BUF_SHIP_0L
@@ -166,6 +158,10 @@ init:
 	inc hl
 	pop bc
 	djnz @sprite_player_loop
+
+; activate sprites
+	ld a,table_max_records
+	call vdu_sprite_activate
 
 ; print loading complete message and wait for user keypress
 	call vdu_cls
@@ -193,32 +189,17 @@ init:
 ; initialization done
 	ret
 
-main_loop_tmr: ds 6
-framerate: equ 30
-
-new_game:
-; initialize the first level
-	xor a
-	ld (cur_level),a
-	call init_level
-; initialize player
-	call player_init
-	ret
-
 main:
-
+	call new_game
 
 main_loop:
-; update global timestamp
-    call timestamp_tick
-
 ; move player
-
 
 ; move enemies
 
+; move tiles
 
-; render frame
+; render ui
 
 ; check for escape key and quit if pressed
 	MOSCALL mos_getkbmap
@@ -238,4 +219,13 @@ main_end:
 	xor a
 	call vdu_set_screen_mode
 	call vdu_cursor_on
+	ret
+
+new_game:
+; initialize the first level
+	xor a
+	ld (cur_level),a
+	call init_level
+; initialize player
+	call player_init
 	ret
