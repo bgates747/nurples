@@ -38,16 +38,23 @@ exit:
     include "vdu.inc"
 	include "vdu_plot.inc"
     include "vdu_sound.inc"
+	include "vdu_sprites.inc"
 	include "maths.inc"
 	include "arith24.inc"
 	include "fixed24.inc"
+	include "trig24.inc"
 
 ; Application includes
 	include "font_rc.inc"
-	include "input.inc"
     include "images.inc"
     include "images_sprites.inc"
 	include "images_ui.inc"
+	include "player.inc"
+	include "laser.inc"
+	include "sprites.inc"
+	include "tiles.inc"
+	include "levels.inc"
+	include "enemies.inc"
 
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"
@@ -90,7 +97,7 @@ init:
 	call vdu_clg
 
 ; set the cursor off
-	call cursor_off
+	call vdu_cursor_off
 
 ; VDU 28, left, bottom, right, top: Set text viewport **
 ; MIND THE LITTLE-ENDIANESS
@@ -129,12 +136,59 @@ init:
 ; 	ld (cur_load_jump_table),hl
 ; 	call sfx_load_main
 
+
+; initialize sprites
+	call vdu_sprite_reset
+	xor a
+@sprite_loop:
+	push af
+	call vdu_sprite_select
+	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
+	call vdu_sprite_add_buff
+	pop af
+	inc a
+	cp table_max_records+1 ; tack on sprites for player and laser
+	jr nz,@sprite_loop
+	inc a
+	call vdu_sprite_activate
+
+; define player sprite
+	ld a,16
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_SHIP_0L
+	ld bc,3 ; three bitmaps for player ship
+@sprite_player_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @sprite_player_loop
+
 ; print loading complete message and wait for user keypress
 	call vdu_cls
 	ld hl,loading_complete
 	call printString
 	call vdu_flip 
 	call waitKeypress
+
+; set up display for gameplay
+    ld a,8
+    call vdu_set_screen_mode
+    xor a
+    call vdu_set_scaling
+	ld bc,32
+	ld de,16
+	call vdu_set_gfx_origin
+	call vdu_cursor_off
+; set gfx viewport to scrolling window
+	ld bc,0
+	ld de,0
+	ld ix,255
+	ld iy,239-16
+	call vdu_set_gfx_viewport
 
 ; initialization done
 	ret
@@ -143,7 +197,12 @@ main_loop_tmr: ds 6
 framerate: equ 30
 
 new_game:
-
+; initialize the first level
+	xor a
+	ld (cur_level),a
+	call init_level
+; initialize player
+	call player_init
 	ret
 
 main:
@@ -160,20 +219,6 @@ main_loop:
 
 
 ; render frame
-
-@wait:
-	call set_keys
-	ld iy,main_loop_tmr
-	call tmr_get
-	jp z,@continue
-	jp m,@continue
-	jp @wait
-@continue:
-
-; reset main loop timer
-	ld iy,main_loop_tmr
-	ld hl,120/framerate
-	call tmr_set
 
 ; check for escape key and quit if pressed
 	MOSCALL mos_getkbmap
@@ -192,5 +237,5 @@ main_end:
 ; restore screen to something normalish
 	xor a
 	call vdu_set_screen_mode
-	call cursor_on
+	call vdu_cursor_on
 	ret

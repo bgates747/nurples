@@ -5,7 +5,7 @@ vdu_home_cursor:
 	rst.lil $10  
 	ret
 
-cursor_on:
+vdu_cursor_on:
 	ld hl,@cmd
 	ld bc,@end-@cmd
 	rst.lil $18
@@ -14,7 +14,7 @@ cursor_on:
 	db 23,1,1
 @end:
 
-cursor_off:	
+vdu_cursor_off:	
 	ld hl,@cmd
 	ld bc,@end-@cmd
 	rst.lil $18
@@ -23,6 +23,20 @@ cursor_off:
 	db 23,1,0
 @end:
 
+; VDU 5: Write text at graphics cursor
+; inputs: a is the character to write to the screen
+; prerequisites: the graphics cursor at the intended position on screen
+; outputs: see the name of the function
+; destroys: a, hl, bc
+vdu_char_to_gfx_cursor:
+	ld (@arg),a        
+	ld hl,@cmd         
+	ld bc,@end-@cmd    
+	rst.lil $18         
+	ret
+@cmd: db 5
+@arg: db 0 
+@end:
 ; VDU 9: Move cursor forward one character
 vdu_cursor_forward:
     ld a,9
