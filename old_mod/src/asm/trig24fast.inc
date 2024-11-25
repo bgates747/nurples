@@ -95,19 +95,19 @@ dxy168:
     push ix ; move ix to hl via the stack
     pop hl ; hl = x1
     sbc hl,bc ; hl = dx
-    ld (@dx168),hl ; dx to scratch
+    ld (dx168),hl ; dx to scratch
 ; compute dy = y1-y0
     xor a ; clear carry
     push iy ; move iy to hl via the stack
     pop hl ; hl = y1
     sbc hl,de ; hl = dy
-    ld (@dy168),hl ; dy to scratch
+    ld (dy168),hl ; dy to scratch
 ; populate output registers and return
     ex de,hl        ; ud.e = dy
-    ld bc,(@dx168)   ; ub.c = dx
+    ld bc,(dx168)   ; ub.c = dx
     ret
-@dx168: ds 6
-@dy168: ds 6
+dx168: blkb 6,0
+dy168: blkb 6,0
 
 ; compute the euclidian distance between two cartesian coordinates
 ; using the formula d = sqrt(dx^2+dy^2
@@ -117,65 +117,26 @@ dxy168:
 ;       dx168/y are the 16.8 fixed format dx and dy
 ; destroys: a,hl,bc,de
 distance168:
-; compute dx = x1-x0
-    xor a ; clear carry
-    push ix ; move ix to hl via the stack
-    pop hl ; hl = x1
-    sbc hl,bc ; hl = dx
-    ld (@dx168),hl ; dx to scratch
-; ; test dx for overflow
-; 	ld de,0x007F00 ; max positive 16.8 value we can square without overflow
-; 	ex de,hl
-; 	sbc hl,de ; test for overflow
-; 	push af ; carry indicates overflow
-; compute dy = y1-y0
-    xor a ; clear carry
-    push iy ; move iy to hl via the stack
-    pop hl ; hl = y1
-    sbc hl,de ; hl = dy
-    ld (@dy168),hl ; dy to scratch
-; ; test dy for overflow
-; 	ld de,0x007F00 ; max positive 16.8 value we can square without overflow
-; 	ex de,hl
-; 	sbc hl,de ; test for overflow
-; 	push af ; carry indicates overflow
+	call dxy168 ; ub.c = dx, ud.e = dy
 ; compute dy^2
-	ld hl,(@dy168)
-    call hlu_abs  ; make dy positive so we can use unsigned multiply
-    ; call hlu_div2 ; divide hlu by 2 to give us some headroom
-    push hl ; load hl/2 to bc via the stack
-    pop bc ; bc = dy/2
-    ex de,hl ; de = dy/2
-    call umul168 ; uh.l = dy^2/2
-    push hl ; dy^2/2 to the stack
+	ex de,hl
+	call hlu_abs
+	push hl
+	pop de
+	call umul168 ; hl = dy^2
+	push hl ; save dy^2
 ; compute dx^2
-    ld hl,(@dx168) ; get back dx
-    call hlu_abs  ; make dx positive so we can use unsigned multiply
-    ; call hlu_div2 ; divide hlu by 2 to give us some headroom
-    push hl ; load hl/2 to bc via the stack
-    pop bc ; bc = dx/2
-    ex de,hl ; de = dx/2
-    call umul168 ; uh.l = dx^2/2
-; commpute dy^2+dx^2
-    pop de ; get back dx^2/2
-    add hl,de ; hl = dx^2/2+dy^2/2
-; compute sqrt(dx^2/2+dy^2/2)
-    call sqrt168 ; uh.l = distance/2
-    ; add hl,hl ; hl = distance
-; ; check for overflow
-; 	pop af ; get back the overflow flags
-; 	sbc a,a ; will be -1 if overflow, 0 if not
-; 	ld b,a ; save the overflow flag
-; 	pop af ; get back the overflow flags
-; 	sbc a,a ; will be -1 if overflow, 0 if not
-; 	add a,b ; if a != 0 then we had overflow
-;     ret z ; no overflow we're done
-; @overflow:
-; 	ld hl,0x7FFFFF ; max positive 16.8 fixed value indicates overflow
+	ld hl,(dx168)
+	call hlu_abs
+	push hl
+	pop de
+	call umul168 ; hl = dx^2
+; add dx^2 and dy^2
+	pop de ; de = dy^2
+	add hl,de ; hl = dx^2 + dy^2
+; compute the square root
+	call sqrt168
 	ret
-@scratch: ds 6
-@dx168: ds 6
-@dy168: ds 6
 
 ; atan2_(ub.c,ud.e) --> uh.l
 ; inputs: ub.c and ud.e are dx and dy in 16.8 fixed format

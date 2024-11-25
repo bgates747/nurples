@@ -610,26 +610,15 @@ collision_enemy_with_laser:
     ld a,(laser_dim_x)
     sra a ; divide by 2
     push af ; we need this later
-    ; ld de,0
-    ; ld d,a
-    ; add ix,de
-    ; add iy,de
-    jr collision_enemy
+    jp collision_enemy
 
 ; it's presumed we've already checked that player is alive
 collision_enemy_with_player:
     ld ix,(player_x)
     ld iy,(player_y)
     ld a,(player_dim_x)
-
-    ; call dumpRegistersHex
-
     sra a ; divide by 2
     push af ; we need this later
-    ; ld de,0
-    ; ld d,a
-    ; add ix,de
-    ; add iy,de
     ; fall through to collision_enemy
 
 ; compute the distance between the two sprites' centers
@@ -642,26 +631,16 @@ collision_enemy:
     ld a,(iy+sprite_dim_x)
     sra a
     push af ; we need this later
-    ; ld de,0
-    ; ld d,a
-    ; add hl,de
     push hl
     pop bc ; bc = x0
     ld hl,(iy+sprite_y)
     ld a,(iy+sprite_dim_y)
-    ; sra a
-    ; ld de,0
-    ; ld d,a
-    ; add hl,de
     ex de,hl ; de = y0
     pop af ; TODO: srsly, this is the best way to do this?
     pop iy
     push af 
-
-    ; call dumpRegistersHex
-
     call distance168
-    ; CALL dumpRegistersHex
+
 ; ; subtract sum of radii from distance between centers
 ;     ld de,0
 ;     pop af ; radius of enemy sprite
@@ -682,12 +661,10 @@ collision_enemy:
     sbc hl,de
     jr c,collision_enemy_is
     xor a
-    ; call dumpRegistersHex
     ret
 collision_enemy_is:
     xor a
     inc a
-    ; call dumpRegistersHex
     ret
 
 ; ; looks up what enemy sprite collides with
