@@ -241,7 +241,6 @@ new_game:
 ;     ld a,1 ; levels are zero-based, so this will wrap around
 ;     ld (cur_level),a
 ;     ld a,3 ; set max enemy sprites to easy street
-;     ; ld a,64 ; DEBUG: BRING IT
 ;     ld (max_enemy_sprites),a 
 ;     call dt_next_level
 ;     call dt

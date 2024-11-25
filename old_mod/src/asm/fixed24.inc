@@ -46,8 +46,6 @@ shift_hlu:
     ld b,a            ; 'b' now holds the number of bits to shift back up
     ld de,0           ; Clear deu for computing the offset address later
 
-    ; call dumpRegistersHex ; DEBUG
-
 ; Get back the original sign of the byte shift
     pop af            ; Restore sign flag
     jp p,@F           ; If a was positive, we're done
@@ -60,20 +58,14 @@ shift_hlu:
     sub b
     ld b,a            ; b is the number of bits to shift back up
 
-    ; call dumpRegistersHex ; DEBUG
-
 @@:
 
 ; Add the byte offset to the base address of output buffer
     ld e,c            ; DEU and D were properly signed above
     add ix,de         ; Add byte-aligned offset (hl = output buffer + l)
 
-    ; call dumpRegistersHex ; DEBUG
-
 ; Read the byte-aligned result into HL and shift in the required number of bits
     ld hl,(ix)        ; Byte-aligned result
-
-    call dumpRegistersHex ; DEBUG
 
 ; Check whether we're already byte-aligned
     xor a
@@ -85,17 +77,11 @@ shift_hlu:
 @loop:
     rlca              ; One bit to carry
 
-    call dumpFlags ; DEBUG
-
     adc hl,hl         ; Shift the carry into the result
-
-    call dumpRegistersHex ; DEBUG
 
     djnz @loop        ; Loop until all bits are shifted up
 
 @end:
-
-    call dumpRegistersHex ; DEBUG
 
 ; get back HLU's original sign and negate if necessary
     pop af
@@ -120,11 +106,6 @@ umulfx:
 
 ; do the multiplication
     call umul24x24
-    ; DEBUG
-    ld hl,umulfxout ; point to output buffer
-    ld a,6 ; 6 bytes to print
-    call dumpMemoryHex ; print the result
-    ; END DEBUG
 
 ; shift the result to the required output precision
     ld a,b
@@ -152,8 +133,6 @@ umulfx:
     ld b,a            ; 'b' now holds the number of bits to shift back up
     ld de,0           ; Clear deu for computing the offset address later
 
-    ; call dumpRegistersHex ; DEBUG
-
 ; Get back the original sign of the byte shift
     pop af            ; Restore sign flag
     jp p,@F           ; If a was positive, we're done
@@ -166,16 +145,12 @@ umulfx:
     sub b
     ld b,a            ; b is the number of bits to shift back up
 
-    ; call dumpRegistersHex ; DEBUG
-
 @@:
 
 ; Add the byte offset to the base address of umulfxout
     ld e,c            ; DEU and D were properly signed above
     ld ix,umulfxout   ; Load base address of the output buffer
     add ix,de         ; Add byte-aligned offset (hl = umulfxout + l)
-
-    ; call dumpRegistersHex ; DEBUG
 
 ; Read the byte-aligned result into HL and shift in the required number of bits
     ld hl,(ix)        ; Byte-aligned result
@@ -188,8 +163,6 @@ umulfx:
 
 ; Otherwise shiften zee bitzen
 @loop:
-
-    ; call dumpRegistersHex ; DEBUG
 
     rlca              ; One bit to carry
     adc hl,hl         ; Shift the carry into the result

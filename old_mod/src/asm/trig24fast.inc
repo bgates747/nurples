@@ -79,12 +79,6 @@ polar_to_cartesian:
     call neg_hlu ; invert dy for screen coords convention
     ex de,hl       ; de = dy for output
     pop bc          ; bc = dx for output
-; ; DEBUG
-; 	call vdu_home_cursor
-; 	call print_s168_hl
-; 	call print_s168_bc
-; 	call print_s168_de
-; ; END DEBUG
 ; and out
     ret
 @angle: ds 3
@@ -101,17 +95,19 @@ dxy168:
     push ix ; move ix to hl via the stack
     pop hl ; hl = x1
     sbc hl,bc ; hl = dx
-    ld (dx168),hl ; dx to scratch
+    ld (@dx168),hl ; dx to scratch
 ; compute dy = y1-y0
     xor a ; clear carry
     push iy ; move iy to hl via the stack
     pop hl ; hl = y1
     sbc hl,de ; hl = dy
-    ld (dy168),hl ; dy to scratch
+    ld (@dy168),hl ; dy to scratch
 ; populate output registers and return
     ex de,hl        ; ud.e = dy
-    ld bc,(dx168)   ; ub.c = dx
+    ld bc,(@dx168)   ; ub.c = dx
     ret
+@dx168: ds 6
+@dy168: ds 6
 
 ; compute the euclidian distance between two cartesian coordinates
 ; using the formula d = sqrt(dx^2+dy^2
@@ -126,7 +122,7 @@ distance168:
     push ix ; move ix to hl via the stack
     pop hl ; hl = x1
     sbc hl,bc ; hl = dx
-    ld (dx168),hl ; dx to scratch
+    ld (@dx168),hl ; dx to scratch
 ; ; test dx for overflow
 ; 	ld de,0x007F00 ; max positive 16.8 value we can square without overflow
 ; 	ex de,hl
@@ -137,14 +133,14 @@ distance168:
     push iy ; move iy to hl via the stack
     pop hl ; hl = y1
     sbc hl,de ; hl = dy
-    ld (dy168),hl ; dy to scratch
+    ld (@dy168),hl ; dy to scratch
 ; ; test dy for overflow
 ; 	ld de,0x007F00 ; max positive 16.8 value we can square without overflow
 ; 	ex de,hl
 ; 	sbc hl,de ; test for overflow
 ; 	push af ; carry indicates overflow
 ; compute dy^2
-	ld hl,(dy168)
+	ld hl,(@dy168)
     call hlu_abs  ; make dy positive so we can use unsigned multiply
     ; call hlu_div2 ; divide hlu by 2 to give us some headroom
     push hl ; load hl/2 to bc via the stack
@@ -153,7 +149,7 @@ distance168:
     call umul168 ; uh.l = dy^2/2
     push hl ; dy^2/2 to the stack
 ; compute dx^2
-    ld hl,(dx168) ; get back dx
+    ld hl,(@dx168) ; get back dx
     call hlu_abs  ; make dx positive so we can use unsigned multiply
     ; call hlu_div2 ; divide hlu by 2 to give us some headroom
     push hl ; load hl/2 to bc via the stack
@@ -178,8 +174,8 @@ distance168:
 ; 	ld hl,0x7FFFFF ; max positive 16.8 fixed value indicates overflow
 	ret
 @scratch: ds 6
-dx168: ds 6
-dy168: ds 6
+@dx168: ds 6
+@dy168: ds 6
 
 ; atan2_(ub.c,ud.e) --> uh.l
 ; inputs: ub.c and ud.e are dx and dy in 16.8 fixed format
@@ -222,26 +218,10 @@ atan2_168fast:
     push hl
     pop bc
 @1:
-; ; DEBUG
-;     call vdu_home_cursor
-;     call print_s168_hl
-;     call print_s168_bc
-;     call print_s168_de
-; ; END DEBUG
-; ; DEBUG
-; 	call vdu_home_cursor
-; 	call dumpRegistersHex
-; ; END DEBUG
 ; now we're ready to snag our preliminary result
 	push bc
 	pop hl
     call atan_168fast ; uh.l comes back with prelim result
-; ; DEBUG
-;     call vdu_home_cursor
-;     call print_s168_hl
-;     call print_s168_bc
-;     call print_s168_de
-; ; END DEBUG
 ; now we adjust uh.l based on sign of de - bc
     pop af
     jp p,@2 ; bc <= de,so we skip ahead
@@ -249,11 +229,6 @@ atan2_168fast:
     ld hl,0x004000 ; 90 degrees
     xor a ; clear the carry flag
     sbc hl,de ; subtract result from 90 degrees
-    ; ld de,0 ; prep to clear hlu
-    ; ld d,h
-    ; ld e,l
-    ; ex de,hl ; now we have 0 <= uh.l < 256 in 16.8 fixed format
-    ; fall through
 @2:
 ; now the fun part of adjusting the result
 ; based on which quadrant (x,y) is in
@@ -356,22 +331,8 @@ atan_168fast:
 ; because we use compass headings instead of geometric angles
 ; we compute dx/dy which is 1/tan(theta) in the maths world
 ; we can do faster unsigned division here because we know dx and dy are positive
-; ; DEBUG
-;     call vdu_home_cursor
-;     call print_s168_hl
-;     call print_s168_de
-; ; END DEBUG
 	call udiv168 ; ud.e = dx/dy
 	ex de,hl ; uh.l = dx/dy
-; ; DEBUG
-; ; 	call vdu_home_cursor
-; 	call printNewLine
-; 	call dumpRegistersHex
-; ; ; END DEBUG
-; ; DEBUG
-;     call print_s168_hl
-; ; END DEBUG
-; TODO: IMPLEMENT THIS, RIGHT NOW IS IS BUGGED
 ; test uh.l for 0
     add hl,de
     or a
@@ -384,15 +345,9 @@ atan_168fast:
     sbc hl,de
     jr z,@is_45
 	ex de,hl
-; END TODO
-
 ; no special cases so we move on
 ; l contains the fractional portion of tan(uh.l)
 ; we multiply it by three to get our lookup table index
-; ; DEBUG
-; 	call vdu_home_cursor
-; 	call dumpRegistersHex
-; ; END DEBUG
     ld h,3
     mlt hl ; gosh that is handy
     ld de,0 ; clear deu
@@ -400,10 +355,6 @@ atan_168fast:
     ld e,l ; de contains our index
     ld hl,atan_lut_168 ; grab the lut address
     add hl,de ; bump hl by the index
-; ; DEBUG
-; 	call dumpRegistersHex
-; ; END DEBUG
-
     ld hl,(hl) ; don't try this on a z80!
     ret ; and out
 @is_45:
@@ -413,7 +364,6 @@ atan_168fast:
 @is_zero:
     ld hl,0x000000
     ret
-
 
 ; Expects  ADL mode
 ; Inputs:  UH.L
