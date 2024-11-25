@@ -128,9 +128,7 @@ en_nav:
 ; set velocity and orientation by player's relative location
 ; move enemies y-axis
 ; where is player relative to us?
-    call orientation_to_player
-;    h.l 16.8 fixed angle256 to player
-;    ub.c and ud.e as 16.8 signed fixed point numbers
+    call orientation_to_player ; uh.l angle to player, ub.c, ud.e = dx, dy
 ; is player above or below us?
     ld (ude),de ; dy
     ld a,(ude+2) ; deu
@@ -147,6 +145,7 @@ en_nav_computevelocities:
     push hl ; we need it back to set rotation frame
     ld de,(iy+sprite_vel) 
     call polar_to_cartesian
+    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
     ld (iy+sprite_xvel),bc ; save x-velocity component
     ld (iy+sprite_yvel),de ; save y-velocity component 
 ; change the animation frame to match heading
@@ -157,13 +156,13 @@ en_nav_computevelocities:
     srl a
     srl a
     call vdu_sprite_select_frame
-; update sprite position
+
 move_enemy_sprite:
+    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
     ld hl,(iy+sprite_x)
     ld de,(iy+sprite_xvel)
     add hl,de
     ld (iy+sprite_x),hl
-
     ld hl,(iy+sprite_y)
     ld de,(iy+sprite_yvel)
     add hl,de
