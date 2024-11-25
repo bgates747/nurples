@@ -127,7 +127,7 @@ sprites_init:
 	call vdu_sprite_add_buff
 	pop af
 	inc a
-	cp table_max_records+1 ; tack on sprites for player and laser
+	cp table_max_records+2 ; tack on sprites for player and laser
 	jr nz,@sprite_loop
 	inc a
 	call vdu_sprite_activate

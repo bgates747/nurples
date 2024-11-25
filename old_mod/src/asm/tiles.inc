@@ -16,17 +16,33 @@ tiles_y_plot: dl -15
 
 
 tiles_plot:
-; ; NOTE: this is bugged. y1 should be zero to get a 1px-tall viewport
-; ;       as written it gves a 2px-tall window which is what we'd expect, 
-; ;       but don't want
-; ; https://discord.com/channels/1158535358624039014/1158536809916149831/1209571014514712637
-; ; set gfx viewport to one scanline to optimise plotting tiles
-; 	ld bc,0 ; leftmost x-coord
-; 	ld de,0 ; topmost y-coord
-; 	ld ix,255 ; rightmost x-coord
-; 	ld iy,1 ; bottommost y-coord
-; 	call vdu_set_gfx_viewport
-
+; set gfx viewport to playing field window
+	ld bc,field_left
+	ld de,field_top
+	ld ix,field_right
+	ld iy,field_bottom
+	call vdu_set_gfx_viewport
+; move the background down one pixel
+	ld a,2 ; current gfx viewport
+	ld l,2 ; direction=down
+	ld h,1 ; speed=1 px
+	call vdu_scroll_down
+; draw a line for the bg color
+    ld a,plot_pt+mv_abs
+    ld bc,0 ; leftmost x-coord
+    ld de,0 ; topmost y-coord
+    call vdu_plot
+    ld a,plot_sl_both+dr_abs_bg
+    ld bc,255 ; rightmost x-coord
+    ld de,0 ; bottommost y-coord
+    call vdu_plot
+; set gfx viewport to one scanline to optimise plotting tiles
+	ld bc,0 ; leftmost x-coord
+	ld de,0 ; topmost y-coord
+	ld ix,255 ; rightmost x-coord
+	ld iy,0 ; bottommost y-coord
+	call vdu_set_gfx_viewport
+; initialize loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
     ld hl,(tiles_row_defs)

@@ -151,21 +151,16 @@ init:
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
+	ld bc,32
+	ld de,16
+	call vdu_set_gfx_origin
 	call vdu_cursor_off
-; plot splash screen background as a placeholder for bezel art
-	ld hl,BUF_SPLASH_BG
-	call vdu_buff_select
+; set gfx viewport to scrolling window
 	ld bc,0
 	ld de,0
-	call vdu_plot_bmp
-; set gfx origin and viewport to playing field window
-	ld bc,128
-	ld de,0
-	call vdu_set_gfx_origin
-	ld bc,field_left
-	ld de,field_top
-	ld ix,field_right
-	ld iy,field_bottom
+	ld ix,255
+	; ld iy,239-16
+	ld iy,384-32
 	call vdu_set_gfx_viewport
 ; set background color
 	ld c,27+128 ; darkest purple in the palette
@@ -173,11 +168,6 @@ init:
 	call vdu_clg
 
 	ret
-
-field_top: equ 0
-field_bottom: equ 383
-field_left: equ 0
-field_right: equ 255
 
 new_game:
 ; initialize sprites
@@ -268,10 +258,25 @@ speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 speed_player: equ 0x000300 ; 3 pixels per frame
 
 main:
-; start a new game
-	call new_game
+; DEBUG
+    ld hl,BUF_2TILE_HORIZ
+    call vdu_buff_select
+    ld bc,64
+    ld de,64
+    call vdu_plot_bmp
+    ret
+; END DEBUG
+
+; ; start a new game
+; 	call new_game
 
 main_loop:
+; move the background down one pixel
+	ld a,2 ; current gfx viewport
+	ld l,2 ; direction=down
+	ld h,1 ; speed=1 px
+	call vdu_scroll_down
+
 ; scroll tiles
 	call tiles_plot
 
