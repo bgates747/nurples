@@ -447,219 +447,56 @@ sdiv168:
 	call neg_hlu ; result is negative
     ex de,hl ; de = negated quotient, hl = remainder
 	ret
-; ========== FROM maths24.inc ==========
 
-; Expects  ADL mode
-; Inputs:  UH.L
-; Outputs: UH.L is the 16.8 square root
-;          UD.E is the difference inputHL-DE^2
-;          c flag reset  
-sqrt168:
-    call sqrt24
-    ex de,hl
-    add hl,hl
-    add hl,hl
-    add hl,hl
-    add hl,hl
-    ret
+;------------------------------------------------------------------------
+;  arith24.asm 
+;  24-bit ez80 arithmetic routines
+;  Copyright (c) Shawn Sijnstra 2024
+;  MIT license
+;
+;  This library was created as a tool to help make ez80
+;  24-bit native assembly routines for simple mathematical problems
+;  more widely available.
+;  
+;------------------------------------------------------------------------
+;
+;------------------------------------------------------------------------
+; udiv24
+; Unsigned 24-bit division
+; Divides HLU by DEU. Gives result in DEU (and BC), remainder in HLU.
+; 
+; Uses AF BC DE HL
+; Uses Restoring Division algorithm
+;------------------------------------------------------------------------
 
-; Expects  ADL mode
-; Inputs:  HL
-; Outputs: DE is the integer square root
-;          HL is the difference inputHL-DE^2
-;          c flag reset 
-sqrt24:
-    xor a
-    ld b,l
-    push bc
-    ld b,a
-    ld d,a
-    ld c,a
-    ld l,a
-    ld e,a
+udiv24:
+	push	hl
+	pop		bc	;move dividend to BCU
+	ld		hl,0	;result
+	and		a
+	sbc		hl,de	;test for div by 0
+	ret		z		;it's zero, carry flag is clear
+	add		hl,de	;HL is 0 again
+	ld		a,24	;number of loops through.
+udiv1:
+	push	bc	;complicated way of doing this because of lack of access to top bits
+	ex		(sp),hl
+	scf
+	adc	hl,hl
+	ex	(sp),hl
+	pop	bc		;we now have bc = (bc * 2) + 1
 
-    ;Iteration 1
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    sub c
-    jr nc,$+6
-    inc e
-    inc e
-    cpl
-    ld c,a
-
-    ;Iteration 2
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    rl e
-    ld a,e
-    sub c
-    jr nc,$+6
-    inc e
-    inc e
-    cpl
-    ld c,a
-
-    ;Iteration 3
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    rl e
-    ld a,e
-    sub c
-    jr nc,$+6
-    inc e
-    inc e
-    cpl
-    ld c,a
-
-    ;Iteration 4
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    rl e
-    ld a,e
-    sub c
-    jr nc,$+6
-    inc e
-    inc e
-    cpl
-    ld c,a
-
-    ;Iteration 5
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    rl e
-    ld a,e
-    sub c
-    jr nc,$+6
-    inc e
-    inc e
-    cpl
-    ld c,a
-
-    ;Iteration 6
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    rl e
-    ld a,e
-    sub c
-    jr nc,$+6
-    inc e
-    inc e
-    cpl
-    ld c,a
-
-    ;Iteration 7
-    add hl,hl
-    rl c
-    add hl,hl
-    rl c
-    rl b
-    ex de,hl
-    add hl,hl
-    push hl
-    sbc hl,bc
-    jr nc,$+8
-    ld a,h
-    cpl
-    ld b,a
-    ld a,l
-    cpl
-    ld c,a
-    pop hl
-    jr nc,$+4
-    inc hl
-    inc hl
-    ex de,hl
-
-    ;Iteration 8
-    add hl,hl
-    ld l,c
-    ld h,b
-    adc hl,hl
-    adc hl,hl
-    ex de,hl
-    add hl,hl
-    sbc hl,de
-    add hl,de
-    ex de,hl
-    jr nc,$+6
-    sbc hl,de
-    inc de
-    inc de
-
-    ;Iteration 9
-    pop af
-    rla
-    adc hl,hl
-    rla
-    adc hl,hl
-    ex de,hl
-    add hl,hl
-    sbc hl,de
-    add hl,de
-    ex de,hl
-    jr nc,$+6
-    sbc hl,de
-    inc de
-    inc de
-
-    ;Iteration 10
-    rla
-    adc hl,hl
-    rla
-    adc hl,hl
-    ex de,hl
-    add hl,hl
-    sbc hl,de
-    add hl,de
-    ex de,hl
-    jr nc,$+6
-    sbc hl,de
-    inc de
-    inc de
-
-    ;Iteration 11
-    rla
-    adc hl,hl
-    rla
-    adc hl,hl
-    ex de,hl
-    add hl,hl
-    sbc hl,de
-    add hl,de
-    ex de,hl
-    jr nc,$+6
-    sbc hl,de
-    inc de
-    inc de
-
-    ;Iteration 11
-    rla
-    adc hl,hl
-    rla
-    adc hl,hl
-    ex de,hl
-    add hl,hl
-    sbc hl,de
-    add hl,de
-    ex de,hl
-    jr nc,$+6
-    sbc hl,de
-    inc de
-    inc de
-
-    rr d
-    rr e
-    ret
+	adc	hl,hl
+	and	a		;is this the bug
+	sbc	hl,de
+	jr	nc,udiv2
+	add	hl,de
+;	dec	c
+	dec	bc
+udiv2:
+	dec	a
+	jr	nz,udiv1
+	scf		;flag used for div0 error
+	push	bc
+	pop		de	;remainder
+	ret

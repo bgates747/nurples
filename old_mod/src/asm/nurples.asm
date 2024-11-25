@@ -54,8 +54,10 @@ exit:
     include "vdu_buff.inc"
     include "vdu_plot.inc"
 	include "vdu_sprites.inc"
-	include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
+	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
+	include "maths.inc"
 	include "maths24.inc"
+	include "fixed24.inc"
 ; App-specific includes
 	include "player.inc"
 	include "tiles.inc"
@@ -68,7 +70,6 @@ exit:
 	include "images_sprites.inc"
 	include "images_ui.inc"
 	include "files.inc"
-	; include "fixed24.inc"
 
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"

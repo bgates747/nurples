@@ -1,47 +1,3 @@
-; http://www.z80.info/pseudo-random.txt
-rand_8:
-    push bc
-    ld a,(r_seed)
-    ld c,a 
-
-    rrca ; multiply by 32
-    rrca
-    rrca
-    xor 0x1f
-
-    add a,c
-    sbc a,255 ; carry
-
-    ld (r_seed),a
-    pop bc
-    ret
-r_seed: defb $50
-
-; tests the sign of 24-bit register hlu
-; returns: a in [-1,0,1]
-;   sign and zero flags as expected
-;   hl is untouched
-; GPT-4 wrote most of this. the or l was inspired. it did bit 7,a instead of h
-; and it left the zero flag set after ld a,1,which i fixed by anding it
-get_sign_hlu:
-    ; Load the upper byte of HLU into A
-    push hl
-    ld ix,0
-    add ix,sp
-    ld a,(ix+2)
-    pop hl
-    
-    or l                ; OR with the low byte to check if HL is zero
-    ret z               ; Return if HL is zero
-
-    ld a,-1             ; Send A back as -1 if the sign flag is set
-    bit 7,h            ; Test the sign bit (7th bit) of the high byte
-    ret nz              ; If set,HL is negative,return with the sign flag set
-
-    ld a,1             ; Otherwise,HL is positive
-    and a               ; Reset the zero flag
-    ret                 ; Return with A set to 1
-
 ; 16.8 fixed inputs / outputs
 ; takes: uh.l as angle in degrees 256
 ;        ud.e as radius
@@ -154,7 +110,7 @@ distance168:
 ; 	push af ; carry indicates overflow
 ; compute dy^2
 	ld hl,(dy168)
-    call abs_hlu  ; make dy positive so we can use unsigned multiply
+    call hlu_abs  ; make dy positive so we can use unsigned multiply
     ; call hlu_div2 ; divide hlu by 2 to give us some headroom
     push hl ; load hl/2 to bc via the stack
     pop bc ; bc = dy/2
@@ -163,7 +119,7 @@ distance168:
     push hl ; dy^2/2 to the stack
 ; compute dx^2
     ld hl,(dx168) ; get back dx
-    call abs_hlu  ; make dx positive so we can use unsigned multiply
+    call hlu_abs  ; make dx positive so we can use unsigned multiply
     ; call hlu_div2 ; divide hlu by 2 to give us some headroom
     push hl ; load hl/2 to bc via the stack
     pop bc ; bc = dx/2
@@ -207,13 +163,13 @@ atan2_168game:
 ; get abs(x) and store its original sign
     push bc
     pop hl
-    call abs_hlu ; if x was negative this also sets the sign flag
+    call hlu_abs ; if x was negative this also sets the sign flag
     push hl ; store abs(x)
     pop bc ; bc = abs(x)
     push af ; store sign of x
 ; get abs(y) and store its original sign
     ex de,hl ; hl = y
-    call abs_hlu ; if y was negative this also sets the sign flag
+    call hlu_abs ; if y was negative this also sets the sign flag
     ex de,hl ; de = abs(y)
     push af ; store sign of y
 ; if abs(bc) < abs(de),then we do bc/de,otherwise de/bc
