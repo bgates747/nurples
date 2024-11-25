@@ -142,6 +142,11 @@ en_nav:
 ; we land here from zig-zag program so as not to 
 ; redundantly save orientation and heading
 en_nav_computevelocities:
+; ; DEBUG
+; 	call vdu_home_cursor
+; 	call print_s168_hl
+; 	call print_s168_bc
+; ; END DEBUG
 ; set x/y component velocities based on bearing to player
     ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
     push hl ; we need it back to set rotation frame
@@ -461,9 +466,15 @@ orientation_to_player:
     ld ix,(player_x)
     ld iy,(player_y)
     call dxy168
-    call atan2_168game
+    call atan2_168fast
     ld bc,(dx168)
     ld de,(dy168)
+; ; DEBUG
+;     call vdu_home_cursor
+;     call print_s168_hl
+;     call print_s168_bc
+;     call print_s168_de
+; ; END DEBUG
     pop iy ; restore table pointer
     ret
 

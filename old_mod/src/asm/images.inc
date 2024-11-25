@@ -49,30 +49,30 @@ img_load_main_loop:
 ; load the next image
     call load_next_image
 
-; plot the background
-	call vdu_cls
-    ld hl,BUF_SPLASH_BG
-    call vdu_buff_select
-    ld bc,0
-    ld de,0
-    call vdu_plot_bmp
+; ; plot the background
+; 	call vdu_cls
+;     ld hl,BUF_SPLASH_BG
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,0
+;     call vdu_plot_bmp
 
-; ; draw the most recently loaded image
-; 	ld hl,(cur_buffer_id)
-; 	call vdu_buff_select
-; 	ld bc,0
-; 	ld de,0
-; 	call vdu_plot_bmp
+; ; ; draw the most recently loaded image
+; ; 	ld hl,(cur_buffer_id)
+; ; 	call vdu_buff_select
+; ; 	ld bc,0
+; ; 	ld de,0
+; ; 	call vdu_plot_bmp
 
-; move logo
-	call move_logo
+; ; move logo
+; 	call move_logo
 
-; print current filename
-	ld hl,(cur_filename)
-	call printString
+; ; print current filename
+; 	ld hl,(cur_filename)
+; 	call printString
 
-; flip the framebuffer
-	call vdu_flip
+; ; flip the framebuffer
+; 	call vdu_flip
 
 ; decrement loop counter
     pop bc

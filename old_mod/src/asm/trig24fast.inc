@@ -67,19 +67,24 @@ polar_to_cartesian:
     ld (@angle), hl
     ld (@radius), de
 ; compute dx = sin(uh.l) * ud.e
-    call cos168 ; uh.l = cos(uh.l)
+    call sin168 ; uh.l = sin(uh.l)
 	ld de,(@radius)
 	call smul168 ; uh.l = dx
     push hl      
 ; compute dy = -cos(uh.l) * ud.e
     ld hl,(@angle)
-    call sin168 ; uh.l = cos(uh.l)
+    call cos168 ; uh.l = cos(uh.l)
     ld de,(@radius)
     call smul168    ; uh.l = dy
     call neg_hlu ; invert dy for screen coords convention
     ex de,hl       ; de = dy for output
     pop bc          ; bc = dx for output
-	call dumpRegistersHex ; DEBUG
+; ; DEBUG
+; 	call vdu_home_cursor
+; 	call print_s168_hl
+; 	call print_s168_bc
+; 	call print_s168_de
+; ; END DEBUG
 ; and out
     ret
 @angle: ds 3
@@ -176,7 +181,7 @@ distance168:
 dx168: ds 6
 dy168: ds 6
 
-; atan2(ub.c,ud.e) --> uh.l
+; atan2_(ub.c,ud.e) --> uh.l
 ; inputs: ub.c and ud.e are dx and dy in 16.8 fixed format
 ;   whether inputs are integers or fractional doesn't matter
 ;   so long as the sign bit of the upper byte is correct
@@ -188,7 +193,7 @@ dy168: ds 6
 ; #C0 270------+------ 90 #40
 ;        -x,+y | +x,+y
 ; #A0 225   180 #80   135 #60
-atan2_168game:
+atan2_168fast:
 ; get signs and make everything positive
 ; get abs(x) and store its original sign
     push bc
@@ -217,8 +222,26 @@ atan2_168game:
     push hl
     pop bc
 @1:
+; ; DEBUG
+;     call vdu_home_cursor
+;     call print_s168_hl
+;     call print_s168_bc
+;     call print_s168_de
+; ; END DEBUG
+; ; DEBUG
+; 	call vdu_home_cursor
+; 	call dumpRegistersHex
+; ; END DEBUG
 ; now we're ready to snag our preliminary result
-    call atan_168game ; uh.l comes back with prelim result
+	push bc
+	pop hl
+    call atan_168fast ; uh.l comes back with prelim result
+; ; DEBUG
+;     call vdu_home_cursor
+;     call print_s168_hl
+;     call print_s168_bc
+;     call print_s168_de
+; ; END DEBUG
 ; now we adjust uh.l based on sign of de - bc
     pop af
     jp p,@2 ; bc <= de,so we skip ahead
@@ -328,29 +351,48 @@ atan2_168game:
 ;      and it's easy to remember
 ;      (ok the bot is stuck in a loop)
 ; REAL NOTE: only works for angles from 0 to 45 degrees
-;   use atan2_168 (which calls this proc) to handle the full 360 degrees
-atan_168game:
+;   use atan2__168 (which calls this proc) to handle the full 360 degrees
+atan_168fast:
 ; because we use compass headings instead of geometric angles
 ; we compute dx/dy which is 1/tan(theta) in the maths world
 ; we can do faster unsigned division here because we know dx and dy are positive
-	call udiv168 ; uh.l = dx/dy	
-; ; TODO: IMPLEMENT THIS, RIGHT NOW IS IS BUGGED
-; ; test uh.l for 0
-;     add hl,de
-;     or a
-;     sbc hl,de 
-;     jr z,@is_zero
-; ; test uh.l for 1
-;     xor a ; clear carry
-;     ex de,hl
-;     ld hl,0x000100 ; 1 in 16.8 fixed format
-;     sbc hl,de
-;     jr z,@is_45
-; ; END TODO
+; ; DEBUG
+;     call vdu_home_cursor
+;     call print_s168_hl
+;     call print_s168_de
+; ; END DEBUG
+	call udiv168 ; ud.e = dx/dy
+	ex de,hl ; uh.l = dx/dy
+; ; DEBUG
+; ; 	call vdu_home_cursor
+; 	call printNewLine
+; 	call dumpRegistersHex
+; ; ; END DEBUG
+; ; DEBUG
+;     call print_s168_hl
+; ; END DEBUG
+; TODO: IMPLEMENT THIS, RIGHT NOW IS IS BUGGED
+; test uh.l for 0
+    add hl,de
+    or a
+    sbc hl,de 
+    jr z,@is_zero
+; test uh.l for 1
+    xor a ; clear carry
+    ex de,hl
+    ld hl,0x000100 ; 1 in 16.8 fixed format
+    sbc hl,de
+    jr z,@is_45
+	ex de,hl
+; END TODO
 
 ; no special cases so we move on
 ; l contains the fractional portion of tan(uh.l)
 ; we multiply it by three to get our lookup table index
+; ; DEBUG
+; 	call vdu_home_cursor
+; 	call dumpRegistersHex
+; ; END DEBUG
     ld h,3
     mlt hl ; gosh that is handy
     ld de,0 ; clear deu
@@ -358,6 +400,10 @@ atan_168game:
     ld e,l ; de contains our index
     ld hl,atan_lut_168 ; grab the lut address
     add hl,de ; bump hl by the index
+; ; DEBUG
+; 	call dumpRegistersHex
+; ; END DEBUG
+
     ld hl,(hl) ; don't try this on a z80!
     ret ; and out
 @is_45:
