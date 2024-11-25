@@ -352,13 +352,13 @@ umul24x24:
 	ld (iy+3),a
 	ret
 
-; umul168:	UH.L = UH.L*UD.E (unsigned)
+; UH.L = UH.L*UD.E (unsigned)
 umul168:
 	call umul24x24
 	ld hl,(iy-1)
 	ret
 
-; smul168:	UH.L * UD.E --> UH.L (signed)
+; UH.L * UD.E --> UH.L (signed)
 smul168:
 ; make everything positive and store sign flags
 	call hlu_abs

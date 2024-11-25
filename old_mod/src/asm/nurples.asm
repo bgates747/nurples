@@ -56,7 +56,7 @@ exit:
 	include "vdu_sprites.inc"
 	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
 	include "maths.inc"
-	include "maths24.inc"
+	include "trig24fast.inc"
 	include "fixed24.inc"
 ; App-specific includes
 	include "player.inc"
@@ -146,7 +146,8 @@ init:
 	call waitKeypress
 
 ; set up display for gameplay
-    ld a,8
+    ; ld a,8
+	ld a,20
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling

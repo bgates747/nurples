@@ -1,59 +1,89 @@
-; 16.8 fixed inputs / outputs
-; takes: uh.l as angle in degrees 256
-;        ud.e as radius
-; returns ub.c as dx, ud.e as dy 
-;        displacements from origin (0,0)
-; destroys: everything except indexes
-polar_to_cartesian:
-; back up input parameters
-    ld (uhl),hl
-    ld (ude),de
-; compute dx = sin(uh.l) * ud.e
-    call sin168
-    push hl
-    pop bc ; ub.c = sin(uh.l)
-	ld de,(ude) ; get radius back
-	call smul168 ; uh.l = ub.c * ud.e = dx
-    push hl ; store dx for output
-; compute dy = -cos(uh.l) * ud.e
-    ld hl,(uhl)
-    call cos168 
-	call neg_hlu ; invert dy for screen coords convention
-    push hl 
-    pop bc ; ub.c = -cos(uh.l)
-    ld de,(ude) ; get radius back
-    call smul168 ; uh.l = ub.c * ud.e = dy
-    ex de,hl    ; de = dy for output
-    pop bc      ; bc = dx for output
-; and out
-    ret
+
+; convert signed angles from a 360 to 256 degree circle
+; inputs: uh.l is the angle360 in 16.8 fixed format
+; outputs: uh.l is the angle256 in 16.8 fixed format
+; destroys: TODO
+deg_360_to_256:
+	push de ; preserve de
+; make angle positive and store sign flag
+	call hlu_abs
+	push af
+; multiply by 256 first to keep precision
+	hlu_mul256 ; uh.l = uh.l * 256
+; divide uh.l by 360
+	ld de,360
+	call udiv24 ; ud.e = degrees / 360
+	ex de,hl    ; uh.l = degrees / 360
+; restore sign flag and adjust output accordingly
+	pop af
+	jp p,@pos ; positive number
+	call neg_hlu
+@pos:
+; restore de and return uh.l as the result
+	pop de
+	ret
 
 ; fixed 16.8 routine
 ; cos(uh.l) --> uh.l
-; destroys: de
+; destroys: f, hl
 cos168:
+    push de ; preserve de
 ; for cos we simply increment the angle by 90 degrees
 ; or 0x004000 in 16.8 degrees256
 ; which makes it a sin problem
     ld de,0x004000
     add hl,de ; modulo 256 happens below
+    pop de ; restore de
 ; fall through to sin168
+
 ; ---------------------
 ; fixed 16.8 routine
 ; sin(uh.l) --> uh.l
-; destroys: de
+; destroys: f, hl
 sin168:
-; h contains the integer portion of our angle
-; we multiply it by three to get our lookup table index
-    ld l,3
-    mlt hl ; gosh that is handy
-    ld de,0 ; clear deu
-    ld d,h ; copy hl to de
-    ld e,l ; de contains our index
-    ld hl,sin_lut_168 ; grab the lut address
+	push de
+; handle negative angles appropriately
+	call hlu_abs
+	jp p,@F
+	ld de,-256*256
+	add hl,de
+@@:
+	ld l,3 ; multiply by 3 to get our lookup index
+    mlt hl
+    ld de,sin_lut_168 ; grab the lut address
     add hl,de ; bump hl by the index
     ld hl,(hl) ; don't try this on a z80!
-    ret ; and out
+    pop de
+    ret
+
+; 16.8 fixed inputs / outputs
+; takes: uh.l as angle in degrees 256
+;        ud.e as radius
+; returns ub.c as dx, ud.e as dy, uh.l as radius
+;        displacements from origin (0,0)
+; destroys: everything except indexes
+polar_to_cartesian:
+; back up input parameters
+    ld (@angle), hl
+    ld (@radius), de
+; compute dx = sin(uh.l) * ud.e
+    call cos168 ; uh.l = cos(uh.l)
+	ld de,(@radius)
+	call smul168 ; uh.l = dx
+    push hl      
+; compute dy = -cos(uh.l) * ud.e
+    ld hl,(@angle)
+    call sin168 ; uh.l = cos(uh.l)
+    ld de,(@radius)
+    call smul168    ; uh.l = dy
+    call neg_hlu ; invert dy for screen coords convention
+    ex de,hl       ; de = dy for output
+    pop bc          ; bc = dx for output
+	call dumpRegistersHex ; DEBUG
+; and out
+    ret
+@angle: ds 3
+@radius: ds 3
 
 ; inputs: ub.c and ud.e are x0 and y0 in 16.8 fixed format
 ;         ui.x and ui.y are x1 and y1 in 16.8 fixed format
@@ -337,6 +367,7 @@ atan_168game:
 @is_zero:
     ld hl,0x000000
     ret
+
 
 ; Expects  ADL mode
 ; Inputs:  UH.L
@@ -810,6 +841,7 @@ sin_lut_168:
 	dl 0xFFFFEE ; 355.781 FD, -0.074
 	dl 0xFFFFF4 ; 357.188 FE, -0.049
 	dl 0xFFFFFA ; 358.594 FF, -0.025
+	dl 0x000000 ; 0.000 00, 0.000 for interpolation
 
 atan_lut_168:
 	dl 0x000000 ; 000000, 0.000
