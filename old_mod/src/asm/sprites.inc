@@ -23,7 +23,7 @@ sprite_shield_damage:   equ 37 ; 1 bytes shield points deducted for collision, b
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites
-table_max_records: equ 1 ; it can handle more but this is pushing it
+table_max_records: equ 16 ; it can handle more but this is pushing it
 table_total_bytes: equ table_max_records*table_bytes_per_record
 
 ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####

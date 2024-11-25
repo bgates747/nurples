@@ -159,7 +159,8 @@ init:
 	ld bc,0
 	ld de,0
 	ld ix,255
-	ld iy,239-16
+	; ld iy,239-16
+	ld iy,384-32
 	call vdu_set_gfx_viewport
 
 	ret
