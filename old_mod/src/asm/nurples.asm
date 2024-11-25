@@ -152,10 +152,15 @@ init:
     xor a
     call vdu_set_scaling
 	call vdu_cursor_off
-; plot splash screen background as a placeholder for bezel art
-	ld hl,BUF_SPLASH_BG
+; plot bezel art
+	ld hl,BUF_BEZEL_L
 	call vdu_buff_select
 	ld bc,0
+	ld de,0
+	call vdu_plot_bmp
+	ld hl,BUF_BEZEL_R
+	call vdu_buff_select
+	ld bc,384
 	ld de,0
 	call vdu_plot_bmp
 ; set gfx origin and viewport to playing field window

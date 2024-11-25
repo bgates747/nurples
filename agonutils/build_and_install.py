@@ -26,7 +26,7 @@ def build_project():
 def local_install():
     """Run the setup.py install command in the virtual environment."""
     print("Installing the project in the virtual environment...")
-    result = subprocess.run([sys.executable, 'setup.py', 'install'], check=True)
+    result = subprocess.run([sys.executable, 'setup.py', 'install', '--user'], check=True)
     if result.returncode == 0:
         print("Install successful!")
     else:
