@@ -240,28 +240,10 @@ def make_images(buffer_id, img_width, img_height, images_type, asm_images_filepa
         f.write(''.join(files_list))
 
 if __name__ == '__main__':
-    # img_width =             16
-    # img_height =            16
-    # buffer_id =             256
-    # images_type =           'sprites'
-    # asm_images_filepath =  f'src/asm/images_{images_type}.inc'
-    # originals_dir =        f'src/assets/img/orig/{images_type}'
-    # output_dir_png =       f'src/assets/img/proc/{images_type}'
-    # output_dir_rgba =      f'tgt/{images_type}'
-    # palette_name =          'Agon64.gpl'
-    # palette_dir =           'build/palettes'
-    # palette_conv_type =     'floyd'
-    # transparent_rgb =       (0, 0, 0, 0)
-    # del_non_png =           False
-    # do_crop =               False
-    # do_scale =              False
-    # do_palette =            False
-    # make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
-
     img_width =             16
     img_height =            16
-    buffer_id =             0
-    images_type =           'ui'
+    buffer_id =             256
+    images_type =           'sprites'
     asm_images_filepath =  f'old_mod/src/asm/images_{images_type}.inc'
     originals_dir =        f'assets/img/orig/{images_type}'
     output_dir_png =       f'assets/img/proc/{images_type}'
@@ -275,3 +257,21 @@ if __name__ == '__main__':
     do_scale =              False
     do_palette =            False
     make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
+
+    # img_width =             16
+    # img_height =            16
+    # buffer_id =             0
+    # images_type =           'ui'
+    # asm_images_filepath =  f'old_mod/src/asm/images_{images_type}.inc'
+    # originals_dir =        f'assets/img/orig/{images_type}'
+    # output_dir_png =       f'assets/img/proc/{images_type}'
+    # output_dir_rgba =      f'old_mod/tgt/{images_type}'
+    # palette_name =          'Agon64.gpl'
+    # palette_dir =           'build/palettes'
+    # palette_conv_type =     'floyd'
+    # transparent_rgb =       (0, 0, 0, 0)
+    # del_non_png =           False
+    # do_crop =               False
+    # do_scale =              False
+    # do_palette =            False
+    # make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
