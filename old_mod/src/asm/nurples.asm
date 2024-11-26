@@ -176,6 +176,12 @@ init:
 	ld c,27+128 ; darkest purple in the palette
 	call vdu_gcol
 	call vdu_clg
+; VDU 28, left, bottom, right, top: Set text viewport **
+	ld c,0 ; left
+	ld d,47 ; top
+	ld e,62 ; right
+	ld b,47; bottom
+	call vdu_set_txt_viewport
 
 	ret
 
@@ -277,6 +283,14 @@ main:
 	call new_game
 
 main_loop:
+; ; DEBUG
+; 	ld hl,BUF_STATION_BG_00
+; 	call vdu_buff_select
+; 	ld bc,0
+; 	ld de,0
+; 	call vdu_plot_bmp
+; 	call waitKeypress
+; ; END DEBUG
 ; scroll tiles
 	call tiles_plot
 

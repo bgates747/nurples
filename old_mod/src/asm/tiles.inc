@@ -14,6 +14,34 @@ tiles_levels: dl tiles_level_00,tiles_level_01
 tiles_x_plot: dl 0
 tiles_y_plot: dl -15
 
+bg_y_plot: dl -1
+bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
+
+bg_plot:
+; load current bg tile bufferId as default
+    ld hl,(bg_bufferId)
+; check whether it is time for a new background tile
+    ld a,(bg_y_plot)
+    inc a
+    ld (bg_y_plot),a
+    jp nz,@F ; not time for a new tile so draw current one
+; load the next background tile
+    ld hl,BUF_STATION_BG_00
+    call rand_8
+    and %0000011
+    add a,l
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
+    ld (bg_bufferId),hl
+@@:
+    call vdu_buff_select
+    ld bc,0
+    ld de,(bg_y_plot)
+    call vdu_plot_bmp
+; all done
+    ret
 
 tiles_plot:
 ; set gfx viewport to playing field window
@@ -27,22 +55,15 @@ tiles_plot:
 	ld l,2 ; direction=down
 	ld h,1 ; speed=1 px
 	call vdu_scroll_down
-; draw a line for the bg color
-    ld a,plot_pt+mv_abs
-    ld bc,0 ; leftmost x-coord
-    ld de,0 ; topmost y-coord
-    call vdu_plot
-    ld a,plot_sl_both+dr_abs_bg
-    ld bc,255 ; rightmost x-coord
-    ld de,0 ; bottommost y-coord
-    call vdu_plot
 ; set gfx viewport to one scanline to optimise plotting tiles
 	ld bc,0 ; leftmost x-coord
 	ld de,0 ; topmost y-coord
 	ld ix,255 ; rightmost x-coord
 	ld iy,0 ; bottommost y-coord
 	call vdu_set_gfx_viewport
-; initialize loop
+; plot the background
+    call bg_plot
+; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
     ld hl,(tiles_row_defs)
@@ -56,56 +77,46 @@ tiles_plot:
     ld l,a ; l is tile defintion
     ld h,0x01 ; hl = 256 + tile index = the tile's bitmapId
     call vdu_buff_select ; tile bitmap buffer is now active
-
 ; plot the active bitmap
     ld bc,(tiles_x_plot)
     ld de,(tiles_y_plot)
     call vdu_plot_bmp
-
 ; bump x-coords the width of one tile and save it
     ld hl,(tiles_x_plot)
     ld bc,16
     add hl,bc
     ld (tiles_x_plot),hl
-
 ; prepare to loop to next column
     pop hl ; get back pointer to tile def
     inc hl ; bump it to the next column
 	pop bc ; snag our loop counter
     djnz @loop
-
 ; increment tiles plotting y-coordinate
 ; when it hits zero, we go to next row of tiles in the map
 ; (we use ix b/c we want to preserve hl for the next step)
 	ld ix,tiles_y_plot
 	inc (ix)
 	ret nz
-
 ; time to bump tiles_row_defs to next row
 ; (hl was already there at the end of the loop)
     ld (tiles_row_defs),hl
-
 ; reset coords to plot next row of tiles
     ld hl,0
     ld (tiles_x_plot),hl
     ld hl,-15
     ld (tiles_y_plot),hl
-
 ; decrement tiles row counter
     ld hl,tiles_row
     dec (hl)
     ret nz
-
 ; queue up next level
     ld a,(cur_level)
     cp num_levels-1
     jr nz,@inc_level
     ld a,-1 ; will wrap around to zero when we fall through
-
 @inc_level:
     inc a
     ld (cur_level),a
-
 ; increase the number of enemy sprites
     ld a,(max_enemy_sprites)
     inc a
@@ -125,14 +136,12 @@ init_level:
     add hl,de
     ld ix,(hl)
     ld (tiles_row_defs),ix
-
 ; set tiles_row counter
     ld a,(ix)
     ld (tiles_row),a
     inc ix ; now ix points first element of first row tile def
     ld (tiles_row_defs),ix ; ... so we save it
     ret
-
 
 ; ###### TODO: NEW CODE TO IMPLEMENT ######
 ; dt_is_active:
