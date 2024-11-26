@@ -1,0 +1,137 @@
+PC: 0000b6 SPL:0bfe48 SPS:000000 MB:00
+SPL stack top:
+b6 00 00 
+17 30 04 
+2b 30 04 
+02 19 00 
+02 19 00 
+5a 26 04 
+e9 33 04 
+00 60 00
+a5 34 04 
+00 0b 00 
+53 4a
+
+Memory map
+Addresses are 24-bit, unless otherwise specified
+
+&000000 - &01FFFF: MOS (Flash ROM)
+&040000 - &0BDFFF: User RAM
+&0B0000 - &0B7FFF: Storage for loading MOS star command executables off SD card
+&0BC000 - 0BFFFFF: Global heap and stack
+
+
+0000b6 MOS
+
+043017 umul168
+------
+043013             0328*  ; UH.L = UH.L*UD.E (unsigned)
+043013             0329*  umul168:
+043013 CD BB 2F 04 0330*  	call umul24x24
+
+043017 FD 27 FF    0331*  	ld hl,(iy-1)
+
+04301A C9          0332*  	ret
+
+
+04302b smul168
+------
+04301B             0334*  ; UH.L * UD.E --> UH.L (signed)
+04301B             0335*  smul168:
+04301B             0336*  ; make everything positive and store sign flags
+04301B CD 36 25 04 0337*  	call hlu_abs
+04301F F5          0338*  	push af
+043020 EB          0339*  	ex de,hl
+043021 CD 36 25 04 0340*  	call hlu_abs
+043025 EB          0341*  	ex de,hl
+043026 F5          0342*  	push af
+043027             0343*  ; do the division
+043027 CD 13 30 04 0344*      call umul168 ; hl = product
+
+04302B             0345*  ; adjust sign of result
+04302B F1          0346*  	pop af ; sign de
+
+04302C FA 37 30 04 0347*  	jp m,@de_neg
+043030 F1          0348*  	pop af ; sign hl
+043031 F0          0349*  	ret p ; both positive, nothing to do
+043032             0350*  @hl_neg:
+043032 CD 46 25 04 0351*      call neg_hlu ; de pos, hl neg, result is negative
+043036 C9          0352*      ret
+043037             0353*  @de_neg:
+043037 F1          0354*  	pop af
+043038 F8          0355*  	ret m ; both negative, nothing to do
+043039 CD 46 25 04 0356*  	call neg_hlu ; result is negative
+04303D C9          0357*  	ret
+
+001902 flags
+001902 flags
+
+04265a polar_to_cartesian
+------
+042644             0065*  polar_to_cartesian:
+042644             0066*  ; back up input parameters
+042644 22 73 26 04 0067*      ld (@angle), hl
+042648 ED 53 76 26 0068*      ld (@radius), de
+       04          
+04264D             0069*  ; compute dx = sin(uh.l) * ud.e
+04264D CD 29 26 04 0070*      call sin168 ; uh.l = sin(uh.l)
+042651 ED 5B 76 26 0071*  	ld de,(@radius)
+       04          
+042656 CD 1B 30 04 0072*  	call smul168 ; uh.l = dx
+
+04265A E5          0073*      push hl
+
+04265B             0074*  ; compute dy = -cos(uh.l) * ud.e
+04265B 2A 73 26 04 0075*      ld hl,(@angle)
+04265F CD 22 26 04 0076*      call cos168 ; uh.l = cos(uh.l)
+042663 ED 5B 76 26 0077*      ld de,(@radius)
+       04          
+042668 CD 1B 30 04 0078*      call smul168    ; uh.l = dy
+04266C CD 46 25 04 0079*      call neg_hlu ; invert dy for screen coords convention
+042670 EB          0080*      ex de,hl       ; de = dy for output
+042671 C1          0081*      pop bc          ; bc = dx for output
+042672             0082*  ; and out
+042672 C9          0083*      ret
+042673             0084*  @angle: ds 3
+042676             0085*  @radius: ds 3
+
+0433e9 en_nav_computevelocities
+------
+0433DC             0142*  en_nav_computevelocities:
+0433DC             0143*  ; set x/y component velocities based on bearing to player
+0433DC FD 2A 42 18 0144*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+       04          
+0433E1 E5          0145*      push hl ; we need it back to set rotation frame
+0433E2 FD 17 17    0146*      ld de,(iy+sprite_vel)
+0433E5 CD 44 26 04 0147*      call polar_to_cartesian
+
+0433E9 FD 2A 42 18 0148*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+
+       04          
+0433EE FD 0F 11    0149*      ld (iy+sprite_xvel),bc ; save x-velocity component
+0433F1 FD 1F 14    0150*      ld (iy+sprite_yvel),de ; save y-velocity component
+0433F4             0151*  ; change the animation frame to match heading
+0433F4             0152*  ; by dividng the heading by 8
+0433F4 E1          0153*      pop hl ; get back Heading
+0433F5 7C          0154*      ld a,h
+0433F6 CB 3F       0155*      srl a
+0433F8 CB 3F       0156*      srl a
+0433FA CB 3F       0157*      srl a
+0433FC CD 29 24 04 0158*      call vdu_sprite_select_frame
+
+006000
+
+
+0434a5 move_enemy_small
+------
+0434A1             0245*  move_enemy_small:
+0434A1 CD C9 33 04 0246*      call en_nav
+
+0434A5 CD C9 35 04 0247*      call check_collisions
+
+0434A9 C3 5D 33 04 0248*      jp move_enemies_loop_return
+
+000b00
+
+
+LDrr,(Mmn) 1 8 ED, kk, nn, mm, MM

@@ -51,10 +51,25 @@ exit:
 
 ; --- INITIALIZATION ---
 init:
-    ret
+   ret
 
 ; --- MAIN PROGRAM ---
 main:
+    ld hl,3*256+64
+    ld de,4*256+128
+    call umul168
+    call print_s168_hl
+    call printNewLine
+
+    ld hl,5
+    ld de,2
+    call udiv168
+    call print_s168_de
+    call printNewLine
+    ret
+
+
+; testing udiv24
     ld iy,tmr_test
     ld hl,120 ; 10 seconds
     call tmr_set

@@ -218,3 +218,31 @@ rand_8:
     pop bc
     ret
 r_seed: defb $50
+
+; https://www.omnimaga.org/asm-language/ez80-optimized-routines/msg399325/#msg399325
+prng24:
+;;Expects ADL mode.
+;;Output: HL
+;;50cc
+;;33 bytes
+;;cycle length: 281,474,959,933,440 (about 2.8 trillion)
+    ld de,(seed1)
+    or a
+    sbc hl,hl
+    add hl,de
+    add hl,hl
+    add hl,hl
+    inc l
+    add hl,de
+    ld (seed1),hl
+    ld hl,(seed2)
+    add hl,hl
+    sbc a,a
+    and %00011011
+    xor l
+    ld l,a
+    ld (seed2),hl
+    add hl,de
+    ret
+seed1: dl 0
+seed2: dl 0
