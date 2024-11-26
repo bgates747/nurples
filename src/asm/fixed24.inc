@@ -1,12 +1,3 @@
-arith24uaf: ds 6
-arith24uhl: ds 6
-arith24ubc: ds 6
-arith24ude: ds 6
-arith24uix: ds 6
-arith24uiy: ds 6
-arith24usp: ds 6
-arith24upc: ds 6
-
 ; multiply a signed 24-bit number by an unsigned 8-bit number giving a signed 24-bit result
 ; uses EZ80 MLT instruction for speed
 ; operation: UHL * A --> UHL
@@ -63,47 +54,40 @@ umul24x8:
 	ret
 @scratch: ds 3
 
-    dl 0 ; padding
 umul24x24out: blkb 6,0
-    dl 0 ; padding
 
 ; unsigned multiplication of two 24-bit numbers giving a 48-bit result
 ; operation: UHL * UDE --> umul24x24out
 umul24x24:
-	ld (@ix),ix ; preserve
-	; push ix ; preserve
-
-	ld ix,umul24x24out ; point to output buffer
+	push ix ; preserve
+; point to output buffer and clear it
+	ld ix,umul24x24out 
 	push bc
 	ld bc,0
 	ld (ix),bc
 	ld (ix+3),bc
 	pop bc
-
 ; STEP 1: UHL * E
 	ld a,e
 	push hl
 	call umul24x8
 	ld (ix+0),hl
 	ld (ix+3),a
-
 ; STEP 2: UHL * D
 	pop hl
 	push hl
 	ld a,d
 	call umul24x8
 	call @accumulate
-
 ; STEP 3: UHL * DEU
 	pop hl
-	; push de
-	; inc sp
-	; pop af
-	; dec sp
 	ld (@de),de
 	ld a,(@de+2)
 	call umul24x8
-
+	call @accumulate
+; all done
+	pop ix ; restore
+	ret
 @accumulate:
 	inc ix
 ; highest byte of product to carry
@@ -117,22 +101,14 @@ umul24x24:
 	adc a,(ix+1)
 	ld (ix+1),a
 ; uppper byte of product
-	; push hl ; 4 cc
-	; inc sp ; 1 cc
-	; pop hl ; 4 cc
-	; dec sp ; 1 cc
-	; ld a,h ; 1 cc
-	ld (@hl),hl ; 7 cc
-	ld a,(@hl+2) ; 5 cc
+	ld (@hl),hl
+	ld a,(@hl+2)
 	adc a,(ix+2)
 	ld (ix+2),a
 ; carry
 	ld a,0 ; preserve flags
 	adc a,(ix+3)
 	ld (ix+3),a
-
-	ld ix,(@ix) ; restore
-	; pop ix
 	ret
 
 @ix: dl 0
