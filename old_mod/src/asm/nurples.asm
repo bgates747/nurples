@@ -90,7 +90,7 @@ init:
 ; 	call vdu_enable_channels
 
 ; set text background color
-	ld a,4 + 128
+	ld a,26+128 ; violet
 	call vdu_colour_text
 
 ; set text foreground color
@@ -99,9 +99,9 @@ init:
 
 ; set gfx bg color
 	xor a ; plotting mode 0
-	ld c,4+128 ; dark blue bg
+	ld a,26+128 ; violet
 	call vdu_gcol
-	call vdu_clg
+	call vdu_cls
 
 ; set the cursor off
 	call vdu_cursor_off
@@ -164,8 +164,8 @@ init:
 	ld de,0
 	call vdu_plot_bmp
 ; set gfx origin and viewport to playing field window
-	ld bc,128
-	ld de,0
+	ld bc,origin_left
+	ld de,origin_top
 	call vdu_set_gfx_origin
 	ld bc,field_left
 	ld de,field_top
@@ -173,7 +173,7 @@ init:
 	ld iy,field_bottom
 	call vdu_set_gfx_viewport
 ; set background color
-	ld c,27+128 ; darkest purple in the palette
+	ld a,26+128 ; violet
 	call vdu_gcol
 	call vdu_clg
 ; VDU 28, left, bottom, right, top: Set text viewport **
@@ -185,10 +185,13 @@ init:
 
 	ret
 
+origin_top: equ 48
+origin_left: equ 128
 field_top: equ 0
-field_bottom: equ 383
+field_bottom: equ 383-origin_top
 field_left: equ 0
 field_right: equ 255
+sprite_top: equ origin_top+24
 
 new_game:
 ; initialize sprites

@@ -177,10 +177,16 @@ vdu_sprite_move_rel:
 ;   leaving only the 16-bit integer portion
 ; prerequisites: vdu_sprite_select
 vdu_sprite_move_abs168:
-; populate in the reverse of normal to keep the 
-; inputs from stomping on each other
-    ld (@ypos-1),de
-    ld (@xpos-1),bc
+; offset inputs by the gfx origin
+; y coordinate
+    ld hl,origin_top*256
+    add hl,de
+    ld (@ypos-1),hl
+; x coordinate
+    ld hl,origin_left*256
+    add hl,bc
+    ld (@xpos-1),hl
+; prepare vdu command
     ld a,13       ; restore the final byte of the command
     ld (@cmd+2),a ; string that got stomped on by bcu
     ld hl,@cmd         
