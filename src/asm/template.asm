@@ -47,6 +47,7 @@ exit:
 	include "trig24fast.inc"
 	include "fixed24.inc"
 	include "files.inc"
+    include "timer.inc"
 
 ; --- INITIALIZATION ---
 init:
@@ -54,52 +55,67 @@ init:
 
 ; --- MAIN PROGRAM ---
 main:
-    call vdu_cls
-
-; testing atan2_168fast
-    ; call printNewLine
-    ld bc,256*1
-    ld de,256*-1
-    call atan2_168fast
-    call print_s168_hl
-    call printNewLine
-    ret
-
-; testing division
-    ld hl,1
-    ld de,2
-    call udiv168
-    call dumpRegistersHex
-    call print_s168_hl
-    call print_s168_de
-    call printNewLine
-    ret
-
-; testing trig
-    ld de,0x006100 ; 97
-    ld hl,0x007C71 ; 124.444444444444444444
-
-    push de
+    ld iy,tmr_test
+    ld hl,120 ; 10 seconds
+    call tmr_set
+    ld hl,0
     push hl
-
-    call sin168
-    call print_s168_hl
-    call printNewLine
-
+    call vdu_vblank
+@loop:
+    ld hl,65535
+    ld de,1023
+    call udiv24
     pop hl
+    inc hl
     push hl
-
-    call cos168
-    call print_s168_hl
+    ld iy,tmr_test
+    call tmr_get
+    jp p,@loop
+    pop hl
+    call printDec
     call printNewLine
 
+fast_div:
+    ld iy,tmr_test
+    ld hl,120 ; 10 seconds
+    call tmr_set
+    ld hl,0
+    push hl
+    call vdu_vblank
+@loop:
+    ld hl,65535
+    ld c,128
+    call HL_Div_C
     pop hl
-    pop de
-
-    call polar_to_cartesian
-    call print_s168_bc
-    call print_s168_de
-    call print_s168_hl
+    inc hl
+    push hl
+    ld iy,tmr_test
+    call tmr_get
+    jp p,@loop
+    pop hl
+    call printDec
     call printNewLine
 
     ret
+
+HL_Div_C:
+   ;Inputs:
+   ;     HL is the numerator
+   ;     C is the denominator
+   ;Outputs:
+   ;     A is the remainder
+   ;     B is 0
+   ;     C is not changed
+   ;     DE is not changed
+   ;     HL is the quotient
+   ;
+          ld b,16
+          xor a
+            add hl,hl
+            rla
+            cp c
+            jr c,$+4
+              inc l
+              sub c
+            djnz $-7
+          ret
