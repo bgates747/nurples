@@ -9,6 +9,9 @@ __pycache__/
 # C extensions
 *.so
 
+# stupid macos files
+.DS_Store
+
 # Distribution / packaging
 .Python
 agonutils/build
