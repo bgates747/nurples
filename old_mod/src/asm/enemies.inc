@@ -159,86 +159,73 @@ en_nav_computevelocities:
 
 move_enemy_sprite:
     ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+; x-axis movement
     ld hl,(iy+sprite_x)
     ld de,(iy+sprite_xvel)
     add hl,de
     ld (iy+sprite_x),hl
+; y-axis movement
     ld hl,(iy+sprite_y)
     ld de,(iy+sprite_yvel)
     add hl,de
     ld (iy+sprite_y),hl
+; detect screen edge collisions
+    xor a  ; reset screen edge collision flag and clear carry
+    ld (sprite_screen_edge),a
+; y-axis first since we already have it in hl
+    ld de,-sprite_top*256
+    adc hl,de
+    jp m,@top
+    sbc hl,de ; hl back to original value
+    ld de,-sprite_bottom*256
+    adc hl,de
+    jp p,@bottom
+@xaxis:
+    ld hl,(iy+sprite_x)
+    ld de,-sprite_left*256
+    adc hl,de
+    jp m,@left
+    sbc hl,de ; hl back to original value
+    ld de,-sprite_right*256
+    adc hl,de
+    jp p,@right
+; no edge collisions so go home
     ret
-
-; ; TODO: IMPLEMENT THIS PROPERLY
-; move_enemy_sprite:
-; ; x-axis movement first
-;     ld hl,(iy+sprite_x)
-;     push hl ; save pre-move position
-;     pop bc ; to detect screen edge collision
-;     ld de,(iy+sprite_xvel)
-;     add hl,de ;compute new x position
-;     ld (iy+sprite_x),hl ; store it
-;     and a ; clear the carry flag
-;     sbc hl,bc ; test which direction was our movement
-;     jr z,@move_y ; zero flag means no horizontal movement
-;     jp p,@move_right ; sign positive means moved right
-; @move_left: ; otherwise we moved left
-;     jr c,@move_y ; move left,no wraparound |C1 N1 PV1 H1 Z0 S1|A=00 HL=FF00 BC=0100 DE=FF00
-;     ld hl,0x000000   ; move left,with wraparound |C0 N1 PV0 H0 Z0 S1|A=00 HL=FF00 BC=0000 DE=FF00
-;     ld (iy+sprite_x),hl ; set x position to left edge of screen
-;     ld a,#20 ; west
-;     ld (sprite_screen_edge),a ; set screen edge collision flag
-;     jr @move_y
-; @move_right:
-;     jr nc,@move_y ; move right,no wraparound |C0 N1 PV1 H0 Z0 S0|A=00 HL=0100 BC=FE00 DE=0100
-;     ; move right,with wraparound |C1 N1 PV0 H1 Z0 S0|A=00 HL=0100 BC=FF00 DE=0100
-;     ld l,0x00
-;     ld a,(iy+sprite_dim_x)
-;     ld h,a
-;     ld a,0x00
-;     sub h
-;     ld h,a
-;     ld (iy+sprite_x),hl ; set x position to right edge of screen
-;     ld a,0x02 ; east
-;     ld (sprite_screen_edge),a ; set screen edge collision flag
-; @move_y:
-;     ld hl,(iy+sprite_y)
-;     ld b,h ; save pre-move position
-;     ld c,l ; to detect screen edge collision
-;     ld de,(iy+sprite_yvel)
-;     add hl,de ;compute new y position
-;     ld (iy+sprite_y),hl ; store it
-;     and a ; clear the carry flag
-;     sbc hl,bc ; test which direction was our movement
-;     jr z,@move_ret ; zero flag means no vertical movement
-;     jp p,@move_dn ; sign positive means moved down
-; @move_up:
-;     add hl,bc ; get back new y position
-;     ld de,0x5000 ; top edge of visible screen
-;     and a ; clear the carry flag
-;     sbc hl,de
-;     jr nc,@move_ret ; move up,no wraparound |C0 N1 PV0 H0 Z1 S0|A=00 HL=0000 BC=5100 DE=5000
-;     ; move up,with wraparound |C1 N1 PV1 H0 Z0 S1|A=00 HL=FF00 BC=5000 DE=5000
-;     ld (iy+sprite_y),de ; set y position flush with top of screen
-;     ld a,(sprite_screen_edge) ; load any vertical edge collision
-;     or 0x80 ; north
-;     ld (sprite_screen_edge),a ; set screen edge collision flag
-;     jr @move_ret
-; @move_dn:
-;     jr nc,@move_ret ; move down,no wraparound |C0 N1 PV0 H0 Z0 S0|A=00 HL=0100 BC=5100 DE=0100
-;     ; move down,with wraparound |C1 N1 PV0 H1 Z0 S0|A=00 HL=0100 BC=FF00 DE=0100
-;     ld l,0x00
-;     ld a,(iy+sprite_dim_y)
-;     ld h,a
-;     ld a,0x00
-;     sub h
-;     ld h,a
-;     ld (iy+sprite_y),hl ; set y position flush with bottom of screen
-;     ld a,(sprite_screen_edge) ; load any vertical edge collision
-;     or 0x08 ; south
-;     ld (sprite_screen_edge),a ; set screen edge collision flag
-; @move_ret:
-;     ret
+@top:
+    ld a,collide_top
+    ld hl,sprite_top*256
+    jp @collide_y
+@bottom:
+    ld a,collide_bottom
+    ld hl,sprite_bottom*256
+@collide_y:
+    ld (sprite_screen_edge),a
+    ld (iy+sprite_y),hl
+; reverse y-axis velocity
+    ld hl,(iy+sprite_yvel)
+    call neg_hlu
+    ld (iy+sprite_yvel),hl
+; go check for x-axis collisions
+    jp @xaxis
+@left:
+    ld a,(sprite_screen_edge)
+    or a,collide_left
+    ld hl,sprite_left*256
+    jp @collide_x
+@right:
+    ld a,(sprite_screen_edge)
+    or a,collide_right
+    ld hl,sprite_right*256
+@collide_x:
+    ld (sprite_screen_edge),a
+    ld (iy+sprite_x),hl
+; reverse x-axis velocity
+    ld hl,(iy+sprite_xvel)
+    call neg_hlu
+    ld (iy+sprite_xvel),hl
+; final collision flag to a and return
+    ld a,(sprite_screen_edge)
+    ret
 
 ; ; ######### SPRITE BEHAVIOR ROUTINES #########
 ; ; each sprite in the table must have one of these defined
@@ -454,7 +441,6 @@ enemy_init_from_landing_pad:
 ;    representing delta-x/y *to* target respectively
 orientation_to_player:
     ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
-    push iy ; so we can send it back intact
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     ld ix,(player_x)
@@ -465,7 +451,7 @@ orientation_to_player:
     call atan2_168fast
     pop de
     pop bc
-    pop iy ; restore table pointer
+    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
     ret
 
 

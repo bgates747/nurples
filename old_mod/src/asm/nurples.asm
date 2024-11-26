@@ -178,9 +178,9 @@ init:
 	call vdu_clg
 ; VDU 28, left, bottom, right, top: Set text viewport **
 	ld c,0 ; left
-	ld d,47 ; top
+	ld d,0 ; top
 	ld e,62 ; right
-	ld b,47; bottom
+	ld b,7; bottom
 	call vdu_set_txt_viewport
 
 	ret
@@ -191,7 +191,49 @@ field_top: equ 0
 field_bottom: equ 383-origin_top
 field_left: equ 0
 field_right: equ 255
-sprite_top: equ origin_top+24
+sprite_top: equ 0
+sprite_bottom: equ field_bottom-16
+sprite_left: equ field_left
+sprite_right: equ field_right-16
+collide_top: equ %00001000
+collide_bottom: equ %00000100
+collide_left: equ %00000010
+collide_right: equ %00000001
+
+; ; #### BEGIN GAME VARIABLES ####
+speed_seeker: equ 0x000280 ; 2.5 pixels per frame
+speed_player: equ 0x000300 ; 3 pixels per frame
+
+main:
+; start a new game
+	call new_game
+
+main_loop:
+; scroll tiles
+	call tiles_plot
+
+; get player input and update sprite position
+	call player_input
+
+; move enemies
+	call move_enemies
+
+; wait for the next vblank mitigate flicker and for loop timing
+	call vdu_vblank
+
+; poll keyboard
+    ld a, $08                           ; code to send to MOS
+    rst.lil $08                         ; get IX pointer to System Variables
+    
+    ld a, (ix + $05)                    ; get ASCII code of key pressed
+    cp 27                               ; check if 27 (ascii code for ESC)   
+    jp z, main_end                      ; if pressed, jump to exit
+
+    jp main_loop
+
+main_end:
+    call vdu_cursor_on
+	ret
 
 new_game:
 ; initialize sprites
@@ -276,49 +318,6 @@ new_game:
 
 ; ; spawn our intrepid hero
 ;     call player_init
-
-; ; #### BEGIN GAME VARIABLES ####
-speed_seeker: equ 0x000280 ; 2.5 pixels per frame
-speed_player: equ 0x000300 ; 3 pixels per frame
-
-main:
-; start a new game
-	call new_game
-
-main_loop:
-; ; DEBUG
-; 	ld hl,BUF_STATION_BG_00
-; 	call vdu_buff_select
-; 	ld bc,0
-; 	ld de,0
-; 	call vdu_plot_bmp
-; 	call waitKeypress
-; ; END DEBUG
-; scroll tiles
-	call tiles_plot
-
-; get player input and update sprite position
-	call player_input
-
-; move enemies
-	call move_enemies
-
-; wait for the next vblank mitigate flicker and for loop timing
-	call vdu_vblank
-
-; poll keyboard
-    ld a, $08                           ; code to send to MOS
-    rst.lil $08                         ; get IX pointer to System Variables
-    
-    ld a, (ix + $05)                    ; get ASCII code of key pressed
-    cp 27                               ; check if 27 (ascii code for ESC)   
-    jp z, main_end                     ; if pressed, jump to exit
-
-    jp main_loop
-
-main_end:
-    call vdu_cursor_on
-	ret
 
 
 ; ; #### BEGIN GAME MAIN LOOP ####
