@@ -3891,901 +3891,7 @@ PC     Output      Line
        00 00 00 00 
        00 00 00 00 
        00 00 00 00 
-042305             0054       include "vdu_buff.inc"
-042305             0001*  ; VDP Buffered Commands API
-042305             0002*  ; https://agonconsole8.github.io/agon-docs/VDP---Buffered-Commands-API.html
-042305             0003*  
-042305             0004*  ; VDU 23, 0 &A0, bufferId; 0, length; <buffer-data>
-042305             0005*  ; This command is used to store a data block (a sequence of bytes)
-042305             0006*  ; in a buffer on the VDP. The exact nature of this data may vary.
-042305             0007*  ; It could be a sequence of VDU commands which can be executed
-042305             0008*  ; later, a bitmap, a sound sample, or just a sequence of bytes.
-042305             0009*  ; When used for a sequence of VDU commands, this effectively
-042305             0010*  ; allows for functions or stored procedures to be created.
-042305             0011*  
-042305             0012*  ; This is the most common command to use to send data to the VDP.
-042305             0013*  ; Typically you will call command 2 first to ensure that the
-042305             0014*  ; buffer is empty, and then make a series of calls to this command
-042305             0015*  ; to send data to the buffer.
-042305             0016*  
-042305             0017*  ; The bufferId is a 16-bit integer that identifies the buffer to
-042305             0018*  ; write to. Writing to the same buffer ID multiple times will add
-042305             0019*  ; new blocks to that buffer. This allows a buffer to be built up
-042305             0020*  ; over time, essentially allowing for a command to be sent across
-042305             0021*  ; to the VDP in multiple separate packets.
-042305             0022*  
-042305             0023*  ; Whilst the length of an individual block added using this command
-042305             0024*  ; is restricted to 65535 bytes (as the largest value that can be
-042305             0025*  ; sent in a 16-bit number) the total size of a buffer is not
-042305             0026*  ; restricted to this size, as multiple blocks can be added to a
-042305             0027*  ; buffer. Given how long it takes to send data to the VDP it is
-042305             0028*  ; advisable to send data across in smaller chunks, such as 1kb of
-042305             0029*  ; data or less at a time.
-042305             0030*  
-042305             0031*  ; As writing to a single buffer ID is cumulative with this command,
-042305             0032*  ; care should be taken to ensure that the buffer is cleared out
-042305             0033*  ; before writing to it.
-042305             0034*  
-042305             0035*  ; When building up a complex sequence of commands it is often
-042305             0036*  ; advisable to use multiple blocks within a buffer. Typically
-042305             0037*  ; this is easier to code, as otherwise working out exactly how
-042305             0038*  ; many bytes long a command sequence is can be can be onerously
-042305             0039*  ; difficult. It is also easier to modify a command sequences that
-042305             0040*  ; are broken up into multiple blocks.
-042305             0041*  
-042305             0042*  ; As mentioned above it is advisable to send large pieces of data,
-042305             0043*  ; such as bitmaps or sound samples, in smaller chunks. In between
-042305             0044*  ; each packet of data sent to a buffer, the user can then perform
-042305             0045*  ; other operations, such as updating the screen to indicate
-042305             0046*  ; progress. This allows for long-running operations to be performed
-042305             0047*  ; without blocking the screen, and larger amounts of data to be
-042305             0048*  ; transferred over to the VDP than may otherwise be practical given
-042305             0049*  ; the limitations of the eZ80.
-042305             0050*  
-042305             0051*  ; If a buffer ID of 65535 is used then this command will be
-042305             0052*  ; ignored, and the data discarded. This is because this buffer ID
-042305             0053*  ; is reserved for special functions.
-042305             0054*  
-042305             0055*  ; Using buffers for bitmaps
-042305             0056*  
-042305             0057*  ; Whilst it is advisable to send bitmaps over in multiple blocks,
-042305             0058*  ; they cannot be used if they are spread over multiple blocks.
-042305             0059*  ; To use a bitmap its data must be in a single contiguous block,
-042305             0060*  ; and this is achieved by using the “consolidate” command &0E.
-042305             0061*  
-042305             0062*  ; Once you have a block that is ready to be used for a bitmap,
-042305             0063*  ; the buffer must be selected, and then a bitmap created for that
-042305             0064*  ; buffer using the bitmap and sprites API. This is done with the
-042305             0065*  ; following commands:
-042305             0066*  
-042305             0067*  ; VDU 23, 27, &20, bufferId;              : REM Select bitmap (using a buffer ID)
-042305             0068*  ; VDU 23, 27, &21, width; height; format  : REM Create bitmap from buffer
-042305             0069*  
-042305             0070*  ; Until the “create bitmap” call has been made the buffer cannot
-042305             0071*  ; be used as a bitmap. That is because the system needs to
-042305             0072*  ; understand the dimensions of the bitmap, as well as the format
-042305             0073*  ; of the data. Usually this only needs to be done once. The format
-042305             0074*  ; is given as an 8-bit value, with the following values supported:
-042305             0075*  ; Value 	Type 	Description
-042305             0076*  ; 0 	RGBA8888 	RGBA, 8-bits per channel, with bytes ordered sequentially for red, green, blue and alpha
-042305             0077*  ; 1 	RGBA2222 	RGBA, 2-bits per channel, with bits ordered from highest bits as alpha, blue, green and red
-042305             0078*  ; 2 	Mono 	Monochrome, 1-bit per pixel
-042305             0079*  
-042305             0080*  ; The existing bitmap API uses an 8-bit number to select bitmaps,
-042305             0081*  ; and these are automatically stored in buffers numbered 64000-64255
-042305             0082*  ; (&FA00-&FAFF). Working out the buffer number for a bitmap is
-042305             0083*  ; simply a matter of adding 64000. All bitmaps created with that
-042305             0084*  ; API will be RGBA8888 format.
-042305             0085*  
-042305             0086*  ; There is one other additional call added to the bitmap and
-042305             0087*  ; sprites API, which allows for bitmaps referenced with a
-042305             0088*  ; buffer ID to be added to sprites. This is done with the
-042305             0089*  ; following command:
-042305             0090*  
-042305             0091*  ; VDU 23, 27, &26, bufferId;              : REM Add bitmap to the current sprite
-042305             0092*  
-042305             0093*  ; This command otherwise works identically to VDU 23, 27, 6.
-042305             0094*  
-042305             0095*  ; It should be noted that it is possible to modify the buffer
-042305             0096*  ; that a bitmap is stored in using the “adjust buffer contents”
-042305             0097*  ; and “reverse contents” commands (5 and 24 respectively). This
-042305             0098*  ; can allow you to do things such as changing colours in a bitmap,
-042305             0099*  ; or flipping an image horizontally or vertically. This will even
-042305             0100*  ; work on bitmaps that are being used inside sprites.
-042305             0101*  
-042305             0102*  ; Using commands targetting a buffer that create new blocks,
-042305             0103*  ; such as “consolidate” or “split”, will invalidate the bitmap
-042305             0104*  ; and remove it from use.
-042305             0105*  
-042305             0106*  ; Using buffers for sound samples
-042305             0107*  
-042305             0108*  ; Much like with bitmaps, it is advisable to send samples over
-042305             0109*  ; to the VDP in multiple blocks for the same reasons.
-042305             0110*  
-042305             0111*  ; In contrast to bitmaps, the sound system can play back samples
-042305             0112*  ; that are spread over multiple blocks, so there is no need to
-042305             0113*  ; consolidate buffers. As a result of this, the sample playback
-042305             0114*  ; system is also more tolerant of modifications being made to
-042305             0115*  ; the buffer after a sample has been created from it, even if
-042305             0116*  ; the sample is currently playing. It should be noted that
-042305             0117*  ; splitting a buffer may result in unexpected behaviour if
-042305             0118*  ; the sample is currently playing, such as skipping to other
-042305             0119*  ; parts of the sample.
-042305             0120*  
-042305             0121*  ; Once you have a buffer that contains block(s) that are ready
-042305             0122*  ; to be used for a sound sample, the following command must be
-042305             0123*  ; used to indicate that a sample should be created from that buffer:
-042305             0124*  
-042305             0125*  ; VDU 23, 0, &85, 0, 5, 2, bufferId; format
-042305             0126*  
-042305             0127*  ; The format parameter is an 8-bit value that indicates the
-042305             0128*  ; format of the sample data. The following values are supported:
-042305             0129*  ; Value 	Description
-042305             0130*  ; 0 	8-bit signed, 16KHz
-042305             0131*  ; 1 	8-bit unsigned, 16KHz
-042305             0132*  
-042305             0133*  ; Once a sample has been created in this way, the sample can
-042305             0134*  ; be selected for use on a channel using the following command:
-042305             0135*  
-042305             0136*  ; VDU 23, 0, &85, channel, 4, 8, bufferId;
-042305             0137*  
-042305             0138*  ; Samples uploaded using the existing “load sample” command
-042305             0139*  ; (VDU 23, 0, &85, sampleNumber, 5, 0, length; lengthHighByte, <sample data>)
-042305             0140*  ; are also stored in buffers automatically. A sample number using this system is in
-042305             0141*  ; the range of -1 to -128, but these are stored in the range 64256-64383 (&FB00-&FB7F).
-042305             0142*  ; To map a number to a buffer range, you need to negate it, subtract 1, and then add
-042305             0143*  ; it to 64256. This means sample number -1 is stored in buffer 64256, -2 is stored in
-042305             0144*  ; buffer 64257, and so on.
-042305             0145*  ; Command 1: Call a buffer
-042305             0146*  
-042305             0147*  ; VDU 23, 0 &A0, bufferId; 1
-042305             0148*  
-042305             0149*  ; This command will attempt to execute all of the commands
-042305             0150*  ; stored in the buffer with the given ID. If the buffer does
-042305             0151*  ; not exist, or is empty, then this command will do nothing.
-042305             0152*  
-042305             0153*  ; Essentially, this command passes the contents of the buffer
-042305             0154*  ; to the VDP’s VDU command processor system, and executes them
-042305             0155*  ; as if they were sent directly to the VDP.
-042305             0156*  
-042305             0157*  ; As noted against command 0, it is possible to build up a
-042305             0158*  ; buffer over time by sending across multiple commands to write
-042305             0159*  ; to the same buffer ID. When calling a buffer with multiple
-042305             0160*  ; blocks, the blocks are executed in order.
-042305             0161*  
-042305             0162*  ; Care should be taken when using this command within a buffer,
-042305             0163*  ; as it is possible to create an infinite loop. For instance,
-042305             0164*  ; if a buffer contains a command to call itself, then this will
-042305             0165*  ; result in an infinite loop. This will cause the VDP to hang,
-042305             0166*  ; and the only way to recover from this is to reset the VDP.
-042305             0167*  
-042305             0168*  ; Using a bufferId of -1 (65535) will cause the current buffer
-042305             0169*  ; to be executed. This can be useful for creating loops within
-042305             0170*  ; a buffer. It will be ignored if used outside of a buffered
-042305             0171*  ; command sequence.
-042305             0172*  
-042305             0173*  ; Command 2: Clear a buffer
-042305             0174*  ; VDU 23, 0 &A0, bufferId; 2
-042305             0175*  
-042305             0176*  ; This command will clear the buffer with the given ID. If
-042305             0177*  ; the buffer does not exist then this command will do nothing.
-042305             0178*  
-042305             0179*  ; Please note that this clears out all of the blocks sent to
-042305             0180*  ; a buffer via command 0, not just the last one. i.e. if you
-042305             0181*  ; have built up a buffer over time by sending multiple commands
-042305             0182*  ; to write to the same buffer ID, this command will clear out
-042305             0183*  ; all of those commands.
-042305             0184*  
-042305             0185*  ; Calling this command with a bufferId value of -1 (65535) will
-042305             0186*  ; clear out all buffers.
-042305             0187*  
-042305             0188*  ; Command 3: Create a writeable buffer
-042305             0189*  ; VDU 23, 0 &A0, bufferId; 3, length;
-042305             0190*  ; This command will create a new writeable buffer with the given
-042305             0191*  ; ID. If a buffer with the given ID already exists then this
-042305             0192*  ; command will do nothing. This command is primarily intended
-042305             0193*  ; for use to create a buffer that can be used to capture output
-042305             0194*  ; using the “set output stream” command (see below), or to store
-042305             0195*  ; data that can be used for other commands.
-042305             0196*  
-042305             0197*  ; It is generally quite rare that you will want to use this
-042305             0198*  ; command. Typically you will instead want to use command 0
-042305             0199*  ; to write data to a buffer. It is not necessary to use this
-042305             0200*  ; command before using command 0, and indeed doing so will
-042305             0201*  ; lead to errors as you will end up with two blocks in the
-042305             0202*  ; buffer, the first of which will be empty. If you do wish
-042305             0203*  ; to use this command to create a buffer for data and then
-042305             0204*  ; write to it, you would need to use operation 2 of command 5,
-042305             0205*  ; the “set” operation in the “buffer adjust” command, to set a
-042305             0206*  ; sequence of bytes in the buffer to the data you want to write.
-042305             0207*  ; This is not recommended, as it is much easier to just use
-042305             0208*  ; command 0 to write a data block to a buffer.
-042305             0209*  
-042305             0210*  ; This new buffer will be a single empty single block upon
-042305             0211*  ; creation, containing zeros.
-042305             0212*  
-042305             0213*  ; The length parameter is a 16-bit integer that specifies
-042305             0214*  ; the maximum size of the buffer. This is the maximum number
-042305             0215*  ; of bytes that can be stored in the buffer. If the buffer
-042305             0216*  ; is full then no more data can be written to it, and subsequent
-042305             0217*  ; writes will be ignored.
-042305             0218*  
-042305             0219*  ; After creating a buffer with this command it is possible to
-042305             0220*  ; use command 0 to write further blocks to the buffer, however
-042305             0221*  ; this is probably not advisable.
-042305             0222*  
-042305             0223*  ; A bufferId of -1 (65535) and 0 will be ignored, as these
-042305             0224*  ; values have special meanings for writable buffers. See command 4.
-042305             0225*  
-042305             0226*  ; Command 4: Set output stream to a buffer
-042305             0227*  ; VDU 23, 0 &A0, bufferId; 4
-042305             0228*  
-042305             0229*  ; Sets then current output stream to the buffer with the given ID.
-042305             0230*  ; With two exceptions, noted below, this needs to be a writable
-042305             0231*  ; buffer created with command 3. If the buffer does not exist,
-042305             0232*  ; or the first block within the buffer is not writable, then
-042305             0233*  ; this command will do nothing.
-042305             0234*  
-042305             0235*  ; Following this command, any subsequent VDU commands that send
-042305             0236*  ; response packets will have those packets written to the specified
-042305             0237*  ; output buffer. This allows the user to capture the response
-042305             0238*  ; packets from a command sent to the VDP.
-042305             0239*  
-042305             0240*  ; By default, the output stream (for the main VDU command processor)
-042305             0241*  ; is the communications channel from the VDP to MOS running on the
-042305             0242*  ; eZ80.
-042305             0243*  
-042305             0244*  ; Passing a buffer ID of -1 (65535) to this command will
-042305             0245*  ; remove/detach the output buffer. From that point onwards,
-042305             0246*  ; any subsequent VDU commands that send response packets will
-042305             0247*  ; have those responses discarded/ignored.
-042305             0248*  
-042305             0249*  ; Passing a buffer ID of 0 to this command will set the output
-042305             0250*  ; buffer back to its original value for the current command stream.
-042305             0251*  ; Typically that will be the communications channel from the VDP to
-042305             0252*  ; MOS running on the eZ80, but this may not be the case if a nested
-042305             0253*  ; call has been made.
-042305             0254*  
-042305             0255*  ; When used inside a buffered command sequence, this command will
-042305             0256*  ; only affect the output stream for that sequence of commands, and
-042305             0257*  ; any other buffered command sequences that are called from within
-042305             0258*  ; that sequence. Once the buffered command sequence has completed,
-042305             0259*  ; the output stream will effectively be reset to its original value.
-042305             0260*  
-042305             0261*  ; It is strongly recommended to only use this command from within a
-042305             0262*  ; buffered command sequence. Whilst it is possible to use this
-042305             0263*  ; command from within a normal VDU command sequence, it is not
-042305             0264*  ; recommended as it may cause unexpected behaviour. If you do use
-042305             0265*  ; it in that context, it is very important to remember to restore
-042305             0266*  ; the original output channel using VDU 23, 0, &A0, 0; 4. (In the
-042305             0267*  ; future, this command may be disabled from being used outside of
-042305             0268*  ; a buffered command sequence.)
-042305             0269*  
-042305             0270*  ; At present, writable buffers can only be written to until the end
-042305             0271*  ; of the buffer has been reached; once that happens no more data
-042305             0272*  ; will be written to the buffer. It is not currently possible to
-042305             0273*  ; “rewind” an output stream. It is therefore advisable to ensure
-042305             0274*  ; that the buffer is large enough to capture all of the data that
-042305             0275*  ; is expected to be written to it. The only current way to “rewind”
-042305             0276*  ; an output stream would be to clear the buffer and create a new
-042305             0277*  ; one, and then call set output stream again with the newly created
-042305             0278*  ; buffer.
-042305             0279*  
-042305             0280*  ; Command 5: Adjust buffer contents
-042305             0281*  ; VDU 23, 0, &A0, bufferId; 5, operation, offset; [count;] <operand>, [arguments]
-042305             0282*  
-042305             0283*  ; This command will adjust the contents of a buffer, at a given
-042305             0284*  ; offset. The exact nature of the adjustment will depend on the
-042305             0285*  ; operation used.
-042305             0286*  
-042305             0287*  ; Passing a bufferId of -1 (65535) to this command will adjust
-042305             0288*  ; the contents of the current buffer. This will only work if this
-042305             0289*  ; command is used within a buffered command sequence, otherwise the
-042305             0290*  ; command will not do anything.
-042305             0291*  
-042305             0292*  ; The basic set of adjustment operations are as follows:
-042305             0293*  ; Operation 	Description
-042305             0294*  ; 0 	NOT
-042305             0295*  ; 1 	Negate
-042305             0296*  ; 2 	Set value
-042305             0297*  ; 3 	Add
-042305             0298*  ; 4 	Add with carry
-042305             0299*  ; 5 	AND
-042305             0300*  ; 6 	OR
-042305             0301*  ; 7 	XOR
-042305             0302*  
-042305             0303*  ; All of these operations will modify a byte found at the given
-042305             0304*  ; offset in the buffer. The only exception to that is the “Add with
-042305             0305*  ; carry” operation, which will also store the “carry” value in the
-042305             0306*  ; byte at the next offset. With the exception of NOT and Negate,
-042305             0307*  ; each command requires an operand value to be specified.
-042305             0308*  
-042305             0309*  ; To flip the bits of a byte at offset 12 in buffer 3, you would
-042305             0310*  ; need to use the NOT operation, and so the following command would
-042305             0311*  ; be used:
-042305             0312*  
-042305             0313*  ; VDU 23, 0, &A0, 3; 5, 0, 12;
-042305             0314*  
-042305             0315*  ; To add 42 to the byte at offset 12 in buffer 3, you would need
-042305             0316*  ; to use the Add operation, and so the following command would be
-042305             0317*  ; used:
-042305             0318*  
-042305             0319*  ; VDU 23, 0, &A0, 3; 5, 3, 12; 42
-042305             0320*  
-042305             0321*  ; When using add with carry, the carry value is stored in the byte
-042305             0322*  ; at the next offset. So to add 42 to the byte at offset 12 in
-042305             0323*  ; buffer 3, and store the carry value in the byte at offset 13,
-042305             0324*  ; you would need to use the Add with carry operation, and so the
-042305             0325*  ; following command would be used:
-042305             0326*  
-042305             0327*  ; VDU 23, 0, &A0, 3; 5, 4, 12; 42
-042305             0328*  
-042305             0329*  ; Advanced operations
-042305             0330*  
-042305             0331*  ; Whilst these operations are useful, they are not particularly
-042305             0332*  ; powerful as they only operate one one byte at a time, with a
-042305             0333*  ; fixed operand value, and potentially cannot reach all bytes in
-042305             0334*  ; a buffer. To address this, the API supports a number of advanced
-042305             0335*  ; operations.
-042305             0336*  
-042305             0337*  ; The operation value used is an 8-bit value that can have bits
-042305             0338*  ; set to modify the behaviour of the operation. The following bits
-042305             0339*  ; are defined:
-042305             0340*  ; Bit 	Description
-042305             0341*  ; &10 	Use “advanced” offsets
-042305             0342*  ; &20 	Operand is a buffer-fetched value (buffer ID and an offset)
-042305             0343*  ; &40 	Multiple target values should be adjusted
-042305             0344*  ; &80 	Multiple operand values should be used
-042305             0345*  
-042305             0346*  ; These bits can be combined together to modify the behaviour of
-042305             0347*  ; the operation.
-042305             0348*  
-042305             0349*  ; Fundamentally, this command adjusts values of a buffer at a given
-042305             0350*  ; offset one byte at a time. When either of the “multiple” variants
-042305             0351*  ; are used, a 16-bit count must be provided to indicate how many
-042305             0352*  ; bytes should be altered.
-042305             0353*  
-042305             0354*  ; Advanced offsets are sent as a 24-bit value in little-endian
-042305             0355*  ; order, which can allow for buffers that are larger than 64kb
-042305             0356*  ; to be adjusted. If the top-bit of this 24-bit value is set, then
-042305             0357*  ; the 16-bit value immediately following the offset is used as a
-042305             0358*  ; block index number, and the remaining 23-bits of the offset value
-042305             0359*  ; are used as an offset within that block. When the “advanced”
-042305             0360*  ; offset mode bit has been set then all offsets associated with
-042305             0361*  ; this command must be sent as advanced offsets.
-042305             0362*  
-042305             0363*  ; The “buffer-fetched value” mode allows for the operand value to
-042305             0364*  ; be fetched from a buffer. The operand sent as part of the
-042305             0365*  ; command in this case is a pair of 16-bit values giving the
-042305             0366*  ; buffer ID and offset to indicate where the actual operand value
-042305             0367*  ; should be fetched from. An operand buffer ID of -1 (65535) will
-042305             0368*  ; be interpretted as meaning “this buffer”, and thus can only be
-042305             0369*  ; used inside a buffered command sequence. If the advanced offset
-042305             0370*  ; mode is used, then the operand value is an advanced offset value.
-042305             0371*  
-042305             0372*  ; The “multiple target values” mode allows for multiple bytes to
-042305             0373*  ; be adjusted at once. When this mode is used, the count value
-042305             0374*  ; must be provided to indicate how many bytes should be adjusted.
-042305             0375*  ; Unless the “multiple operand values” mode is also used, the
-042305             0376*  ; operand value is used for all bytes adjusted.
-042305             0377*  
-042305             0378*  ; The “multiple operand values” mode allows for multiple operand
-042305             0379*  ; values to be used. When this mode is used, the count value must
-042305             0380*  ; be provided to indicate how many operand values should be used.
-042305             0381*  ; This can allow, for instance, to add together several bytes in a
-042305             0382*  ; buffer. When this mode is used in conjunction with the “multiple
-042305             0383*  ; target values” mode, the number of operand values must match the
-042305             0384*  ; number of target values, and the operation happens one byte at a
-042305             0385*  ; time.
-042305             0386*  
-042305             0387*  ; Some examples of advanced operations are as follows:
-042305             0388*  
-042305             0389*  ; Flip the bits of 7 bytes in buffer 3 starting at offset 12:
-042305             0390*  
-042305             0391*  ; VDU 23, 0, &A0, 3; 5, &40, 12; 7;
-042305             0392*  
-042305             0393*  ; This uses operation 0 (NOT) with the “multiple target values”
-042305             0394*  ; modifier (&40).
-042305             0395*  
-042305             0396*  ; Add 42 to each of the 7 bytes in buffer 3 starting at offset 12:
-042305             0397*  
-042305             0398*  ; VDU 23, 0, &A0, 3; 5, &43, 12; 7; 42
-042305             0399*  
-042305             0400*  ; Set the byte at offset 12 in the fourth block of buffer 3 to 42:
-042305             0401*  
-042305             0402*  ; VDU 23, 0, &A0, 3; 5, &12, 12; &80, 4; 42
-042305             0403*  
-042305             0404*  ; This is using operation 2 (Set) with the “advanced offsets”
-042305             0405*  ; modifier (&10). As BBC BASIC doesn’t natively understand how
-042305             0406*  ; to send 24-bit values it is sent as the 16-bit value 12; followed
-042305             0407*  ; by a byte with its top bit set &80 to complete the 24-bit offset
-042305             0408*  ; in little-endian order. As the top bit of the offset is set, this
-042305             0409*  ; indicates that the next 16-bit value will be a block index, 4;.
-042305             0410*  ; Finally the value to write is sent, 42.
-042305             0411*  
-042305             0412*  ; An operation like this could be used to set the position as part
-042305             0413*  ; of a draw command.
-042305             0414*  
-042305             0415*  ; Set the value in buffer 3 at offset 12 to the sum of the five
-042305             0416*  ; values 1, 2, 3, 4, 5:
-042305             0417*  
-042305             0418*  ; VDU 23, 0, &A0, 3; 5, 2, 12; 0  : REM clear out the value at
-042305             0419*  ; offset 12 (set it to 0)
-042305             0420*  ; VDU 23, 0, &A0, 3; 5, &83, 12; 5; 1, 2, 3, 4, 5
-042305             0421*  
-042305             0422*  ; AND together 7 bytes in buffer 3 starting at offset 12 with the
-042305             0423*  ; 7 bytes in buffer 4 starting at offset 42:
-042305             0424*  
-042305             0425*  ; VDU 23, 0, &A0, 3; 5, &E5, 12; 7; 4; 42;
-042305             0426*  
-042305             0427*  ; As we are working on a little-endian system, integers longer
-042305             0428*  ; than one byte are sent with their least significant byte first.
-042305             0429*  ; This means that the add with carry operation can be used to add
-042305             0430*  ; together integers of any size, so long as they are the same size.
-042305             0431*  ; To do this, both the “multiple target values” and “multiple
-042305             0432*  ; operand values” modes must be used.
-042305             0433*  
-042305             0434*  ; The following commands will add together a 16-bit, 24-bit,
-042305             0435*  ; 32-bit, and 40-bit integers, all targetting the value stored
-042305             0436*  ; in buffer 3 starting at offset 12, and all using the operand
-042305             0437*  ; value of 42:
-042305             0438*  
-042305             0439*  ; VDU 23, 0, &A0, 3; 5, &C4, 12; 2; 42;  : REM 2 bytes; a 16-bit integer
-042305             0440*  ; VDU 23, 0, &A0, 3; 5, &C4, 12; 3; 42; 0  : REM 3 bytes; a 24-bit integer
-042305             0441*  ; VDU 23, 0, &A0, 3; 5, &C4, 12; 4; 42; 0;  : REM 4 bytes; a 32-bit integer
-042305             0442*  ; VDU 23, 0, &A0, 3; 5, &C4, 12; 5; 42; 0; 0  : REM 5 bytes; a 40-bit integer
-042305             0443*  
-042305             0444*  ; Take note of how the operand value is padded out with zeros
-042305             0445*  ; to match the size of the target value. 42; is used as a base
-042305             0446*  ; to send a 16-bit value, with zeros added of either 8-bit or
-042305             0447*  ; 16-bits to pad it out to the required size. The “carry” value
-042305             0448*  ; will be stored at the next offset in the target buffer after
-042305             0449*  ; the complete target value. So for a 16-bit value, the carry
-042305             0450*  ; will be stored at offset 14, for a 24-bit value it will be stored
-042305             0451*  ; at offset 15, and so on.
-042305             0452*  
-042305             0453*  ; Command 6: Conditionally call a buffer
-042305             0454*  
-042305             0455*  ; VDU 23, 0, &A0, bufferId; 6, operation, checkBufferId; checkOffset; [arguments]
-042305             0456*  
-042305             0457*  ; This command will conditionally call a buffer if the condition
-042305             0458*  ; operation passes. This command works in a similar manner to the
-042305             0459*  ; “Adjust buffer contents” command.
-042305             0460*  
-042305             0461*  ; With this command a buffer ID of 65535 (-1) is always
-042305             0462*  ; interpretted as “current buffer”, and so can only be used
-042305             0463*  ; within a buffered command sequence. If used outside of a
-042305             0464*  ; buffered command sequence then this command will do nothing.
-042305             0465*  
-042305             0466*  ; The basic set of condition operations are as follows:
-042305             0467*  ; Operation 	Description
-042305             0468*  ; 0 	Exists (value is non-zero)
-042305             0469*  ; 1 	Not exists (value is zero)
-042305             0470*  ; 2 	Equal
-042305             0471*  ; 3 	Not equal
-042305             0472*  ; 4 	Less than
-042305             0473*  ; 5 	Greater than
-042305             0474*  ; 6 	Less than or equal
-042305             0475*  ; 7 	Greater than or equal
-042305             0476*  ; 8 	AND
-042305             0477*  ; 9 	OR
-042305             0478*  
-042305             0479*  ; The value that is being checked is fetched from the specified
-042305             0480*  ; check buffer ID and offset. With the exception of “Exists” and
-042305             0481*  ; “Not exists”, each command requires an operand value to be
-042305             0482*  ; specified to check against.
-042305             0483*  
-042305             0484*  ; The operation value used is an 8-bit value that can have bits
-042305             0485*  ; set to modify the behaviour of the operation. The following bits
-042305             0486*  ; are defined:
-042305             0487*  ; Bit value 	Description
-042305             0488*  ; &10 	Use advanced offsets
-042305             0489*  ; &20 	Operand is a buffer-fetched value (buffer ID and an offset)
-042305             0490*  
-042305             0491*  ; These modifiers can be combined together to modify the behaviour
-042305             0492*  ; of the operation.
-042305             0493*  
-042305             0494*  ; At this time, unlike with the “adjust” command, multiple target
-042305             0495*  ; values and multiple operand values are not supported. All
-042305             0496*  ; comparisons are therefore only conducted on single 8-bit values.
-042305             0497*  ; (If comparisons of 16-bit values are required, multiple calls
-042305             0498*  ; can be combined.) Support for them may be added in the future.
-042305             0499*  
-042305             0500*  ; The AND and OR operations are logical operations, and so the
-042305             0501*  ; operand value is used as a boolean value. Any non-zero value is
-042305             0502*  ; considered to be true, and zero is considered to be false. These
-042305             0503*  ; operations therefore are most useful when used with buffer-fetched
-042305             0504*  ; operand values (operations &28, &29, &38 and &39).
-042305             0505*  
-042305             0506*  ; Some examples of condition operations are as follows:
-042305             0507*  
-042305             0508*  ; Call buffer 7 if the value in buffer 12 at offset 5 exists
-042305             0509*  ; (is non-zero):
-042305             0510*  
-042305             0511*  ; VDU 23, 0, &A0, 7; 6, 0, 12; 5;
-042305             0512*  
-042305             0513*  ; Call buffer 8 if the value in buffer 12 at offset 5 does not
-042305             0514*  ; exist (is zero):
-042305             0515*  
-042305             0516*  ; VDU 23, 0, &A0, 8; 6, 1, 12; 5;
-042305             0517*  
-042305             0518*  ; Combining the above two examples is effectively equivalent to
-042305             0519*  ; “if the value exists, call buffer 7, otherwise call buffer 8”:
-042305             0520*  
-042305             0521*  ; VDU 23, 0, &A0, 7; 6, 0, 12; 5;
-042305             0522*  ; VDU 23, 0, &A0, 8; 6, 1, 12; 5;
-042305             0523*  
-042305             0524*  ; Call buffer 3 if the value in buffer 4 at offset 12 is equal to 42:
-042305             0525*  
-042305             0526*  ; VDU 23, 0, &A0, 3; 6, 2, 4; 12; 42
-042305             0527*  
-042305             0528*  ; Call buffer 5 if the value in buffer 2 at offset 7 is less than
-042305             0529*  ; the value in buffer 2 at offset 8:
-042305             0530*  
-042305             0531*  ; VDU 23, 0, &A0, 5; 6, &24, 2; 7; 2; 8;
-042305             0532*  
-042305             0533*  ; Command 7: Jump to a buffer
-042305             0534*  
-042305             0535*  ; VDU 23, 0, &A0, bufferId; 7
-042305             0536*  
-042305             0537*  ; This command will jump to the buffer with the given ID. If
-042305             0538*  ; the buffer does not exist, or is empty, then this command will
-042305             0539*  ; do nothing.
-042305             0540*  
-042305             0541*  ; This essentially works the same as the call command (command 1),
-042305             0542*  ;  except that it does not return to the caller. This command is
-042305             0543*  ;  therefore useful for creating loops.
-042305             0544*  
-042305             0545*  ; Using this command to jump to buffer 65535 (buffer ID -1) is
-042305             0546*  ; treated as a “jump to end of current buffer”. This will return
-042305             0547*  ; execution to the caller, and can be useful for exiting a loop.
-042305             0548*  
-042305             0549*  ; ## Command 8: Conditional Jump to a buffer
-042305             0550*  
-042305             0551*  ; VDU 23, 0, &A0, bufferId; 8, operation, checkBufferId; checkOffset; [arguments]
-042305             0552*  
-042305             0553*  ; This command operates in a similar manner to the “Conditionally
-042305             0554*  ; call a buffer” command (command 6), except that it will jump to
-042305             0555*  ; the buffer if the condition operation passes.
-042305             0556*  
-042305             0557*  ; As with the “Jump to a buffer” command (command 7), a jump to
-042305             0558*  ; buffer 65535 is treated as a “jump to end of current buffer”.
-042305             0559*  ; Command 9: Jump to an offset in a buffer
-042305             0560*  
-042305             0561*  ; VDU 23, 0, &A0, bufferId; 9, offset; offsetHighByte, [blockNumber;]
-042305             0562*  
-042305             0563*  ; This command will jump to the given offset in the buffer with the
-042305             0564*  ; given ID. If the buffer does not exist, or is empty, then this
-042305             0565*  ; command will do nothing.
-042305             0566*  
-042305             0567*  ; The offset in this command is always an “advanced” offset, given
-042305             0568*  ; as a 24-bit value in little-endian order. As with other uses of
-042305             0569*  ; advanced offsets, if the top-bit is set in the high byte of the
-042305             0570*  ; offset value, a block number must also be provided.
-042305             0571*  
-042305             0572*  ; When jumping to an offset, using buffer ID 65535 is treated as
-042305             0573*  ; meaning “jump within current buffer”. This can be useful for
-042305             0574*  ; creating loops within a buffer, or when building up command
-042305             0575*  ; sequences that may be copied across multiple buffers.
-042305             0576*  
-042305             0577*  ; Jumping to an offset that is beyond the end of the buffer is
-042305             0578*  ; equivalent to jumping to the end of the buffer.
-042305             0579*  ; Command 10: Conditional jump to an offset in a buffer
-042305             0580*  
-042305             0581*  ; VDU 23, 0, &A0, bufferId; 10, offset; offsetHighByte, [blockNumber;] [arguments]
-042305             0582*  
-042305             0583*  ; A conditional jump with an offset works in a similar manner to
-042305             0584*  ; the “Conditional call a buffer” command (command 6), except that
-042305             0585*  ; it will jump to the given offset in the buffer if the condition
-042305             0586*  ; operation passes.
-042305             0587*  
-042305             0588*  ; As with the “Jump to an offset in a buffer” command (command 9),
-042305             0589*  ; the offset in this command is always an “advanced” offset, given
-042305             0590*  ; as a 24-bit value in little-endian order, and the usual advanced
-042305             0591*  ; offset rules apply. And similarly, using buffer ID 65535 is
-042305             0592*  ; treated as meaning “jump within current buffer”.
-042305             0593*  ; Command 11: Call buffer with an offset
-042305             0594*  
-042305             0595*  ; VDU 23, 0, &A0, bufferId; 11, offset; offsetHighByte, [blockNumber;]
-042305             0596*  
-042305             0597*  ; Works just like “Call a buffer” (command 1), except that it also
-042305             0598*  ; accepts an advanced offset.
-042305             0599*  
-042305             0600*  ; Command 12: Conditional call buffer with an offset
-042305             0601*  
-042305             0602*  ; VDU 23, 0, &A0, bufferId; 12, offset; offsetHighByte, [blockNumber;] [arguments]
-042305             0603*  
-042305             0604*  ; Works just like the “Conditional call a buffer” command
-042305             0605*  ; (command 6), except that it also accepts an advanced offset.
-042305             0606*  
-042305             0607*  ; Command 13: Copy blocks from multiple buffers into a single buffer
-042305             0608*  
-042305             0609*  ; VDU 23, 0, &A0, targetBufferId; 13, sourceBufferId1; sourceBufferId2; ... 65535;
-042305             0610*  
-042305             0611*  ; This command will copy the contents of multiple buffers into a
-042305             0612*  ; single buffer. The buffers to copy from are specified as a list
-042305             0613*  ; of buffer IDs, terminated by a buffer ID of -1 (65535). The
-042305             0614*  ; buffers are copied in the order they are specified.
-042305             0615*  
-042305             0616*  ; This is a block-wise copy, so the blocks from the source buffers
-042305             0617*  ; are copied into the target buffer. The blocks are copied in the
-042305             0618*  ; order they are found in the source buffers.
-042305             0619*  
-042305             0620*  ; The target buffer will be overwritten with the contents of the
-042305             0621*  ; source buffers. This will not be done however until after all the
-042305             0622*  ; data has been gathered and copied. The target buffer can therefore
-042305             0623*  ; included in the list of the source buffers.
-042305             0624*  
-042305             0625*  ; If a source buffer that does not exist is specified, or a source
-042305             0626*  ; buffer that is empty is specified, then that buffer will be ignored. If no source buffers are specified, or all of the source buffers are empty, then the target buffer will be cleared out.
-042305             0627*  
-042305             0628*  ; The list of source buffers can contain repeated buffer IDs. If a
-042305             0629*  ; buffer ID is repeated, then the blocks from that buffer will be
-042305             0630*  ; copied multiple times into the target buffer.
-042305             0631*  
-042305             0632*  ; If there is insufficient memory available on the VDP to complete
-042305             0633*  ; this command then it will fail, and the target buffer will be
-042305             0634*  ; left unchanged.
-042305             0635*  
-042305             0636*  
-042305             0637*  ; Command 14: Consolidate blocks in a buffer
-042305             0638*  
-042305             0639*  ; VDU 23, 0, &A0, bufferId; 14
-042305             0640*  
-042305             0641*  ; Takes all the blocks in a buffer and consolidates them into a
-042305             0642*  ; single block. This is useful for bitmaps, as it allows for a
-042305             0643*  ; bitmap to be built up over time in multiple blocks, and then
-042305             0644*  ; consolidated into a single block for use as a bitmap.
-042305             0645*  
-042305             0646*  ; If there is insufficient memory available on the VDP to complete
-042305             0647*  ; this command then it will fail, and the buffer will be left
-042305             0648*  ; unchanged.
-042305             0649*  
-042305             0650*  ; Command 15: Split a buffer into multiple blocks
-042305             0651*  
-042305             0652*  ; VDU 23, 0, &A0, bufferId; 15, blockSize;
-042305             0653*  
-042305             0654*  ; Splits a buffer into multiple blocks. The blockSize parameter
-042305             0655*  ; is a 16-bit integer that specifies the target size of each block.
-042305             0656*  ; If the source data is not a multiple of the block size then the
-042305             0657*  ; last block will be smaller than the specified block size.
-042305             0658*  
-042305             0659*  ; If this command is used on a buffer that is already split into
-042305             0660*  ; multiple blocks, then the blocks will be consolidated first,
-042305             0661*  ; and then re-split into the new block size.
-042305             0662*  
-042305             0663*  ; If there is insufficient memory available on the VDP to complete
-042305             0664*  ; this command then it will fail, and the buffer will be left
-042305             0665*  ; unchanged.
-042305             0666*  ; Command 16: Split a buffer into multiple blocks and spread across
-042305             0667*  ; multiple buffers
-042305             0668*  
-042305             0669*  ; VDU 23, 0, &A0, bufferId; 16, blockSize; [targetBufferId1;] [targetBufferId2;] ... 65535;
-042305             0670*  
-042305             0671*  ; Splits a buffer into multiple blocks, as per command 15, but
-042305             0672*  ; then spreads the resultant blocks across the target buffers.
-042305             0673*  ; The target buffers are specified as a list of buffer IDs,
-042305             0674*  ; terminated by a buffer ID of -1 (65535).
-042305             0675*  
-042305             0676*  ; The blocks are spread across the target buffers in the order
-042305             0677*  ; they are specified, and the spread will loop around the buffers
-042305             0678*  ; until all the blocks have been distributed. The target buffers
-042305             0679*  ; will be cleared out before the blocks are spread across them.
-042305             0680*  
-042305             0681*  ; What this means is that if the source buffer is, let’s say,
-042305             0682*  ; 100 bytes in size and we split using a block size of 10 bytes
-042305             0683*  ; then we will end up with 10 blocks. If we then spread those
-042305             0684*  ; blocks across 3 target buffers, then the first buffer will
-042305             0685*  ; contain blocks 1, 4, 7 and 10, the second buffer will contain
-042305             0686*  ; blocks 2, 5 and 8, and the third buffer will contain
-042305             0687*  ; blocks 3, 6 and 9.
-042305             0688*  
-042305             0689*  ; This command attempts to ensure that, in the event of
-042305             0690*  ; insufficient memory being available on the VDP to complete
-042305             0691*  ; the command, it will leave the targets as they were before
-042305             0692*  ; the command was executed. However this may not always be
-042305             0693*  ; possible. The first step of this command is to consolidate
-042305             0694*  ; the source buffer into a single block, and this may fail from
-042305             0695*  ; insufficient memory. If that happens then all the buffers will
-042305             0696*  ; be left as they were. After this however the target buffers
-042305             0697*  ; will be cleared. If there is insufficient memory to successfully
-042305             0698*  ; split the buffer into multiple blocks then the call will exit,
-042305             0699*  ; and the target buffers will be left empty.
-042305             0700*  ; Command 17: Split a buffer and spread across blocks, starting
-042305             0701*  ; at target buffer ID
-042305             0702*  
-042305             0703*  ; VDU 23, 0, &A0, bufferId; 17, blockSize; targetBufferId;
-042305             0704*  
-042305             0705*  ; As per the above two commands, this will split a buffer into
-042305             0706*  ; multiple blocks. It will then spread the blocks across buffers
-042305             0707*  ; starting at the target buffer ID, incrementing the target buffer
-042305             0708*  ; ID until all the blocks have been distributed.
-042305             0709*  
-042305             0710*  ; Target blocks will be cleared before a block is stored in them.
-042305             0711*  ; Each target will contain a single block. The exception to this
-042305             0712*  ; is if the target buffer ID reaches 65534, as it is not possible
-042305             0713*  ; to store a block in buffer 65535. In this case, multiple blocks
-042305             0714*  ; will be placed into buffer 65534.
-042305             0715*  
-042305             0716*  ; With this command if there is insufficient memory available on
-042305             0717*  ; the VDP to complete the command then it will fail, and the target
-042305             0718*  ; buffers will be left unchanged.
-042305             0719*  
-042305             0720*  ; Command 18: Split a buffer into blocks by width
-042305             0721*  
-042305             0722*  ; VDU 23, 0, &A0, bufferId; 18, width; blockCount;
-042305             0723*  
-042305             0724*  ; This command splits a buffer into a given number of blocks by
-042305             0725*  ; first of all splitting the buffer into blocks of a given width
-042305             0726*  ; (number of bytes), and then consolidating those blocks into the
-042305             0727*  ; given number of blocks.
-042305             0728*  
-042305             0729*  ; This is useful for splitting a bitmap into a number of separate
-042305             0730*  ; columns, which can then be manipulated individually. This can be
-042305             0731*  ; useful for dealing with sprite sheets.
-042305             0732*  ; Command 19: Split by width into blocks and spread across target
-042305             0733*  ; buffers
-042305             0734*  
-042305             0735*  ; VDU 23, 0, &A0, bufferId; 19, width; [targetBufferId1;] [targetBufferId2;] ... 65535;
-042305             0736*  
-042305             0737*  ; This command essentially operates the same as command 18, but the
-042305             0738*  ; block count is determined by the number of target buffers specified. The blocks are spread across the target buffers in the order they are specified, with one block placed in each target.
-042305             0739*  
-042305             0740*  ; Command 20: Split by width into blocks and spread across blocks
-042305             0741*  ; starting at target buffer ID
-042305             0742*  
-042305             0743*  ; VDU 23, 0, &A0, bufferId; 20, width; blockCount; targetBufferId;
-042305             0744*  
-042305             0745*  ; This command essentially operates the same as command 18, but
-042305             0746*  ; the generated blocks are spread across blocks starting at the
-042305             0747*  ; target buffer ID, as per command 17.
-042305             0748*  
-042305             0749*  ; Command 21: Spread blocks from a buffer across multiple target
-042305             0750*  ; buffers
-042305             0751*  
-042305             0752*  ; VDU 23, 0, &A0, bufferId; 21, [targetBufferId1;] [targetBufferId2;] ... 65535;
-042305             0753*  
-042305             0754*  ; Spreads the blocks from a buffer across multiple target buffers.
-042305             0755*  ; The target buffers are specified as a list of buffer IDs,
-042305             0756*  ; terminated by a buffer ID of -1 (65535). The blocks are spread
-042305             0757*  ; across the target buffers in the order they are specified, and
-042305             0758*  ; the spread will loop around the buffers until all the blocks have
-042305             0759*  ; been distributed.
-042305             0760*  
-042305             0761*  ; It should be noted that this command does not copy the blocks,
-042305             0762*  ; and nor does it move them. Unless the source buffer has been
-042305             0763*  ; included in the list of targets, it will remain completely
-042305             0764*  ; intact. The blocks distributed across the target buffers will
-042305             0765*  ; point to the same memory as the blocks in the source buffer.
-042305             0766*  ; Operations to modify data in the source buffer will also modify
-042305             0767*  ; the data in the target buffers. Clearing the source buffer
-042305             0768*  ; however will not clear the target buffers.
-042305             0769*  
-042305             0770*  ; Command 22: Spread blocks from a buffer across blocks starting
-042305             0771*  ; at target buffer ID
-042305             0772*  
-042305             0773*  ; VDU 23, 0, &A0, bufferId; 22, targetBufferId;
-042305             0774*  
-042305             0775*  ; Spreads the blocks from a buffer across blocks starting at
-042305             0776*  ; the target buffer ID.
-042305             0777*  
-042305             0778*  ; This essentially works the same as command 21, and the same
-042305             0779*  ; notes about copying and moving blocks apply. Blocks are spread
-042305             0780*  ; in the same manner as commands 17 and 20.
-042305             0781*  
-042305             0782*  ; Command 23: Reverse the order of blocks in a buffer
-042305             0783*  
-042305             0784*  ; VDU 23, 0, &A0, bufferId; 23
-042305             0785*  
-042305             0786*  ; Reverses the order of the blocks in a buffer.
-042305             0787*  ; Command 24: Reverse the order of data of blocks within a buffer
-042305             0788*  
-042305             0789*  ; VDU 23, 0, &A0, bufferId; 24, options, [valueSize;] [chunkSize;]
-042305             0790*  
-042305             0791*  ; Reverses the order of the data within the blocks of a buffer.
-042305             0792*  ; The options parameter is an 8-bit value that can have bits set
-042305             0793*  ; to modify the behaviour of the operation. The following bits
-042305             0794*  ; are defined:
-042305             0795*  ; Bit value 	Description
-042305             0796*  ; 1 	Values are 16-bits in size
-042305             0797*  ; 2 	Values are 32-bits in size
-042305             0798*  ; 3 (1+2) 	If both value size bits are set, then the value size is sent as a 16-bit value
-042305             0799*  ; 4 	Reverse data of the value size within chunk of data of the specified size, sent as a 16-bit value
-042305             0800*  ; 8 	Reverse blocks
-042305             0801*  
-042305             0802*  ; These modifiers can be combined together to modify the behaviour
-042305             0803*  ; of the operation.
-042305             0804*  
-042305             0805*  ; If no value size is set in the options (i.e. the value of the
-042305             0806*  ; bottom two bits of the options is zero) then the value size is
-042305             0807*  ; assumed to be 8-bits.
-042305             0808*  
-042305             0809*  ; It is probably easiest to understand what this operation is
-042305             0810*  ; capable of by going through some examples of how it can be used
-042305             0811*  ; to manipulate bitmaps. The VDP supports two different formats
-042305             0812*  ; of color bitmap, either RGBA8888 which uses 4-bytes per pixel,
-042305             0813*  ; i.e. 32-bit values, or RGBA2222 which uses a single byte per
-042305             0814*  ; pixel.
-042305             0815*  
-042305             0816*  ; The simplest example is rotating an RGBA2222 bitmap by 180
-042305             0817*  ; degrees, which can be done by just reversing the order of
-042305             0818*  ; bytes in the buffer:
-042305             0819*  
-042305             0820*  ; VDU 23, 0, &A0, bufferId; 24, 0
-042305             0821*  
-042305             0822*  ; Rotating an RGBA8888 bitmap by 180 degrees is in principle a
-042305             0823*  ; little more complex, as each pixel is made up of 4 bytes.
-042305             0824*  ; However with this command it is still a simple operation, as
-042305             0825*  ; we can just reverse the order of the 32-bit values that make
-042305             0826*  ; up the bitmap by using an options value of 2:
-042305             0827*  
-042305             0828*  ; VDU 23, 0, &A0, bufferId; 24, 2
-042305             0829*  
-042305             0830*  ; Mirroring a bitmap around the x-axis is a matter of reversing
-042305             0831*  ; the order of rows of pixels. To do this we can set a custom
-042305             0832*  ; value size that corresponds to our bitmap width. For an RGBA2222
-042305             0833*  ; bitmap we can just set a custom value size to our bitmap width:
-042305             0834*  
-042305             0835*  ; VDU 23, 0, &A0, bufferId; 24, 3, width
-042305             0836*  
-042305             0837*  ; As an RGBA8888 bitmap uses 4 bytes per pixel we need to multiply
-042305             0838*  ; our width by 4:
-042305             0839*  
-042305             0840*  ; VDU 23, 0, &A0, bufferId; 24, 3, width * 4
-042305             0841*  
-042305             0842*  ; To mirror a bitmap around the y-axis, we need to reverse the
-042305             0843*  ; order of pixels within each row. For an RGBA2222 bitmap we can
-042305             0844*  ; just set a custom chunk size to our bitmap width:
-042305             0845*  
-042305             0846*  ; VDU 23, 0, &A0, bufferId; 24, 4, width
-042305             0847*  
-042305             0848*  ; For an RGBA8888 bitmap we need to set our options to indicate
-042305             0849*  ; 32-bit values as well as a custom chunk size:
-042305             0850*  
-042305             0851*  ; VDU 23, 0, &A0, bufferId; 24, 6, width * 4
-042305             0852*  
-042305             0853*  ; Command 25: Copy blocks from multiple buffers by reference
-042305             0854*  
-042305             0855*  ; VDU 23, 0, &A0, targetBufferId; 25, sourceBufferId1; sourceBufferId2; ...; 65535;
-042305             0856*  
-042305             0857*  ; This command is essentially a version of command 13 that copies
-042305             0858*  ; blocks by reference rather than by value. The parameters for
-042305             0859*  ; this command are the same as for command 13, and the same rules
-042305             0860*  ; apply.
-042305             0861*  
-042305             0862*  ; If the target buffer is included in the list of source buffers
-042305             0863*  ; then it will be skipped to prevent a reference loop.
-042305             0864*  
-042305             0865*  ; Copying by reference means that the blocks in the target buffer
-042305             0866*  ; will point to the same memory as the blocks in the source
-042305             0867*  ; buffers. Operations to modify data blocks in the source buffers
-042305             0868*  ; will therefore also modify those blocks in the target buffer.
-042305             0869*  ; Clearing the source buffers will not clear the target buffer -
-042305             0870*  ; it will still point to the original data blocks. Data blocks
-042305             0871*  ; are only freed from memory when no buffers are left with any
-042305             0872*  ; references to them.
-042305             0873*  
-042305             0874*  ; Buffers that get consolidated become new blocks, so will lose
-042305             0875*  ; their links to the original blocks, thus after a “consolidate”
-042305             0876*  ; operation modifications to the original blocks will no longer be
-042305             0877*  ; reflected in the consolidated buffer.
-042305             0878*  
-042305             0879*  ; This command is useful to construct a single buffer from multiple
-042305             0880*  ; sources without the copy overhead, which can be costly. For
-042305             0881*  ; example, this can be useful for constructing a bitmap from
-042305             0882*  ; multiple constituent parts before consolidating it into a
-042305             0883*  ; single block. In such an example, using command 13 instead
-042305             0884*  ; would first make a copy of the contents of the source buffers,
-042305             0885*  ; and then consolidate them into a single block. Using this
-042305             0886*  ; command does not make that first copy, and so would be faster.
-042305             0887*  
-042305             0888*  ; This command is also useful for creating multiple buffers that
-042305             0889*  ; all point to the same data.
-042305             0890*  
-042305             0891*  ; Command 26: Copy blocks from multiple buffers and consolidate
-042305             0892*  
-042305             0893*  ; VDU 23, 0, &A0, targetBufferId; 26, sourceBufferId1; sourceBufferId2; ...; 65535;
-042305             0055       include "vdu_plot.inc"
+042305             0054       include "vdu_plot.inc"
 042305             0001*  ; https://agonconsole8.github.io/agon-docs/VDP---PLOT-Commands.html
 042305             0002*  ; PLOT code 	(Decimal) 	Effect
 042305             0003*  ; &00-&07 	0-7 	Solid line, includes both ends
@@ -5030,7 +4136,7 @@ PC     Output      Line
 0423C1 00 00       0228*  @x1:    dw 0x0000
 0423C3 00 00       0229*  @y1:    dw 0x0000
 0423C5 00          0230*  @end:   db 0x00 ; padding
-0423C6             0056   	include "vdu_sprites.inc"
+0423C6             0055   	include "vdu_sprites.inc"
 0423C6             0001*  ; ; https://github.com/AgonConsole8/agon-docs/blob/main/VDP---Bitmaps-API.md
 0423C6             0002*  ; the VDP can support up to 256 sprites. They must be defined
 0423C6             0003*  ; contiguously, and so the first sprite is sprite 0.
@@ -5314,8 +4420,8 @@ PC     Output      Line
 04252A 17 1B 26    0275*  @cmd:      db 23,27,0x26
 04252D 00 00       0276*  @bufferId: dw 0x0000
 04252F 00          0277*  @end:      db 0x00 ; padding
-042530             0057   	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
-042530             0058   	include "maths.inc"
+042530             0056   	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
+042530             0057   	include "maths.inc"
 042530             0001*  ; test the sign of HL
 042530             0002*  ; inputs: HL obviously
 042530             0003*  ; outputs: sign flag set if HL is negative, zero flag set if HL is zero
@@ -5539,7 +4645,7 @@ PC     Output      Line
 0425FD C1          0218*      pop bc
 0425FE C9          0219*      ret
 0425FF 50          0220*  r_seed: defb $50
-042600             0059   	include "trig24fast.inc"
+042600             0058   	include "trig24fast.inc"
 042600             0001*  
 042600             0002*  ; convert signed angles from a 360 to 256 degree circle
 042600             0003*  ; inputs: uh.l is the angle360 in 16.8 fixed format
@@ -6614,7 +5720,7 @@ PC     Output      Line
 042E6E D7 1F 00    1058*  	dl 0x001FD7 ; 0000FE, 44.775
 042E71 EB 1F 00    1059*  	dl 0x001FEB ; 0000FF, 44.888
 042E74 00 20 00    1060*  	dl 0x002000 ; 000100, 45.000 only needed for interpolation
-042E77             0060   	include "fixed24.inc"
+042E77             0059   	include "fixed24.inc"
 042E77             0001*  arith24uaf: ds 6
 042E7D             0002*  arith24uhl: ds 6
 042E83             0003*  arith24ubc: ds 6
@@ -7108,8 +6214,8 @@ PC     Output      Line
 0430C7 C5          0473*  	push	bc
 0430C8 D1          0474*  	pop		de	;remainder
 0430C9 C9          0475*  	ret
-0430CA             0061   ; App-specific includes
-0430CA             0062   	include "player.inc"
+0430CA             0060   ; App-specific includes
+0430CA             0061   	include "player.inc"
 0430CA             0001*  ; ######## GAME STATE VARIABLES #######
 0430CA             0002*  ; THESE MUST BE IN THIS ORDER FOR new_game TO WORK PROPERLY
 0430CA 00 00 00    0003*  player_score: db 0x00,#00,#00 ; bcd
@@ -7455,7 +6561,7 @@ PC     Output      Line
 0431CC             0335*  ;     ld hl,(sprite_y)
 0431CC             0336*  ;     ld (player_y),hl
 0431CC             0337*  ;     ret
-0431CC             0063   	include "tiles.inc"
+0431CC             0062   	include "tiles.inc"
 0431CC             0001*  ; ######### TILES #########
 0431CC             0002*  ; TODO: implement buffering of tiles here when there isn't other stuff to do
 0431CC             0003*  ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
@@ -7707,7 +6813,7 @@ PC     Output      Line
 043308             0238*      ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 043308             0239*      ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
 043308 C9          0240*      ret ; and done
-043309             0064   	include "enemies.inc"
+043309             0063   	include "enemies.inc"
 043309 10          0001*  max_enemy_sprites: db 16
 04330A             0002*  
 04330A             0003*  ; sprite_type
@@ -8437,7 +7543,7 @@ PC     Output      Line
 0435ED 32 FE 35 04 0708*      ld (laser_collisions),a
 0435F1 CD 67 35 04 0709*      call kill_nurple ; yes there was a collision,so kill enemy
 0435F5 C9          0710*      ret ; we're outta' here
-0435F6             0065   	include "laser.inc"
+0435F6             0064   	include "laser.inc"
 0435F6             0001*  ; ##### LASER SPRITE PARAMETERS #####
 0435F6             0002*  ; uses the same offsets from its table base as the main sprite table:
 0435F6             0003*  laser_start_variables: ; label marking beginning of table
@@ -8532,7 +7638,7 @@ PC     Output      Line
 04361C             0092*  ;     xor a ; zero out a
 04361C             0093*  ;     ld (laser_collisions),a
 04361C             0094*  ;     ret
-04361C             0066   	include "timer.inc"
+04361C             0065   	include "timer.inc"
 04361C             0001*  ; Table 32. Timer Control Registers
 04361C             0002*  ; this constant is the base address of the timer control registers
 04361C             0003*  ; each timer takes three bytes:
@@ -8903,9 +8009,9 @@ PC     Output      Line
 04378C C9          0353*      ret
 04378D             0354*  
 04378D 00          0355*  oldTimeStamp:   .db 00h
-04378E             0067   
-04378E             0068   ; new includes
-04378E             0069   	include "images.inc"
+04378E             0066   
+04378E             0067   ; new includes
+04378E             0068   	include "images.inc"
 04378E             0001*  image_type: equ 0
 04378E             0002*  image_width: equ image_type+3
 04378E             0003*  image_height: equ image_width+3
@@ -9058,7 +8164,7 @@ PC     Output      Line
 04389A             0143*  
 04389A 00 00 00    0144*  logo_yvel: dl 0
 04389D 00 00 00    0145*  logo_ypos: dl 0
-0438A0             0070   	include "images_sprites.inc"
+0438A0             0069   	include "images_sprites.inc"
 0438A0             0001*  ; Generated by make_images.py
 0438A0             0002*  
 0438A0             0003*  sprites_num_images: equ 95
@@ -10291,7 +9397,7 @@ PC     Output      Line
        34 38 2E 72 
        67 62 61 32 
        00          
-044890             0071   	include "images_ui.inc"
+044890             0070   	include "images_ui.inc"
 044890             0001*  ; Generated by make_images.py
 044890             0002*  
 044890             0003*  ui_num_images: equ 4
@@ -10346,387 +9452,387 @@ PC     Output      Line
        67 6F 2E 72 
        67 62 61 32 
        00          
-044922             0072   	include "files.inc"
+044922             0071   	include "files.inc"
 044922             0001*  ; load to onboard 8k sram
 044922             0002*  filedata: equ 0xB7E000; Directory object structure (DIR)
-044922             0073   
-044922 57 65 6C 63 0074   hello_world: asciz "Welcome to Purple Nurples!"
+044922             0072   
+044922 57 65 6C 63 0073   hello_world: asciz "Welcome to Purple Nurples!"
        6F 6D 65 20 
        74 6F 20 50 
        75 72 70 6C 
        65 20 4E 75 
        72 70 6C 65 
        73 21 00    
-04493D 4C 6F 61 64 0075   loading_ui: asciz "Loading UI"
+04493D 4C 6F 61 64 0074   loading_ui: asciz "Loading UI"
        69 6E 67 20 
        55 49 00    
-044948 4C 6F 61 64 0076   loading_time: asciz "Loading time:"
+044948 4C 6F 61 64 0075   loading_time: asciz "Loading time:"
        69 6E 67 20 
        74 69 6D 65 
        3A 00       
-044956 50 72 65 73 0077   loading_complete: asciz "Press any key to continue."
+044956 50 72 65 73 0076   loading_complete: asciz "Press any key to continue."
        73 20 61 6E 
        79 20 6B 65 
        79 20 74 6F 
        20 63 6F 6E 
        74 69 6E 75 
        65 2E 00    
-044971             0078   
-044971             0079   init:
-044971             0080   ; clear all buffers
-044971 CD 4E 21 04 0081       call vdu_clear_all_buffers
-044975             0082   
-044975             0083   ; set up the display
-044975 3E 88       0084       ld a,8+128 ; 136   320   240   64    60hz double-buffered
-044977 CD 38 20 04 0085       call vdu_set_screen_mode
-04497B AF          0086       xor a
-04497C CD 49 20 04 0087       call vdu_set_scaling
-044980             0088   
-044980             0089   ; ; enable additional audio channels
-044980             0090   ; 	call vdu_enable_channels
-044980             0091   
-044980             0092   ; set text background color
-044980 3E 9A       0093   	ld a,26+128 ; violet
-044982 CD A0 1F 04 0094   	call vdu_colour_text
-044986             0095   
-044986             0096   ; set text foreground color
-044986 3E 2F       0097   	ld a,47 ; aaaaff lavenderish
-044988 CD A0 1F 04 0098   	call vdu_colour_text
-04498C             0099   
-04498C             0100   ; set gfx bg color
-04498C AF          0101   	xor a ; plotting mode 0
-04498D 3E 9A       0102   	ld a,26+128 ; violet
-04498F CD B1 1F 04 0103   	call vdu_gcol
-044993 CD 6F 1F 04 0104   	call vdu_cls
-044997             0105   
-044997             0106   ; set the cursor off
-044997 CD 37 1F 04 0107   	call vdu_cursor_off
-04499B             0108   
-04499B             0109   ; VDU 28, left, bottom, right, top: Set text viewport **
-04499B             0110   ; MIND THE LITTLE-ENDIANESS
-04499B             0111   ; inputs: c=left,b=bottom,e=right,d=top
-04499B 0E 00       0112   	ld c,0 ; left
-04499D 16 1D       0113   	ld d,29 ; top
-04499F 1E 27       0114   	ld e,39 ; right
-0449A1 06 1D       0115   	ld b,29; bottom
-0449A3 CD C8 1F 04 0116   	call vdu_set_txt_viewport
-0449A7             0117   
-0449A7             0118   ; print loading ui message
-0449A7 21 3D 49 04 0119   	ld hl,loading_ui
-0449AB CD 0D 19 04 0120   	call printString
-0449AF CD 74 1F 04 0121   	call vdu_flip
-0449B3             0122   
-0449B3             0123   ; load UI images
-0449B3 CD 9A 37 04 0124   	call load_ui_images
-0449B7             0125   
-0449B7             0126   ; ; load fonts ; TODO
-0449B7             0127   ; 	call load_font_rc
-0449B7             0128   
-0449B7             0129   ; load sprites
-0449B7 CD 47 38 04 0130   	call img_load_init ; sets up the animated load screen
-0449BB CD B5 37 04 0131   	call load_sprite_images
-0449BF             0132   
-0449BF             0133   ; ; load sound effects ; TODO
-0449BF             0134   ; 	ld bc,SFX_num_buffers
-0449BF             0135   ; 	ld hl,SFX_buffer_id_lut
-0449BF             0136   ; 	ld (cur_buffer_id_lut),hl
-0449BF             0137   ; 	ld hl,SFX_load_routines_table
-0449BF             0138   ; 	ld (cur_load_jump_table),hl
-0449BF             0139   ; 	call sfx_load_main
-0449BF             0140   
-0449BF             0141   ; print loading complete message and wait for user keypress
-0449BF CD 6F 1F 04 0142   	call vdu_cls
-0449C3 21 56 49 04 0143   	ld hl,loading_complete
-0449C7 CD 0D 19 04 0144   	call printString
-0449CB CD 74 1F 04 0145   	call vdu_flip
-0449CF CD AB 1E 04 0146   	call waitKeypress
-0449D3             0147   
-0449D3             0148   ; set up display for gameplay
-0449D3             0149       ; ld a,8
-0449D3 3E 14       0150   	ld a,20
-0449D5 CD 38 20 04 0151       call vdu_set_screen_mode
-0449D9 AF          0152       xor a
-0449DA CD 49 20 04 0153       call vdu_set_scaling
-0449DE CD 37 1F 04 0154   	call vdu_cursor_off
-0449E2             0155   ; plot bezel art
-0449E2 21 00 00 00 0156   	ld hl,BUF_BEZEL_L
-0449E6 CD 5C 20 04 0157   	call vdu_buff_select
-0449EA 01 00 00 00 0158   	ld bc,0
-0449EE 11 00 00 00 0159   	ld de,0
-0449F2 CD 25 23 04 0160   	call vdu_plot_bmp
-0449F6 21 01 00 00 0161   	ld hl,BUF_BEZEL_R
-0449FA CD 5C 20 04 0162   	call vdu_buff_select
-0449FE 01 80 01 00 0163   	ld bc,384
-044A02 11 00 00 00 0164   	ld de,0
-044A06 CD 25 23 04 0165   	call vdu_plot_bmp
-044A0A             0166   ; set gfx origin and viewport to playing field window
-044A0A 01 80 00 00 0167   	ld bc,origin_left
-044A0E 11 30 00 00 0168   	ld de,origin_top
-044A12 CD F4 1F 04 0169   	call vdu_set_gfx_origin
-044A16 01 00 00 00 0170   	ld bc,field_left
-044A1A 11 00 00 00 0171   	ld de,field_top
-044A1E DD 21 FF 00 0172   	ld ix,field_right
+044971             0077   
+044971             0078   init:
+044971             0079   ; clear all buffers
+044971 CD 4E 21 04 0080       call vdu_clear_all_buffers
+044975             0081   
+044975             0082   ; set up the display
+044975 3E 88       0083       ld a,8+128 ; 136   320   240   64    60hz double-buffered
+044977 CD 38 20 04 0084       call vdu_set_screen_mode
+04497B AF          0085       xor a
+04497C CD 49 20 04 0086       call vdu_set_scaling
+044980             0087   
+044980             0088   ; ; enable additional audio channels
+044980             0089   ; 	call vdu_enable_channels
+044980             0090   
+044980             0091   ; set text background color
+044980 3E 9A       0092   	ld a,26+128 ; violet
+044982 CD A0 1F 04 0093   	call vdu_colour_text
+044986             0094   
+044986             0095   ; set text foreground color
+044986 3E 2F       0096   	ld a,47 ; aaaaff lavenderish
+044988 CD A0 1F 04 0097   	call vdu_colour_text
+04498C             0098   
+04498C             0099   ; set gfx bg color
+04498C AF          0100   	xor a ; plotting mode 0
+04498D 3E 9A       0101   	ld a,26+128 ; violet
+04498F CD B1 1F 04 0102   	call vdu_gcol
+044993 CD 6F 1F 04 0103   	call vdu_cls
+044997             0104   
+044997             0105   ; set the cursor off
+044997 CD 37 1F 04 0106   	call vdu_cursor_off
+04499B             0107   
+04499B             0108   ; VDU 28, left, bottom, right, top: Set text viewport **
+04499B             0109   ; MIND THE LITTLE-ENDIANESS
+04499B             0110   ; inputs: c=left,b=bottom,e=right,d=top
+04499B 0E 00       0111   	ld c,0 ; left
+04499D 16 1D       0112   	ld d,29 ; top
+04499F 1E 27       0113   	ld e,39 ; right
+0449A1 06 1D       0114   	ld b,29; bottom
+0449A3 CD C8 1F 04 0115   	call vdu_set_txt_viewport
+0449A7             0116   
+0449A7             0117   ; print loading ui message
+0449A7 21 3D 49 04 0118   	ld hl,loading_ui
+0449AB CD 0D 19 04 0119   	call printString
+0449AF CD 74 1F 04 0120   	call vdu_flip
+0449B3             0121   
+0449B3             0122   ; load UI images
+0449B3 CD 9A 37 04 0123   	call load_ui_images
+0449B7             0124   
+0449B7             0125   ; ; load fonts ; TODO
+0449B7             0126   ; 	call load_font_rc
+0449B7             0127   
+0449B7             0128   ; load sprites
+0449B7 CD 47 38 04 0129   	call img_load_init ; sets up the animated load screen
+0449BB CD B5 37 04 0130   	call load_sprite_images
+0449BF             0131   
+0449BF             0132   ; ; load sound effects ; TODO
+0449BF             0133   ; 	ld bc,SFX_num_buffers
+0449BF             0134   ; 	ld hl,SFX_buffer_id_lut
+0449BF             0135   ; 	ld (cur_buffer_id_lut),hl
+0449BF             0136   ; 	ld hl,SFX_load_routines_table
+0449BF             0137   ; 	ld (cur_load_jump_table),hl
+0449BF             0138   ; 	call sfx_load_main
+0449BF             0139   
+0449BF             0140   ; print loading complete message and wait for user keypress
+0449BF CD 6F 1F 04 0141   	call vdu_cls
+0449C3 21 56 49 04 0142   	ld hl,loading_complete
+0449C7 CD 0D 19 04 0143   	call printString
+0449CB CD 74 1F 04 0144   	call vdu_flip
+0449CF CD AB 1E 04 0145   	call waitKeypress
+0449D3             0146   
+0449D3             0147   ; set up display for gameplay
+0449D3             0148       ; ld a,8
+0449D3 3E 14       0149   	ld a,20
+0449D5 CD 38 20 04 0150       call vdu_set_screen_mode
+0449D9 AF          0151       xor a
+0449DA CD 49 20 04 0152       call vdu_set_scaling
+0449DE CD 37 1F 04 0153   	call vdu_cursor_off
+0449E2             0154   ; plot bezel art
+0449E2 21 00 00 00 0155   	ld hl,BUF_BEZEL_L
+0449E6 CD 5C 20 04 0156   	call vdu_buff_select
+0449EA 01 00 00 00 0157   	ld bc,0
+0449EE 11 00 00 00 0158   	ld de,0
+0449F2 CD 25 23 04 0159   	call vdu_plot_bmp
+0449F6 21 01 00 00 0160   	ld hl,BUF_BEZEL_R
+0449FA CD 5C 20 04 0161   	call vdu_buff_select
+0449FE 01 80 01 00 0162   	ld bc,384
+044A02 11 00 00 00 0163   	ld de,0
+044A06 CD 25 23 04 0164   	call vdu_plot_bmp
+044A0A             0165   ; set gfx origin and viewport to playing field window
+044A0A 01 80 00 00 0166   	ld bc,origin_left
+044A0E 11 30 00 00 0167   	ld de,origin_top
+044A12 CD F4 1F 04 0168   	call vdu_set_gfx_origin
+044A16 01 00 00 00 0169   	ld bc,field_left
+044A1A 11 00 00 00 0170   	ld de,field_top
+044A1E DD 21 FF 00 0171   	ld ix,field_right
        00          
-044A23 FD 21 4F 01 0173   	ld iy,field_bottom
+044A23 FD 21 4F 01 0172   	ld iy,field_bottom
        00          
-044A28 CD 0F 20 04 0174   	call vdu_set_gfx_viewport
-044A2C             0175   ; set background color
-044A2C 3E 9A       0176   	ld a,26+128 ; violet
-044A2E CD B1 1F 04 0177   	call vdu_gcol
-044A32 CD 82 1F 04 0178   	call vdu_clg
-044A36             0179   ; VDU 28, left, bottom, right, top: Set text viewport **
-044A36 0E 00       0180   	ld c,0 ; left
-044A38 16 00       0181   	ld d,0 ; top
-044A3A 1E 3E       0182   	ld e,62 ; right
-044A3C 06 07       0183   	ld b,7; bottom
-044A3E CD C8 1F 04 0184   	call vdu_set_txt_viewport
-044A42             0185   
-044A42 C9          0186   	ret
-044A43             0187   
-044A43             0188   origin_top: equ 48
-044A43             0189   origin_left: equ 128
-044A43             0190   field_top: equ 0
-044A43             0191   field_bottom: equ 383-origin_top
-044A43             0192   field_left: equ 0
-044A43             0193   field_right: equ 255
-044A43             0194   sprite_top: equ 0
-044A43             0195   sprite_bottom: equ field_bottom-16
-044A43             0196   sprite_left: equ field_left
-044A43             0197   sprite_right: equ field_right-16
-044A43             0198   collide_top: equ %00001000
-044A43             0199   collide_bottom: equ %00000100
-044A43             0200   collide_left: equ %00000010
-044A43             0201   collide_right: equ %00000001
-044A43             0202   
-044A43             0203   ; ; #### BEGIN GAME VARIABLES ####
-044A43             0204   speed_seeker: equ 0x000280 ; 2.5 pixels per frame
-044A43             0205   speed_player: equ 0x000300 ; 3 pixels per frame
-044A43             0206   
-044A43             0207   main:
-044A43             0208   ; start a new game
-044A43 CD 6D 4A 04 0209   	call new_game
-044A47             0210   
-044A47             0211   main_loop:
-044A47             0212   ; scroll tiles
-044A47 CD 1A 32 04 0213   	call tiles_plot
-044A4B             0214   
-044A4B             0215   ; get player input and update sprite position
-044A4B CD 35 31 04 0216   	call player_input
-044A4F             0217   
-044A4F             0218   ; move enemies
-044A4F CD 2E 33 04 0219   	call move_enemies
-044A53             0220   
-044A53             0221   ; wait for the next vblank mitigate flicker and for loop timing
-044A53 CD E3 1F 04 0222   	call vdu_vblank
-044A57             0223   
-044A57             0224   ; poll keyboard
-044A57 3E 08       0225       ld a, $08                           ; code to send to MOS
-044A59 5B CF       0226       rst.lil $08                         ; get IX pointer to System Variables
-044A5B             0227   
-044A5B DD 7E 05    0228       ld a, (ix + $05)                    ; get ASCII code of key pressed
-044A5E FE 1B       0229       cp 27                               ; check if 27 (ascii code for ESC)
-044A60 CA 68 4A 04 0230       jp z, main_end                      ; if pressed, jump to exit
-044A64             0231   
-044A64 C3 47 4A 04 0232       jp main_loop
-044A68             0233   
-044A68             0234   main_end:
-044A68 CD 29 1F 04 0235       call vdu_cursor_on
-044A6C C9          0236   	ret
-044A6D             0237   
-044A6D             0238   new_game:
-044A6D             0239   ; initialize sprites
-044A6D CD B5 18 04 0240   	call sprites_init
-044A71             0241   
-044A71             0242   ; initialize the first level
-044A71 AF          0243   	xor a
-044A72 32 D0 31 04 0244   	ld (cur_level),a
-044A76 CD CF 32 04 0245   	call init_level
-044A7A             0246   
-044A7A             0247   ; initialize player
-044A7A CD F6 30 04 0248   	call player_init
-044A7E             0249   
-044A7E             0250   ; spawn an enemy sprite
-044A7E 06 10       0251   	ld b,table_max_records
-044A80             0252   @spawn_enemy_loop:
-044A80 C5          0253   	push bc
-044A81 CD AD 34 04 0254   	call enemy_init_from_landing_pad
-044A85 C1          0255   	pop bc
-044A86 10 F8       0256   	djnz @spawn_enemy_loop
-044A88             0257   
-044A88 C9          0258   	ret
-044A89             0259   
-044A89             0260   ; ; ###### INITIALIZE GAME #######
-044A89             0261   ; ; clear the screen
-044A89             0262   ;     ld a,3
-044A89             0263   ;     out (81h),a
-044A89             0264   
-044A89             0265   ; ; reset the sprite table
-044A89             0266   ;     xor a
-044A89             0267   ;     ld (table_active_sprites),a
-044A89             0268   ;     ld hl,table_limit
-044A89             0269   ;     ld (table_base),hl
-044A89             0270   ;     ld (table_pointer),hl
-044A89             0271   
-044A89             0272   ; ; draw a starfield over the entire screen
-044A89             0273   ;     ld b,#50 ; first row of visible screen
-044A89             0274   ; new_game_draw_stars_loop:
-044A89             0275   ;     push bc
-044A89             0276   ;     call draw_stars
-044A89             0277   ;     pop bc
-044A89             0278   ;     ld a,#10
-044A89             0279   ;     add a,b
-044A89             0280   ;     ld b,a
-044A89             0281   ;     jr nz,new_game_draw_stars_loop
-044A89             0282   
-044A89             0283   ; ; ; print a welcome message
-044A89             0284   ; ;     ld de,msg_welcome
-044A89             0285   ; ;     ld hl,#581C
-044A89             0286   ; ;     ld c,218 ; a bright pastel purple d677e3
-044A89             0287   ; ;     call print_string
-044A89             0288   
-044A89             0289   ; ; push all that to frame buffer
-044A89             0290   ;     ld a,#01 ; send video to frame buffer
-044A89             0291   ;     out (81h),a
-044A89             0292   
-044A89             0293   ; ; reset score, lives, shields
-044A89             0294   ;     xor a
-044A89             0295   ;     ld hl,player_score
-044A89             0296   ;     ld (hl),a ; player_score 0
-044A89             0297   ;     inc hl
-044A89             0298   ;     ld (hl),a ; player_score 1
-044A89             0299   ;     inc hl
-044A89             0300   ;     ld (hl),a ; player_score 3
-044A89             0301   ;     inc hl
-044A89             0302   ;     ld a,16
-044A89             0303   ;     ld (hl),a ; player_shields
-044A89             0304   ;     inc hl
-044A89             0305   ;     ld (hl),a ; player_max_shields
-044A89             0306   ;     inc hl
-044A89             0307   ;     ld a,3
-044A89             0308   ;     ld (hl),a ; player_ships
-044A89             0309   ;     inc hl
-044A89             0310   
-044A89             0311   ; ; initialize first level
-044A89             0312   ;     ld a,1 ; levels are zero-based, so this will wrap around
-044A89             0313   ;     ld (cur_level),a
-044A89             0314   ;     ld a,3 ; set max enemy sprites to easy street
-044A89             0315   ;     ld (max_enemy_sprites),a
-044A89             0316   ;     call dt_next_level
-044A89             0317   ;     call dt
-044A89             0318   
-044A89             0319   ; ; spawn our intrepid hero
-044A89             0320   ;     call player_init
+044A28 CD 0F 20 04 0173   	call vdu_set_gfx_viewport
+044A2C             0174   ; set background color
+044A2C 3E 9A       0175   	ld a,26+128 ; violet
+044A2E CD B1 1F 04 0176   	call vdu_gcol
+044A32 CD 82 1F 04 0177   	call vdu_clg
+044A36             0178   ; VDU 28, left, bottom, right, top: Set text viewport **
+044A36 0E 00       0179   	ld c,0 ; left
+044A38 16 00       0180   	ld d,0 ; top
+044A3A 1E 3E       0181   	ld e,62 ; right
+044A3C 06 07       0182   	ld b,7; bottom
+044A3E CD C8 1F 04 0183   	call vdu_set_txt_viewport
+044A42             0184   
+044A42 C9          0185   	ret
+044A43             0186   
+044A43             0187   origin_top: equ 48
+044A43             0188   origin_left: equ 128
+044A43             0189   field_top: equ 0
+044A43             0190   field_bottom: equ 383-origin_top
+044A43             0191   field_left: equ 0
+044A43             0192   field_right: equ 255
+044A43             0193   sprite_top: equ 0
+044A43             0194   sprite_bottom: equ field_bottom-16
+044A43             0195   sprite_left: equ field_left
+044A43             0196   sprite_right: equ field_right-16
+044A43             0197   collide_top: equ %00001000
+044A43             0198   collide_bottom: equ %00000100
+044A43             0199   collide_left: equ %00000010
+044A43             0200   collide_right: equ %00000001
+044A43             0201   
+044A43             0202   ; ; #### BEGIN GAME VARIABLES ####
+044A43             0203   speed_seeker: equ 0x000280 ; 2.5 pixels per frame
+044A43             0204   speed_player: equ 0x000300 ; 3 pixels per frame
+044A43             0205   
+044A43             0206   main:
+044A43             0207   ; start a new game
+044A43 CD 6D 4A 04 0208   	call new_game
+044A47             0209   
+044A47             0210   main_loop:
+044A47             0211   ; scroll tiles
+044A47 CD 1A 32 04 0212   	call tiles_plot
+044A4B             0213   
+044A4B             0214   ; get player input and update sprite position
+044A4B CD 35 31 04 0215   	call player_input
+044A4F             0216   
+044A4F             0217   ; move enemies
+044A4F CD 2E 33 04 0218   	call move_enemies
+044A53             0219   
+044A53             0220   ; wait for the next vblank mitigate flicker and for loop timing
+044A53 CD E3 1F 04 0221   	call vdu_vblank
+044A57             0222   
+044A57             0223   ; poll keyboard
+044A57 3E 08       0224       ld a, $08                           ; code to send to MOS
+044A59 5B CF       0225       rst.lil $08                         ; get IX pointer to System Variables
+044A5B             0226   
+044A5B DD 7E 05    0227       ld a, (ix + $05)                    ; get ASCII code of key pressed
+044A5E FE 1B       0228       cp 27                               ; check if 27 (ascii code for ESC)
+044A60 CA 68 4A 04 0229       jp z, main_end                      ; if pressed, jump to exit
+044A64             0230   
+044A64 C3 47 4A 04 0231       jp main_loop
+044A68             0232   
+044A68             0233   main_end:
+044A68 CD 29 1F 04 0234       call vdu_cursor_on
+044A6C C9          0235   	ret
+044A6D             0236   
+044A6D             0237   new_game:
+044A6D             0238   ; initialize sprites
+044A6D CD B5 18 04 0239   	call sprites_init
+044A71             0240   
+044A71             0241   ; initialize the first level
+044A71 AF          0242   	xor a
+044A72 32 D0 31 04 0243   	ld (cur_level),a
+044A76 CD CF 32 04 0244   	call init_level
+044A7A             0245   
+044A7A             0246   ; initialize player
+044A7A CD F6 30 04 0247   	call player_init
+044A7E             0248   
+044A7E             0249   ; spawn an enemy sprite
+044A7E 06 10       0250   	ld b,table_max_records
+044A80             0251   @spawn_enemy_loop:
+044A80 C5          0252   	push bc
+044A81 CD AD 34 04 0253   	call enemy_init_from_landing_pad
+044A85 C1          0254   	pop bc
+044A86 10 F8       0255   	djnz @spawn_enemy_loop
+044A88             0256   
+044A88 C9          0257   	ret
+044A89             0258   
+044A89             0259   ; ; ###### INITIALIZE GAME #######
+044A89             0260   ; ; clear the screen
+044A89             0261   ;     ld a,3
+044A89             0262   ;     out (81h),a
+044A89             0263   
+044A89             0264   ; ; reset the sprite table
+044A89             0265   ;     xor a
+044A89             0266   ;     ld (table_active_sprites),a
+044A89             0267   ;     ld hl,table_limit
+044A89             0268   ;     ld (table_base),hl
+044A89             0269   ;     ld (table_pointer),hl
+044A89             0270   
+044A89             0271   ; ; draw a starfield over the entire screen
+044A89             0272   ;     ld b,#50 ; first row of visible screen
+044A89             0273   ; new_game_draw_stars_loop:
+044A89             0274   ;     push bc
+044A89             0275   ;     call draw_stars
+044A89             0276   ;     pop bc
+044A89             0277   ;     ld a,#10
+044A89             0278   ;     add a,b
+044A89             0279   ;     ld b,a
+044A89             0280   ;     jr nz,new_game_draw_stars_loop
+044A89             0281   
+044A89             0282   ; ; ; print a welcome message
+044A89             0283   ; ;     ld de,msg_welcome
+044A89             0284   ; ;     ld hl,#581C
+044A89             0285   ; ;     ld c,218 ; a bright pastel purple d677e3
+044A89             0286   ; ;     call print_string
+044A89             0287   
+044A89             0288   ; ; push all that to frame buffer
+044A89             0289   ;     ld a,#01 ; send video to frame buffer
+044A89             0290   ;     out (81h),a
+044A89             0291   
+044A89             0292   ; ; reset score, lives, shields
+044A89             0293   ;     xor a
+044A89             0294   ;     ld hl,player_score
+044A89             0295   ;     ld (hl),a ; player_score 0
+044A89             0296   ;     inc hl
+044A89             0297   ;     ld (hl),a ; player_score 1
+044A89             0298   ;     inc hl
+044A89             0299   ;     ld (hl),a ; player_score 3
+044A89             0300   ;     inc hl
+044A89             0301   ;     ld a,16
+044A89             0302   ;     ld (hl),a ; player_shields
+044A89             0303   ;     inc hl
+044A89             0304   ;     ld (hl),a ; player_max_shields
+044A89             0305   ;     inc hl
+044A89             0306   ;     ld a,3
+044A89             0307   ;     ld (hl),a ; player_ships
+044A89             0308   ;     inc hl
+044A89             0309   
+044A89             0310   ; ; initialize first level
+044A89             0311   ;     ld a,1 ; levels are zero-based, so this will wrap around
+044A89             0312   ;     ld (cur_level),a
+044A89             0313   ;     ld a,3 ; set max enemy sprites to easy street
+044A89             0314   ;     ld (max_enemy_sprites),a
+044A89             0315   ;     call dt_next_level
+044A89             0316   ;     call dt
+044A89             0317   
+044A89             0318   ; ; spawn our intrepid hero
+044A89             0319   ;     call player_init
+044A89             0320   
 044A89             0321   
-044A89             0322   
-044A89             0323   ; ; #### BEGIN GAME MAIN LOOP ####
-044A89             0324   ; main_loop:
-044A89             0325   ; ; ; debug: start execution counter
-044A89             0326   ; ;     ld a,1
-044A89             0327   ; ;     out (#e0),a ; start counting instructions
-044A89             0328   
-044A89             0329   ; ; refresh background from frame buffer
-044A89             0330   ;     ld a,#02
-044A89             0331   ;     out (81h),a
-044A89             0332   ;     call move_background ; now move it
-044A89             0333   ;     ld a,#01
-044A89             0334   ;     out (81h),a ; save it back to buffer
-044A89             0335   ; ; do all the things
-044A89             0336   ;     call move_enemies
-044A89             0337   ;     call player_move
-044A89             0338   ;     call laser_control
-044A89             0339   ;     call print_score
-044A89             0340   ;     call draw_shields
-044A89             0341   ;     call draw_lives
-044A89             0342   ; ; ; debug: stop execution counter and print results
-044A89             0343   ; ;     ld a,0
-044A89             0344   ; ;     out (#e0),a ; stop counting instructions
-044A89             0345   
-044A89             0346   ; ; ; debug: start execution counter
-044A89             0347   ; ;     ld a,1
-044A89             0348   ; ;     out (#e0),a ; start counting instructions
-044A89             0349   
-044A89             0350   ;     call vdu_vblank
-044A89             0351   ; ; ; debug: stop execution counter and print results
-044A89             0352   ; ;     ld a,0
-044A89             0353   ; ;     out (#e0),a ; stop counting instructions
-044A89             0354   
-044A89             0355   ;     jr main_loop
-044A89             0356   ; #### END GAME MAIN LOOP ####
-044A89             0357   
-044A89             0358   ; draws the player's shields level
-044A89             0359   ; draw_shields:
-044A89             0360   ; TODO: Agonize this routine
-044A89             0361   ; ; prep the loop to draw the bars
-044A89             0362   ;     ld a,(player_shields) ; snag shields
-044A89             0363   ;     and a
-044A89             0364   ;     ret z ; don't draw if zero shields
-044A89             0365   ; ; set loop counter and drawing position
-044A89             0366   ;     ld b,a ; loop counter
-044A89             0367   ;     ld hl,#5300+48+12
-044A89             0368   ; ; set color based on bars remaining
-044A89             0369   ;     ld c,103 ; bright green 28fe0a
-044A89             0370   ;     cp 9
-044A89             0371   ;     jp p,draw_shields_loop
-044A89             0372   ;     ld c,74 ; bright yellow eafe5b
-044A89             0373   ;     cp 3
-044A89             0374   ;     jp p,draw_shields_loop
-044A89             0375   ;     ld c,28 ; bright red fe0a0a
-044A89             0376   ; draw_shields_loop:
-044A89             0377   ;     push bc ; yup,outta
-044A89             0378   ;     push hl ; registers again
-044A89             0379   ;     ; ld a,#A8 ; ▀,168
-044A89             0380   ;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
-044A89             0381   ;     ; call draw_char
-044A89             0382   ;     call draw_num ; we nuked draw_char for the time being
-044A89             0383   ;     pop hl
-044A89             0384   ;     ld a,8
-044A89             0385   ;     add a,l
-044A89             0386   ;     ld l,a
-044A89             0387   ;     pop bc
-044A89             0388   ;     djnz draw_shields_loop
-044A89             0389       ; ret
-044A89             0390   
-044A89             0391   ; prints the player's score
-044A89             0392   ; print_score:
-044A89             0393   ; TODO: Agonize this
-044A89             0394   ; ; draw score (we do it twice for a totally unecessary drop-shadow effect)
-044A89             0395   ;     ld c,42 ; dark orange b74400
-044A89             0396   ;     ld hl,#5200+1+8+6*6
-044A89             0397   ;     ld a,3 ; print 6 bdc digits
-044A89             0398   ;     ld de,player_score
-044A89             0399   ;     call print_num
-044A89             0400   
-044A89             0401   ;     ld c,58 ; golden yellow fec10a
-044A89             0402   ;     ld hl,#5100+8+6*6
-044A89             0403   ;     ld a,3 ; print 6 bdc digits
-044A89             0404   ;     ld de,player_score
-044A89             0405   ;     call print_num
-044A89             0406       ; ret
-044A89             0407   
-044A89             0408   ; draw_lives:
-044A89             0409   ;     ld hl,player_small ; make small yellow ship the active sprite
-044A89             0410   ;     ld (sprite_base_bufferId),hl
-044A89             0411   ;     ; ld a,#80 ; northern orientation
-044A89             0412   ;     ; ld (sprite_orientation),a
-044A89             0413   ;     ld hl,0 ; north
-044A89             0414   ;     ld (sprite_heading),hl
-044A89             0415   ;     xor a
-044A89             0416   ;     ld (sprite_animation),a
-044A89             0417   ;     ld a,#56 ; top of visible screen
-044A89             0418   ;     ld (sprite_y+1),a
-044A89             0419   ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
-044A89             0420   ;     ld a,(player_ships)
-044A89             0421   ;     dec a ; we draw one fewer ships than lives
-044A89             0422   ;     ret z ; nothing to draw here, move along
-044A89             0423   ;     ld b,a ; loop counter
-044A89             0424   ;     ld a,256-16 ; initial x position
-044A89             0425   ; draw_lives_loop:
-044A89             0426   ;     ld (sprite_x+1),a
-044A89             0427   ;     push af
-044A89             0428   ;     push bc
-044A89             0429   ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-044A89             0430   ;     pop bc
-044A89             0431   ;     pop af
-044A89             0432   ;     sub 10
-044A89             0433   ;     djnz draw_lives_loop
-044A89             0434   ;     ret
+044A89             0322   ; ; #### BEGIN GAME MAIN LOOP ####
+044A89             0323   ; main_loop:
+044A89             0324   ; ; ; debug: start execution counter
+044A89             0325   ; ;     ld a,1
+044A89             0326   ; ;     out (#e0),a ; start counting instructions
+044A89             0327   
+044A89             0328   ; ; refresh background from frame buffer
+044A89             0329   ;     ld a,#02
+044A89             0330   ;     out (81h),a
+044A89             0331   ;     call move_background ; now move it
+044A89             0332   ;     ld a,#01
+044A89             0333   ;     out (81h),a ; save it back to buffer
+044A89             0334   ; ; do all the things
+044A89             0335   ;     call move_enemies
+044A89             0336   ;     call player_move
+044A89             0337   ;     call laser_control
+044A89             0338   ;     call print_score
+044A89             0339   ;     call draw_shields
+044A89             0340   ;     call draw_lives
+044A89             0341   ; ; ; debug: stop execution counter and print results
+044A89             0342   ; ;     ld a,0
+044A89             0343   ; ;     out (#e0),a ; stop counting instructions
+044A89             0344   
+044A89             0345   ; ; ; debug: start execution counter
+044A89             0346   ; ;     ld a,1
+044A89             0347   ; ;     out (#e0),a ; start counting instructions
+044A89             0348   
+044A89             0349   ;     call vdu_vblank
+044A89             0350   ; ; ; debug: stop execution counter and print results
+044A89             0351   ; ;     ld a,0
+044A89             0352   ; ;     out (#e0),a ; stop counting instructions
+044A89             0353   
+044A89             0354   ;     jr main_loop
+044A89             0355   ; #### END GAME MAIN LOOP ####
+044A89             0356   
+044A89             0357   ; draws the player's shields level
+044A89             0358   ; draw_shields:
+044A89             0359   ; TODO: Agonize this routine
+044A89             0360   ; ; prep the loop to draw the bars
+044A89             0361   ;     ld a,(player_shields) ; snag shields
+044A89             0362   ;     and a
+044A89             0363   ;     ret z ; don't draw if zero shields
+044A89             0364   ; ; set loop counter and drawing position
+044A89             0365   ;     ld b,a ; loop counter
+044A89             0366   ;     ld hl,#5300+48+12
+044A89             0367   ; ; set color based on bars remaining
+044A89             0368   ;     ld c,103 ; bright green 28fe0a
+044A89             0369   ;     cp 9
+044A89             0370   ;     jp p,draw_shields_loop
+044A89             0371   ;     ld c,74 ; bright yellow eafe5b
+044A89             0372   ;     cp 3
+044A89             0373   ;     jp p,draw_shields_loop
+044A89             0374   ;     ld c,28 ; bright red fe0a0a
+044A89             0375   ; draw_shields_loop:
+044A89             0376   ;     push bc ; yup,outta
+044A89             0377   ;     push hl ; registers again
+044A89             0378   ;     ; ld a,#A8 ; ▀,168
+044A89             0379   ;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
+044A89             0380   ;     ; call draw_char
+044A89             0381   ;     call draw_num ; we nuked draw_char for the time being
+044A89             0382   ;     pop hl
+044A89             0383   ;     ld a,8
+044A89             0384   ;     add a,l
+044A89             0385   ;     ld l,a
+044A89             0386   ;     pop bc
+044A89             0387   ;     djnz draw_shields_loop
+044A89             0388       ; ret
+044A89             0389   
+044A89             0390   ; prints the player's score
+044A89             0391   ; print_score:
+044A89             0392   ; TODO: Agonize this
+044A89             0393   ; ; draw score (we do it twice for a totally unecessary drop-shadow effect)
+044A89             0394   ;     ld c,42 ; dark orange b74400
+044A89             0395   ;     ld hl,#5200+1+8+6*6
+044A89             0396   ;     ld a,3 ; print 6 bdc digits
+044A89             0397   ;     ld de,player_score
+044A89             0398   ;     call print_num
+044A89             0399   
+044A89             0400   ;     ld c,58 ; golden yellow fec10a
+044A89             0401   ;     ld hl,#5100+8+6*6
+044A89             0402   ;     ld a,3 ; print 6 bdc digits
+044A89             0403   ;     ld de,player_score
+044A89             0404   ;     call print_num
+044A89             0405       ; ret
+044A89             0406   
+044A89             0407   ; draw_lives:
+044A89             0408   ;     ld hl,player_small ; make small yellow ship the active sprite
+044A89             0409   ;     ld (sprite_base_bufferId),hl
+044A89             0410   ;     ; ld a,#80 ; northern orientation
+044A89             0411   ;     ; ld (sprite_orientation),a
+044A89             0412   ;     ld hl,0 ; north
+044A89             0413   ;     ld (sprite_heading),hl
+044A89             0414   ;     xor a
+044A89             0415   ;     ld (sprite_animation),a
+044A89             0416   ;     ld a,#56 ; top of visible screen
+044A89             0417   ;     ld (sprite_y+1),a
+044A89             0418   ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+044A89             0419   ;     ld a,(player_ships)
+044A89             0420   ;     dec a ; we draw one fewer ships than lives
+044A89             0421   ;     ret z ; nothing to draw here, move along
+044A89             0422   ;     ld b,a ; loop counter
+044A89             0423   ;     ld a,256-16 ; initial x position
+044A89             0424   ; draw_lives_loop:
+044A89             0425   ;     ld (sprite_x+1),a
+044A89             0426   ;     push af
+044A89             0427   ;     push bc
+044A89             0428   ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
+044A89             0429   ;     pop bc
+044A89             0430   ;     pop af
+044A89             0431   ;     sub 10
+044A89             0432   ;     djnz draw_lives_loop
+044A89             0433   ;     ret

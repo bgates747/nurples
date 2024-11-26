@@ -51,7 +51,6 @@ exit:
     include "mos_api.inc"
     include "functions.inc"
     include "vdu.inc"
-    include "vdu_buff.inc"
     include "vdu_plot.inc"
 	include "vdu_sprites.inc"
 	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
