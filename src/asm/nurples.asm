@@ -184,7 +184,8 @@ init:
 
 	ret
 
-origin_top: equ 48
+; origin_top: equ 48
+origin_top: equ 0 ; DEBUG
 origin_left: equ 128
 field_top: equ 0
 field_bottom: equ 383-origin_top
