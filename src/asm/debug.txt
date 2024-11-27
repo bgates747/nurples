@@ -27,7 +27,7 @@ Addresses are 24-bit, unless otherwise specified
 ------
 043013             0328*  ; UH.L = UH.L*UD.E (unsigned)
 043013             0329*  umul168:
-043013 CD BB 2F 04 0330*  	call umul24x24
+043013 CD BB 2F 04 0330*  	call mul24
 
 043017 FD 27 FF    0331*  	ld hl,(iy-1)
 
