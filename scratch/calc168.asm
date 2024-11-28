@@ -9,7 +9,7 @@ argv_ptrs_max: EQU 16 ; Maximum number of arguments allowed in argv
 argv_ptrs: BLKP argv_ptrs_max, 0	
 
 _exec_name:
-    ASCIZ "calc" ; The executable name, only used in argv
+    ASCIZ "calc168" ; The executable name, only used in argv
     ALIGN 64
     DB "MOS" ; Flag for MOS - to confirm this is a valid MOS command
     DB 00h ; MOS header version 0
@@ -50,7 +50,7 @@ _main_end_error:
 
 _main_end_ok:
     call printInline
-    asciz "Success!\r\n"
+    asciz "\r\n"
     ld hl,0 ; return 0 for success
     ret
 
@@ -60,15 +60,48 @@ _main_end_ok:
 ; --- MAIN PROGRAM ---
 main:
     dec c ; decrement the argument count to skip the program name
-    call get_arg_s24
+
+    call get_arg_s168
     ld (@arg1),de
-    ex de,hl
-    call printDec
+    call get_arg_s168
+    ld (@arg2),de
+
+    call printInline
+    asciz "\r\ndistance between two points: "
     ld hl,(@arg1)
-    call sqrt24
-    ex de,hl
-    call printDec
-    call printNewLine
+    call print_s168
+    ld a,',' ; print a comma
+    rst.lil 10h
+    ld hl,(@arg2)
+    call print_s168
+    call printInline
+    asciz " = "
+
+    ld bc,(@arg1)
+    ld de,(@arg2)
+    ld ix,0 ; x1 0
+    ld iy,0 ; y1 0
+    call distance168
+    call print_s168
+
+    ; call get_arg_s168
+    ; ld (@arg1),de
+    ; ex de,hl
+    ; call print_s168
+    ; ld hl,(@arg1)
+    ; call sqrt168
+    ; call print_s168
+    ; call printNewLine
+
+    ; call get_arg_s24
+    ; ld (@arg1),de
+    ; ex de,hl
+    ; call printDec
+    ; ld hl,(@arg1)
+    ; call sqrt24
+    ; ex de,hl
+    ; call printDec
+    ; call printNewLine
 
     jp _main_end_ok
 

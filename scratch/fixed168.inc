@@ -486,7 +486,7 @@ distance168:
 ; compute dy^2
 	ex de,hl
 	call hlu_abs
-	call hlu_udiv256 ; make integer to avoid overflow for dy >= 256
+	call hlu_udiv256 ; make integer to avoid overflow
 	push hl
 	pop de
 	call umul24 ; hl = dy^2
@@ -494,7 +494,7 @@ distance168:
 ; compute dx^2
 	ld hl,(dx168)
 	call hlu_abs
-	call hlu_udiv256 ; make integer to avoid overflow for dx >= 256
+	call hlu_udiv256 ; make integer to avoid overflow
 	push hl
 	pop de
 	call umul24 ; hl = dx^2
@@ -689,21 +689,22 @@ sqrt168:
     add hl,hl
     add hl,hl
     ret
+
+; credit: xeda112358
+; https://www.cemetech.net/forum/viewtopic.php?t=11178&postdays=0&postorder=asc&start=0
 sqrt24:
 ; Expects ADL mode
 ; Inputs: HL
 ; Outputs: DE is the integer square root
 ;  HL is the difference inputHL-DE^2
 ;  c flag reset
-	ld de,0 ; clear result
+	ld bc,0 ; clear bcu
+	ld de,0 ; clear deu
     xor a
     ld b,l
     push bc
     ld b,a
-    ld d,a
-    ld c,a
     ld l,a
-    ld e,a
 ; Iteration 1
     add hl,hl
     rl c
