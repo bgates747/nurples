@@ -386,6 +386,29 @@ deg_360_to_256:
 	pop de
 	ret
 
+; convert signed angles from a 256 to 360 degree circle
+; inputs: uh.l is the angle256 in 16.8 fixed format
+; outputs: uh.l is the angle360 in 16.8 fixed format
+; destroys: TODO
+deg_256_to_360:
+	push de ; preserve de
+; make angle positive and store sign flag
+	call hlu_abs
+	push af
+; multiply by 360 first to keep precision
+	ld de,360
+	call umul24 ; uh.l = uh.l * 360
+; divide uh.l by 256
+	call hlu_udiv256 ; uh.l = uh.l / 256
+; restore sign flag and adjust output accordingly
+	pop af
+	jp p,@pos ; positive number
+	call neg_hlu
+@pos:
+; restore de and return uh.l as the result
+	pop de
+	ret
+
 ; fixed 16.8 routine
 ; cos(uh.l) --> uh.l
 ; destroys: f, hl

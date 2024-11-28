@@ -50,7 +50,7 @@ _main_end_error:
 
 _main_end_ok:
     call printInline
-    asciz "\r\n"
+    asciz "\r\n\r\n"
     ld hl,0 ; return 0 for success
     ret
 
@@ -61,13 +61,15 @@ _main_end_ok:
 main:
     dec c ; decrement the argument count to skip the program name
 
+; compute distance between the origin and a point entered by the user
     call get_arg_s168
-    ld (@arg1),de
+    ld (@arg1),de ; dx
     call get_arg_s168
-    ld (@arg2),de
+    ld (@arg2),de ; dy
 
+; echo the input
     call printInline
-    asciz "\r\ndistance between two points: "
+    asciz "distance to target at: "
     ld hl,(@arg1)
     call print_s168
     ld a,',' ; print a comma
@@ -77,31 +79,22 @@ main:
     call printInline
     asciz " = "
 
-    ld bc,(@arg1)
-    ld de,(@arg2)
-    ld ix,0 ; x1 0
-    ld iy,0 ; y1 0
+; compute the distance
+    ld ix,(@arg1) ; x1
+    ld iy,(@arg2) ; y1
+    ld bc,0 ; x1 0
+    ld de,0 ; y1 0
     call distance168
     call print_s168
 
-    ; call get_arg_s168
-    ; ld (@arg1),de
-    ; ex de,hl
-    ; call print_s168
-    ; ld hl,(@arg1)
-    ; call sqrt168
-    ; call print_s168
-    ; call printNewLine
-
-    ; call get_arg_s24
-    ; ld (@arg1),de
-    ; ex de,hl
-    ; call printDec
-    ; ld hl,(@arg1)
-    ; call sqrt24
-    ; ex de,hl
-    ; call printDec
-    ; call printNewLine
+; compute angle between the origin and the point entered by the user
+    call printInline
+    asciz "\r\ntarget bearing: "
+    ld bc,(dx168)
+    ld de,(dy168)
+    call atan2_168fast ; uh.l = atan2(dx,-dy) in deg256
+    ; call deg_256_to_360 ; convert to 360 degree circle
+    call print_s168
 
     jp _main_end_ok
 
