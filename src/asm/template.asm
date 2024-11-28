@@ -1,16 +1,9 @@
     assume adl=1   
     org 0x040000    
 
-    include "mos_api.inc"
-
-    MACRO PROGNAME
-    ASCIZ "flower_demo"
-    ENDMACRO
+    ; include "mos_api.inc"
 
     jp start       
-
-_exec_name:
-	PROGNAME
 
     align 64      
     db "MOS"       
@@ -41,13 +34,13 @@ exit:
 ; --- MAIN PROGRAM ---
 ; APPLICATION INCLUDES
 ; API includes
-    include "functions.inc"
-    include "vdu.inc"
-	include "maths.inc"
-	include "trig24fast.inc"
-	include "fixed24.inc"
-	include "files.inc"
-    include "timer.inc"
+    ; include "functions.inc"
+    ; include "vdu.inc"
+	; include "maths.inc"
+	; include "trig24fast.inc"
+	; include "fixed24.inc"
+	; include "files.inc"
+    ; include "timer.inc"
 
 ; --- INITIALIZATION ---
 init:
@@ -55,82 +48,194 @@ init:
 
 ; --- MAIN PROGRAM ---
 main:
-    ld hl,3*256+64
-    ld de,4*256+128
-    call umul168
-    call print_s168_hl
-    call printNewLine
-
-    ld hl,5
-    ld de,2
-    call udiv168
-    call print_s168_de
-    call printNewLine
+    ld hl,256
+    call sqrt24
     ret
-
-
-; testing udiv24
-    ld iy,tmr_test
-    ld hl,120 ; 10 seconds
-    call tmr_set
-    ld hl,0
-    push hl
-    call vdu_vblank
-@loop:
-    ld hl,65535
-    ld de,1023
-    call udiv24
+sqrt24:
+; Expects ADL mode
+; Inputs: HL
+; Outputs: DE is the integer square root
+;          HL is the difference inputHL-DE^2
+;          c flag reset
+    ld de,0 ; clear deu
+    xor a 
+    ld b,l 
+    push bc 
+    ld b,a 
+    ld d,a 
+    ld c,a 
+    ld l,a 
+    ld e,a
+; Iteration 1
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c
+    sub c 
+    jr nc,$+6 
+    inc e 
+    inc e 
+    cpl 
+    ld c,a
+; Iteration 2
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c 
+    rl e 
+    ld a,e
+    sub c 
+    jr nc,$+6 
+    inc e 
+    inc e 
+    cpl 
+    ld c,a
+; Iteration 3
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c 
+    rl e 
+    ld a,e
+    sub c 
+    jr nc,$+6 
+    inc e 
+    inc e 
+    cpl 
+    ld c,a
+; Iteration 4
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c 
+    rl e 
+    ld a,e
+    sub c 
+    jr nc,$+6 
+    inc e 
+    inc e 
+    cpl 
+    ld c,a
+; Iteration 5
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c 
+    rl e 
+    ld a,e
+    sub c 
+    jr nc,$+6 
+    inc e 
+    inc e 
+    cpl 
+    ld c,a
+; Iteration 6
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c 
+    rl e 
+    ld a,e
+    sub c 
+    jr nc,$+6 
+    inc e 
+    inc e 
+    cpl 
+    ld c,a
+; Iteration 7
+    add hl,hl 
+    rl c 
+    add hl,hl 
+    rl c 
+    rl b
+    ex de,hl 
+    add hl,hl 
+    push hl 
+    sbc hl,bc 
+    jr nc,$+8
+    ld a,h 
+    cpl 
+    ld b,a
+    ld a,l 
+    cpl 
+    ld c,a
     pop hl
+    jr nc,$+4 
+    inc hl 
     inc hl
-    push hl
-    ld iy,tmr_test
-    call tmr_get
-    jp p,@loop
-    pop hl
-    call printDec
-    call printNewLine
-
-fast_div:
-    ld iy,tmr_test
-    ld hl,120 ; 10 seconds
-    call tmr_set
-    ld hl,0
-    push hl
-    call vdu_vblank
-@loop:
-    ld hl,65535
-    ld c,128
-    call HL_Div_C
-    pop hl
-    inc hl
-    push hl
-    ld iy,tmr_test
-    call tmr_get
-    jp p,@loop
-    pop hl
-    call printDec
-    call printNewLine
-
+    ex de,hl
+; Iteration 8
+    add hl,hl 
+    ld l,c 
+    ld h,b 
+    adc hl,hl 
+    adc hl,hl
+    ex de,hl 
+    add hl,hl 
+    sbc hl,de 
+    add hl,de 
+    ex de,hl
+    jr nc,$+6 
+    sbc hl,de 
+    inc de 
+    inc de
+; Iteration 9
+    pop af
+    rla 
+    adc hl,hl 
+    rla 
+    adc hl,hl
+    ex de,hl 
+    add hl,hl 
+    sbc hl,de 
+    add hl,de 
+    ex de,hl
+    jr nc,$+6 
+    sbc hl,de 
+    inc de 
+    inc de
+; Iteration 10
+    rla 
+    adc hl,hl 
+    rla 
+    adc hl,hl
+    ex de,hl 
+    add hl,hl 
+    sbc hl,de 
+    add hl,de 
+    ex de,hl
+    jr nc,$+6 
+    sbc hl,de 
+    inc de 
+    inc de
+; Iteration 11
+    rla 
+    adc hl,hl 
+    rla 
+    adc hl,hl
+    ex de,hl 
+    add hl,hl 
+    sbc hl,de 
+    add hl,de 
+    ex de,hl
+    jr nc,$+6 
+    sbc hl,de 
+    inc de 
+    inc de
+; Iteration 12
+    rla 
+    adc hl,hl 
+    rla 
+    adc hl,hl
+    ex de,hl 
+    add hl,hl 
+    sbc hl,de 
+    add hl,de 
+    ex de,hl
+    jr nc,$+6 
+    sbc hl,de 
+    inc de 
+    inc de
+    rr d 
+    rr e 
     ret
-
-HL_Div_C:
-   ;Inputs:
-   ;     HL is the numerator
-   ;     C is the denominator
-   ;Outputs:
-   ;     A is the remainder
-   ;     B is 0
-   ;     C is not changed
-   ;     DE is not changed
-   ;     HL is the quotient
-   ;
-          ld b,16
-          xor a
-            add hl,hl
-            rla
-            cp c
-            jr c,$+4
-              inc l
-              sub c
-            djnz $-7
-          ret

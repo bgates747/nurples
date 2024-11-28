@@ -1,0 +1,236 @@
+PC     Output      Line
+040000             0001      assume adl=1
+040000             0002      org 0x040000
+040000 C3 45 00 04 0003      jp start
+040004             0004  
+040004 FF FF FF FF 0005      align 64
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+040040 4D 4F 53    0006      db "MOS"
+040043 00          0007      db 00h
+040044 01          0008      db 01h
+040045             0009  
+040045             0010  start:
+040045 F5          0011      push af
+040046 C5          0012      push bc
+040047 D5          0013      push de
+040048 DD E5       0014      push ix
+04004A FD E5       0015      push iy
+04004C             0016  
+04004C CD 5C 00 04 0017      call main
+040050             0018  
+040050             0019  exit:
+040050 FD E1       0020      pop iy
+040052 DD E1       0021      pop ix
+040054 D1          0022      pop de
+040055 C1          0023      pop bc
+040056 F1          0024      pop af
+040057 21 00 00 00 0025      ld hl,0
+04005B             0026  
+04005B C9          0027      ret
+04005C             0028  
+04005C             0029  main:
+04005C 21 00 01 00 0030      ld hl,256
+040060 CD 65 00 04 0031      call sqrt24
+040064 C9          0032      ret
+040065             0033  
+040065             0034  sqrt24:
+040065             0035  ; Expects ADL mode
+040065             0036  ; Inputs: HL
+040065             0037  ; Outputs: DE is the integer square root
+040065             0038  ;  HL is the difference inputHL-DE^2
+040065             0039  ;  c flag reset
+040065 11 00 00 00 0040  	ld de,0 ; clear result
+040069 AF          0041      xor a
+04006A 45          0042      ld b,l
+04006B C5          0043      push bc
+04006C 47          0044      ld b,a
+04006D 57          0045      ld d,a
+04006E 4F          0046      ld c,a
+04006F 6F          0047      ld l,a
+040070 5F          0048      ld e,a
+040071             0049  ; Iteration 1
+040071 29          0050      add hl,hl
+040072 CB 11       0051      rl c
+040074 29          0052      add hl,hl
+040075 CB 11       0053      rl c
+040077 91          0054      sub c
+040078 30 04       0055      jr nc,$+6
+04007A 1C          0056      inc e
+04007B 1C          0057      inc e
+04007C 2F          0058      cpl
+04007D 4F          0059      ld c,a
+04007E             0060  ; Iteration 2
+04007E 29          0061      add hl,hl
+04007F CB 11       0062      rl c
+040081 29          0063      add hl,hl
+040082 CB 11       0064      rl c
+040084 CB 13       0065      rl e
+040086 7B          0066      ld a,e
+040087 91          0067      sub c
+040088 30 04       0068      jr nc,$+6
+04008A 1C          0069      inc e
+04008B 1C          0070      inc e
+04008C 2F          0071      cpl
+04008D 4F          0072      ld c,a
+04008E             0073  ; Iteration 3
+04008E 29          0074      add hl,hl
+04008F CB 11       0075      rl c
+040091 29          0076      add hl,hl
+040092 CB 11       0077      rl c
+040094 CB 13       0078      rl e
+040096 7B          0079      ld a,e
+040097 91          0080      sub c
+040098 30 04       0081      jr nc,$+6
+04009A 1C          0082      inc e
+04009B 1C          0083      inc e
+04009C 2F          0084      cpl
+04009D 4F          0085      ld c,a
+04009E             0086  ; Iteration 4
+04009E 29          0087      add hl,hl
+04009F CB 11       0088      rl c
+0400A1 29          0089      add hl,hl
+0400A2 CB 11       0090      rl c
+0400A4 CB 13       0091      rl e
+0400A6 7B          0092      ld a,e
+0400A7 91          0093      sub c
+0400A8 30 04       0094      jr nc,$+6
+0400AA 1C          0095      inc e
+0400AB 1C          0096      inc e
+0400AC 2F          0097      cpl
+0400AD 4F          0098      ld c,a
+0400AE             0099  ; Iteration 5
+0400AE 29          0100      add hl,hl
+0400AF CB 11       0101      rl c
+0400B1 29          0102      add hl,hl
+0400B2 CB 11       0103      rl c
+0400B4 CB 13       0104      rl e
+0400B6 7B          0105      ld a,e
+0400B7 91          0106      sub c
+0400B8 30 04       0107      jr nc,$+6
+0400BA 1C          0108      inc e
+0400BB 1C          0109      inc e
+0400BC 2F          0110      cpl
+0400BD 4F          0111      ld c,a
+0400BE             0112  ; Iteration 6
+0400BE 29          0113      add hl,hl
+0400BF CB 11       0114      rl c
+0400C1 29          0115      add hl,hl
+0400C2 CB 11       0116      rl c
+0400C4 CB 13       0117      rl e
+0400C6 7B          0118      ld a,e
+0400C7 91          0119      sub c
+0400C8 30 04       0120      jr nc,$+6
+0400CA 1C          0121      inc e
+0400CB 1C          0122      inc e
+0400CC 2F          0123      cpl
+0400CD 4F          0124      ld c,a
+0400CE             0125  ; Iteration 7
+0400CE 29          0126      add hl,hl
+0400CF CB 11       0127      rl c
+0400D1 29          0128      add hl,hl
+0400D2 CB 11       0129      rl c
+0400D4 CB 10       0130      rl b
+0400D6 EB          0131      ex de,hl
+0400D7 29          0132      add hl,hl
+0400D8 E5          0133      push hl
+0400D9 ED 42       0134      sbc hl,bc
+0400DB 30 06       0135      jr nc,$+8
+0400DD 7C          0136      ld a,h
+0400DE 2F          0137      cpl
+0400DF 47          0138      ld b,a
+0400E0 7D          0139      ld a,l
+0400E1 2F          0140      cpl
+0400E2 4F          0141      ld c,a
+0400E3 E1          0142      pop hl
+0400E4 30 02       0143      jr nc,$+4
+0400E6 23          0144      inc hl
+0400E7 23          0145      inc hl
+0400E8 EB          0146      ex de,hl
+0400E9             0147  ; Iteration 8
+0400E9 29          0148      add hl,hl
+0400EA 69          0149      ld l,c
+0400EB 60          0150      ld h,b
+0400EC ED 6A       0151      adc hl,hl
+0400EE ED 6A       0152      adc hl,hl
+0400F0 EB          0153      ex de,hl
+0400F1 29          0154      add hl,hl
+0400F2 ED 52       0155      sbc hl,de
+0400F4 19          0156      add hl,de
+0400F5 EB          0157      ex de,hl
+0400F6 30 04       0158      jr nc,$+6
+0400F8 ED 52       0159      sbc hl,de
+0400FA 13          0160      inc de
+0400FB 13          0161      inc de
+0400FC             0162  ; Iteration 9
+0400FC F1          0163      pop af
+0400FD 17          0164      rla
+0400FE ED 6A       0165      adc hl,hl
+040100 17          0166      rla
+040101 ED 6A       0167      adc hl,hl
+040103 EB          0168      ex de,hl
+040104 29          0169      add hl,hl
+040105 ED 52       0170      sbc hl,de
+040107 19          0171      add hl,de
+040108 EB          0172      ex de,hl
+040109 30 04       0173      jr nc,$+6
+04010B ED 52       0174      sbc hl,de
+04010D 13          0175      inc de
+04010E 13          0176      inc de
+04010F             0177  ; Iteration 10
+04010F 17          0178      rla
+040110 ED 6A       0179      adc hl,hl
+040112 17          0180      rla
+040113 ED 6A       0181      adc hl,hl
+040115 EB          0182      ex de,hl
+040116 29          0183      add hl,hl
+040117 ED 52       0184      sbc hl,de
+040119 19          0185      add hl,de
+04011A EB          0186      ex de,hl
+04011B 30 04       0187      jr nc,$+6
+04011D ED 52       0188      sbc hl,de
+04011F 13          0189      inc de
+040120 13          0190      inc de
+040121             0191  ; Iteration 11
+040121 17          0192      rla
+040122 ED 6A       0193      adc hl,hl
+040124 17          0194      rla
+040125 ED 6A       0195      adc hl,hl
+040127 EB          0196      ex de,hl
+040128 29          0197      add hl,hl
+040129 ED 52       0198      sbc hl,de
+04012B 19          0199      add hl,de
+04012C EB          0200      ex de,hl
+04012D 30 04       0201      jr nc,$+6
+04012F ED 52       0202      sbc hl,de
+040131 13          0203      inc de
+040132 13          0204      inc de
+040133             0205  ; Iteration 12
+040133 17          0206      rla
+040134 ED 6A       0207      adc hl,hl
+040136 17          0208      rla
+040137 ED 6A       0209      adc hl,hl
+040139 EB          0210      ex de,hl
+04013A 29          0211      add hl,hl
+04013B ED 52       0212      sbc hl,de
+04013D 19          0213      add hl,de
+04013E EB          0214      ex de,hl
+04013F 30 04       0215      jr nc,$+6
+040141 ED 52       0216      sbc hl,de
+040143 13          0217      inc de
+040144 13          0218      inc de
+040145 CB 1A       0219      rr d
+040147 CB 1B       0220      rr e
+040149 C9          0221      ret

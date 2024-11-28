@@ -1,87 +1,68 @@
-import zipfile
-from fontTools.ttLib import TTFont
-import os
+import sys
 
-def unzip_files_in_downloads():
+def integer_sqrt(value):
     """
-    Unzips all .zip files in /home/smith/Downloads into a new folder 
-    with the same name as the base zip file name. Then, renames the .ttf file 
-    found inside the folder to match the base zip file name.
+    Simulate the integer square root algorithm.
+    Computes the integer square root of a 24-bit input value.
+    
+    Parameters:
+        value (int): 24-bit unsigned integer input.
+    
+    Returns:
+        tuple: (root, remainder)
+            - root: The integer square root of the input.
+            - remainder: The leftover value after subtracting root^2.
     """
-    downloads_dir = '/home/smith/Downloads'
+    remainder = 0  # This holds the shifted and updated remainder during computation
+    root = 0       # This builds the square root, one bit at a time
 
-    # Iterate over all files in the downloads directory
-    for filename in os.listdir(downloads_dir):
-        if filename.endswith('.zip'):
-            # Define the full path to the zip file
-            zip_filepath = os.path.join(downloads_dir, filename)
+    # There are 12 iterations for a 24-bit input because we process 2 bits of the input per iteration
+    for i in range(12):
+        # Step 1: Shift the remainder left by 2 bits to make room for the next 2 bits of input
+        remainder = (remainder << 2) | ((value >> (22 - 2 * i)) & 0b11)
+        # Bring down the next 2 bits of the input into the remainder
+        
+        # Step 2: Form the next trial root by shifting the current root left by 1 and adding 1
+        # This represents testing the next bit of the square root
+        trial = (root << 1) | 1
 
-            # Define the target extraction folder based on the base filename
-            base_name = os.path.splitext(filename)[0]
-            extract_folder = os.path.join(downloads_dir, base_name)
+        # Step 3: Test if the trial root squared is less than or equal to the remainder
+        if remainder >= trial:
+            # If the trial is successful, subtract it from the remainder
+            remainder -= trial
+            # Update the root by setting the bit we just tested
+            root = (root << 1) | 1
+        else:
+            # If the trial fails, just shift the root left without setting the new bit
+            root = root << 1
 
-            # Create the directory if it doesn't exist
-            os.makedirs(extract_folder, exist_ok=True)
+    # Post-processing step: Correct overshoot if necessary
+    if root * root > value:
+        root -= 1
+        remainder += (root << 1) + 1  # Adjust remainder to restore consistency
 
-            # Unzip the file into the new folder
-            with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
-                zip_ref.extractall(extract_folder)
-                print(f'Unzipped {filename} to {extract_folder}')
+    # At the end of 12 iterations, 'root' holds the integer square root, and 'remainder' holds the leftover
+    return root, remainder
 
-            # Find the .ttf file in the extracted folder
-            ttf_file = None
-            for root, dirs, files in os.walk(extract_folder):
-                for file in files:
-                    if file.endswith('.ttf'):
-                        ttf_file = os.path.join(root, file)
-                        break
-                if ttf_file:
-                    break
 
-            # If a .ttf file is found, rename it to match the base .zip filename
-            if ttf_file:
-                ttf_new_name = os.path.join(extract_folder, f"{base_name}.ttf")
-                os.rename(ttf_file, ttf_new_name)
-                print(f'Renamed {ttf_file} to {ttf_new_name}')
-
-def extract_ttf_metadata(ttf_path):
-    """
-    Extracts metadata from a .ttf file and dumps it into a metadata file in the same directory.
-    
-    :param ttf_path: Path to the .ttf file.
-    """
-    # Load the TTF file
-    font = TTFont(ttf_path)
-    
-    # Define the metadata file path
-    metadata_filepath = os.path.splitext(ttf_path)[0] + '_metadata.txt'
-    
-    # Extract metadata
-    metadata = {}
-    
-    # Get font name table
-    name_records = font['name'].names
-    for record in name_records:
-        try:
-            # Some records are in bytes, so decode them if needed
-            name = record.toUnicode()
-            metadata[record.nameID] = name
-        except UnicodeDecodeError:
-            pass
-
-    # Dump the metadata to a file with UTF-8 encoding
-    with open(metadata_filepath, 'w', encoding='utf-8') as f:
-        f.write("TTF Metadata:\n")
-        f.write("================\n")
-        for nameID, name in metadata.items():
-            f.write(f"Name ID {nameID}: {name}\n")
-
-    print(f"Metadata saved as {metadata_filepath}")
 
 if __name__ == "__main__":
-    # Run the function
-    # unzip_files_in_downloads()
+    if len(sys.argv) != 2:
+        print("Usage: python sqrt24.py <value>")
+        print("<value> should be a 24-bit unsigned integer (0 to 16777215).")
+        sys.exit(1)
 
-    font_name = 'amiga_forever'
-    ttf_path = f'src/assets/ttf/{font_name}/{font_name}.ttf'
-    extract_ttf_metadata(ttf_path)
+    try:
+        # Parse the input value
+        value = int(sys.argv[1])
+        if value < 0 or value > 0xFFFFFF:
+            raise ValueError("Value out of range.")
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+    # Compute the square root
+    root, remainder = integer_sqrt(value)
+    print(f"Input: {value} (0x{value:06X})")
+    print(f"Integer Square Root: {root} (0x{root:06X})")
+    print(f"Remainder: {remainder} (0x{remainder:06X})")

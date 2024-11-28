@@ -1,0 +1,2260 @@
+PC     Output      Line
+040000             0001       assume adl=1
+040000             0002       org 0x040000
+040000 C3 45 00 04 0003       jp start
+040004             0004   
+040004 FF FF FF FF 0005       align 64
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+040040 4D 4F 53    0006       db "MOS"
+040043 00          0007       db 00h
+040044 01          0008       db 01h
+040045             0009   
+040045             0010   start:
+040045 F5          0011       push af
+040046 C5          0012       push bc
+040047 D5          0013       push de
+040048 DD E5       0014       push ix
+04004A FD E5       0015       push iy
+04004C             0016   
+04004C CD 55 0E 04 0017       call init
+040050 CD 56 0E 04 0018       call main
+040054             0019   
+040054             0020   exit:
+040054 FD E1       0021       pop iy
+040056 DD E1       0022       pop ix
+040058 D1          0023       pop de
+040059 C1          0024       pop bc
+04005A F1          0025       pop af
+04005B 21 00 00 00 0026       ld hl,0
+04005F             0027   
+04005F C9          0028       ret
+040060             0029   
+040060             0030   ;--- APPLICATION INCLUDES ---
+040060             0031       include "fixed168.inc"
+040060             0001*  ; multiply HL by 256
+040060             0002*  ; inputs: HL
+040060             0003*  ; outputs: HL*256
+040060             0004*  ; destroys: flags
+040060             0005*      MACRO hlu_mul256
+040060             0006*          add hl,hl ; * 2
+040060             0007*          add hl,hl ; * 4
+040060             0008*          add hl,hl ; * 8
+040060             0009*          add hl,hl ; * 16
+040060             0010*          add hl,hl ; * 32
+040060             0011*          add hl,hl ; * 64
+040060             0012*          add hl,hl ; * 128
+040060             0013*          add hl,hl ; * 256
+040060             0014*      ENDMACRO
+040060             0015*  
+040060             0016*  ; test the sign of HL
+040060             0017*  ; inputs: HL obviously
+040060             0018*  ; outputs: sign flag set if HL is negative, zero flag set if HL is zero
+040060             0019*  ; destroys: flags
+040060             0020*      MACRO sign_hlu
+040060             0021*          add hl,de
+040060             0022*          or a
+040060             0023*          sbc hl,de
+040060             0024*      ENDMACRO
+040060             0025*  
+040060             0026*  ; hlu signed division by 256
+040060             0027*  ; returns: hlu / 256
+040060             0028*  ; destroys: af
+040060             0029*  hlu_sdiv256:
+040060 AF          0030*      xor a ; assume hl is positive
+040061 22 77 00 04 0031*      ld (@buffer),hl
+040065             0032*      sign_hlu
+040065 19          0001*M         add hl,de
+040066 B7          0002*M         or a
+040067 ED 52       0003*M         sbc hl,de
+040069 F2 6E 00 04 0033*      jp p,@hl_pos
+04006D 3D          0034*      dec a
+04006E             0035*  @hl_pos:
+04006E 32 7A 00 04 0036*      ld (@buffer+3),a
+040072 2A 78 00 04 0037*      ld hl,(@buffer+1)
+040076 C9          0038*      ret
+040077 00 00 00 00 0039*  @buffer: blkb 4,0
+04007B             0040*  
+04007B             0041*  ; hlu 1 byte right shift, unsigned
+04007B             0042*  ; returns: hlu / 256
+04007B             0043*  hlu_udiv256:
+04007B 22 84 00 04 0044*  	ld (@buffer),hl
+04007F 2A 85 00 04 0045*  	ld hl,(@buffer+1)
+040083 C9          0046*  	ret
+040084 00 00 00 00 0047*  @buffer: blkb 4,0
+040088             0048*  
+040088             0049*  ; absolute value of hlu
+040088             0050*  ; returns: abs(hlu), flags set according to the incoming sign of hlu:
+040088             0051*  ;         s1,z0,pv0,n1,c0 if hlu was negative
+040088             0052*  ;         s0,z1,pv0,n1,c0 if hlu was zero
+040088             0053*  ;         s0,z0,pv0,n1,c0 if hlu was positive
+040088             0054*  ; destroys: a
+040088             0055*  hlu_abs:
+040088 19          0056*      add hl,de
+040089 B7          0057*      or a
+04008A ED 52       0058*      sbc hl,de
+04008C FA 91 00 04 0059*      jp m,@is_neg
+040090 C9          0060*      ret         ; hlu is positive or zero so we're done
+040091             0061*  @is_neg:
+040091 F5          0062*      push af     ; otherwise, save current flags for return
+040092 CD 98 00 04 0063*      call neg_hlu ; negate hlu
+040096 F1          0064*      pop af      ; get back flags
+040097 C9          0065*      ret
+040098             0066*  
+040098             0067*  ; flip the sign of hlu
+040098             0068*  ; inputs: hlu
+040098             0069*  ; returns: 0-hlu, flags set appropriately for the result:
+040098             0070*  ;         s1,z0,pv0,n1,c1 if result is negative
+040098             0071*  ;         s0,z1,pv0,n1,c0 if result is zero
+040098             0072*  ;         s0,z0,pv0,n1,c1 if result is positive
+040098             0073*  ; destroys a
+040098             0074*  neg_hlu:
+040098 D5          0075*      push de     ; save de
+040099 EB          0076*      ex de,hl    ; put hl into de
+04009A 21 00 00 00 0077*      ld hl,0     ; clear hl
+04009E AF          0078*      xor a       ; clear carry
+04009F ED 52       0079*      sbc hl,de   ; 0-hlu = -hlu
+0400A1 D1          0080*      pop de      ; get de back
+0400A2 C9          0081*      ret         ; easy peasy
+0400A3             0082*  
+0400A3             0083*      ; include "fixed24.inc"
+0400A3             0084*  
+0400A3             0085*  ; multiply a signed 24-bit number by an unsigned 8-bit number giving a signed 24-bit result
+0400A3             0086*  ; uses EZ80 MLT instruction for speed
+0400A3             0087*  ; operation: UHL * A --> UHL
+0400A3             0088*  ; destroys: AF, HL
+0400A3             0089*  smul24x8:
+0400A3             0090*  ; make hl positive and store sign flag
+0400A3 CD 88 00 04 0091*  	call hlu_abs
+0400A7 F5          0092*  	push af
+0400A8             0093*  ; do the division
+0400A8 CD B3 00 04 0094*      call mul24x8 ; hl = product
+0400AC             0095*  ; adjust sign of result
+0400AC F1          0096*  	pop af ; sign de
+0400AD F0          0097*  	ret p ; hl was positive, nothing to do
+0400AE CD 98 00 04 0098*  	call neg_hlu ; result is negative
+0400B2 C9          0099*  	ret
+0400B3             0100*  
+0400B3             0101*  ; unsigned multiplication of a 24-bit and 8-bit number giving a 32-bit result
+0400B3             0102*  ; uses EZ80 MLT instruction for speed
+0400B3             0103*  ; operation: UHL * A --> AUHL
+0400B3             0104*  ; destroys: AF, HL
+0400B3             0105*  mul24x8:
+0400B3 D5          0106*  	push de ; preserve de
+0400B4             0107*  ; low byte
+0400B4 5D          0108*  	ld e,l
+0400B5 57          0109*  	ld d,a
+0400B6 ED 5C       0110*  	mlt de
+0400B8 6B          0111*  	ld l,e ; product low byte
+0400B9 08          0112*  	ex af,af' ; save multiplier
+0400BA 7A          0113*  	ld a,d ; carry
+0400BB 08          0114*  	ex af,af' ; save carry, restore multiplier
+0400BC             0115*  ; high byte
+0400BC 5C          0116*  	ld e,h
+0400BD 57          0117*  	ld d,a
+0400BE ED 5C       0118*  	mlt de
+0400C0 08          0119*  	ex af,af' ; save multiplier, restore carry
+0400C1 83          0120*  	add a,e ; add carry
+0400C2 67          0121*  	ld h,a ; product middle byte
+0400C3 7A          0122*  	ld a,d ; carry
+0400C4 08          0123*  	ex af,af' ; save carry, restore multiplier
+0400C5             0124*  ; upper byte
+0400C5 22 E0 00 04 0125*      ld (@scratch),hl ; 7 cycles
+0400C9 5F          0126*  	ld e,a
+0400CA 3A E2 00 04 0127*  	ld a,(@scratch+2)
+0400CE 57          0128*  	ld d,a
+0400CF ED 5C       0129*  	mlt de
+0400D1 08          0130*  	ex af,af' ; restore carry
+0400D2 8B          0131*  	adc a,e ; add carry
+0400D3 32 E2 00 04 0132*      ld (@scratch+2),a ; 5 cycles
+0400D7 2A E0 00 04 0133*      ld hl,(@scratch) ; 7 cycles
+0400DB             0134*  ; highest byte
+0400DB 3E 00       0135*  	ld a,0 ; preserve carry flag
+0400DD 8A          0136*  	adc a,d ; product highest byte
+0400DE D1          0137*  	pop de ; restore de
+0400DF C9          0138*  	ret
+0400E0             0139*  @scratch: ds 3
+0400E3             0140*  
+0400E3 00 00 00 00 0141*  mul24out: blkb 6,0
+       00 00       
+0400E9             0142*  
+0400E9             0143*  ; unsigned multiplication of two 24-bit numbers giving a 48-bit result
+0400E9             0144*  ; operation: UHL * UDE --> mul24out
+0400E9             0145*  mul24:
+0400E9 DD E5       0146*  	push ix ; preserve
+0400EB             0147*  ; point to output buffer and clear it
+0400EB DD 21 E3 00 0148*  	ld ix,mul24out
+       04          
+0400F0 C5          0149*  	push bc
+0400F1 01 00 00 00 0150*  	ld bc,0
+0400F5 DD 0F 00    0151*  	ld (ix),bc
+0400F8 DD 0F 03    0152*  	ld (ix+3),bc
+0400FB C1          0153*  	pop bc
+0400FC             0154*  ; STEP 1: UHL * E
+0400FC 7B          0155*  	ld a,e
+0400FD E5          0156*  	push hl
+0400FE CD B3 00 04 0157*  	call mul24x8
+040102 DD 2F 00    0158*  	ld (ix+0),hl
+040105 DD 77 03    0159*  	ld (ix+3),a
+040108             0160*  ; STEP 2: UHL * D
+040108 E1          0161*  	pop hl
+040109 E5          0162*  	push hl
+04010A 7A          0163*  	ld a,d
+04010B CD B3 00 04 0164*  	call mul24x8
+04010F CD 28 01 04 0165*  	call @accumulate
+040113             0166*  ; STEP 3: UHL * DEU
+040113 E1          0167*  	pop hl
+040114 ED 53 58 01 0168*  	ld (@de),de
+       04          
+040119 3A 5A 01 04 0169*  	ld a,(@de+2)
+04011D CD B3 00 04 0170*  	call mul24x8
+040121 CD 28 01 04 0171*  	call @accumulate
+040125             0172*  ; all done
+040125 DD E1       0173*  	pop ix ; restore
+040127 C9          0174*  	ret
+040128             0175*  @accumulate:
+040128 DD 23       0176*  	inc ix
+04012A             0177*  ; highest byte of product to carry
+04012A DD 77 03    0178*  	ld (ix+3),a
+04012D             0179*  ; low byte of product
+04012D 7D          0180*  	ld a,l
+04012E DD 86 00    0181*  	add a,(ix+0)
+040131 DD 77 00    0182*  	ld (ix+0),a
+040134             0183*  ; high byte of product
+040134 7C          0184*  	ld a,h
+040135 DD 8E 01    0185*  	adc a,(ix+1)
+040138 DD 77 01    0186*  	ld (ix+1),a
+04013B             0187*  ; uppper byte of product
+04013B 22 55 01 04 0188*  	ld (@hl),hl
+04013F 3A 57 01 04 0189*  	ld a,(@hl+2)
+040143 DD 8E 02    0190*  	adc a,(ix+2)
+040146 DD 77 02    0191*  	ld (ix+2),a
+040149             0192*  ; carry
+040149 3E 00       0193*  	ld a,0 ; preserve flags
+04014B DD 8E 03    0194*  	adc a,(ix+3)
+04014E DD 77 03    0195*  	ld (ix+3),a
+040151 C9          0196*  	ret
+040152             0197*  
+040152 00 00 00    0198*  @ix: dl 0
+040155 00 00 00    0199*  @hl: dl 0
+040158 00 00 00    0200*  @de: dl 0
+04015B             0201*  
+04015B             0202*  ; UHL * UDE --> UHL (unsigned)
+04015B             0203*  umul24:
+04015B CD E9 00 04 0204*  	call mul24
+04015F 2A E3 00 04 0205*  	ld hl,(mul24out)
+040163 C9          0206*  	ret
+040164             0207*  
+040164             0208*  ; UH.L = UH.L*UD.E (unsigned)
+040164             0209*  umul168:
+040164 CD E9 00 04 0210*  	call mul24
+040168 2A E4 00 04 0211*  	ld hl,(mul24out+1)
+04016C C9          0212*  	ret
+04016D             0213*  
+04016D             0214*  ; UH.L * UD.E --> UH.L (signed)
+04016D             0215*  smul168:
+04016D             0216*  ; make everything positive and store sign flags
+04016D CD 88 00 04 0217*  	call hlu_abs
+040171 F5          0218*  	push af
+040172 EB          0219*  	ex de,hl
+040173 CD 88 00 04 0220*  	call hlu_abs
+040177 EB          0221*  	ex de,hl
+040178 F5          0222*  	push af
+040179             0223*  ; do the division
+040179 CD 64 01 04 0224*      call umul168 ; hl = product
+04017D             0225*  ; adjust sign of result
+04017D F1          0226*  	pop af ; sign de
+04017E FA 89 01 04 0227*  	jp m,@de_neg
+040182 F1          0228*  	pop af ; sign hl
+040183 F0          0229*  	ret p ; both positive, nothing to do
+040184             0230*  @hl_neg:
+040184 CD 98 00 04 0231*      call neg_hlu ; de pos, hl neg, result is negative
+040188 C9          0232*      ret
+040189             0233*  @de_neg:
+040189 F1          0234*  	pop af
+04018A F8          0235*  	ret m ; both negative, nothing to do
+04018B CD 98 00 04 0236*  	call neg_hlu ; result is negative
+04018F C9          0237*  	ret
+040190             0238*  
+040190             0239*  ; UH.L / UD.E --> UD.E rem UHL (unsigned)
+040190             0240*  ; perform unsigned division of 16.8 fixed place values
+040190             0241*  ; with an unsigned 16.8 fixed place result and 24-bit remainder
+040190             0242*  udiv168:
+040190             0243*  ; back up divisor
+040190 ED 53 C7 01 0244*  	ld (@ude),de
+       04          
+040195             0245*  ; get the 16-bit integer part of the quotient
+040195 CD F8 01 04 0246*      call udiv24 ; de = quotient, hl = remainder
+040199             0247*  ; load quotient to upper three bytes of output
+040199 ED 53 CE 01 0248*      ld (div168_out+1),de
+       04          
+04019E             0249*  @div256:
+04019E             0250*  ; multiply remainder by 256
+04019E             0251*  	hlu_mul256
+04019E 29          0001*M         add hl,hl ; * 2
+04019F 29          0002*M         add hl,hl ; * 4
+0401A0 29          0003*M         add hl,hl ; * 8
+0401A1 29          0004*M         add hl,hl ; * 16
+0401A2 29          0005*M         add hl,hl ; * 32
+0401A3 29          0006*M         add hl,hl ; * 64
+0401A4 29          0007*M         add hl,hl ; * 128
+0401A5 29          0008*M         add hl,hl ; * 256
+0401A6             0252*  ; skip fractional computation if remainder is zero
+0401A6             0253*      sign_hlu
+0401A6 19          0001*M         add hl,de
+0401A7 B7          0002*M         or a
+0401A8 ED 52       0003*M         sbc hl,de
+0401AA 20 03       0254*      jr nz,@div_frac
+0401AC AF          0255*      xor a
+0401AD 18 0A       0256*      jr @write_frac
+0401AF             0257*  ; now divide the shifted remainder by the divisor
+0401AF             0258*  @div_frac:
+0401AF ED 5B C7 01 0259*  	ld de,(@ude) ; get back divisor
+       04          
+0401B4 CD F8 01 04 0260*      call udiv24 ; de = quotient, hl = remainder
+0401B8             0261*  ; load low byte of quotient to low byte of output
+0401B8 7B          0262*      ld a,e
+0401B9             0263*  @write_frac:
+0401B9 32 CD 01 04 0264*      ld (div168_out),a
+0401BD             0265*  ; load de with return value
+0401BD ED 5B CD 01 0266*      ld de,(div168_out)
+       04          
+0401C2             0267*  ; load a with any overflow
+0401C2 3A D0 01 04 0268*      ld a,(div168_out+3)
+0401C6 C9          0269*      ret ; ud.e is the 16.8 result
+0401C7             0270*  @ude: ds 6
+0401CD             0271*  div168_out: ds 4 ; the extra byte is for overflow
+0401D1             0272*  
+0401D1             0273*  ; UH.L / UD.E --> UD.E (signed) rem UHL (unsigned)
+0401D1             0274*  ; perform signed division of 16.8 fixed place values
+0401D1             0275*  ; with a signed 16.8 fixed place result and unsigned 24-bit remainder
+0401D1             0276*  sdiv168:
+0401D1             0277*  ; make everything positive and store sign flags
+0401D1 CD 88 00 04 0278*  	call hlu_abs
+0401D5 F5          0279*  	push af
+0401D6 EB          0280*  	ex de,hl
+0401D7 CD 88 00 04 0281*  	call hlu_abs
+0401DB EB          0282*  	ex de,hl
+0401DC F5          0283*  	push af
+0401DD             0284*  ; do the division
+0401DD CD 90 01 04 0285*      call udiv168 ; de = quotient, hl = remainder
+0401E1             0286*  ; adjust sign of result
+0401E1 F1          0287*  	pop af ; sign de
+0401E2 FA EF 01 04 0288*  	jp m,@de_neg
+0401E6 F1          0289*  	pop af ; sign hl
+0401E7 F0          0290*  	ret p ; both positive, nothing to do
+0401E8             0291*  @hl_neg:
+0401E8 EB          0292*      ex de,hl ; hl = quotient, de = remainder
+0401E9 CD 98 00 04 0293*      call neg_hlu ; de pos, hl neg, result is negative
+0401ED EB          0294*      ex de,hl ; de = negated quotient, hl = remainder
+0401EE C9          0295*      ret
+0401EF             0296*  @de_neg:
+0401EF F1          0297*  	pop af
+0401F0 F8          0298*  	ret m ; both negative, nothing to do
+0401F1 EB          0299*      ex de,hl ; hl = quotient, de = remainder
+0401F2 CD 98 00 04 0300*  	call neg_hlu ; result is negative
+0401F6 EB          0301*      ex de,hl ; de = negated quotient, hl = remainder
+0401F7 C9          0302*  	ret
+0401F8             0303*  
+0401F8             0304*  ;------------------------------------------------------------------------
+0401F8             0305*  ;  arith24.asm
+0401F8             0306*  ;  24-bit ez80 arithmetic routines
+0401F8             0307*  ;  Copyright (c) Shawn Sijnstra 2024
+0401F8             0308*  ;  MIT license
+0401F8             0309*  ;
+0401F8             0310*  ;  This library was created as a tool to help make ez80
+0401F8             0311*  ;  24-bit native assembly routines for simple mathematical problems
+0401F8             0312*  ;  more widely available.
+0401F8             0313*  ;
+0401F8             0314*  ;------------------------------------------------------------------------
+0401F8             0315*  ;
+0401F8             0316*  ;------------------------------------------------------------------------
+0401F8             0317*  ; udiv24
+0401F8             0318*  ; Unsigned 24-bit division
+0401F8             0319*  ; Divides HLU by DEU. Gives result in DEU (and BC), remainder in HLU.
+0401F8             0320*  ;
+0401F8             0321*  ; Uses AF BC DE HL
+0401F8             0322*  ; Uses Restoring Division algorithm
+0401F8             0323*  ;------------------------------------------------------------------------
+0401F8             0324*  
+0401F8             0325*  udiv24:
+0401F8 E5          0326*  	push	hl
+0401F9 C1          0327*  	pop		bc	;move dividend to BCU
+0401FA 21 00 00 00 0328*  	ld		hl,0	;result
+0401FE A7          0329*  	and		a
+0401FF ED 52       0330*  	sbc		hl,de	;test for div by 0
+040201 C8          0331*  	ret		z		;it's zero, carry flag is clear
+040202 19          0332*  	add		hl,de	;HL is 0 again
+040203 3E 18       0333*  	ld		a,24	;number of loops through.
+040205             0334*  udiv1:
+040205 C5          0335*  	push	bc	;complicated way of doing this because of lack of access to top bits
+040206 E3          0336*  	ex		(sp),hl
+040207 37          0337*  	scf
+040208 ED 6A       0338*  	adc	hl,hl
+04020A E3          0339*  	ex	(sp),hl
+04020B C1          0340*  	pop	bc		;we now have bc = (bc * 2) + 1
+04020C             0341*  
+04020C ED 6A       0342*  	adc	hl,hl
+04020E A7          0343*  	and	a		;is this the bug
+04020F ED 52       0344*  	sbc	hl,de
+040211 30 02       0345*  	jr	nc,udiv2
+040213 19          0346*  	add	hl,de
+040214             0347*  ;	dec	c
+040214 0B          0348*  	dec	bc
+040215             0349*  udiv2:
+040215 3D          0350*  	dec	a
+040216 20 ED       0351*  	jr	nz,udiv1
+040218 37          0352*  	scf		;flag used for div0 error
+040219 C5          0353*  	push	bc
+04021A D1          0354*  	pop		de	;remainder
+04021B C9          0355*  	ret
+04021C             0356*  
+04021C             0357*  ;------------------------------------------------------------------------
+04021C             0358*  ;  END 24-bit ez80 arithmetic routines by Shawn Sijnstra
+04021C             0359*  ;------------------------------------------------------------------------
+04021C             0360*  
+04021C             0361*  
+04021C             0362*      ; include "trig24fast.inc"
+04021C             0363*  
+04021C             0364*  
+04021C             0365*  ; convert signed angles from a 360 to 256 degree circle
+04021C             0366*  ; inputs: uh.l is the angle360 in 16.8 fixed format
+04021C             0367*  ; outputs: uh.l is the angle256 in 16.8 fixed format
+04021C             0368*  ; destroys: TODO
+04021C             0369*  deg_360_to_256:
+04021C D5          0370*  	push de ; preserve de
+04021D             0371*  ; make angle positive and store sign flag
+04021D CD 88 00 04 0372*  	call hlu_abs
+040221 F5          0373*  	push af
+040222             0374*  ; multiply by 256 first to keep precision
+040222             0375*  	hlu_mul256 ; uh.l = uh.l * 256
+040222 29          0001*M         add hl,hl ; * 2
+040223 29          0002*M         add hl,hl ; * 4
+040224 29          0003*M         add hl,hl ; * 8
+040225 29          0004*M         add hl,hl ; * 16
+040226 29          0005*M         add hl,hl ; * 32
+040227 29          0006*M         add hl,hl ; * 64
+040228 29          0007*M         add hl,hl ; * 128
+040229 29          0008*M         add hl,hl ; * 256
+04022A             0376*  ; divide uh.l by 360
+04022A 11 68 01 00 0377*  	ld de,360
+04022E CD F8 01 04 0378*  	call udiv24 ; ud.e = degrees / 360
+040232 EB          0379*  	ex de,hl    ; uh.l = degrees / 360
+040233             0380*  ; restore sign flag and adjust output accordingly
+040233 F1          0381*  	pop af
+040234 F2 3C 02 04 0382*  	jp p,@pos ; positive number
+040238 CD 98 00 04 0383*  	call neg_hlu
+04023C             0384*  @pos:
+04023C             0385*  ; restore de and return uh.l as the result
+04023C D1          0386*  	pop de
+04023D C9          0387*  	ret
+04023E             0388*  
+04023E             0389*  ; fixed 16.8 routine
+04023E             0390*  ; cos(uh.l) --> uh.l
+04023E             0391*  ; destroys: f, hl
+04023E             0392*  cos168:
+04023E D5          0393*      push de ; preserve de
+04023F             0394*  ; for cos we simply increment the angle by 90 degrees
+04023F             0395*  ; or 0x004000 in 16.8 degrees256
+04023F             0396*  ; which makes it a sin problem
+04023F 11 00 40 00 0397*      ld de,0x004000
+040243 19          0398*      add hl,de ; modulo 256 happens below
+040244 D1          0399*      pop de ; restore de
+040245             0400*  ; fall through to sin168
+040245             0401*  
+040245             0402*  ; ---------------------
+040245             0403*  ; fixed 16.8 routine
+040245             0404*  ; sin(uh.l) --> uh.l
+040245             0405*  ; destroys: f, hl
+040245             0406*  sin168:
+040245 D5          0407*  	push de
+040246             0408*  ; handle negative angles appropriately
+040246 CD 88 00 04 0409*  	call hlu_abs
+04024A F2 53 02 04 0410*  	jp p,@F
+04024E 11 00 00 FF 0411*  	ld de,-256*256
+040252 19          0412*  	add hl,de
+040253             0413*  @@:
+040253 2E 03       0414*  	ld l,3 ; multiply by 3 to get our lookup index
+040255 ED 6C       0415*      mlt hl
+040257 11 A2 04 04 0416*      ld de,sin_lut_168 ; grab the lut address
+04025B 19          0417*      add hl,de ; bump hl by the index
+04025C ED 27       0418*      ld hl,(hl) ; don't try this on a z80!
+04025E D1          0419*      pop de
+04025F C9          0420*      ret
+040260             0421*  
+040260             0422*  ; 16.8 fixed inputs / outputs
+040260             0423*  ; takes: uh.l as angle in degrees 256
+040260             0424*  ;        ud.e as radius
+040260             0425*  ; returns ub.c as dx, ud.e as dy, uh.l as radius
+040260             0426*  ;        displacements from origin (0,0)
+040260             0427*  ; destroys: everything except indexes
+040260             0428*  polar_to_cartesian:
+040260             0429*  ; back up input parameters
+040260 22 8F 02 04 0430*      ld (@angle), hl
+040264 ED 53 92 02 0431*      ld (@radius), de
+       04          
+040269             0432*  ; compute dx = sin(uh.l) * ud.e
+040269 CD 45 02 04 0433*      call sin168 ; uh.l = sin(uh.l)
+04026D ED 5B 92 02 0434*  	ld de,(@radius)
+       04          
+040272 CD 6D 01 04 0435*  	call smul168 ; uh.l = dx
+040276 E5          0436*      push hl
+040277             0437*  ; compute dy = -cos(uh.l) * ud.e
+040277 2A 8F 02 04 0438*      ld hl,(@angle)
+04027B CD 3E 02 04 0439*      call cos168 ; uh.l = cos(uh.l)
+04027F ED 5B 92 02 0440*      ld de,(@radius)
+       04          
+040284 CD 6D 01 04 0441*      call smul168    ; uh.l = dy
+040288 CD 98 00 04 0442*      call neg_hlu ; invert dy for screen coords convention
+04028C EB          0443*      ex de,hl       ; de = dy for output
+04028D C1          0444*      pop bc          ; bc = dx for output
+04028E             0445*  ; and out
+04028E C9          0446*      ret
+04028F             0447*  @angle: ds 3
+040292             0448*  @radius: ds 3
+040295             0449*  
+040295             0450*  ; inputs: ub.c and ud.e are x0 and y0 in 16.8 fixed format
+040295             0451*  ;         ui.x and ui.y are x1 and y1 in 16.8 fixed format
+040295             0452*  ; output: ub.c and ud.e are dx and dy in 16.8 fixed format
+040295             0453*  ;         also populates scratch locations dx168 and dy168
+040295             0454*  ; destroys: a,hl,bc,de
+040295             0455*  dxy168:
+040295             0456*  ; compute dx = x1-x0
+040295 AF          0457*      xor a ; clear carry
+040296 DD E5       0458*      push ix ; move ix to hl via the stack
+040298 E1          0459*      pop hl ; hl = x1
+040299 ED 42       0460*      sbc hl,bc ; hl = dx
+04029B 22 B0 02 04 0461*      ld (dx168),hl ; dx to scratch
+04029F             0462*  ; compute dy = y1-y0
+04029F AF          0463*      xor a ; clear carry
+0402A0 FD E5       0464*      push iy ; move iy to hl via the stack
+0402A2 E1          0465*      pop hl ; hl = y1
+0402A3 ED 52       0466*      sbc hl,de ; hl = dy
+0402A5 22 B6 02 04 0467*      ld (dy168),hl ; dy to scratch
+0402A9             0468*  ; populate output registers and return
+0402A9 EB          0469*      ex de,hl        ; ud.e = dy
+0402AA ED 4B B0 02 0470*      ld bc,(dx168)   ; ub.c = dx
+       04          
+0402AF C9          0471*      ret
+0402B0 00 00 00 00 0472*  dx168: blkb 6,0
+       00 00       
+0402B6 00 00 00 00 0473*  dy168: blkb 6,0
+       00 00       
+0402BC             0474*  
+0402BC             0475*  ; compute the euclidian distance between two cartesian coordinates
+0402BC             0476*  ; using the formula d = sqrt(dx^2+dy^2)
+0402BC             0477*  ; inputs: ub.c and ud.e are x0 and y0 in 16.8 fixed format
+0402BC             0478*  ;         ui.x and ui.y are x1 and y1 in 16.8 fixed format
+0402BC             0479*  ; output; uh.l is the 16.8 fixed format distance
+0402BC             0480*  ;         also populates scratch locations dx168 and dy168
+0402BC             0481*  ; destroys: a,hl,bc,de
+0402BC             0482*  ; NOTE: rounds both deltas down to the nearest integer to avoid overflow when squaring,
+0402BC             0483*  ;       thus the result will always be an integer, albeit in 16.8 format
+0402BC             0484*  distance168:
+0402BC CD 95 02 04 0485*  	call dxy168 ; ub.c = dx, ud.e = dy
+0402C0             0486*  ; compute dy^2
+0402C0 EB          0487*  	ex de,hl
+0402C1 CD 88 00 04 0488*  	call hlu_abs
+0402C5 CD 7B 00 04 0489*  	call hlu_udiv256 ; make integer to avoid overflow for dy >= 256
+0402C9 E5          0490*  	push hl
+0402CA D1          0491*  	pop de
+0402CB CD 5B 01 04 0492*  	call umul24 ; hl = dy^2
+0402CF E5          0493*  	push hl ; save dy^2
+0402D0             0494*  ; compute dx^2
+0402D0 2A B0 02 04 0495*  	ld hl,(dx168)
+0402D4 CD 88 00 04 0496*  	call hlu_abs
+0402D8 CD 7B 00 04 0497*  	call hlu_udiv256 ; make integer to avoid overflow for dx >= 256
+0402DC E5          0498*  	push hl
+0402DD D1          0499*  	pop de
+0402DE CD 5B 01 04 0500*  	call umul24 ; hl = dx^2
+0402E2             0501*  ; add dx^2 and dy^2
+0402E2 D1          0502*  	pop de ; de = dy^2 (was hl)
+0402E3 19          0503*  	add hl,de ; hl = dx^2 + dy^2
+0402E4             0504*  ; compute the square root
+0402E4 CD BD 03 04 0505*  	call sqrt24 ; de = sqrt(dx^2 + dy^2)
+0402E8 EB          0506*      ex de,hl ; hl = distance
+0402E9             0507*      hlu_mul256 ; convert back to 16.8 fixed
+0402E9 29          0001*M         add hl,hl ; * 2
+0402EA 29          0002*M         add hl,hl ; * 4
+0402EB 29          0003*M         add hl,hl ; * 8
+0402EC 29          0004*M         add hl,hl ; * 16
+0402ED 29          0005*M         add hl,hl ; * 32
+0402EE 29          0006*M         add hl,hl ; * 64
+0402EF 29          0007*M         add hl,hl ; * 128
+0402F0 29          0008*M         add hl,hl ; * 256
+0402F1 C9          0508*  	ret
+0402F2             0509*  
+0402F2             0510*  ; atan2_(ub.c,ud.e) --> uh.l
+0402F2             0511*  ; inputs: ub.c and ud.e are dx and dy in 16.8 fixed format
+0402F2             0512*  ;   whether inputs are integers or fractional doesn't matter
+0402F2             0513*  ;   so long as the sign bit of the upper byte is correct
+0402F2             0514*  ; output: uh.l is the 16.8 fixed angle in degrees 256
+0402F2             0515*  ; angles are COMPASS HEADINGS based on
+0402F2             0516*  ; screen coordinate conventions,where the y axis is flipped
+0402F2             0517*  ; #E0 315      0       45 #20
+0402F2             0518*  ;        -x,-y | +x,-y
+0402F2             0519*  ; #C0 270------+------ 90 #40
+0402F2             0520*  ;        -x,+y | +x,+y
+0402F2             0521*  ; #A0 225   180 #80   135 #60
+0402F2             0522*  atan2_168fast:
+0402F2             0523*  ; get signs and make everything positive
+0402F2             0524*  ; get abs(x) and store its original sign
+0402F2 C5          0525*      push bc
+0402F3 E1          0526*      pop hl
+0402F4 CD 88 00 04 0527*      call hlu_abs ; if x was negative this also sets the sign flag
+0402F8 E5          0528*      push hl ; store abs(x)
+0402F9 C1          0529*      pop bc ; bc = abs(x)
+0402FA F5          0530*      push af ; store sign of x
+0402FB             0531*  ; get abs(y) and store its original sign
+0402FB EB          0532*      ex de,hl ; hl = y
+0402FC CD 88 00 04 0533*      call hlu_abs ; if y was negative this also sets the sign flag
+040300 EB          0534*      ex de,hl ; de = abs(y)
+040301 F5          0535*      push af ; store sign of y
+040302             0536*  ; if abs(bc) < abs(de),then we do bc/de,otherwise de/bc
+040302             0537*  ; this ensures that our lookup value is between 0 and 1 inclusive
+040302 AF          0538*      xor a ; clear the carry flag
+040303 D5          0539*      push de
+040304 E1          0540*      pop hl
+040305 ED 42       0541*      sbc hl,bc
+040307 F5          0542*      push af ; save sign of de - bc
+040308 F2 11 03 04 0543*      jp p,@1 ; bc <= de, so we skip ahead
+04030C             0544*  ; otherwise we swap bc and de
+04030C C5          0545*      push bc
+04030D E1          0546*      pop hl
+04030E EB          0547*      ex de,hl
+04030F E5          0548*      push hl
+040310 C1          0549*      pop bc
+040311             0550*  @1:
+040311             0551*  ; now we're ready to snag our preliminary result
+040311 C5          0552*  	push bc
+040312 E1          0553*  	pop hl
+040313 CD 81 03 04 0554*      call atan_168fast ; uh.l comes back with prelim result
+040317             0555*  ; now we adjust uh.l based on sign of de - bc
+040317 F1          0556*      pop af
+040318 F2 24 03 04 0557*      jp p,@2 ; bc <= de,so we skip ahead
+04031C EB          0558*      ex de,hl
+04031D 21 00 40 00 0559*      ld hl,0x004000 ; 90 degrees
+040321 AF          0560*      xor a ; clear the carry flag
+040322 ED 52       0561*      sbc hl,de ; subtract result from 90 degrees
+040324             0562*  @2:
+040324             0563*  ; now the fun part of adjusting the result
+040324             0564*  ; based on which quadrant (x,y) is in
+040324             0565*  ; #E0 315      0       45 #20
+040324             0566*  ;        -x,-y | +x,-y
+040324             0567*  ; #C0 270------+------ 90 #40
+040324             0568*  ;        -x,+y | +x,+y
+040324             0569*  ; #A0 225   180 #80   135 #60
+040324 F1          0570*      pop af ; sign of y
+040325 CA 62 03 04 0571*      jp z,@y_zero
+040329 F2 42 03 04 0572*      jp p,@y_pos
+04032D             0573*  ; y neg,check x
+04032D F1          0574*      pop af ; sign of x
+04032E CA 3C 03 04 0575*      jp z,@y_neg_x_zero
+040332 F2 41 03 04 0576*      jp p,@y_neg_x_pos
+040336             0577*  ; y neg,x neg
+040336             0578*  ; angle is 270-360
+040336             0579*  ; negating the intermediate does the trick
+040336 CD 98 00 04 0580*      call neg_hlu
+04033A 18 31       0581*      jr @zero_hlu
+04033C             0582*  
+04033C             0583*  @y_neg_x_zero:
+04033C             0584*  ; y neg,x zero
+04033C             0585*  ; angle is 0
+04033C 21 00 00 00 0586*      ld hl,0
+040340 C9          0587*      ret
+040341             0588*  @y_neg_x_pos:
+040341             0589*  ; y neg,x pos
+040341             0590*  ; angle is 0 to 90
+040341             0591*  ; so we're good
+040341 C9          0592*      ret
+040342             0593*  
+040342             0594*  @y_pos:
+040342 F1          0595*      pop af ; sign of x
+040343 CA 52 03 04 0596*      jp z,@y_pos_x_zero
+040347 F2 57 03 04 0597*      jp p,@y_pos_x_pos
+04034B             0598*  ; y pos,x neg
+04034B             0599*  ; angle is 180-270
+04034B             0600*  ; so we add 180 to intermediate
+04034B 11 00 80 00 0601*      ld de,0x008000
+04034F 19          0602*      add hl,de
+040350 18 1B       0603*      jr @zero_hlu
+040352             0604*  @y_pos_x_zero:
+040352             0605*  ; y pos,x zero
+040352             0606*  ; angle is 180
+040352 21 00 80 00 0607*      ld hl,0x008000
+040356 C9          0608*      ret
+040357             0609*  @y_pos_x_pos:
+040357             0610*  ; y pos,x pos
+040357             0611*  ; angle is 90-180
+040357             0612*  ; neg the intermediate and add 180 degrees
+040357 CD 98 00 04 0613*      call neg_hlu
+04035B 11 00 80 00 0614*      ld de,0x008000
+04035F 19          0615*      add hl,de
+040360 18 0B       0616*      jr @zero_hlu
+040362             0617*  
+040362             0618*  @y_zero:
+040362 F1          0619*      pop af ; sign of x
+040363 FA 68 03 04 0620*      jp m,@y_zero_x_neg
+040367             0621*  ; y zero,x pos
+040367             0622*  ; angle is 90,nothing to do
+040367 C9          0623*      ret
+040368             0624*  @y_zero_x_neg:
+040368             0625*  ; y zero ,x neg
+040368             0626*  ; angle is 270
+040368 21 00 C0 00 0627*      ld hl,0x00C000
+04036C C9          0628*      ret
+04036D             0629*  @zero_hlu:
+04036D AF          0630*      xor a
+04036E 22 7B 03 04 0631*      ld (@scratch),hl
+040372 32 7D 03 04 0632*      ld (@scratch+2),a
+040376 2A 7B 03 04 0633*      ld hl,(@scratch)
+04037A C9          0634*      ret
+04037B             0635*  @scratch: ds 6
+040381             0636*  
+040381             0637*  ; inputs: ub.c and ud.e are dx and dy in 16.8 fixed format
+040381             0638*  ; output: uh.l is the 16.8 fixed format angle in degrees 256
+040381             0639*  ; destroys: a,hl,bc,de
+040381             0640*  ; note: only works for angles from 0 to 32 (45) degrees
+040381             0641*  ;   use atan2_168fast (which calls this proc) to handle the full 256 (360) degrees
+040381             0642*  atan_168fast:
+040381             0643*  ; because we use compass headings instead of geometric angles
+040381             0644*  ; we compute dx/dy which is 1/tan(theta) in the maths world
+040381             0645*  ; we can do faster unsigned division here because we know dx and dy are positive
+040381 CD 90 01 04 0646*  	call udiv168 ; ud.e = dx/dy
+040385 EB          0647*  	ex de,hl ; uh.l = dx/dy
+040386             0648*  ; test uh.l for 0
+040386 19          0649*      add hl,de
+040387 B7          0650*      or a
+040388 ED 52       0651*      sbc hl,de
+04038A 28 22       0652*      jr z,@is_zero
+04038C             0653*  ; test uh.l for 1
+04038C AF          0654*      xor a ; clear carry
+04038D EB          0655*      ex de,hl
+04038E 21 00 01 00 0656*      ld hl,0x000100 ; 1 in 16.8 fixed format
+040392 ED 52       0657*      sbc hl,de
+040394 28 13       0658*      jr z,@is_45
+040396 EB          0659*  	ex de,hl
+040397             0660*  ; no special cases so we move on
+040397             0661*  ; l contains the fractional portion of tan(uh.l)
+040397             0662*  ; we multiply it by three to get our lookup table index
+040397 26 03       0663*      ld h,3
+040399 ED 6C       0664*      mlt hl ; gosh that is handy
+04039B 11 00 00 00 0665*      ld de,0 ; clear deu
+04039F 54          0666*      ld d,h ; copy hl to de
+0403A0 5D          0667*      ld e,l ; de contains our index
+0403A1 21 A5 07 04 0668*      ld hl,atan_lut_168 ; grab the lut address
+0403A5 19          0669*      add hl,de ; bump hl by the index
+0403A6 ED 27       0670*      ld hl,(hl) ; don't try this on a z80!
+0403A8 C9          0671*      ret ; and out
+0403A9             0672*  @is_45:
+0403A9 21 00 20 00 0673*      ld hl,0x002000 ; 45 degrees decimal
+0403AD C9          0674*      ret
+0403AE             0675*  ; for the case tan(0)
+0403AE             0676*  @is_zero:
+0403AE 21 00 00 00 0677*      ld hl,0x000000
+0403B2 C9          0678*      ret
+0403B3             0679*  
+0403B3             0680*  ; Expects  ADL mode
+0403B3             0681*  ; Inputs:  UH.L
+0403B3             0682*  ; Outputs: UH.L is the 16.8 square root
+0403B3             0683*  ;          UDE is the integer difference inputHL-DE^2
+0403B3             0684*  sqrt168:
+0403B3 CD BD 03 04 0685*      call sqrt24
+0403B7 EB          0686*      ex de,hl
+0403B8 29          0687*      add hl,hl
+0403B9 29          0688*      add hl,hl
+0403BA 29          0689*      add hl,hl
+0403BB 29          0690*      add hl,hl
+0403BC C9          0691*      ret
+0403BD             0692*  sqrt24:
+0403BD             0693*  ; Expects ADL mode
+0403BD             0694*  ; Inputs: HL
+0403BD             0695*  ; Outputs: DE is the integer square root
+0403BD             0696*  ;  HL is the difference inputHL-DE^2
+0403BD             0697*  ;  c flag reset
+0403BD 11 00 00 00 0698*  	ld de,0 ; clear result
+0403C1 AF          0699*      xor a
+0403C2 45          0700*      ld b,l
+0403C3 C5          0701*      push bc
+0403C4 47          0702*      ld b,a
+0403C5 57          0703*      ld d,a
+0403C6 4F          0704*      ld c,a
+0403C7 6F          0705*      ld l,a
+0403C8 5F          0706*      ld e,a
+0403C9             0707*  ; Iteration 1
+0403C9 29          0708*      add hl,hl
+0403CA CB 11       0709*      rl c
+0403CC 29          0710*      add hl,hl
+0403CD CB 11       0711*      rl c
+0403CF 91          0712*      sub c
+0403D0 30 04       0713*      jr nc,$+6
+0403D2 1C          0714*      inc e
+0403D3 1C          0715*      inc e
+0403D4 2F          0716*      cpl
+0403D5 4F          0717*      ld c,a
+0403D6             0718*  ; Iteration 2
+0403D6 29          0719*      add hl,hl
+0403D7 CB 11       0720*      rl c
+0403D9 29          0721*      add hl,hl
+0403DA CB 11       0722*      rl c
+0403DC CB 13       0723*      rl e
+0403DE 7B          0724*      ld a,e
+0403DF 91          0725*      sub c
+0403E0 30 04       0726*      jr nc,$+6
+0403E2 1C          0727*      inc e
+0403E3 1C          0728*      inc e
+0403E4 2F          0729*      cpl
+0403E5 4F          0730*      ld c,a
+0403E6             0731*  ; Iteration 3
+0403E6 29          0732*      add hl,hl
+0403E7 CB 11       0733*      rl c
+0403E9 29          0734*      add hl,hl
+0403EA CB 11       0735*      rl c
+0403EC CB 13       0736*      rl e
+0403EE 7B          0737*      ld a,e
+0403EF 91          0738*      sub c
+0403F0 30 04       0739*      jr nc,$+6
+0403F2 1C          0740*      inc e
+0403F3 1C          0741*      inc e
+0403F4 2F          0742*      cpl
+0403F5 4F          0743*      ld c,a
+0403F6             0744*  ; Iteration 4
+0403F6 29          0745*      add hl,hl
+0403F7 CB 11       0746*      rl c
+0403F9 29          0747*      add hl,hl
+0403FA CB 11       0748*      rl c
+0403FC CB 13       0749*      rl e
+0403FE 7B          0750*      ld a,e
+0403FF 91          0751*      sub c
+040400 30 04       0752*      jr nc,$+6
+040402 1C          0753*      inc e
+040403 1C          0754*      inc e
+040404 2F          0755*      cpl
+040405 4F          0756*      ld c,a
+040406             0757*  ; Iteration 5
+040406 29          0758*      add hl,hl
+040407 CB 11       0759*      rl c
+040409 29          0760*      add hl,hl
+04040A CB 11       0761*      rl c
+04040C CB 13       0762*      rl e
+04040E 7B          0763*      ld a,e
+04040F 91          0764*      sub c
+040410 30 04       0765*      jr nc,$+6
+040412 1C          0766*      inc e
+040413 1C          0767*      inc e
+040414 2F          0768*      cpl
+040415 4F          0769*      ld c,a
+040416             0770*  ; Iteration 6
+040416 29          0771*      add hl,hl
+040417 CB 11       0772*      rl c
+040419 29          0773*      add hl,hl
+04041A CB 11       0774*      rl c
+04041C CB 13       0775*      rl e
+04041E 7B          0776*      ld a,e
+04041F 91          0777*      sub c
+040420 30 04       0778*      jr nc,$+6
+040422 1C          0779*      inc e
+040423 1C          0780*      inc e
+040424 2F          0781*      cpl
+040425 4F          0782*      ld c,a
+040426             0783*  ; Iteration 7
+040426 29          0784*      add hl,hl
+040427 CB 11       0785*      rl c
+040429 29          0786*      add hl,hl
+04042A CB 11       0787*      rl c
+04042C CB 10       0788*      rl b
+04042E EB          0789*      ex de,hl
+04042F 29          0790*      add hl,hl
+040430 E5          0791*      push hl
+040431 ED 42       0792*      sbc hl,bc
+040433 30 06       0793*      jr nc,$+8
+040435 7C          0794*      ld a,h
+040436 2F          0795*      cpl
+040437 47          0796*      ld b,a
+040438 7D          0797*      ld a,l
+040439 2F          0798*      cpl
+04043A 4F          0799*      ld c,a
+04043B E1          0800*      pop hl
+04043C 30 02       0801*      jr nc,$+4
+04043E 23          0802*      inc hl
+04043F 23          0803*      inc hl
+040440 EB          0804*      ex de,hl
+040441             0805*  ; Iteration 8
+040441 29          0806*      add hl,hl
+040442 69          0807*      ld l,c
+040443 60          0808*      ld h,b
+040444 ED 6A       0809*      adc hl,hl
+040446 ED 6A       0810*      adc hl,hl
+040448 EB          0811*      ex de,hl
+040449 29          0812*      add hl,hl
+04044A ED 52       0813*      sbc hl,de
+04044C 19          0814*      add hl,de
+04044D EB          0815*      ex de,hl
+04044E 30 04       0816*      jr nc,$+6
+040450 ED 52       0817*      sbc hl,de
+040452 13          0818*      inc de
+040453 13          0819*      inc de
+040454             0820*  ; Iteration 9
+040454 F1          0821*      pop af
+040455 17          0822*      rla
+040456 ED 6A       0823*      adc hl,hl
+040458 17          0824*      rla
+040459 ED 6A       0825*      adc hl,hl
+04045B EB          0826*      ex de,hl
+04045C 29          0827*      add hl,hl
+04045D ED 52       0828*      sbc hl,de
+04045F 19          0829*      add hl,de
+040460 EB          0830*      ex de,hl
+040461 30 04       0831*      jr nc,$+6
+040463 ED 52       0832*      sbc hl,de
+040465 13          0833*      inc de
+040466 13          0834*      inc de
+040467             0835*  ; Iteration 10
+040467 17          0836*      rla
+040468 ED 6A       0837*      adc hl,hl
+04046A 17          0838*      rla
+04046B ED 6A       0839*      adc hl,hl
+04046D EB          0840*      ex de,hl
+04046E 29          0841*      add hl,hl
+04046F ED 52       0842*      sbc hl,de
+040471 19          0843*      add hl,de
+040472 EB          0844*      ex de,hl
+040473 30 04       0845*      jr nc,$+6
+040475 ED 52       0846*      sbc hl,de
+040477 13          0847*      inc de
+040478 13          0848*      inc de
+040479             0849*  ; Iteration 11
+040479 17          0850*      rla
+04047A ED 6A       0851*      adc hl,hl
+04047C 17          0852*      rla
+04047D ED 6A       0853*      adc hl,hl
+04047F EB          0854*      ex de,hl
+040480 29          0855*      add hl,hl
+040481 ED 52       0856*      sbc hl,de
+040483 19          0857*      add hl,de
+040484 EB          0858*      ex de,hl
+040485 30 04       0859*      jr nc,$+6
+040487 ED 52       0860*      sbc hl,de
+040489 13          0861*      inc de
+04048A 13          0862*      inc de
+04048B             0863*  ; Iteration 12
+04048B 17          0864*      rla
+04048C ED 6A       0865*      adc hl,hl
+04048E 17          0866*      rla
+04048F ED 6A       0867*      adc hl,hl
+040491 EB          0868*      ex de,hl
+040492 29          0869*      add hl,hl
+040493 ED 52       0870*      sbc hl,de
+040495 19          0871*      add hl,de
+040496 EB          0872*      ex de,hl
+040497 30 04       0873*      jr nc,$+6
+040499 ED 52       0874*      sbc hl,de
+04049B 13          0875*      inc de
+04049C 13          0876*      inc de
+04049D CB 1A       0877*      rr d
+04049F CB 1B       0878*      rr e
+0404A1 C9          0879*      ret
+0404A2             0880*  
+0404A2             0881*  sin_lut_168:
+0404A2 00 00 00    0882*  	dl 0x000000 ; 0.000 00, 0.000
+0404A5 06 00 00    0883*  	dl 0x000006 ; 1.406 01, 0.025
+0404A8 0C 00 00    0884*  	dl 0x00000C ; 2.813 02, 0.049
+0404AB 12 00 00    0885*  	dl 0x000012 ; 4.219 03, 0.074
+0404AE 19 00 00    0886*  	dl 0x000019 ; 5.625 04, 0.098
+0404B1 1F 00 00    0887*  	dl 0x00001F ; 7.031 05, 0.122
+0404B4 25 00 00    0888*  	dl 0x000025 ; 8.438 06, 0.147
+0404B7 2B 00 00    0889*  	dl 0x00002B ; 9.844 07, 0.171
+0404BA 31 00 00    0890*  	dl 0x000031 ; 11.250 08, 0.195
+0404BD 38 00 00    0891*  	dl 0x000038 ; 12.656 09, 0.219
+0404C0 3E 00 00    0892*  	dl 0x00003E ; 14.063 0A, 0.243
+0404C3 44 00 00    0893*  	dl 0x000044 ; 15.469 0B, 0.267
+0404C6 4A 00 00    0894*  	dl 0x00004A ; 16.875 0C, 0.290
+0404C9 50 00 00    0895*  	dl 0x000050 ; 18.281 0D, 0.314
+0404CC 56 00 00    0896*  	dl 0x000056 ; 19.688 0E, 0.337
+0404CF 5C 00 00    0897*  	dl 0x00005C ; 21.094 0F, 0.360
+0404D2 61 00 00    0898*  	dl 0x000061 ; 22.500 10, 0.383
+0404D5 67 00 00    0899*  	dl 0x000067 ; 23.906 11, 0.405
+0404D8 6D 00 00    0900*  	dl 0x00006D ; 25.313 12, 0.428
+0404DB 73 00 00    0901*  	dl 0x000073 ; 26.719 13, 0.450
+0404DE 78 00 00    0902*  	dl 0x000078 ; 28.125 14, 0.471
+0404E1 7E 00 00    0903*  	dl 0x00007E ; 29.531 15, 0.493
+0404E4 83 00 00    0904*  	dl 0x000083 ; 30.938 16, 0.514
+0404E7 88 00 00    0905*  	dl 0x000088 ; 32.344 17, 0.535
+0404EA 8E 00 00    0906*  	dl 0x00008E ; 33.750 18, 0.556
+0404ED 93 00 00    0907*  	dl 0x000093 ; 35.156 19, 0.576
+0404F0 98 00 00    0908*  	dl 0x000098 ; 36.563 1A, 0.596
+0404F3 9D 00 00    0909*  	dl 0x00009D ; 37.969 1B, 0.615
+0404F6 A2 00 00    0910*  	dl 0x0000A2 ; 39.375 1C, 0.634
+0404F9 A7 00 00    0911*  	dl 0x0000A7 ; 40.781 1D, 0.653
+0404FC AB 00 00    0912*  	dl 0x0000AB ; 42.188 1E, 0.672
+0404FF B0 00 00    0913*  	dl 0x0000B0 ; 43.594 1F, 0.690
+040502 B5 00 00    0914*  	dl 0x0000B5 ; 45.000 20, 0.707
+040505 B9 00 00    0915*  	dl 0x0000B9 ; 46.406 21, 0.724
+040508 BD 00 00    0916*  	dl 0x0000BD ; 47.813 22, 0.741
+04050B C1 00 00    0917*  	dl 0x0000C1 ; 49.219 23, 0.757
+04050E C5 00 00    0918*  	dl 0x0000C5 ; 50.625 24, 0.773
+040511 C9 00 00    0919*  	dl 0x0000C9 ; 52.031 25, 0.788
+040514 CD 00 00    0920*  	dl 0x0000CD ; 53.438 26, 0.803
+040517 D1 00 00    0921*  	dl 0x0000D1 ; 54.844 27, 0.818
+04051A D4 00 00    0922*  	dl 0x0000D4 ; 56.250 28, 0.831
+04051D D8 00 00    0923*  	dl 0x0000D8 ; 57.656 29, 0.845
+040520 DB 00 00    0924*  	dl 0x0000DB ; 59.063 2A, 0.858
+040523 DE 00 00    0925*  	dl 0x0000DE ; 60.469 2B, 0.870
+040526 E1 00 00    0926*  	dl 0x0000E1 ; 61.875 2C, 0.882
+040529 E4 00 00    0927*  	dl 0x0000E4 ; 63.281 2D, 0.893
+04052C E7 00 00    0928*  	dl 0x0000E7 ; 64.688 2E, 0.904
+04052F EA 00 00    0929*  	dl 0x0000EA ; 66.094 2F, 0.914
+040532 EC 00 00    0930*  	dl 0x0000EC ; 67.500 30, 0.924
+040535 EE 00 00    0931*  	dl 0x0000EE ; 68.906 31, 0.933
+040538 F1 00 00    0932*  	dl 0x0000F1 ; 70.313 32, 0.942
+04053B F3 00 00    0933*  	dl 0x0000F3 ; 71.719 33, 0.950
+04053E F4 00 00    0934*  	dl 0x0000F4 ; 73.125 34, 0.957
+040541 F6 00 00    0935*  	dl 0x0000F6 ; 74.531 35, 0.964
+040544 F8 00 00    0936*  	dl 0x0000F8 ; 75.938 36, 0.970
+040547 F9 00 00    0937*  	dl 0x0000F9 ; 77.344 37, 0.976
+04054A FB 00 00    0938*  	dl 0x0000FB ; 78.750 38, 0.981
+04054D FC 00 00    0939*  	dl 0x0000FC ; 80.156 39, 0.985
+040550 FD 00 00    0940*  	dl 0x0000FD ; 81.563 3A, 0.989
+040553 FE 00 00    0941*  	dl 0x0000FE ; 82.969 3B, 0.992
+040556 FE 00 00    0942*  	dl 0x0000FE ; 84.375 3C, 0.995
+040559 FF 00 00    0943*  	dl 0x0000FF ; 85.781 3D, 0.997
+04055C FF 00 00    0944*  	dl 0x0000FF ; 87.188 3E, 0.999
+04055F FF 00 00    0945*  	dl 0x0000FF ; 88.594 3F, 1.000
+040562 00 01 00    0946*  	dl 0x000100 ; 90.000 40, 1.000
+040565 FF 00 00    0947*  	dl 0x0000FF ; 91.406 41, 1.000
+040568 FF 00 00    0948*  	dl 0x0000FF ; 92.813 42, 0.999
+04056B FF 00 00    0949*  	dl 0x0000FF ; 94.219 43, 0.997
+04056E FE 00 00    0950*  	dl 0x0000FE ; 95.625 44, 0.995
+040571 FE 00 00    0951*  	dl 0x0000FE ; 97.031 45, 0.992
+040574 FD 00 00    0952*  	dl 0x0000FD ; 98.438 46, 0.989
+040577 FC 00 00    0953*  	dl 0x0000FC ; 99.844 47, 0.985
+04057A FB 00 00    0954*  	dl 0x0000FB ; 101.250 48, 0.981
+04057D F9 00 00    0955*  	dl 0x0000F9 ; 102.656 49, 0.976
+040580 F8 00 00    0956*  	dl 0x0000F8 ; 104.063 4A, 0.970
+040583 F6 00 00    0957*  	dl 0x0000F6 ; 105.469 4B, 0.964
+040586 F4 00 00    0958*  	dl 0x0000F4 ; 106.875 4C, 0.957
+040589 F3 00 00    0959*  	dl 0x0000F3 ; 108.281 4D, 0.950
+04058C F1 00 00    0960*  	dl 0x0000F1 ; 109.688 4E, 0.942
+04058F EE 00 00    0961*  	dl 0x0000EE ; 111.094 4F, 0.933
+040592 EC 00 00    0962*  	dl 0x0000EC ; 112.500 50, 0.924
+040595 EA 00 00    0963*  	dl 0x0000EA ; 113.906 51, 0.914
+040598 E7 00 00    0964*  	dl 0x0000E7 ; 115.313 52, 0.904
+04059B E4 00 00    0965*  	dl 0x0000E4 ; 116.719 53, 0.893
+04059E E1 00 00    0966*  	dl 0x0000E1 ; 118.125 54, 0.882
+0405A1 DE 00 00    0967*  	dl 0x0000DE ; 119.531 55, 0.870
+0405A4 DB 00 00    0968*  	dl 0x0000DB ; 120.938 56, 0.858
+0405A7 D8 00 00    0969*  	dl 0x0000D8 ; 122.344 57, 0.845
+0405AA D4 00 00    0970*  	dl 0x0000D4 ; 123.750 58, 0.831
+0405AD D1 00 00    0971*  	dl 0x0000D1 ; 125.156 59, 0.818
+0405B0 CD 00 00    0972*  	dl 0x0000CD ; 126.563 5A, 0.803
+0405B3 C9 00 00    0973*  	dl 0x0000C9 ; 127.969 5B, 0.788
+0405B6 C5 00 00    0974*  	dl 0x0000C5 ; 129.375 5C, 0.773
+0405B9 C1 00 00    0975*  	dl 0x0000C1 ; 130.781 5D, 0.757
+0405BC BD 00 00    0976*  	dl 0x0000BD ; 132.188 5E, 0.741
+0405BF B9 00 00    0977*  	dl 0x0000B9 ; 133.594 5F, 0.724
+0405C2 B5 00 00    0978*  	dl 0x0000B5 ; 135.000 60, 0.707
+0405C5 B0 00 00    0979*  	dl 0x0000B0 ; 136.406 61, 0.690
+0405C8 AB 00 00    0980*  	dl 0x0000AB ; 137.813 62, 0.672
+0405CB A7 00 00    0981*  	dl 0x0000A7 ; 139.219 63, 0.653
+0405CE A2 00 00    0982*  	dl 0x0000A2 ; 140.625 64, 0.634
+0405D1 9D 00 00    0983*  	dl 0x00009D ; 142.031 65, 0.615
+0405D4 98 00 00    0984*  	dl 0x000098 ; 143.438 66, 0.596
+0405D7 93 00 00    0985*  	dl 0x000093 ; 144.844 67, 0.576
+0405DA 8E 00 00    0986*  	dl 0x00008E ; 146.250 68, 0.556
+0405DD 88 00 00    0987*  	dl 0x000088 ; 147.656 69, 0.535
+0405E0 83 00 00    0988*  	dl 0x000083 ; 149.063 6A, 0.514
+0405E3 7E 00 00    0989*  	dl 0x00007E ; 150.469 6B, 0.493
+0405E6 78 00 00    0990*  	dl 0x000078 ; 151.875 6C, 0.471
+0405E9 73 00 00    0991*  	dl 0x000073 ; 153.281 6D, 0.450
+0405EC 6D 00 00    0992*  	dl 0x00006D ; 154.688 6E, 0.428
+0405EF 67 00 00    0993*  	dl 0x000067 ; 156.094 6F, 0.405
+0405F2 61 00 00    0994*  	dl 0x000061 ; 157.500 70, 0.383
+0405F5 5C 00 00    0995*  	dl 0x00005C ; 158.906 71, 0.360
+0405F8 56 00 00    0996*  	dl 0x000056 ; 160.313 72, 0.337
+0405FB 50 00 00    0997*  	dl 0x000050 ; 161.719 73, 0.314
+0405FE 4A 00 00    0998*  	dl 0x00004A ; 163.125 74, 0.290
+040601 44 00 00    0999*  	dl 0x000044 ; 164.531 75, 0.267
+040604 3E 00 00    1000*  	dl 0x00003E ; 165.938 76, 0.243
+040607 38 00 00    1001*  	dl 0x000038 ; 167.344 77, 0.219
+04060A 31 00 00    1002*  	dl 0x000031 ; 168.750 78, 0.195
+04060D 2B 00 00    1003*  	dl 0x00002B ; 170.156 79, 0.171
+040610 25 00 00    1004*  	dl 0x000025 ; 171.563 7A, 0.147
+040613 1F 00 00    1005*  	dl 0x00001F ; 172.969 7B, 0.122
+040616 19 00 00    1006*  	dl 0x000019 ; 174.375 7C, 0.098
+040619 12 00 00    1007*  	dl 0x000012 ; 175.781 7D, 0.074
+04061C 0C 00 00    1008*  	dl 0x00000C ; 177.188 7E, 0.049
+04061F 06 00 00    1009*  	dl 0x000006 ; 178.594 7F, 0.025
+040622 00 00 00    1010*  	dl 0x000000 ; 180.000 80, 0.000
+040625 FA FF FF    1011*  	dl 0xFFFFFA ; 181.406 81, -0.025
+040628 F4 FF FF    1012*  	dl 0xFFFFF4 ; 182.813 82, -0.049
+04062B EE FF FF    1013*  	dl 0xFFFFEE ; 184.219 83, -0.074
+04062E E7 FF FF    1014*  	dl 0xFFFFE7 ; 185.625 84, -0.098
+040631 E1 FF FF    1015*  	dl 0xFFFFE1 ; 187.031 85, -0.122
+040634 DB FF FF    1016*  	dl 0xFFFFDB ; 188.438 86, -0.147
+040637 D5 FF FF    1017*  	dl 0xFFFFD5 ; 189.844 87, -0.171
+04063A CF FF FF    1018*  	dl 0xFFFFCF ; 191.250 88, -0.195
+04063D C8 FF FF    1019*  	dl 0xFFFFC8 ; 192.656 89, -0.219
+040640 C2 FF FF    1020*  	dl 0xFFFFC2 ; 194.063 8A, -0.243
+040643 BC FF FF    1021*  	dl 0xFFFFBC ; 195.469 8B, -0.267
+040646 B6 FF FF    1022*  	dl 0xFFFFB6 ; 196.875 8C, -0.290
+040649 B0 FF FF    1023*  	dl 0xFFFFB0 ; 198.281 8D, -0.314
+04064C AA FF FF    1024*  	dl 0xFFFFAA ; 199.688 8E, -0.337
+04064F A4 FF FF    1025*  	dl 0xFFFFA4 ; 201.094 8F, -0.360
+040652 9F FF FF    1026*  	dl 0xFFFF9F ; 202.500 90, -0.383
+040655 99 FF FF    1027*  	dl 0xFFFF99 ; 203.906 91, -0.405
+040658 93 FF FF    1028*  	dl 0xFFFF93 ; 205.313 92, -0.428
+04065B 8D FF FF    1029*  	dl 0xFFFF8D ; 206.719 93, -0.450
+04065E 88 FF FF    1030*  	dl 0xFFFF88 ; 208.125 94, -0.471
+040661 82 FF FF    1031*  	dl 0xFFFF82 ; 209.531 95, -0.493
+040664 7D FF FF    1032*  	dl 0xFFFF7D ; 210.938 96, -0.514
+040667 78 FF FF    1033*  	dl 0xFFFF78 ; 212.344 97, -0.535
+04066A 72 FF FF    1034*  	dl 0xFFFF72 ; 213.750 98, -0.556
+04066D 6D FF FF    1035*  	dl 0xFFFF6D ; 215.156 99, -0.576
+040670 68 FF FF    1036*  	dl 0xFFFF68 ; 216.563 9A, -0.596
+040673 63 FF FF    1037*  	dl 0xFFFF63 ; 217.969 9B, -0.615
+040676 5E FF FF    1038*  	dl 0xFFFF5E ; 219.375 9C, -0.634
+040679 59 FF FF    1039*  	dl 0xFFFF59 ; 220.781 9D, -0.653
+04067C 55 FF FF    1040*  	dl 0xFFFF55 ; 222.188 9E, -0.672
+04067F 50 FF FF    1041*  	dl 0xFFFF50 ; 223.594 9F, -0.690
+040682 4B FF FF    1042*  	dl 0xFFFF4B ; 225.000 A0, -0.707
+040685 47 FF FF    1043*  	dl 0xFFFF47 ; 226.406 A1, -0.724
+040688 43 FF FF    1044*  	dl 0xFFFF43 ; 227.813 A2, -0.741
+04068B 3F FF FF    1045*  	dl 0xFFFF3F ; 229.219 A3, -0.757
+04068E 3B FF FF    1046*  	dl 0xFFFF3B ; 230.625 A4, -0.773
+040691 37 FF FF    1047*  	dl 0xFFFF37 ; 232.031 A5, -0.788
+040694 33 FF FF    1048*  	dl 0xFFFF33 ; 233.438 A6, -0.803
+040697 2F FF FF    1049*  	dl 0xFFFF2F ; 234.844 A7, -0.818
+04069A 2C FF FF    1050*  	dl 0xFFFF2C ; 236.250 A8, -0.831
+04069D 28 FF FF    1051*  	dl 0xFFFF28 ; 237.656 A9, -0.845
+0406A0 25 FF FF    1052*  	dl 0xFFFF25 ; 239.063 AA, -0.858
+0406A3 22 FF FF    1053*  	dl 0xFFFF22 ; 240.469 AB, -0.870
+0406A6 1F FF FF    1054*  	dl 0xFFFF1F ; 241.875 AC, -0.882
+0406A9 1C FF FF    1055*  	dl 0xFFFF1C ; 243.281 AD, -0.893
+0406AC 19 FF FF    1056*  	dl 0xFFFF19 ; 244.688 AE, -0.904
+0406AF 16 FF FF    1057*  	dl 0xFFFF16 ; 246.094 AF, -0.914
+0406B2 14 FF FF    1058*  	dl 0xFFFF14 ; 247.500 B0, -0.924
+0406B5 12 FF FF    1059*  	dl 0xFFFF12 ; 248.906 B1, -0.933
+0406B8 0F FF FF    1060*  	dl 0xFFFF0F ; 250.313 B2, -0.942
+0406BB 0D FF FF    1061*  	dl 0xFFFF0D ; 251.719 B3, -0.950
+0406BE 0C FF FF    1062*  	dl 0xFFFF0C ; 253.125 B4, -0.957
+0406C1 0A FF FF    1063*  	dl 0xFFFF0A ; 254.531 B5, -0.964
+0406C4 08 FF FF    1064*  	dl 0xFFFF08 ; 255.938 B6, -0.970
+0406C7 07 FF FF    1065*  	dl 0xFFFF07 ; 257.344 B7, -0.976
+0406CA 05 FF FF    1066*  	dl 0xFFFF05 ; 258.750 B8, -0.981
+0406CD 04 FF FF    1067*  	dl 0xFFFF04 ; 260.156 B9, -0.985
+0406D0 03 FF FF    1068*  	dl 0xFFFF03 ; 261.563 BA, -0.989
+0406D3 02 FF FF    1069*  	dl 0xFFFF02 ; 262.969 BB, -0.992
+0406D6 02 FF FF    1070*  	dl 0xFFFF02 ; 264.375 BC, -0.995
+0406D9 01 FF FF    1071*  	dl 0xFFFF01 ; 265.781 BD, -0.997
+0406DC 01 FF FF    1072*  	dl 0xFFFF01 ; 267.188 BE, -0.999
+0406DF 01 FF FF    1073*  	dl 0xFFFF01 ; 268.594 BF, -1.000
+0406E2 00 FF FF    1074*  	dl 0xFFFF00 ; 270.000 C0, -1.000
+0406E5 01 FF FF    1075*  	dl 0xFFFF01 ; 271.406 C1, -1.000
+0406E8 01 FF FF    1076*  	dl 0xFFFF01 ; 272.813 C2, -0.999
+0406EB 01 FF FF    1077*  	dl 0xFFFF01 ; 274.219 C3, -0.997
+0406EE 02 FF FF    1078*  	dl 0xFFFF02 ; 275.625 C4, -0.995
+0406F1 02 FF FF    1079*  	dl 0xFFFF02 ; 277.031 C5, -0.992
+0406F4 03 FF FF    1080*  	dl 0xFFFF03 ; 278.438 C6, -0.989
+0406F7 04 FF FF    1081*  	dl 0xFFFF04 ; 279.844 C7, -0.985
+0406FA 05 FF FF    1082*  	dl 0xFFFF05 ; 281.250 C8, -0.981
+0406FD 07 FF FF    1083*  	dl 0xFFFF07 ; 282.656 C9, -0.976
+040700 08 FF FF    1084*  	dl 0xFFFF08 ; 284.063 CA, -0.970
+040703 0A FF FF    1085*  	dl 0xFFFF0A ; 285.469 CB, -0.964
+040706 0C FF FF    1086*  	dl 0xFFFF0C ; 286.875 CC, -0.957
+040709 0D FF FF    1087*  	dl 0xFFFF0D ; 288.281 CD, -0.950
+04070C 0F FF FF    1088*  	dl 0xFFFF0F ; 289.688 CE, -0.942
+04070F 12 FF FF    1089*  	dl 0xFFFF12 ; 291.094 CF, -0.933
+040712 14 FF FF    1090*  	dl 0xFFFF14 ; 292.500 D0, -0.924
+040715 16 FF FF    1091*  	dl 0xFFFF16 ; 293.906 D1, -0.914
+040718 19 FF FF    1092*  	dl 0xFFFF19 ; 295.313 D2, -0.904
+04071B 1C FF FF    1093*  	dl 0xFFFF1C ; 296.719 D3, -0.893
+04071E 1F FF FF    1094*  	dl 0xFFFF1F ; 298.125 D4, -0.882
+040721 22 FF FF    1095*  	dl 0xFFFF22 ; 299.531 D5, -0.870
+040724 25 FF FF    1096*  	dl 0xFFFF25 ; 300.938 D6, -0.858
+040727 28 FF FF    1097*  	dl 0xFFFF28 ; 302.344 D7, -0.845
+04072A 2C FF FF    1098*  	dl 0xFFFF2C ; 303.750 D8, -0.831
+04072D 2F FF FF    1099*  	dl 0xFFFF2F ; 305.156 D9, -0.818
+040730 33 FF FF    1100*  	dl 0xFFFF33 ; 306.563 DA, -0.803
+040733 37 FF FF    1101*  	dl 0xFFFF37 ; 307.969 DB, -0.788
+040736 3B FF FF    1102*  	dl 0xFFFF3B ; 309.375 DC, -0.773
+040739 3F FF FF    1103*  	dl 0xFFFF3F ; 310.781 DD, -0.757
+04073C 43 FF FF    1104*  	dl 0xFFFF43 ; 312.188 DE, -0.741
+04073F 47 FF FF    1105*  	dl 0xFFFF47 ; 313.594 DF, -0.724
+040742 4B FF FF    1106*  	dl 0xFFFF4B ; 315.000 E0, -0.707
+040745 50 FF FF    1107*  	dl 0xFFFF50 ; 316.406 E1, -0.690
+040748 55 FF FF    1108*  	dl 0xFFFF55 ; 317.813 E2, -0.672
+04074B 59 FF FF    1109*  	dl 0xFFFF59 ; 319.219 E3, -0.653
+04074E 5E FF FF    1110*  	dl 0xFFFF5E ; 320.625 E4, -0.634
+040751 63 FF FF    1111*  	dl 0xFFFF63 ; 322.031 E5, -0.615
+040754 68 FF FF    1112*  	dl 0xFFFF68 ; 323.438 E6, -0.596
+040757 6D FF FF    1113*  	dl 0xFFFF6D ; 324.844 E7, -0.576
+04075A 72 FF FF    1114*  	dl 0xFFFF72 ; 326.250 E8, -0.556
+04075D 78 FF FF    1115*  	dl 0xFFFF78 ; 327.656 E9, -0.535
+040760 7D FF FF    1116*  	dl 0xFFFF7D ; 329.063 EA, -0.514
+040763 82 FF FF    1117*  	dl 0xFFFF82 ; 330.469 EB, -0.493
+040766 88 FF FF    1118*  	dl 0xFFFF88 ; 331.875 EC, -0.471
+040769 8D FF FF    1119*  	dl 0xFFFF8D ; 333.281 ED, -0.450
+04076C 93 FF FF    1120*  	dl 0xFFFF93 ; 334.688 EE, -0.428
+04076F 99 FF FF    1121*  	dl 0xFFFF99 ; 336.094 EF, -0.405
+040772 9F FF FF    1122*  	dl 0xFFFF9F ; 337.500 F0, -0.383
+040775 A4 FF FF    1123*  	dl 0xFFFFA4 ; 338.906 F1, -0.360
+040778 AA FF FF    1124*  	dl 0xFFFFAA ; 340.313 F2, -0.337
+04077B B0 FF FF    1125*  	dl 0xFFFFB0 ; 341.719 F3, -0.314
+04077E B6 FF FF    1126*  	dl 0xFFFFB6 ; 343.125 F4, -0.290
+040781 BC FF FF    1127*  	dl 0xFFFFBC ; 344.531 F5, -0.267
+040784 C2 FF FF    1128*  	dl 0xFFFFC2 ; 345.938 F6, -0.243
+040787 C8 FF FF    1129*  	dl 0xFFFFC8 ; 347.344 F7, -0.219
+04078A CF FF FF    1130*  	dl 0xFFFFCF ; 348.750 F8, -0.195
+04078D D5 FF FF    1131*  	dl 0xFFFFD5 ; 350.156 F9, -0.171
+040790 DB FF FF    1132*  	dl 0xFFFFDB ; 351.563 FA, -0.147
+040793 E1 FF FF    1133*  	dl 0xFFFFE1 ; 352.969 FB, -0.122
+040796 E7 FF FF    1134*  	dl 0xFFFFE7 ; 354.375 FC, -0.098
+040799 EE FF FF    1135*  	dl 0xFFFFEE ; 355.781 FD, -0.074
+04079C F4 FF FF    1136*  	dl 0xFFFFF4 ; 357.188 FE, -0.049
+04079F FA FF FF    1137*  	dl 0xFFFFFA ; 358.594 FF, -0.025
+0407A2 00 00 00    1138*  	dl 0x000000 ; 0.000 00, 0.000 for interpolation
+0407A5             1139*  
+0407A5             1140*  atan_lut_168:
+0407A5 00 00 00    1141*  	dl 0x000000 ; 000000, 0.000
+0407A8 28 00 00    1142*  	dl 0x000028 ; 000001, 0.224
+0407AB 51 00 00    1143*  	dl 0x000051 ; 000002, 0.448
+0407AE 7A 00 00    1144*  	dl 0x00007A ; 000003, 0.671
+0407B1 A2 00 00    1145*  	dl 0x0000A2 ; 000004, 0.895
+0407B4 CB 00 00    1146*  	dl 0x0000CB ; 000005, 1.119
+0407B7 F4 00 00    1147*  	dl 0x0000F4 ; 000006, 1.343
+0407BA 1D 01 00    1148*  	dl 0x00011D ; 000007, 1.566
+0407BD 45 01 00    1149*  	dl 0x000145 ; 000008, 1.790
+0407C0 6E 01 00    1150*  	dl 0x00016E ; 000009, 2.013
+0407C3 97 01 00    1151*  	dl 0x000197 ; 00000A, 2.237
+0407C6 BF 01 00    1152*  	dl 0x0001BF ; 00000B, 2.460
+0407C9 E8 01 00    1153*  	dl 0x0001E8 ; 00000C, 2.684
+0407CC 11 02 00    1154*  	dl 0x000211 ; 00000D, 2.907
+0407CF 39 02 00    1155*  	dl 0x000239 ; 00000E, 3.130
+0407D2 62 02 00    1156*  	dl 0x000262 ; 00000F, 3.353
+0407D5 8B 02 00    1157*  	dl 0x00028B ; 000010, 3.576
+0407D8 B3 02 00    1158*  	dl 0x0002B3 ; 000011, 3.799
+0407DB DC 02 00    1159*  	dl 0x0002DC ; 000012, 4.022
+0407DE 04 03 00    1160*  	dl 0x000304 ; 000013, 4.245
+0407E1 2D 03 00    1161*  	dl 0x00032D ; 000014, 4.467
+0407E4 55 03 00    1162*  	dl 0x000355 ; 000015, 4.690
+0407E7 7E 03 00    1163*  	dl 0x00037E ; 000016, 4.912
+0407EA A6 03 00    1164*  	dl 0x0003A6 ; 000017, 5.134
+0407ED CE 03 00    1165*  	dl 0x0003CE ; 000018, 5.356
+0407F0 F7 03 00    1166*  	dl 0x0003F7 ; 000019, 5.578
+0407F3 1F 04 00    1167*  	dl 0x00041F ; 00001A, 5.799
+0407F6 48 04 00    1168*  	dl 0x000448 ; 00001B, 6.021
+0407F9 70 04 00    1169*  	dl 0x000470 ; 00001C, 6.242
+0407FC 98 04 00    1170*  	dl 0x000498 ; 00001D, 6.463
+0407FF C0 04 00    1171*  	dl 0x0004C0 ; 00001E, 6.684
+040802 E8 04 00    1172*  	dl 0x0004E8 ; 00001F, 6.905
+040805 11 05 00    1173*  	dl 0x000511 ; 000020, 7.125
+040808 39 05 00    1174*  	dl 0x000539 ; 000021, 7.345
+04080B 61 05 00    1175*  	dl 0x000561 ; 000022, 7.565
+04080E 89 05 00    1176*  	dl 0x000589 ; 000023, 7.785
+040811 B1 05 00    1177*  	dl 0x0005B1 ; 000024, 8.005
+040814 D9 05 00    1178*  	dl 0x0005D9 ; 000025, 8.224
+040817 01 06 00    1179*  	dl 0x000601 ; 000026, 8.443
+04081A 28 06 00    1180*  	dl 0x000628 ; 000027, 8.662
+04081D 50 06 00    1181*  	dl 0x000650 ; 000028, 8.881
+040820 78 06 00    1182*  	dl 0x000678 ; 000029, 9.099
+040823 A0 06 00    1183*  	dl 0x0006A0 ; 00002A, 9.317
+040826 C7 06 00    1184*  	dl 0x0006C7 ; 00002B, 9.535
+040829 EF 06 00    1185*  	dl 0x0006EF ; 00002C, 9.752
+04082C 16 07 00    1186*  	dl 0x000716 ; 00002D, 9.970
+04082F 3E 07 00    1187*  	dl 0x00073E ; 00002E, 10.187
+040832 65 07 00    1188*  	dl 0x000765 ; 00002F, 10.403
+040835 8D 07 00    1189*  	dl 0x00078D ; 000030, 10.620
+040838 B4 07 00    1190*  	dl 0x0007B4 ; 000031, 10.836
+04083B DB 07 00    1191*  	dl 0x0007DB ; 000032, 11.051
+04083E 03 08 00    1192*  	dl 0x000803 ; 000033, 11.267
+040841 2A 08 00    1193*  	dl 0x00082A ; 000034, 11.482
+040844 51 08 00    1194*  	dl 0x000851 ; 000035, 11.697
+040847 78 08 00    1195*  	dl 0x000878 ; 000036, 11.911
+04084A 9F 08 00    1196*  	dl 0x00089F ; 000037, 12.125
+04084D C6 08 00    1197*  	dl 0x0008C6 ; 000038, 12.339
+040850 ED 08 00    1198*  	dl 0x0008ED ; 000039, 12.553
+040853 13 09 00    1199*  	dl 0x000913 ; 00003A, 12.766
+040856 3A 09 00    1200*  	dl 0x00093A ; 00003B, 12.978
+040859 61 09 00    1201*  	dl 0x000961 ; 00003C, 13.191
+04085C 87 09 00    1202*  	dl 0x000987 ; 00003D, 13.403
+04085F AE 09 00    1203*  	dl 0x0009AE ; 00003E, 13.614
+040862 D4 09 00    1204*  	dl 0x0009D4 ; 00003F, 13.825
+040865 FB 09 00    1205*  	dl 0x0009FB ; 000040, 14.036
+040868 21 0A 00    1206*  	dl 0x000A21 ; 000041, 14.247
+04086B 47 0A 00    1207*  	dl 0x000A47 ; 000042, 14.457
+04086E 6D 0A 00    1208*  	dl 0x000A6D ; 000043, 14.666
+040871 94 0A 00    1209*  	dl 0x000A94 ; 000044, 14.876
+040874 BA 0A 00    1210*  	dl 0x000ABA ; 000045, 15.085
+040877 E0 0A 00    1211*  	dl 0x000AE0 ; 000046, 15.293
+04087A 05 0B 00    1212*  	dl 0x000B05 ; 000047, 15.501
+04087D 2B 0B 00    1213*  	dl 0x000B2B ; 000048, 15.709
+040880 51 0B 00    1214*  	dl 0x000B51 ; 000049, 15.916
+040883 77 0B 00    1215*  	dl 0x000B77 ; 00004A, 16.123
+040886 9C 0B 00    1216*  	dl 0x000B9C ; 00004B, 16.329
+040889 C2 0B 00    1217*  	dl 0x000BC2 ; 00004C, 16.535
+04088C E7 0B 00    1218*  	dl 0x000BE7 ; 00004D, 16.740
+04088F 0C 0C 00    1219*  	dl 0x000C0C ; 00004E, 16.945
+040892 32 0C 00    1220*  	dl 0x000C32 ; 00004F, 17.150
+040895 57 0C 00    1221*  	dl 0x000C57 ; 000050, 17.354
+040898 7C 0C 00    1222*  	dl 0x000C7C ; 000051, 17.558
+04089B A1 0C 00    1223*  	dl 0x000CA1 ; 000052, 17.761
+04089E C6 0C 00    1224*  	dl 0x000CC6 ; 000053, 17.964
+0408A1 EB 0C 00    1225*  	dl 0x000CEB ; 000054, 18.166
+0408A4 0F 0D 00    1226*  	dl 0x000D0F ; 000055, 18.368
+0408A7 34 0D 00    1227*  	dl 0x000D34 ; 000056, 18.569
+0408AA 58 0D 00    1228*  	dl 0x000D58 ; 000057, 18.770
+0408AD 7D 0D 00    1229*  	dl 0x000D7D ; 000058, 18.970
+0408B0 A1 0D 00    1230*  	dl 0x000DA1 ; 000059, 19.170
+0408B3 C6 0D 00    1231*  	dl 0x000DC6 ; 00005A, 19.370
+0408B6 EA 0D 00    1232*  	dl 0x000DEA ; 00005B, 19.569
+0408B9 0E 0E 00    1233*  	dl 0x000E0E ; 00005C, 19.767
+0408BC 32 0E 00    1234*  	dl 0x000E32 ; 00005D, 19.965
+0408BF 56 0E 00    1235*  	dl 0x000E56 ; 00005E, 20.163
+0408C2 7A 0E 00    1236*  	dl 0x000E7A ; 00005F, 20.360
+0408C5 9E 0E 00    1237*  	dl 0x000E9E ; 000060, 20.556
+0408C8 C1 0E 00    1238*  	dl 0x000EC1 ; 000061, 20.752
+0408CB E5 0E 00    1239*  	dl 0x000EE5 ; 000062, 20.947
+0408CE 08 0F 00    1240*  	dl 0x000F08 ; 000063, 21.142
+0408D1 2C 0F 00    1241*  	dl 0x000F2C ; 000064, 21.337
+0408D4 4F 0F 00    1242*  	dl 0x000F4F ; 000065, 21.531
+0408D7 72 0F 00    1243*  	dl 0x000F72 ; 000066, 21.724
+0408DA 95 0F 00    1244*  	dl 0x000F95 ; 000067, 21.917
+0408DD B8 0F 00    1245*  	dl 0x000FB8 ; 000068, 22.109
+0408E0 DB 0F 00    1246*  	dl 0x000FDB ; 000069, 22.301
+0408E3 FE 0F 00    1247*  	dl 0x000FFE ; 00006A, 22.493
+0408E6 21 10 00    1248*  	dl 0x001021 ; 00006B, 22.683
+0408E9 44 10 00    1249*  	dl 0x001044 ; 00006C, 22.874
+0408EC 66 10 00    1250*  	dl 0x001066 ; 00006D, 23.063
+0408EF 89 10 00    1251*  	dl 0x001089 ; 00006E, 23.253
+0408F2 AB 10 00    1252*  	dl 0x0010AB ; 00006F, 23.441
+0408F5 CD 10 00    1253*  	dl 0x0010CD ; 000070, 23.629
+0408F8 EF 10 00    1254*  	dl 0x0010EF ; 000071, 23.817
+0408FB 11 11 00    1255*  	dl 0x001111 ; 000072, 24.004
+0408FE 33 11 00    1256*  	dl 0x001133 ; 000073, 24.191
+040901 55 11 00    1257*  	dl 0x001155 ; 000074, 24.376
+040904 77 11 00    1258*  	dl 0x001177 ; 000075, 24.562
+040907 99 11 00    1259*  	dl 0x001199 ; 000076, 24.747
+04090A BA 11 00    1260*  	dl 0x0011BA ; 000077, 24.931
+04090D DC 11 00    1261*  	dl 0x0011DC ; 000078, 25.115
+040910 FD 11 00    1262*  	dl 0x0011FD ; 000079, 25.298
+040913 1E 12 00    1263*  	dl 0x00121E ; 00007A, 25.481
+040916 3F 12 00    1264*  	dl 0x00123F ; 00007B, 25.663
+040919 60 12 00    1265*  	dl 0x001260 ; 00007C, 25.844
+04091C 81 12 00    1266*  	dl 0x001281 ; 00007D, 26.025
+04091F A2 12 00    1267*  	dl 0x0012A2 ; 00007E, 26.206
+040922 C3 12 00    1268*  	dl 0x0012C3 ; 00007F, 26.386
+040925 E4 12 00    1269*  	dl 0x0012E4 ; 000080, 26.565
+040928 04 13 00    1270*  	dl 0x001304 ; 000081, 26.744
+04092B 25 13 00    1271*  	dl 0x001325 ; 000082, 26.922
+04092E 45 13 00    1272*  	dl 0x001345 ; 000083, 27.100
+040931 65 13 00    1273*  	dl 0x001365 ; 000084, 27.277
+040934 85 13 00    1274*  	dl 0x001385 ; 000085, 27.453
+040937 A5 13 00    1275*  	dl 0x0013A5 ; 000086, 27.629
+04093A C5 13 00    1276*  	dl 0x0013C5 ; 000087, 27.805
+04093D E5 13 00    1277*  	dl 0x0013E5 ; 000088, 27.979
+040940 05 14 00    1278*  	dl 0x001405 ; 000089, 28.154
+040943 24 14 00    1279*  	dl 0x001424 ; 00008A, 28.327
+040946 44 14 00    1280*  	dl 0x001444 ; 00008B, 28.501
+040949 63 14 00    1281*  	dl 0x001463 ; 00008C, 28.673
+04094C 83 14 00    1282*  	dl 0x001483 ; 00008D, 28.845
+04094F A2 14 00    1283*  	dl 0x0014A2 ; 00008E, 29.017
+040952 C1 14 00    1284*  	dl 0x0014C1 ; 00008F, 29.187
+040955 E0 14 00    1285*  	dl 0x0014E0 ; 000090, 29.358
+040958 FF 14 00    1286*  	dl 0x0014FF ; 000091, 29.527
+04095B 1E 15 00    1287*  	dl 0x00151E ; 000092, 29.697
+04095E 3C 15 00    1288*  	dl 0x00153C ; 000093, 29.865
+040961 5B 15 00    1289*  	dl 0x00155B ; 000094, 30.033
+040964 79 15 00    1290*  	dl 0x001579 ; 000095, 30.201
+040967 98 15 00    1291*  	dl 0x001598 ; 000096, 30.368
+04096A B6 15 00    1292*  	dl 0x0015B6 ; 000097, 30.534
+04096D D4 15 00    1293*  	dl 0x0015D4 ; 000098, 30.700
+040970 F2 15 00    1294*  	dl 0x0015F2 ; 000099, 30.865
+040973 10 16 00    1295*  	dl 0x001610 ; 00009A, 31.030
+040976 2E 16 00    1296*  	dl 0x00162E ; 00009B, 31.194
+040979 4C 16 00    1297*  	dl 0x00164C ; 00009C, 31.357
+04097C 6A 16 00    1298*  	dl 0x00166A ; 00009D, 31.520
+04097F 87 16 00    1299*  	dl 0x001687 ; 00009E, 31.682
+040982 A5 16 00    1300*  	dl 0x0016A5 ; 00009F, 31.844
+040985 C2 16 00    1301*  	dl 0x0016C2 ; 0000A0, 32.005
+040988 DF 16 00    1302*  	dl 0x0016DF ; 0000A1, 32.166
+04098B FC 16 00    1303*  	dl 0x0016FC ; 0000A2, 32.326
+04098E 19 17 00    1304*  	dl 0x001719 ; 0000A3, 32.486
+040991 36 17 00    1305*  	dl 0x001736 ; 0000A4, 32.645
+040994 53 17 00    1306*  	dl 0x001753 ; 0000A5, 32.803
+040997 70 17 00    1307*  	dl 0x001770 ; 0000A6, 32.961
+04099A 8C 17 00    1308*  	dl 0x00178C ; 0000A7, 33.118
+04099D A9 17 00    1309*  	dl 0x0017A9 ; 0000A8, 33.275
+0409A0 C5 17 00    1310*  	dl 0x0017C5 ; 0000A9, 33.431
+0409A3 E2 17 00    1311*  	dl 0x0017E2 ; 0000AA, 33.587
+0409A6 FE 17 00    1312*  	dl 0x0017FE ; 0000AB, 33.742
+0409A9 1A 18 00    1313*  	dl 0x00181A ; 0000AC, 33.896
+0409AC 36 18 00    1314*  	dl 0x001836 ; 0000AD, 34.050
+0409AF 52 18 00    1315*  	dl 0x001852 ; 0000AE, 34.203
+0409B2 6E 18 00    1316*  	dl 0x00186E ; 0000AF, 34.356
+0409B5 8A 18 00    1317*  	dl 0x00188A ; 0000B0, 34.509
+0409B8 A5 18 00    1318*  	dl 0x0018A5 ; 0000B1, 34.660
+0409BB C1 18 00    1319*  	dl 0x0018C1 ; 0000B2, 34.811
+0409BE DC 18 00    1320*  	dl 0x0018DC ; 0000B3, 34.962
+0409C1 F7 18 00    1321*  	dl 0x0018F7 ; 0000B4, 35.112
+0409C4 13 19 00    1322*  	dl 0x001913 ; 0000B5, 35.262
+0409C7 2E 19 00    1323*  	dl 0x00192E ; 0000B6, 35.410
+0409CA 49 19 00    1324*  	dl 0x001949 ; 0000B7, 35.559
+0409CD 64 19 00    1325*  	dl 0x001964 ; 0000B8, 35.707
+0409D0 7F 19 00    1326*  	dl 0x00197F ; 0000B9, 35.854
+0409D3 99 19 00    1327*  	dl 0x001999 ; 0000BA, 36.001
+0409D6 B4 19 00    1328*  	dl 0x0019B4 ; 0000BB, 36.147
+0409D9 CE 19 00    1329*  	dl 0x0019CE ; 0000BC, 36.293
+0409DC E9 19 00    1330*  	dl 0x0019E9 ; 0000BD, 36.438
+0409DF 03 1A 00    1331*  	dl 0x001A03 ; 0000BE, 36.582
+0409E2 1D 1A 00    1332*  	dl 0x001A1D ; 0000BF, 36.726
+0409E5 37 1A 00    1333*  	dl 0x001A37 ; 0000C0, 36.870
+0409E8 51 1A 00    1334*  	dl 0x001A51 ; 0000C1, 37.013
+0409EB 6B 1A 00    1335*  	dl 0x001A6B ; 0000C2, 37.155
+0409EE 85 1A 00    1336*  	dl 0x001A85 ; 0000C3, 37.297
+0409F1 9F 1A 00    1337*  	dl 0x001A9F ; 0000C4, 37.439
+0409F4 B9 1A 00    1338*  	dl 0x001AB9 ; 0000C5, 37.579
+0409F7 D2 1A 00    1339*  	dl 0x001AD2 ; 0000C6, 37.720
+0409FA EC 1A 00    1340*  	dl 0x001AEC ; 0000C7, 37.859
+0409FD 05 1B 00    1341*  	dl 0x001B05 ; 0000C8, 37.999
+040A00 1E 1B 00    1342*  	dl 0x001B1E ; 0000C9, 38.137
+040A03 37 1B 00    1343*  	dl 0x001B37 ; 0000CA, 38.276
+040A06 50 1B 00    1344*  	dl 0x001B50 ; 0000CB, 38.413
+040A09 69 1B 00    1345*  	dl 0x001B69 ; 0000CC, 38.550
+040A0C 82 1B 00    1346*  	dl 0x001B82 ; 0000CD, 38.687
+040A0F 9B 1B 00    1347*  	dl 0x001B9B ; 0000CE, 38.823
+040A12 B4 1B 00    1348*  	dl 0x001BB4 ; 0000CF, 38.959
+040A15 CC 1B 00    1349*  	dl 0x001BCC ; 0000D0, 39.094
+040A18 E5 1B 00    1350*  	dl 0x001BE5 ; 0000D1, 39.228
+040A1B FD 1B 00    1351*  	dl 0x001BFD ; 0000D2, 39.362
+040A1E 16 1C 00    1352*  	dl 0x001C16 ; 0000D3, 39.496
+040A21 2E 1C 00    1353*  	dl 0x001C2E ; 0000D4, 39.629
+040A24 46 1C 00    1354*  	dl 0x001C46 ; 0000D5, 39.762
+040A27 5E 1C 00    1355*  	dl 0x001C5E ; 0000D6, 39.894
+040A2A 76 1C 00    1356*  	dl 0x001C76 ; 0000D7, 40.025
+040A2D 8E 1C 00    1357*  	dl 0x001C8E ; 0000D8, 40.156
+040A30 A5 1C 00    1358*  	dl 0x001CA5 ; 0000D9, 40.286
+040A33 BD 1C 00    1359*  	dl 0x001CBD ; 0000DA, 40.416
+040A36 D5 1C 00    1360*  	dl 0x001CD5 ; 0000DB, 40.546
+040A39 EC 1C 00    1361*  	dl 0x001CEC ; 0000DC, 40.675
+040A3C 04 1D 00    1362*  	dl 0x001D04 ; 0000DD, 40.803
+040A3F 1B 1D 00    1363*  	dl 0x001D1B ; 0000DE, 40.931
+040A42 32 1D 00    1364*  	dl 0x001D32 ; 0000DF, 41.059
+040A45 49 1D 00    1365*  	dl 0x001D49 ; 0000E0, 41.186
+040A48 60 1D 00    1366*  	dl 0x001D60 ; 0000E1, 41.312
+040A4B 77 1D 00    1367*  	dl 0x001D77 ; 0000E2, 41.438
+040A4E 8E 1D 00    1368*  	dl 0x001D8E ; 0000E3, 41.564
+040A51 A5 1D 00    1369*  	dl 0x001DA5 ; 0000E4, 41.689
+040A54 BB 1D 00    1370*  	dl 0x001DBB ; 0000E5, 41.814
+040A57 D2 1D 00    1371*  	dl 0x001DD2 ; 0000E6, 41.938
+040A5A E9 1D 00    1372*  	dl 0x001DE9 ; 0000E7, 42.061
+040A5D FF 1D 00    1373*  	dl 0x001DFF ; 0000E8, 42.184
+040A60 15 1E 00    1374*  	dl 0x001E15 ; 0000E9, 42.307
+040A63 2C 1E 00    1375*  	dl 0x001E2C ; 0000EA, 42.429
+040A66 42 1E 00    1376*  	dl 0x001E42 ; 0000EB, 42.551
+040A69 58 1E 00    1377*  	dl 0x001E58 ; 0000EC, 42.672
+040A6C 6E 1E 00    1378*  	dl 0x001E6E ; 0000ED, 42.793
+040A6F 84 1E 00    1379*  	dl 0x001E84 ; 0000EE, 42.913
+040A72 99 1E 00    1380*  	dl 0x001E99 ; 0000EF, 43.033
+040A75 AF 1E 00    1381*  	dl 0x001EAF ; 0000F0, 43.152
+040A78 C5 1E 00    1382*  	dl 0x001EC5 ; 0000F1, 43.271
+040A7B DA 1E 00    1383*  	dl 0x001EDA ; 0000F2, 43.390
+040A7E F0 1E 00    1384*  	dl 0x001EF0 ; 0000F3, 43.508
+040A81 05 1F 00    1385*  	dl 0x001F05 ; 0000F4, 43.625
+040A84 1B 1F 00    1386*  	dl 0x001F1B ; 0000F5, 43.742
+040A87 30 1F 00    1387*  	dl 0x001F30 ; 0000F6, 43.859
+040A8A 45 1F 00    1388*  	dl 0x001F45 ; 0000F7, 43.975
+040A8D 5A 1F 00    1389*  	dl 0x001F5A ; 0000F8, 44.091
+040A90 6F 1F 00    1390*  	dl 0x001F6F ; 0000F9, 44.206
+040A93 84 1F 00    1391*  	dl 0x001F84 ; 0000FA, 44.321
+040A96 99 1F 00    1392*  	dl 0x001F99 ; 0000FB, 44.435
+040A99 AD 1F 00    1393*  	dl 0x001FAD ; 0000FC, 44.549
+040A9C C2 1F 00    1394*  	dl 0x001FC2 ; 0000FD, 44.662
+040A9F D7 1F 00    1395*  	dl 0x001FD7 ; 0000FE, 44.775
+040AA2 EB 1F 00    1396*  	dl 0x001FEB ; 0000FF, 44.888
+040AA5 00 20 00    1397*  	dl 0x002000 ; 000100, 45.000 only needed for interpolation
+040AA8             1398*  
+040AA8             1399*  	; include "functions.inc"
+040AA8             1400*  
+040AA8             1401*      MACRO printChar char
+040AA8             1402*          LD A, char
+040AA8             1403*          RST.LIL 10h
+040AA8             1404*      ENDMACRO
+040AA8             1405*  
+040AA8             1406*  ; put the value in HLU into the accumulator
+040AA8             1407*  ; destroys: af
+040AA8             1408*      MACRO HLU_TO_A
+040AA8             1409*          push hl ; 4 cycles
+040AA8             1410*          inc sp ; 1 cycle
+040AA8             1411*          pop af  ; 4 cycles
+040AA8             1412*          dec sp ; 1 cycle
+040AA8             1413*                 ; 10 cycles total
+040AA8             1414*      ENDMACRO
+040AA8             1415*  
+040AA8             1416*  ; put the value in the accumulator into HLU
+040AA8             1417*  ; destroys a
+040AA8             1418*  A_TO_HLU:
+040AA8             1419*      ; call is 7 cycles
+040AA8 22 B5 0A 04 1420*      ld (@scratch),hl ; 7 cycles
+040AAC 32 B7 0A 04 1421*      ld (@scratch+2),a ; 5 cycles
+040AB0 2A B5 0A 04 1422*      ld hl,(@scratch) ; 7 cycles
+040AB4 C9          1423*      ret ; 6 cycles
+040AB5             1424*          ; 25 cycles total
+040AB5 00 00 00    1425*  @scratch: dl 0
+040AB8             1426*  
+040AB8             1427*  
+040AB8             1428*  ; Print a zero-terminated string inline with code, e.g.:
+040AB8             1429*  ;
+040AB8             1430*  ;    call printInline
+040AB8             1431*  ;    ASCIZ "Hello, world!\r\n"
+040AB8             1432*  ;
+040AB8             1433*  ; Destroys: HL,AF
+040AB8             1434*  printInline:
+040AB8 E1          1435*      pop hl ; get the return address = pointer to start of string
+040AB9 CD BF 0A 04 1436*      call printString ; HL advances to end of string
+040ABD E5          1437*      push hl ; restore the return address = pointer to end of string
+040ABE C9          1438*      ret
+040ABF             1439*  
+040ABF             1440*  ; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/functions.s
+040ABF             1441*  ; Print a zero-terminated string
+040ABF             1442*  ; HL: Pointer to string
+040ABF             1443*  printString:
+040ABF C5          1444*  	PUSH	BC
+040AC0 01 00 00 00 1445*  	LD		BC,0
+040AC4 3E 00       1446*  	LD 	 	A,0
+040AC6 5B DF       1447*  	RST.LIL 18h
+040AC8 C1          1448*  	POP		BC
+040AC9 C9          1449*  	RET
+040ACA             1450*  ; print a VDU sequence
+040ACA             1451*  ; HL: Pointer to VDU sequence - <1 byte length> <data>
+040ACA             1452*  sendVDUsequence:
+040ACA C5          1453*  	PUSH	BC
+040ACB 01 00 00 00 1454*  	LD		BC, 0
+040ACF 4E          1455*  	LD		C, (HL)
+040AD0 5B DF       1456*  	RST.LIL	18h
+040AD2 C1          1457*  	POP		BC
+040AD3 C9          1458*  	RET
+040AD4             1459*  ; Print Newline sequence to VDP
+040AD4             1460*  printNewLine:
+040AD4 F5          1461*      push af ; for some reason rst.lil 10h sets carry flag
+040AD5 3E 0D       1462*  	LD	A, '\r'
+040AD7 5B D7       1463*  	RST.LIL 10h
+040AD9 3E 0A       1464*  	LD	A, '\n'
+040ADB 5B D7       1465*  	RST.LIL 10h
+040ADD F1          1466*      pop af
+040ADE C9          1467*  	RET
+040ADF             1468*  
+040ADF             1469*  ; Print a 24-bit HEX number
+040ADF             1470*  ; HLU: Number to print
+040ADF             1471*  printHex24:
+040ADF             1472*      HLU_TO_A
+040ADF E5          0001*M         push hl ; 4 cycles
+040AE0 33          0002*M         inc sp ; 1 cycle
+040AE1 F1          0003*M         pop af  ; 4 cycles
+040AE2 3B          0004*M         dec sp ; 1 cycle
+040AE3             0005*M                ; 10 cycles total
+040AE3 CD ED 0A 04 1473*  	CALL	printHex8
+040AE7             1474*  ; Print a 16-bit HEX number
+040AE7             1475*  ; HL: Number to print
+040AE7             1476*  printHex16:
+040AE7 7C          1477*  	LD		A,H
+040AE8 CD ED 0A 04 1478*  	CALL	printHex8
+040AEC 7D          1479*  	LD		A,L
+040AED             1480*  ; Print an 8-bit HEX number
+040AED             1481*  ; A: Number to print
+040AED             1482*  printHex8:
+040AED 4F          1483*  	LD		C,A
+040AEE 1F          1484*  	RRA
+040AEF 1F          1485*  	RRA
+040AF0 1F          1486*  	RRA
+040AF1 1F          1487*  	RRA
+040AF2 CD F7 0A 04 1488*  	CALL	@F
+040AF6 79          1489*  	LD		A,C
+040AF7             1490*  @@:
+040AF7 E6 0F       1491*  	AND		0Fh
+040AF9 C6 90       1492*  	ADD		A,90h
+040AFB 27          1493*  	DAA
+040AFC CE 40       1494*  	ADC		A,40h
+040AFE 27          1495*  	DAA
+040AFF 5B D7       1496*  	RST.LIL	10h
+040B01 C9          1497*  	RET
+040B02             1498*  
+040B02             1499*  printHexUHL:
+040B02 E5          1500*  	push hl
+040B03 CD DF 0A 04 1501*  	call printHex24
+040B07 E1          1502*  	pop hl
+040B08 C9          1503*  	ret
+040B09             1504*  
+040B09             1505*  
+040B09             1506*  ; print registers to screen in hexidecimal format
+040B09             1507*  ; inputs: none
+040B09             1508*  ; outputs: values of every register printed to screen
+040B09             1509*  ;    values of each register in global scratch memory
+040B09             1510*  ; destroys: nothing
+040B09             1511*  dumpRegistersHex:
+040B09             1512*  ; store everything in scratch
+040B09 22 AE 0B 04 1513*      ld (@uhl),hl
+040B0D ED 43 B1 0B 1514*      ld (@ubc),bc
+       04          
+040B12 ED 53 B4 0B 1515*      ld (@ude),de
+       04          
+040B17 DD 22 B7 0B 1516*      ld (@uix),ix
+       04          
+040B1C FD 22 BA 0B 1517*      ld (@uiy),iy
+       04          
+040B21 F5          1518*      push af
+040B22 E1          1519*      pop hl
+040B23 22 AB 0B 04 1520*      ld (@uaf),hl
+040B27 F5          1521*      push af
+040B28             1522*  
+040B28             1523*  ; print each register
+040B28 CD B8 0A 04 1524*      call printInline
+040B2C 61 66 3D 00 1525*      asciz "af="
+040B30 2A AB 0B 04 1526*      ld hl,(@uaf)
+040B34 CD DF 0A 04 1527*      call printHex24
+040B38             1528*  
+040B38 CD B8 0A 04 1529*      call printInline
+040B3C 20 68 6C 3D 1530*      asciz " hl="
+       00          
+040B41 2A AE 0B 04 1531*      ld hl,(@uhl)
+040B45 CD DF 0A 04 1532*      call printHex24
+040B49             1533*  
+040B49 CD B8 0A 04 1534*      call printInline
+040B4D 20 62 63 3D 1535*      asciz " bc="
+       00          
+040B52 2A B1 0B 04 1536*      ld hl,(@ubc)
+040B56 CD DF 0A 04 1537*      call printHex24
+040B5A             1538*  
+040B5A CD B8 0A 04 1539*      call printInline
+040B5E 20 64 65 3D 1540*      asciz " de="
+       00          
+040B63 2A B4 0B 04 1541*      ld hl,(@ude)
+040B67 CD DF 0A 04 1542*      call printHex24
+040B6B             1543*  
+040B6B CD B8 0A 04 1544*      call printInline
+040B6F 20 69 78 3D 1545*      asciz " ix="
+       00          
+040B74 2A B7 0B 04 1546*      ld hl,(@uix)
+040B78 CD DF 0A 04 1547*      call printHex24
+040B7C             1548*  
+040B7C CD B8 0A 04 1549*      call printInline
+040B80 20 69 79 3D 1550*      asciz " iy="
+       00          
+040B85 2A BA 0B 04 1551*      ld hl,(@uiy)
+040B89 CD DF 0A 04 1552*      call printHex24
+040B8D             1553*  
+040B8D CD D4 0A 04 1554*      call printNewLine
+040B91             1555*  ; restore everything
+040B91 2A AE 0B 04 1556*      ld hl, (@uhl)
+040B95 ED 4B B1 0B 1557*      ld bc, (@ubc)
+       04          
+040B9A ED 5B B4 0B 1558*      ld de, (@ude)
+       04          
+040B9F DD 2A B7 0B 1559*      ld ix, (@uix)
+       04          
+040BA4 FD 2A BA 0B 1560*      ld iy, (@uiy)
+       04          
+040BA9 F1          1561*      pop af
+040BAA             1562*  ; all done
+040BAA C9          1563*      ret
+040BAB             1564*  
+040BAB 00 00 00    1565*  @uaf: dl 0
+040BAE 00 00 00    1566*  @uhl: dl 0
+040BB1 00 00 00    1567*  @ubc: dl 0
+040BB4 00 00 00    1568*  @ude: dl 0
+040BB7 00 00 00    1569*  @uix: dl 0
+040BBA 00 00 00    1570*  @uiy: dl 0
+040BBD             1571*  
+040BBD             1572*  ; Prints the right justified decimal value in HL without leading zeroes
+040BBD             1573*  ; HL : Value to print
+040BBD             1574*  ; preserves all registers and flags
+040BBD             1575*  printDec:
+040BBD             1576*  ; BEGIN MY CODE
+040BBD             1577*  ; back up all the things
+040BBD F5          1578*      push af
+040BBE C5          1579*      push bc
+040BBF D5          1580*      push de
+040BC0 E5          1581*      push hl
+040BC1             1582*  ; END MY CODE
+040BC1 11 E9 0B 04 1583*  	LD	 DE, _printDecBuffer
+040BC5 CD F9 0B 04 1584*  	CALL u24_to_ascii
+040BC9             1585*  ; BEGIN MY CODE
+040BC9             1586*  ; replace leading zeroes with spaces
+040BC9 21 E9 0B 04 1587*      LD	 HL, _printDecBuffer
+040BCD 06 07       1588*      ld   B, 7 ; if HL was 0, we want to keep the final zero
+040BCF             1589*  @loop:
+040BCF 7E          1590*      LD	 A, (HL)
+040BD0 FE 30       1591*      CP	 '0'
+040BD2 C2 DC 0B 04 1592*      JP	 NZ, @done
+040BD6 3E 20       1593*      LD   A, ' '
+040BD8 77          1594*      LD	 (HL), A
+040BD9 23          1595*      INC	 HL
+040BDA             1596*      ; CALL vdu_cursor_forward
+040BDA 10 F3       1597*      DJNZ @loop
+040BDC             1598*  @done:
+040BDC             1599*  ; END MY CODE
+040BDC 21 E9 0B 04 1600*  	LD	 HL, _printDecBuffer
+040BE0 CD BF 0A 04 1601*  	CALL printString
+040BE4             1602*  ; BEGIN MY CODE
+040BE4             1603*  ; restore all the things
+040BE4 E1          1604*      pop hl
+040BE5 D1          1605*      pop de
+040BE6 C1          1606*      pop bc
+040BE7 F1          1607*      pop af
+040BE8             1608*  ; END MY CODE
+040BE8 C9          1609*  	RET
+040BE9 00 00 00 00 1610*  _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
+       00 00 00 00 
+       00 00 00 00 
+       00 00 00 00 
+040BF9             1611*  
+040BF9             1612*  ; This routine converts the unsigned 24-bit value in HLU into it's ASCII representation,
+040BF9             1613*  ; starting to memory location pointing by DE, in decimal form and with leading zeroes
+040BF9             1614*  ; so it will allways be 8 characters length
+040BF9             1615*  ; HL : Value to convert to string
+040BF9             1616*  ; DE : pointer to buffer, at least 8 byte + 0
+040BF9             1617*  u24_to_ascii:
+040BF9 01 80 69 67 1618*  	LD	 BC,-10000000
+040BFD CD 30 0C 04 1619*  	CALL @one_digit
+040C01 01 C0 BD F0 1620*  	LD	 BC,-1000000
+040C05 CD 30 0C 04 1621*  	CALL @one_digit
+040C09 01 60 79 FE 1622*  	LD	 BC,-100000
+040C0D CD 30 0C 04 1623*  	CALL @one_digit
+040C11 01 F0 D8 FF 1624*  	LD   BC,-10000
+040C15 CD 30 0C 04 1625*  	CALL @one_digit
+040C19 01 18 FC FF 1626*  	LD   BC,-1000
+040C1D CD 30 0C 04 1627*  	CALL @one_digit
+040C21 01 9C FF FF 1628*  	LD   BC,-100
+040C25 CD 30 0C 04 1629*  	CALL @one_digit
+040C29 0E F6       1630*  	LD   C,-10
+040C2B CD 30 0C 04 1631*  	CALL @one_digit
+040C2F 48          1632*  	LD   C,B
+040C30             1633*  @one_digit:
+040C30 3E 2F       1634*  	LD   A,'0'-1
+040C32             1635*  @divide_me:
+040C32 3C          1636*  	INC  A
+040C33 09          1637*  	ADD  HL,BC
+040C34 38 FC       1638*  	JR   C,@divide_me
+040C36 ED 42       1639*  	SBC  HL,BC
+040C38 12          1640*  	LD   (DE),A
+040C39 13          1641*  	INC  DE
+040C3A C9          1642*  	RET
+040C3B             1643*  
+040C3B             1644*  print_u24:
+040C3B D5          1645*      push de
+040C3C E5          1646*      push hl
+040C3D 11 E9 0B 04 1647*      ld de,_printDecBuffer
+040C41 CD F9 0B 04 1648*      call u24_to_ascii
+040C45 21 E9 0B 04 1649*      ld hl,_printDecBuffer
+040C49 CD BF 0A 04 1650*      call printString
+040C4D 3E 20       1651*      ld a,' '
+040C4F 5B D7       1652*      rst.lil 10h
+040C51 E1          1653*      pop hl
+040C52 D1          1654*      pop de
+040C53 C9          1655*      ret
+040C54             1656*  
+040C54             1657*  ; u168_to_ascii: Converts an unsigned 16.8 fixed-point value in HL to an ASCII string.
+040C54             1658*  ; HL : Value to convert to string (integer part in H, fractional part in L)
+040C54             1659*  ; DE : Pointer to buffer, requires at least 11 bytes (8 digits, sign, decimal point, and null terminator)
+040C54             1660*  u168_to_ascii:
+040C54             1661*  ; add a leading space to make room for sign flag if needed
+040C54 3E 20       1662*      ld a,' '
+040C56 12          1663*      ld (de),a
+040C57 13          1664*      inc de
+040C58             1665*  ; Convert integer part
+040C58 E5          1666*      push hl               ; Save HL (we’ll need the fractional part later)
+040C59 CD 7B 00 04 1667*      call hlu_udiv256    ; Shift to get integer portion in HL
+040C5D 01 F0 D8 FF 1668*      ld   bc, -10000
+040C61 CD 84 0C 04 1669*      call @one_int
+040C65 01 18 FC FF 1670*      ld   bc, -1000
+040C69 CD 84 0C 04 1671*      call @one_int
+040C6D 01 9C FF FF 1672*      ld   bc, -100
+040C71 CD 84 0C 04 1673*      call @one_int
+040C75 0E F6       1674*      ld   c, -10
+040C77 CD 84 0C 04 1675*      call @one_int
+040C7B 48          1676*      ld   c, b
+040C7C CD 84 0C 04 1677*      call @one_int
+040C80 C3 8F 0C 04 1678*      jp   @frac            ; Jump to fractional part conversion
+040C84             1679*  @one_int:
+040C84 3E 2F       1680*      ld   a, '0' - 1       ; Start ASCII character at '0'
+040C86             1681*  @divide_me:
+040C86 3C          1682*      inc  a
+040C87 09          1683*      add  hl, bc           ; Accumulate until overflow
+040C88 38 FC       1684*      jr   c, @divide_me
+040C8A ED 42       1685*      sbc  hl, bc           ; Remove excess after overflow
+040C8C 12          1686*      ld   (de), a          ; Store ASCII digit
+040C8D 13          1687*      inc  de
+040C8E C9          1688*      ret
+040C8F             1689*  ; Convert fractional part
+040C8F             1690*  @frac:
+040C8F 3E 2E       1691*      ld   a, '.'           ; Decimal point
+040C91 12          1692*      ld   (de), a
+040C92 13          1693*      inc  de
+040C93 E1          1694*      pop  hl               ; Restore HL with original fraction
+040C94 06 03       1695*      ld   b, 3             ; Loop counter for 3 fractional digits
+040C96             1696*  @frac_loop:
+040C96 26 0A       1697*      ld   h, 10            ; Load multiplier for fractional part
+040C98 ED 6C       1698*      mlt  hl               ; Multiply by 10, result in HL (H holds the integer part)
+040C9A 3E 30       1699*      ld   a, '0'
+040C9C 84          1700*      add  a, h             ; Convert integer part to ASCII
+040C9D 12          1701*      ld   (de), a
+040C9E 13          1702*      inc  de
+040C9F 10 F5       1703*      djnz @frac_loop       ; Repeat for each fractional digit
+040CA1             1704*  ; Add null terminator
+040CA1 AF          1705*      xor  a                ; Null terminator
+040CA2 12          1706*      ld   (de), a
+040CA3 C9          1707*      ret
+040CA4             1708*  
+040CA4             1709*  print_u168:
+040CA4 D5          1710*      push de
+040CA5 E5          1711*      push hl
+040CA6 11 E9 0B 04 1712*      ld de,_printDecBuffer
+040CAA CD 54 0C 04 1713*      call u168_to_ascii
+040CAE 21 E9 0B 04 1714*      ld hl,_printDecBuffer
+040CB2 CD BF 0A 04 1715*      call printString
+040CB6 E1          1716*      pop hl
+040CB7 D1          1717*      pop de
+040CB8 C9          1718*      ret
+040CB9             1719*  
+040CB9             1720*  ; signed version of u168_to_ascii
+040CB9             1721*  s168_to_ascii:
+040CB9 D5          1722*      push de ; save starting address of buffer
+040CBA CD 88 00 04 1723*      call hlu_abs
+040CBE F5          1724*      push af ; save sign flag
+040CBF CD 54 0C 04 1725*      call u168_to_ascii
+040CC3 F1          1726*      pop af ; restore sign flag
+040CC4 D1          1727*      pop de ; restore starting address of buffer
+040CC5 F0          1728*      ret p ; hlu was positive so nothing to do
+040CC6 3E 2D       1729*      ld a,'-'
+040CC8 12          1730*      ld (de),a
+040CC9 C9          1731*      ret
+040CCA             1732*  
+040CCA             1733*  print_s168:
+040CCA D5          1734*      push de
+040CCB E5          1735*      push hl
+040CCC 11 E9 0B 04 1736*      ld de,_printDecBuffer
+040CD0 CD B9 0C 04 1737*      call s168_to_ascii
+040CD4 21 E9 0B 04 1738*      ld hl,_printDecBuffer
+040CD8 CD BF 0A 04 1739*      call printString
+040CDC E1          1740*      pop hl
+040CDD D1          1741*      pop de
+040CDE C9          1742*      ret
+040CDF             1743*  
+040CDF             1744*  	; include "parse.inc"
+040CDF             1745*  
+040CDF             1746*  ;
+040CDF             1747*  ; Title:	Number Parsing Functions
+040CDF             1748*  ; Author:	Dean Belfield
+040CDF             1749*  ; Created:	15/11/2022
+040CDF             1750*  ; Last Updated:	15/11/2022
+040CDF             1751*  ; Last Updated: 29/12/2022 Lennart Benchop adapt for 24-bit mode.
+040CDF             1752*  ; Modinfo:
+040CDF             1753*  ; 2024/04/08    Adapt for ez80asm
+040CDF             1754*  
+040CDF             1755*  ; Read a number and convert to binary
+040CDF             1756*  ; If prefixed with &, will read as hex, otherwise decimal
+040CDF             1757*  ;   Inputs: HL: Pointer in string buffer
+040CDF             1758*  ;  Outputs: HL: Updated text pointer
+040CDF             1759*  ;           DE: Value
+040CDF             1760*  ;            A: Terminator (spaces skipped)
+040CDF             1761*  ;            F: Carry set if valid number, otherwise reset
+040CDF             1762*  ; Destroys: A,D,E,H,L,F
+040CDF             1763*  ;
+040CDF 11 00 00 00 1764*  ASC_TO_NUMBER:		LD		DE, 0			; Initialise DE
+040CE3             1765*  			; CALL		_skip_spaces		; Skip whitespace
+040CE3 7E          1766*  			LD		A, (HL)			; Read first character
+040CE4 B7          1767*  			OR		A			; Check for end of string
+040CE5 C8          1768*  			RET		Z			; Return with no carry if not
+040CE6 C5          1769*  			PUSH		BC			; Preserve BC
+040CE7 FE 26       1770*  			CP		'&'			; Is it prefixed with '&' (HEX number)?
+040CE9 20 23       1771*  			JR		NZ, ASC_TO_NUMBER3	; Jump to decimal parser if not
+040CEB 23          1772*  			INC		HL			; Otherwise fall through to ASC_TO_HEX
+040CEC             1773*  ;
+040CEC 7E          1774*  ASC_TO_NUMBER1:		LD		A, (HL)			; Fetch the character
+040CED CD 2F 0D 04 1775*  			CALL   	 	UPPRC			; Convert to uppercase
+040CF1 D6 30       1776*  			SUB		'0'			; Normalise to 0
+040CF3 38 37       1777*  			JR 		C, ASC_TO_NUMBER4	; Return if < ASCII '0'
+040CF5 FE 0A       1778*  			CP 		10			; Check if >= 10
+040CF7 38 06       1779*  			JR 		C, ASC_TO_NUMBER2	; No, so skip next bit
+040CF9 D6 07       1780*  			SUB 		7			; Adjust ASCII A-F to nibble
+040CFB FE 10       1781*  			CP 		16			; Check for > F
+040CFD 30 2D       1782*  			JR 		NC, ASC_TO_NUMBER4	; Return if out of range
+040CFF             1783*  ;
+040CFF E5          1784*  ASC_TO_NUMBER2:		PUSH		HL			; Stack HL
+040D00 D5          1785*  			PUSH		DE			; LD HL, DE
+040D01 E1          1786*  			POP		HL
+040D02 29          1787*  			ADD		HL, HL
+040D03 29          1788*  			ADD		HL, HL
+040D04 29          1789*  			ADD		HL, HL
+040D05 29          1790*  			ADD		HL, HL
+040D06 E5          1791*  			PUSH		HL			; LD DE, HL
+040D07 D1          1792*  			POP		DE
+040D08 E1          1793*  			POP		HL			; Restore HL
+040D09 B3          1794*  			OR      	E			; OR the new digit in to the least significant nibble
+040D0A 5F          1795*  			LD      	E, A
+040D0B             1796*  ;
+040D0B 23          1797*  			INC		HL			; Onto the next character
+040D0C 18 DE       1798*  			JR      	ASC_TO_NUMBER1		; And loop
+040D0E             1799*  ;
+040D0E 7E          1800*  ASC_TO_NUMBER3:		LD		A, (HL)
+040D0F D6 30       1801*  			SUB		'0'			; Normalise to 0
+040D11 38 19       1802*  			JR		C, ASC_TO_NUMBER4	; Return if < ASCII '0'
+040D13 FE 0A       1803*  			CP		10			; Check if >= 10
+040D15 30 15       1804*  			JR		NC, ASC_TO_NUMBER4	; Return if >= 10
+040D17             1805*  ;
+040D17 E5          1806*  			PUSH		HL			; Stack HL
+040D18 D5          1807*  			PUSH		DE			; LD HL, DE
+040D19 E1          1808*  			POP		HL
+040D1A E5          1809*  			PUSH		HL			; LD BC, HL
+040D1B C1          1810*  			POP		BC
+040D1C 29          1811*  			ADD		HL, HL 			; x 2
+040D1D 29          1812*  			ADD		HL, HL 			; x 4
+040D1E 09          1813*  			ADD		HL, BC 			; x 5
+040D1F 29          1814*  			ADD		HL, HL 			; x 10
+040D20 01 00 00 00 1815*  			LD		BC, 0
+040D24 4F          1816*  			LD 		C, A			; LD BCU, A
+040D25 09          1817*  			ADD		HL, BC			; Add BCU to HL
+040D26 E5          1818*  			PUSH		HL			; LD DE, HL
+040D27 D1          1819*  			POP		DE
+040D28 E1          1820*  			POP		HL			; Restore HL
+040D29             1821*  ;
+040D29 23          1822*  			INC		HL
+040D2A 18 E2       1823*  			JR		ASC_TO_NUMBER3
+040D2C C1          1824*  ASC_TO_NUMBER4:		POP		BC
+040D2D 37          1825*  			SCF					; We have a valid number so set carry
+040D2E C9          1826*  			RET
+040D2F             1827*  
+040D2F             1828*  
+040D2F             1829*  ; Convert a character to upper case
+040D2F             1830*  ;  A: Character to convert
+040D2F             1831*  ;
+040D2F E6 7F       1832*  UPPRC:  		AND     	7FH
+040D31 FE 60       1833*  			CP      	'`'
+040D33 D8          1834*  			RET     	C
+040D34 E6 5F       1835*  			AND     	5FH			; Convert to upper case
+040D36 C9          1836*  			RET
+040D37             1837*  
+040D37             1838*  ; -----------------------------------------------------------------------
+040D37             1839*  ;
+040D37             1840*  ; additional functions by Brandon R. Gates based on Dean's code
+040D37             1841*  ;
+040D37             1842*  ;------------------------------------------------------------------------
+040D37             1843*  ; Read a number and convert to binary (decimal only)
+040D37             1844*  ; Inputs: hl: Pointer in string buffer
+040D37             1845*  ; Outputs: hl: Updated text pointer
+040D37             1846*  ;         de: Value
+040D37             1847*  ;         a: Terminator (spaces skipped)
+040D37             1848*  ;         f: Carry set if valid number, otherwise reset
+040D37             1849*  ; Destroys: a, d, e, h, l, f
+040D37             1850*  ;------------------------------------------------------------------------
+040D37             1851*  asc_to_s24:
+040D37 3E 01       1852*      ld a,1 ; set sign flag
+040D39 32 85 0D 04 1853*      ld (@sign),a ; store sign flag
+040D3D             1854*  
+040D3D 11 00 00 00 1855*      ld de, 0 ; initialise de
+040D41             1856*      ; call _skip_spaces ; skip whitespace
+040D41             1857*  
+040D41 7E          1858*      ld a, (hl) ; read first character
+040D42 B7          1859*      or a ; check for end of string
+040D43 C8          1860*      ret z ; return with no carry if not
+040D44             1861*  
+040D44 C5          1862*      push bc ; preserve bc
+040D45             1863*  
+040D45 FE 2D       1864*      cp '-' ; check for negative number
+040D47 C2 51 0D 04 1865*      jp nz,@loop ; number is positive, nothing more to do
+040D4B AF          1866*      xor a ; sign flag to zero
+040D4C 32 85 0D 04 1867*      ld (@sign),a ; store sign flag
+040D50 23          1868*      inc hl ; skip '-'
+040D51             1869*  
+040D51             1870*  @loop:
+040D51 7E          1871*      ld a, (hl)
+040D52 D6 30       1872*      sub '0' ; normalise to 0
+040D54 38 19       1873*      jr c, @integer_end ; return if < ascii '0'
+040D56 FE 0A       1874*      cp 10 ; check if >= 10
+040D58 30 15       1875*      jr nc, @integer_end ; return if >= 10
+040D5A E5          1876*      push hl ; stack hl
+040D5B D5          1877*      push de ; ld hl, de
+040D5C E1          1878*      pop hl
+040D5D E5          1879*      push hl ; ld bc, hl
+040D5E C1          1880*      pop bc
+040D5F 29          1881*      add hl, hl ; x 2
+040D60 29          1882*      add hl, hl ; x 4
+040D61 09          1883*      add hl, bc ; x 5
+040D62 29          1884*      add hl, hl ; x 10
+040D63 01 00 00 00 1885*      ld bc, 0
+040D67 4F          1886*      ld c, a ; ld bcu, a
+040D68 09          1887*      add hl, bc ; add bcu to hl
+040D69 E5          1888*      push hl ; ld de, hl
+040D6A D1          1889*      pop de
+040D6B E1          1890*      pop hl ; restore hl
+040D6C 23          1891*      inc hl
+040D6D 18 E2       1892*      jr @loop
+040D6F             1893*  
+040D6F             1894*  @integer_end:
+040D6F C1          1895*      pop bc ; send bc back how she came in
+040D70 3A 85 0D 04 1896*      ld a, (@sign) ; get sign flag
+040D74 3D          1897*      dec a ; check if negative
+040D75 F2 83 0D 04 1898*      jp p,@pos ; positive number
+040D79             1899*  
+040D79             1900*  ; Negate de
+040D79 E5          1901*      push hl ; save text pointer
+040D7A 21 00 00 00 1902*      ld hl, 0
+040D7E AF          1903*      xor a ; clear carry
+040D7F ED 52       1904*      sbc hl, de ; subtract DE from HL
+040D81 EB          1905*      ex de, hl ; DE = 0-HL
+040D82 E1          1906*      pop hl ; restore text pointer
+040D83             1907*  
+040D83             1908*  @pos:
+040D83 37          1909*      scf ; we have a valid number so set carry
+040D84 C9          1910*      ret
+040D85             1911*  
+040D85 00          1912*  @sign: db 0 ; sign flag buffer
+040D86             1913*  
+040D86             1914*  
+040D86             1915*  ;------------------------------------------------------------------------
+040D86             1916*  ; Read a number and convert to binary (decimal only)
+040D86             1917*  ; Inputs: hl: Pointer in string buffer
+040D86             1918*  ; Outputs: hl: Updated text pointer
+040D86             1919*  ;         de: Value
+040D86             1920*  ;         a: Terminator (spaces skipped)
+040D86             1921*  ;         f: Carry set if valid number, otherwise reset
+040D86             1922*  ; Destroys: a, d, e, h, l, f
+040D86             1923*  ;------------------------------------------------------------------------
+040D86             1924*  asc_to_s168:
+040D86 3E 01       1925*      ld a,1 ; set sign flag
+040D88 32 45 0E 04 1926*      ld (@sign),a ; store sign flag
+040D8C             1927*  
+040D8C 11 00 00 00 1928*      ld de, 0 ; initialise de
+040D90 ED 53 3D 0E 1929*      ld (@result), de ; clear low bytes of result buffer
+       04          
+040D95 ED 53 41 0E 1930*      ld (@scratch), de ; clear low bytes of scratch buffer
+       04          
+040D9A             1931*  
+040D9A             1932*      ; call _skip_spaces ; skip whitespace
+040D9A             1933*  
+040D9A 7E          1934*      ld a, (hl) ; read first character
+040D9B B7          1935*      or a ; check for end of string
+040D9C C8          1936*      ret z ; return with no carry if not
+040D9D             1937*  
+040D9D C5          1938*      push bc ; preserve bc
+040D9E             1939*  
+040D9E FE 2D       1940*      cp '-' ; check for negative number
+040DA0 C2 AA 0D 04 1941*      jp nz,@loop ; number is positive, nothing more to do
+040DA4 AF          1942*      xor a ; sign flag to zero
+040DA5 32 45 0E 04 1943*      ld (@sign),a ; store sign flag
+040DA9 23          1944*      inc hl ; skip '-'
+040DAA             1945*  
+040DAA             1946*  @loop:
+040DAA 7E          1947*      ld a, (hl)
+040DAB             1948*  
+040DAB             1949*  ; chcek for decimal point
+040DAB FE 2E       1950*      cp '.' ; check for decimal point
+040DAD CA EE 0D 04 1951*      jp z,@fractional_start ; jump to fractional part
+040DB1             1952*  
+040DB1             1953*  ; process integer part
+040DB1 D6 30       1954*      sub '0' ; normalise to 0
+040DB3 38 19       1955*      jr c, @integer_end ; return if < ascii '0'
+040DB5 FE 0A       1956*      cp 10 ; check if >= 10
+040DB7 30 15       1957*      jr nc, @integer_end ; return if >= 10
+040DB9 E5          1958*      push hl ; stack hl
+040DBA D5          1959*      push de ; ld hl, de
+040DBB E1          1960*      pop hl
+040DBC E5          1961*      push hl ; ld bc, hl
+040DBD C1          1962*      pop bc
+040DBE 29          1963*      add hl, hl ; x 2
+040DBF 29          1964*      add hl, hl ; x 4
+040DC0 09          1965*      add hl, bc ; x 5
+040DC1 29          1966*      add hl, hl ; x 10
+040DC2 01 00 00 00 1967*      ld bc, 0
+040DC6 4F          1968*      ld c, a ; ld bcu, a
+040DC7 09          1969*      add hl, bc ; add bcu to hl
+040DC8 E5          1970*      push hl ; ld de, hl
+040DC9 D1          1971*      pop de
+040DCA E1          1972*      pop hl ; restore hl
+040DCB 23          1973*      inc hl
+040DCC 18 DC       1974*      jr @loop
+040DCE             1975*  
+040DCE             1976*  @integer_end:
+040DCE ED 53 3E 0E 1977*      ld (@result+1), de      ; Store integer part in result buffer (shifted up one byte)
+       04          
+040DD3             1978*  
+040DD3             1979*  @end:
+040DD3 C1          1980*      pop bc ; send bc back how she came in
+040DD4 ED 5B 3D 0E 1981*      ld de,(@result) ; will contain shifted integer part combined with any fractional value
+       04          
+040DD9 3A 45 0E 04 1982*      ld a, (@sign) ; get sign flag
+040DDD 3D          1983*      dec a ; check if negative
+040DDE F2 EC 0D 04 1984*      jp p,@pos ; positive number
+040DE2             1985*  
+040DE2             1986*  ; Negate de
+040DE2 E5          1987*      push hl ; save text pointer
+040DE3 21 00 00 00 1988*      ld hl, 0
+040DE7 AF          1989*      xor a ; clear carry
+040DE8 ED 52       1990*      sbc hl, de ; subtract DE from HL
+040DEA EB          1991*      ex de, hl ; DE = 0-HL
+040DEB E1          1992*      pop hl ; restore text pointer
+040DEC             1993*  
+040DEC             1994*  @pos:
+040DEC 37          1995*      scf ; we have a valid number so set carry
+040DED C9          1996*      ret
+040DEE             1997*  
+040DEE             1998*  @fractional_start:
+040DEE DD E5       1999*      push ix                    ; preserve ix
+040DF0 ED 53 3E 0E 2000*      ld (@result+1), de         ; Store integer part in result buffer (shifted up one byte)
+       04          
+040DF5 06 03       2001*      ld b, 3                    ; Set loop counter to 3 for up to three fractional digits
+040DF7 11 00 00 00 2002*      ld de, 0                   ; Initialize DE as the fractional accumulator
+040DFB DD 21 46 0E 2003*      ld ix, powers_of_10        ; Point IX to the lookup table for the scaling factor based on digits
+       04          
+040E00 23          2004*      inc hl                     ; Skip decimal point
+040E01             2005*  
+040E01             2006*  @fractional_loop:
+040E01 7E          2007*      ld a, (hl)                 ; Load next character
+040E02 D6 30       2008*      sub '0'                    ; Normalize ASCII to decimal
+040E04 38 1C       2009*      jr c, @end_fraction        ; Exit if < '0'
+040E06 FE 0A       2010*      cp 10
+040E08 30 18       2011*      jr nc, @end_fraction       ; Exit if >= 10
+040E0A             2012*  
+040E0A             2013*      ; Multiply the current fractional accumulator by 10
+040E0A E5          2014*      push hl                    ; Save char pointer
+040E0B F5          2015*      push af                    ; Save the digit
+040E0C EB          2016*      ex de, hl
+040E0D E5          2017*      push hl
+040E0E 29          2018*      add hl,hl ; * 2
+040E0F 29          2019*      add hl,hl ; * 4
+040E10 D1          2020*      pop de
+040E11 19          2021*      add hl,de ; * 5
+040E12 29          2022*      add hl,hl ; * 10
+040E13 11 00 00 00 2023*      ld de, 0                   ; Clear DEU
+040E17 F1          2024*      pop af                     ; Restore the current digit
+040E18 5F          2025*      ld e, a                    ; Load the digit into E
+040E19 19          2026*      add hl, de                 ; Add the digit to the accumulator
+040E1A EB          2027*      ex de, hl                  ; Result back to DE
+040E1B ED 32 03    2028*      lea ix,ix+3                ; Advance IX to the next scaling factor
+040E1E E1          2029*      pop hl                     ; Restore char pointer
+040E1F 23          2030*      inc hl                     ; Move to the next character
+040E20 10 DF       2031*      djnz @fractional_loop      ; Loop if more digits to process
+040E22             2032*  
+040E22             2033*  @end_fraction:
+040E22             2034*  ; Final scaling based on number of fractional digits processed
+040E22 ED 53 42 0E 2035*      ld (@scratch+1), de          ; Shift fractional part up a byte
+       04          
+040E27 2A 41 0E 04 2036*      ld hl,(@scratch)             ; Load the shifted fractional part into HL
+040E2B             2037*  
+040E2B DD 17 00    2038*      ld de, (ix)                ; Load final scaling factor from IX based on digit count
+040E2E CD F8 01 04 2039*      call udiv24                ; Perform 24-bit division to scale down
+040E32 7B          2040*      ld a, e                    ; Load the low byte (8-bit fractional part) into A
+040E33 32 3D 0E 04 2041*      ld (@result), a            ; Store fractional part in result buffer
+040E37 DD E1       2042*      pop ix                     ; Restore ix
+040E39 C3 D3 0D 04 2043*      jp @end                    ; Final sign check and flag setup
+040E3D             2044*  
+040E3D             2045*  @result: ds 4                  ; 32-bit result buffer to shift integer part up one byte
+040E41             2046*  @scratch: ds 4                 ; 32-bit scratch buffer for intermediate calculations
+040E45 00          2047*  @sign: db 0                    ; Sign flag buffer
+040E46             2048*  
+040E46             2049*  powers_of_10:
+040E46 01 00 00    2050*      dl 1                       ; 10^0
+040E49 0A 00 00    2051*      dl 10                      ; 10^1
+040E4C 64 00 00    2052*      dl 100                     ; 10^2
+040E4F E8 03 00    2053*      dl 1000                    ; 10^3
+040E52 10 27 00    2054*      dl 10000                   ; 10^4
+040E55             0032   
+040E55             0033   ; --- INITIALIZATION ---
+040E55             0034   init:
+040E55 C9          0035      ret
+040E56             0036   
+040E56             0037   ; --- MAIN PROGRAM ---
+040E56             0038   main:
+040E56             0039       ; call printInline
+040E56             0040       ; asciz "rounding error in print_u168: "
+040E56             0041       ; ld hl,@arg1
+040E56             0042       ; call asc_to_s168 ; de = @arg1
+040E56             0043       ; ex de,hl
+040E56             0044       ; call printHexUHL
+040E56             0045       ; push hl
+040E56             0046       ; call printInline
+040E56             0047       ; asciz " -> "
+040E56             0048       ; pop hl
+040E56             0049       ; call print_u168
+040E56             0050       ; call printInline
+040E56             0051       ; asciz " should be: "
+040E56             0052       ; ld hl,@arg1
+040E56             0053       ; call printString
+040E56             0054       ; call printNewLine
+040E56             0055   
+040E56             0056       ; call printInline
+040E56             0057       ; asciz "sign overflow in print_u168: "
+040E56             0058       ; ld hl,@arg2
+040E56             0059       ; call asc_to_s168 ; de = @arg2
+040E56             0060       ; ex de,hl
+040E56             0061       ; call printHexUHL
+040E56             0062       ; push hl
+040E56             0063       ; call printInline
+040E56             0064       ; asciz " -> "
+040E56             0065       ; pop hl
+040E56             0066       ; call print_u168
+040E56             0067       ; call printInline
+040E56             0068       ; asciz " should be: "
+040E56             0069       ; ld hl,@arg2
+040E56             0070       ; call printString
+040E56             0071       ; call printNewLine
+040E56             0072   
+040E56             0073       ; call printInline
+040E56             0074       ; asciz "unsigned fixed place multiplication: e * pi = "
+040E56             0075       ; ld hl,0x0002B7 ; 2.718
+040E56             0076       ; ld de,0x000324 ; 3.141
+040E56             0077       ; call umul168
+040E56             0078       ; call print_u168
+040E56             0079       ; call printInline
+040E56             0080       ; asciz " should be: 8.539\r\n"
+040E56             0081   
+040E56             0082       ; call printInline
+040E56             0083       ; asciz "unsigned fixed place division: e / pi = "
+040E56             0084       ; ld hl,0x0002B7 ; 2.718
+040E56             0085       ; ld de,0x000324 ; 3.141
+040E56             0086       ; call udiv168
+040E56             0087       ; call print_u168
+040E56             0088       ; call printInline
+040E56             0089       ; asciz " should be: 0.864\r\n"
+040E56             0090   
+040E56             0091       ; call printInline
+040E56             0092       ; asciz "distance between two points: "
+040E56             0093       ; ld hl,0x000000 ; x0 0
+040E56             0094       ; ld de,0x000000 ; y0 0
+040E56             0095       ; ld ix,0x010000 ; x1 256
+040E56             0096       ; ld iy,0x010000 ; y1 256
+040E56             0097       ; call distance168
+040E56             0098       ; call printHexUHL
+040E56             0099       ; ; call print_u168
+040E56             0100       ; call printDec
+040E56             0101       ; call printInline
+040E56             0102       ; asciz " should be: 0x016A09 362.039\r\n"
+040E56             0103   
+040E56             0104       ; call printInline
+040E56             0105       ; asciz "24-bit integer square-root: "
+040E56 CD D4 0A 04 0106       call printNewLine
+040E5A 21 00 01 00 0107       ld hl,256
+040E5E CD BD 03 04 0108       call sqrt24
+040E62 EB          0109       ex de,hl
+040E63 CD 09 0B 04 0110       call dumpRegistersHex
+040E67 CD BD 0B 04 0111       call printDec
+040E6B CD D4 0A 04 0112       call printNewLine
+040E6F             0113   
+040E6F C9          0114       ret
+040E70             0115   
+040E70 33 32 37 36 0116   @arg1: asciz "32767.999" ; 0x7FFFFF
+       37 2E 39 39 
+       39 00       
+040E7A 2D 33 32 37 0117   @arg2: asciz "-32768" ; 0x800000
+       36 38 00    
