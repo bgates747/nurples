@@ -371,12 +371,9 @@ deg_360_to_256:
 ; make angle positive and store sign flag
 	call hlu_abs
 	push af
-; multiply by 256 first to keep precision
-	hlu_mul256 ; uh.l = uh.l * 256
-; divide uh.l by 360
-	ld de,360
-	call udiv24 ; ud.e = degrees / 360
-	ex de,hl    ; uh.l = degrees / 360
+; multiply by coversion factor of 256/360
+	ld de,0x0000B6 ; 0.711
+	call umul168 ; uh.l = uh.l * 0.711
 ; restore sign flag and adjust output accordingly
 	pop af
 	jp p,@pos ; positive number
@@ -395,11 +392,9 @@ deg_256_to_360:
 ; make angle positive and store sign flag
 	call hlu_abs
 	push af
-; multiply by 360 first to keep precision
-	ld de,360
-	call umul24 ; uh.l = uh.l * 360
-; divide uh.l by 256
-	call hlu_udiv256 ; uh.l = uh.l / 256
+; multiply by coversion factor of 360/256
+    ld de,0x000168 ; 1.406
+	call umul168 ; uh.l = uh.l * 1.406
 ; restore sign flag and adjust output accordingly
 	pop af
 	jp p,@pos ; positive number

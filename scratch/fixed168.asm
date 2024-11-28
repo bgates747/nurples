@@ -89,16 +89,25 @@ main:
     asciz " should be: 0.864\r\n"
 
     call printInline
-    asciz "distance between two points: "
+    asciz "\r\ndistance between two points: "
     ld bc,0x000000 ; x0 0
     ld de,0x000000 ; y0 0
     ld ix,0x010000 ; x1 256
     ld iy,0x010000 ; y1 256
-    call distance168
+    call distance168 ; 
     call print_s168
     call printInline
     asciz " should be: 0x016A09 362.039\r\n"
 
+    call printInline
+    asciz "target bearing: "
+    ld bc,(dx168) ; populated by distance168 call above
+    ld de,(dy168) ; ditto
+    call atan2_168fast ; uh.l = atan2(dx,-dy) in deg256
+    call deg_256_to_360 ; convert to 360 degree circle
+    call print_s168
+    call printNewLine
+    call printNewLine
     ret
 
 @arg1: asciz "32767.999" ; 0x7FFFFF

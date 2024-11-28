@@ -93,10 +93,32 @@ main:
     ld bc,(dx168)
     ld de,(dy168)
     call atan2_168fast ; uh.l = atan2(dx,-dy) in deg256
-    ; call deg_256_to_360 ; convert to 360 degree circle
+    call deg_256_to_360 ; convert to 360 degree circle
     call print_s168
 
     jp _main_end_ok
+
+; ; test deg_360_to_256
+;     call get_arg_s168
+;     ld (@arg1),de 
+;     ex de,hl
+;     call print_s168
+;     ld hl,(@arg1)
+;     call deg_360_to_256
+;     call print_s168
+;     call printNewLine
+;     jp _main_end_ok
+
+; ; test deg_256_to_360
+;     call get_arg_s168
+;     ld (@arg1),de 
+;     ex de,hl
+;     call print_s168
+;     ld hl,(@arg1)
+;     call deg_256_to_360
+;     call print_s168
+;     call printNewLine
+;     jp _main_end_ok
 
 @arg1: dl 0
 @arg2: dl 0
