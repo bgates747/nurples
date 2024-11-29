@@ -170,6 +170,9 @@ sprites_init:
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly
 ; inputs: iy pointing to sprite table record
+; returns: updated x, y positions and edge collision flags in sprite table record
+; destroys: everything
+; note: actual rendering of sprite must be handled by caller
 move_sprite:
     ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
 ; x-axis movement

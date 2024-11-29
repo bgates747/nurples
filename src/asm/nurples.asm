@@ -38,6 +38,7 @@ exit:
     include "levels.inc"
     include "player.inc"
     include "sprites.inc"
+    include "state.inc"
     include "tiles.inc"
     include "timer.inc"
     include "vdu.inc"
@@ -168,8 +169,8 @@ main_loop:
 ; scroll tiles
     call tiles_plot
 
-; get player input and update sprite position
-    call player_input
+; call state-specific player routines
+    call player_do
 
 ; move enemies
     call move_enemies

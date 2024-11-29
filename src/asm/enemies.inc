@@ -1,4 +1,4 @@
-max_enemy_sprites: db 16 
+max_enemy_sprites: db 1 
 
 ; sprite_type
 enemy_dead: equ 0
@@ -20,7 +20,8 @@ respawn_countdown:
     or a
     sbc hl,de 
     ret nz
-    ld b,table_max_records
+    ld a,(max_enemy_sprites)
+    ld b,a ; loop counter
 @respawn_loop:
     push bc
     call enemy_init_from_landing_pad
@@ -585,42 +586,35 @@ collision_enemy_is:
     inc a
     ret
 
-; ; looks up what enemy sprite collides with
-; ; detects collisions
-; ; and sets things to sploding accordingly
-; check_collisions:
-;     ld a,(iy+sprite_collisions) ; snag what we collide with
-;     and a ; if this is zero,
-;     ret z ; there's nothing to do
-;     and %01 ; do we collide with player?
-;     jr z,move_enemies_laser ; if not,check laser collision
-;     call collision_enemy_with_player ; otherwise see if we hit player
-;     and a ; was there a collision?
-;     jr z,move_enemies_laser ; if not,see if laser smacked us
-; ; yes collision with player
-;     ; deduct shield damage
-;     ld hl,sprite_shield_damage 
-;     ld a,(player_shields) 
-;     sub (hl)
-;     ld (player_shields),a 
-; ; if shields >= 0,player survives
-;     jp p,check_collisions_kill_nurple
-; ; otherwise update player status so it will die
-;     ld a,(player_collisions)
-;     or %10 ; sets bit 1,meaning player just died
-;     ld (player_collisions),a
-;     ; fall through
-; check_collisions_kill_nurple:
-; ; kill enemy and replace with explosion
-;     call kill_nurple
-;     ret ; and out
-
+; looks up what enemy sprite collides with
+; detects collisions
+; and sets things to sploding accordingly
 check_collisions:
-    call collision_enemy_with_player ; did we hit the player?
+    ld a,(iy+sprite_collisions) ; snag what we collide with
+    and a ; if this is zero,
+    ret z ; there's nothing to do
+    and %01 ; do we collide with player?
+    jr z,move_enemies_laser ; if not,check laser collision
+    call collision_enemy_with_player ; otherwise see if we hit player
     and a ; was there a collision?
-    ret z ; if not,we're done
-    call kill_nurple ; otherwise kill enemy
-    ret
+    jr z,move_enemies_laser ; if not,see if laser smacked us
+; yes collision with player
+    ; deduct shield damage
+    ld hl,sprite_shield_damage 
+    ld a,(player_shields) 
+    sub (hl)
+    ld (player_shields),a 
+; if shields >= 0,player survives
+    jp p,check_collisions_kill_nurple
+; otherwise update player status so it will die
+    ld a,(player_collisions)
+    or %10 ; sets bit 1,meaning player just died
+    ld (player_collisions),a
+    ; fall through
+check_collisions_kill_nurple:
+; kill enemy and replace with explosion
+    call kill_nurple
+    ret ; and out
 
 ; did we hit the laser?
 move_enemies_laser:
