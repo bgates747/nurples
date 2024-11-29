@@ -448,11 +448,11 @@ distance168:
 ; output: uh.l is the 16.8 fixed angle in degrees 256
 ; angles are COMPASS HEADINGS based on
 ; screen coordinate conventions,where the y axis is flipped
-; #E0 315      0       45 #20
+; #E0 224      0       32 #20
 ;        -x,-y | +x,-y
-; #C0 270------+------ 90 #40
+; #C0 192------+------ 64 #40
 ;        -x,+y | +x,+y
-; #A0 225   180 #80   135 #60
+; #A0 160   128 #80   96 #60
 atan2_168fast:
 ; get signs and make everything positive
 ; get abs(x) and store its original sign
@@ -490,17 +490,16 @@ atan2_168fast:
     pop af
     jp p,@2 ; bc <= de,so we skip ahead
     ex de,hl
-    ld hl,0x004000 ; 90 degrees
+    ld hl,64*256 ; subtract from 64 (90) degrees
     xor a ; clear the carry flag
-    sbc hl,de ; subtract result from 90 degrees
+    sbc hl,de
 @2:
-; now the fun part of adjusting the result
-; based on which quadrant (x,y) is in
-; #E0 315      0       45 #20
+; adjust the result based on quadrant
+; #E0 224      0       32 #20
 ;        -x,-y | +x,-y
-; #C0 270------+------ 90 #40
+; #C0 192------+------ 64 #40
 ;        -x,+y | +x,+y
-; #A0 225   180 #80   135 #60
+; #A0 160   128 #80   96 #60
     pop af ; sign of y
     jp z,@y_zero
     jp p,@y_pos
@@ -509,7 +508,7 @@ atan2_168fast:
     jp z,@y_neg_x_zero
     jp p,@y_neg_x_pos
 ; y neg,x neg
-; angle is 270-360
+; angle is 128 to 256 (270 to 360)
 ; negating the intermediate does the trick
     call neg_hlu
     jr @zero_hlu
@@ -521,7 +520,7 @@ atan2_168fast:
     ret
 @y_neg_x_pos:
 ; y neg,x pos
-; angle is 0 to 90
+; angle is 0 to 64 (0 to 90)
 ; so we're good
     ret
 
@@ -530,22 +529,22 @@ atan2_168fast:
     jp z,@y_pos_x_zero
     jp p,@y_pos_x_pos
 ; y pos,x neg
-; angle is 180-270
-; so we add 180 to intermediate
-    ld de,0x008000
+; angle is 128 to 192 (180-270)
+; so we add 128 to intermediate
+    ld de,128*256
     add hl,de
     jr @zero_hlu
 @y_pos_x_zero:
 ; y pos,x zero
-; angle is 180
-    ld hl,0x008000
+; angle is 128 (180)
+    ld hl,128*256
     ret
 @y_pos_x_pos:
 ; y pos,x pos
-; angle is 90-180
+; angle is 64 to 128 (90 to 180)
 ; neg the intermediate and add 180 degrees
     call neg_hlu
-    ld de,0x008000
+    ld de,128*256
     add hl,de
     jr @zero_hlu
 
@@ -553,12 +552,12 @@ atan2_168fast:
     pop af ; sign of x
     jp m,@y_zero_x_neg
 ; y zero,x pos
-; angle is 90,nothing to do
+; angle is 64 (90),nothing to do
     ret
 @y_zero_x_neg:
 ; y zero ,x neg
-; angle is 270
-    ld hl,0x00C000
+; angle is 192 (270)
+    ld hl,192*256
     ret
 @zero_hlu:
     xor a
@@ -587,7 +586,7 @@ atan_168fast:
 ; test uh.l for 1
     xor a ; clear carry
     ex de,hl
-    ld hl,0x000100 ; 1 in 16.8 fixed format
+    ld hl,1*256 ; 1 in 16.8 fixed format
     sbc hl,de
     jr z,@is_45
     ex de,hl
@@ -595,7 +594,7 @@ atan_168fast:
 ; l contains the fractional portion of tan(uh.l)
 ; we multiply it by three to get our lookup table index
     ld h,3
-    mlt hl ; gosh that is handy
+    mlt hl ; index into lut
     ld de,0 ; clear deu
     ld d,h ; copy hl to de
     ld e,l ; de contains our index
@@ -604,11 +603,11 @@ atan_168fast:
     ld hl,(hl) ; don't try this on a z80!
     ret ; and out
 @is_45:
-    ld hl,0x002000 ; 45 degrees decimal
+    ld hl,64*256
     ret
 ; for the case tan(0)
 @is_zero:
-    ld hl,0x000000
+    ld hl,0*256
     ret
 
 ; Expects  ADL mode
