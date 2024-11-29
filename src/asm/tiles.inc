@@ -44,35 +44,35 @@ bg_plot:
 ; all done
     ret
 
-xevious_plot:
-; load current bg tile bufferId as default
-    ld hl,(bg_bufferId)
-; check whether it is time for a new background tile
-    ld a,(bg_y_plot)
-    inc a
-    ld (bg_y_plot),a
-    jp nz,@F ; not time for a new tile so draw current one
-; load the next background tile
-    ld hl,Xevious_tile
-    inc (hl)
-    ld a,%00011111 ; 31
-    and (hl)
-    ld hl,BUF_XEVIOUS_00
-    add a,l
-    ld l,a
-    ld a,0
-    adc a,h
-    ld h,a
-    ld (bg_bufferId),hl
-@@:
-    call vdu_buff_select
-    ld bc,0
-    ld de,(bg_y_plot)
-    inc de
-    call vdu_plot_bmp
-; all done
-    ret
-Xevious_tile: db 0
+; xevious_plot:
+; ; load current bg tile bufferId as default
+;     ld hl,(bg_bufferId)
+; ; check whether it is time for a new background tile
+;     ld a,(bg_y_plot)
+;     inc a
+;     ld (bg_y_plot),a
+;     jp nz,@F ; not time for a new tile so draw current one
+; ; load the next background tile
+;     ld hl,Xevious_tile
+;     inc (hl)
+;     ld a,%00011111 ; 31
+;     and (hl)
+;     ld hl,BUF_XEVIOUS_00
+;     add a,l
+;     ld l,a
+;     ld a,0
+;     adc a,h
+;     ld h,a
+;     ld (bg_bufferId),hl
+; @@:
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,(bg_y_plot)
+;     inc de
+;     call vdu_plot_bmp
+; ; all done
+;     ret
+; Xevious_tile: db 0
 
 tiles_plot:
 ; set gfx viewport to playing field window
@@ -93,9 +93,9 @@ tiles_plot:
     ld iy,0 ; bottommost y-coord
     call vdu_set_gfx_viewport
 ; plot the background
-    ; call bg_plot
-    call xevious_plot
-    ret ; DEBUG
+    call bg_plot
+    ; call xevious_plot
+    ; ret ; DEBUG
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -174,6 +174,20 @@ init_level:
     ld (tiles_row),a
     inc ix ; now ix points first element of first row tile def
     ld (tiles_row_defs),ix ; ... so we save it
+; draw initial background tiles 
+; TODO: make this a stars background
+    ld hl,BUF_STATION_BG_00
+    call vdu_buff_select
+    ld bc,0
+    ld de,field_top
+    call vdu_plot_bmp
+
+    ld hl,BUF_STATION_BG_01
+    call vdu_buff_select
+    ld bc,0
+    ld de,field_top+256
+    call vdu_plot_bmp
+
     ret
 
 ; ###### TODO: NEW CODE TO IMPLEMENT ######

@@ -158,21 +158,7 @@ init:
 
     ret
 
-; origin_top: equ 48
-origin_top: equ 0 ; DEBUG
-origin_left: equ 128
-field_top: equ 0
-field_bottom: equ 383-origin_top
-field_left: equ 0
-field_right: equ 255
-sprite_top: equ 0
-sprite_bottom: equ field_bottom-16
-sprite_left: equ field_left
-sprite_right: equ field_right-16
-collide_top: equ %00001000
-collide_bottom: equ %00000100
-collide_left: equ %00000010
-collide_right: equ %00000001
+
 
 main:
 ; start a new game

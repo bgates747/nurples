@@ -55,7 +55,7 @@ player_init:
     call vdu_sprite_add_buff
     ld bc,0
     ld (player_x),bc
-    ld de,0x00DF00
+    ld de,sprite_bottom*256 ; max sprite y-coordinate
     ld (player_y),de
     call vdu_sprite_move_abs168
     call vdu_sprite_show
