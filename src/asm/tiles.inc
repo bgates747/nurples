@@ -3,7 +3,7 @@
 ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
 tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
 tiles_row: db 0 ; decrements each time a row is drawn. level is over when hits zero
-                        ; initialize to zero for a maximum of 256 rows in a level
+    ; initialize to zero for a maximum of 256 rows in a level
 cur_level: db 0
 num_levels: equ 2 ; number of levels,duh
 
@@ -76,22 +76,22 @@ Xevious_tile: db 0
 
 tiles_plot:
 ; set gfx viewport to playing field window
-	ld bc,field_left
-	ld de,field_top
-	ld ix,field_right
-	ld iy,field_bottom
-	call vdu_set_gfx_viewport
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
 ; move the background down one pixel
-	ld a,2 ; current gfx viewport
-	ld l,2 ; direction=down
-	ld h,1 ; speed=1 px
-	call vdu_scroll_down
+    ld a,2 ; current gfx viewport
+    ld l,2 ; direction=down
+    ld h,1 ; speed=1 px
+    call vdu_scroll_down
 ; set gfx viewport to one scanline to optimise plotting tiles
-	ld bc,0 ; leftmost x-coord
-	ld de,0 ; topmost y-coord
-	ld ix,255 ; rightmost x-coord
-	ld iy,0 ; bottommost y-coord
-	call vdu_set_gfx_viewport
+    ld bc,0 ; leftmost x-coord
+    ld de,0 ; topmost y-coord
+    ld ix,255 ; rightmost x-coord
+    ld iy,0 ; bottommost y-coord
+    call vdu_set_gfx_viewport
 ; plot the background
     ; call bg_plot
     call xevious_plot
@@ -100,12 +100,12 @@ tiles_plot:
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
     ld hl,(tiles_row_defs)
-	ld b,16 ; loop counter
+    ld b,16 ; loop counter
 @loop:
-	push bc ; save the loop counter
+    push bc ; save the loop counter
 ; read the tile defintion for the current column
     ld a,(hl) ; a has tile definition
-    push hl  ; save pointer to tile definition
+    push hl ; save pointer to tile definition
     ld hl,0 ; hlu is non-zero
     ld l,a ; l is tile defintion
     ld h,0x01 ; hl = 256 + tile index = the tile's bitmapId
@@ -122,14 +122,14 @@ tiles_plot:
 ; prepare to loop to next column
     pop hl ; get back pointer to tile def
     inc hl ; bump it to the next column
-	pop bc ; snag our loop counter
+    pop bc ; snag our loop counter
     djnz @loop
 ; increment tiles plotting y-coordinate
 ; when it hits zero, we go to next row of tiles in the map
 ; (we use ix b/c we want to preserve hl for the next step)
-	ld ix,tiles_y_plot
-	inc (ix)
-	ret nz
+    ld ix,tiles_y_plot
+    inc (ix)
+    ret nz
 ; time to bump tiles_row_defs to next row
 ; (hl was already there at the end of the loop)
     ld (tiles_row_defs),hl

@@ -9,10 +9,10 @@ BUF_SPLASH_BG: equ 2
 BUF_SPLASH_LOGO: equ 3
 
 ui_image_list: ; type; width; height; filename; bufferId:
-	dl 1, 128, 384, 49152, fn_bezel_l, 0
-	dl 1, 128, 384, 49152, fn_bezel_r, 1
-	dl 1, 320, 240, 76800, fn_splash_bg, 2
-	dl 1, 320, 240, 76800, fn_splash_logo, 3
+    dl 1, 128, 384, 49152, fn_bezel_l, 0
+    dl 1, 128, 384, 49152, fn_bezel_r, 1
+    dl 1, 320, 240, 76800, fn_splash_bg, 2
+    dl 1, 320, 240, 76800, fn_splash_logo, 3
 
 ; files_list: ; filename:
 fn_bezel_l: db "ui/bezel_l.rgba2",0 

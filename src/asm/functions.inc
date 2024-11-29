@@ -1,7 +1,7 @@
 
     MACRO printChar char
-        LD A, char
-        RST.LIL 10h
+    LD A, char
+    RST.LIL 10h
     ENDMACRO
 
 ; Simulated call to subroutine at HL
@@ -9,9 +9,9 @@
 ; outputs: whatever the subroutine does, including HL and BC
 ; destroys: only what the subroutine does, but always BC
     MACRO callHL
-        ld bc,$+7     ; Address of first instruction after the jump
-        push bc       ; which constitutes the return address
-        jp   (hl)     ; Jump to the address in HL
+    ld bc,$+7 ; Address of first instruction after the jump
+    push bc ; which constitutes the return address
+    jp (hl) ; Jump to the address in HL
     ENDMACRO
 
 ; Simulated call to subroutine at IX
@@ -19,9 +19,9 @@
 ; outputs: whatever the subroutine does, including IX and BC
 ; destroys: only what the subroutine does, but always BC
     MACRO callIX
-        ld bc,$+7     ; Address of first instruction after the jump
-        push bc       ; which constitutes the return address
-        jp   (ix)     ; Jump to the address in IX
+    ld bc,$+7 ; Address of first instruction after the jump
+    push bc ; which constitutes the return address
+    jp (ix) ; Jump to the address in IX
     ENDMACRO
 
 ; Simulated call to soubroutinte at IY
@@ -29,19 +29,19 @@
 ; outputs: whatever the subroutine does, including IY and BC
 ; destroys: only what the subroutine does, but always BC
     MACRO callIY
-        ld bc,$+7     ; Address of first instruction after the jump
-        push bc       ; which constitutes the return address
-        jp   (iy)     ; Jump to the address in IY
+    ld bc,$+7 ; Address of first instruction after the jump
+    push bc ; which constitutes the return address
+    jp (iy) ; Jump to the address in IY
     ENDMACRO
 
 ; put the value in HLU into the accumulator
 ; destroys: af
     MACRO HLU_TO_A
-        push hl ; 4 cycles
-        inc sp ; 1 cycle
-        pop af  ; 4 cycles
-        dec sp ; 1 cycle
-               ; 10 cycles total
+    push hl ; 4 cycles
+    inc sp ; 1 cycle
+    pop af ; 4 cycles
+    dec sp ; 1 cycle
+    ; 10 cycles total
     ENDMACRO
 
 A_TO_HLU:
@@ -50,7 +50,7 @@ A_TO_HLU:
     ld (@scratch+2),a ; 5 cycles
     ld hl,(@scratch) ; 7 cycles
     ret ; 6 cycles
-        ; 25 cycles total
+    ; 25 cycles total
 @scratch: dl 0
 
     ; TODO: implement this
@@ -64,39 +64,39 @@ A_TO_HLU:
     ; ENDMACRO
 
     MACRO PUSH_ALL
-        ex af,af'
-        exx
-        push af
-        push hl
-        push bc
-        push de
+    ex af,af'
+    exx
+    push af
+    push hl
+    push bc
+    push de
 
-        ex af,af'
-        exx
-        push af
-        push hl
-        push bc
-        push de
-        push ix
-        push iy
+    ex af,af'
+    exx
+    push af
+    push hl
+    push bc
+    push de
+    push ix
+    push iy
     ENDMACRO
 
     MACRO POP_ALL
-        pop iy
-        pop ix
-        pop de
-        pop bc
-        pop hl
-        pop af
-        ex af,af'
-        exx
+    pop iy
+    pop ix
+    pop de
+    pop bc
+    pop hl
+    pop af
+    ex af,af'
+    exx
 
-        pop de
-        pop bc
-        pop hl
-        pop af
-        ex af,af'
-        exx
+    pop de
+    pop bc
+    pop hl
+    pop af
+    ex af,af'
+    exx
     ENDMACRO
 
 ; Print a zero-terminated string inline with code, e.g.:
@@ -115,60 +115,60 @@ printInline:
 ; Print a zero-terminated string
 ; HL: Pointer to string
 printString:
-	PUSH	BC
-	LD		BC,0
-	LD 	 	A,0
-	RST.LIL 18h
-	POP		BC
-	RET
+    PUSH BC
+    LD BC,0
+    LD A,0
+    RST.LIL 18h
+    POP BC
+    RET
 ; print a VDU sequence
 ; HL: Pointer to VDU sequence - <1 byte length> <data>
 sendVDUsequence:
-	PUSH	BC
-	LD		BC, 0
-	LD		C, (HL)
-	RST.LIL	18h
-	POP		BC
-	RET
+    PUSH BC
+    LD BC, 0
+    LD C, (HL)
+    RST.LIL 18h
+    POP BC
+    RET
 ; Print Newline sequence to VDP
 printNewLine:
     push af ; for some reason rst.lil 10h sets carry flag
-	LD	A, '\r'
-	RST.LIL 10h
-	LD	A, '\n'
-	RST.LIL 10h
+    LD A, '\r'
+    RST.LIL 10h
+    LD A, '\n'
+    RST.LIL 10h
     pop af
-	RET
+    RET
 
 ; Print a 24-bit HEX number
 ; HLU: Number to print
 printHex24:
     HLU_TO_A
-	CALL	printHex8
+    CALL printHex8
 ; Print a 16-bit HEX number
 ; HL: Number to print
 printHex16:
-	LD		A,H
-	CALL	printHex8
-	LD		A,L
+    LD A,H
+    CALL printHex8
+    LD A,L
 ; Print an 8-bit HEX number
 ; A: Number to print
 printHex8:
-	LD		C,A
-	RRA 
-	RRA 
-	RRA 
-	RRA 
-	CALL	@F
-	LD		A,C
+    LD C,A
+    RRA 
+    RRA 
+    RRA 
+    RRA 
+    CALL @F
+    LD A,C
 @@:
-	AND		0Fh
-	ADD		A,90h
-	DAA
-	ADC		A,40h
-	DAA
-	RST.LIL	10h
-	RET
+    AND 0Fh
+    ADD A,90h
+    DAA
+    ADC A,40h
+    DAA
+    RST.LIL 10h
+    RET
 
 printHexA:
     push af
@@ -286,46 +286,46 @@ printHexUIX:
 
 ; Print a 0x HEX prefix
 DisplayHexPrefix:
-	LD	A, '0'
-	RST.LIL 10h
-	LD	A, 'x'
-	RST.LIL 10h
-	RET
+    LD A, '0'
+    RST.LIL 10h
+    LD A, 'x'
+    RST.LIL 10h
+    RET
 
     MACRO printDecBC
-        push hl
-        push bc
-        pop hl
-        call printDec
-        pop hl
+    push hl
+    push bc
+    pop hl
+    call printDec
+    pop hl
     ENDMACRO
 
     MACRO printDecDE
-        push hl
-        push de
-        pop hl
-        call printDec
-        pop hl
+    push hl
+    push de
+    pop hl
+    call printDec
+    pop hl
     ENDMACRO
 
     MACRO printDecHL
-        call printDec
+    call printDec
     ENDMACRO
 
     MACRO printDecIX
-        push hl
-        push ix
-        pop hl
-        call printDec
-        pop hl
+    push hl
+    push ix
+    pop hl
+    call printDec
+    pop hl
     ENDMACRO
 
     MACRO printDecIY
-        push hl
-        push iy
-        pop hl
-        call printDec
-        pop hl
+    push hl
+    push iy
+    pop hl
+    call printDec
+    pop hl
     ENDMACRO
 
 
@@ -340,25 +340,25 @@ printDec:
     push de
     push hl
 ; END MY CODE
-	LD	 DE, _printDecBuffer
-	CALL u24_to_ascii
+    LD DE, _printDecBuffer
+    CALL u24_to_ascii
 ; BEGIN MY CODE
 ; replace leading zeroes with spaces
-    LD	 HL, _printDecBuffer
-    ld   B, 7 ; if HL was 0, we want to keep the final zero 
+    LD HL, _printDecBuffer
+    ld B, 7 ; if HL was 0, we want to keep the final zero 
 @loop:
-    LD	 A, (HL)
-    CP	 '0'
-    JP	 NZ, @done
-    LD   A, ' '
-    LD	 (HL), A
-    INC	 HL
+    LD A, (HL)
+    CP '0'
+    JP NZ, @done
+    LD A, ' '
+    LD (HL), A
+    INC HL
     ; CALL vdu_cursor_forward
     DJNZ @loop
 @done:
 ; END MY CODE
-	LD	 HL, _printDecBuffer
-	CALL printString
+    LD HL, _printDecBuffer
+    CALL printString
 ; BEGIN MY CODE
 ; restore all the things
     pop hl
@@ -366,7 +366,7 @@ printDec:
     pop bc
     pop af
 ; END MY CODE
-	RET
+    RET
 _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
 
 ; This routine converts the unsigned 24-bit value in HLU into it's ASCII representation, 
@@ -375,31 +375,31 @@ _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
 ; HL : Value to convert to string
 ; DE : pointer to buffer, at least 8 byte + 0
 u24_to_ascii:
-	LD	 BC,-10000000
-	CALL @one_digit
-	LD	 BC,-1000000
-	CALL @one_digit
-	LD	 BC,-100000
-	CALL @one_digit
-	LD   BC,-10000
-	CALL @one_digit
-	LD   BC,-1000
-	CALL @one_digit
-	LD   BC,-100
-	CALL @one_digit
-	LD   C,-10
-	CALL @one_digit
-	LD   C,B
+    LD BC,-10000000
+    CALL @one_digit
+    LD BC,-1000000
+    CALL @one_digit
+    LD BC,-100000
+    CALL @one_digit
+    LD BC,-10000
+    CALL @one_digit
+    LD BC,-1000
+    CALL @one_digit
+    LD BC,-100
+    CALL @one_digit
+    LD C,-10
+    CALL @one_digit
+    LD C,B
 @one_digit:
-	LD   A,'0'-1
+    LD A,'0'-1
 @divide_me:
-	INC  A
-	ADD  HL,BC
-	JR   C,@divide_me
-	SBC  HL,BC
-	LD   (DE),A
-	INC  DE
-	RET
+    INC A
+    ADD HL,BC
+    JR C,@divide_me
+    SBC HL,BC
+    LD (DE),A
+    INC DE
+    RET
 
 print_u24:
     push de
@@ -423,47 +423,47 @@ u168_to_ascii:
     ld (de),a
     inc de
 ; Convert integer part
-    push hl               ; Save HL (we’ll need the fractional part later)
-    call hlu_udiv256    ; Shift to get integer portion in HL
-    ld   bc, -10000
+    push hl ; Save HL (we’ll need the fractional part later)
+    call hlu_udiv256 ; Shift to get integer portion in HL
+    ld bc, -10000
     call @one_int
-    ld   bc, -1000
+    ld bc, -1000
     call @one_int
-    ld   bc, -100
+    ld bc, -100
     call @one_int
-    ld   c, -10
+    ld c, -10
     call @one_int
-    ld   c, b
+    ld c, b
     call @one_int
-    jp   @frac            ; Jump to fractional part conversion
+    jp @frac ; Jump to fractional part conversion
 @one_int:
-    ld   a, '0' - 1       ; Start ASCII character at '0'
+    ld a, '0' - 1 ; Start ASCII character at '0'
 @divide_me:
-    inc  a
-    add  hl, bc           ; Accumulate until overflow
-    jr   c, @divide_me
-    sbc  hl, bc           ; Remove excess after overflow
-    ld   (de), a          ; Store ASCII digit
-    inc  de
+    inc a
+    add hl, bc ; Accumulate until overflow
+    jr c, @divide_me
+    sbc hl, bc ; Remove excess after overflow
+    ld (de), a ; Store ASCII digit
+    inc de
     ret
 ; Convert fractional part
 @frac:
-    ld   a, '.'           ; Decimal point
-    ld   (de), a
-    inc  de
-    pop  hl               ; Restore HL with original fraction
-    ld   b, 3             ; Loop counter for 3 fractional digits
+    ld a, '.' ; Decimal point
+    ld (de), a
+    inc de
+    pop hl ; Restore HL with original fraction
+    ld b, 3 ; Loop counter for 3 fractional digits
 @frac_loop:
-    ld   h, 10            ; Load multiplier for fractional part
-    mlt  hl               ; Multiply by 10, result in HL (H holds the integer part)
-    ld   a, '0'
-    add  a, h             ; Convert integer part to ASCII
-    ld   (de), a
-    inc  de
-    djnz @frac_loop       ; Repeat for each fractional digit
+    ld h, 10 ; Load multiplier for fractional part
+    mlt hl ; Multiply by 10, result in HL (H holds the integer part)
+    ld a, '0'
+    add a, h ; Convert integer part to ASCII
+    ld (de), a
+    inc de
+    djnz @frac_loop ; Repeat for each fractional digit
 ; Add null terminator
-    xor  a                ; Null terminator
-    ld   (de), a
+    xor a ; Null terminator
+    ld (de), a
     ret
 
 print_u168:
@@ -597,9 +597,9 @@ print_s168_a:
 ; print the binary representation of the 8-bit value in a
 ; destroys a, hl, bc
 printBin8:
-    ld b,8      ; loop counter for 8 bits
-    ld hl,@cmd  ; set hl to the low byte of the output string
-                ; (which will be the high bit of the value in a)
+    ld b,8 ; loop counter for 8 bits
+    ld hl,@cmd ; set hl to the low byte of the output string
+    ; (which will be the high bit of the value in a)
 @loop:
     rlca ; put the next highest bit into carry
     jr c,@one
@@ -611,10 +611,10 @@ printBin8:
     inc hl
     djnz @loop
 ; print it
-	ld hl,@cmd         
-	ld bc,@end-@cmd    
-	rst.lil $18         
-	ret
+    ld hl,@cmd 
+    ld bc,@end-@cmd 
+    rst.lil $18 
+    ret
 @cmd: ds 8 ; eight bytes for eight bits
 @end:
 
@@ -622,9 +622,9 @@ printBin8:
 ; in reverse order (lsb first)
 ; destroys a, hl, bc
 printBin8Rev:
-    ld b,8      ; loop counter for 8 bits
-    ld hl,@cmd  ; set hl to the low byte of the output string
-                ; (which will be the high bit of the value in a)
+    ld b,8 ; loop counter for 8 bits
+    ld hl,@cmd ; set hl to the low byte of the output string
+    ; (which will be the high bit of the value in a)
 @loop:
     rrca ; put the next lowest bit into carry
     jr c,@one
@@ -636,10 +636,10 @@ printBin8Rev:
     inc hl
     djnz @loop
 ; print it
-	ld hl,@cmd         
-	ld bc,@end-@cmd    
-	rst.lil $18         
-	ret
+    ld hl,@cmd 
+    ld bc,@end-@cmd 
+    rst.lil $18 
+    ret
 @cmd: ds 8 ; eight bytes for eight bits
 @end:
 
@@ -656,7 +656,7 @@ stepRegistersHex:
     ld (uix),ix
     ld (uiy),iy
     push af ; fml
-    pop hl  ; thanks, zilog
+    pop hl ; thanks, zilog
     ld (uaf),hl
     push af ; dammit
 
@@ -705,7 +705,7 @@ stepRegistersHex:
     call printNewLine
 
 ; check for right shift key and quit if pressed
-	MOSCALL mos_getkbmap
+    MOSCALL mos_getkbmap
 @stayhere:
 ; 7 RightShift
     bit 6,(ix+0)
@@ -739,7 +739,7 @@ dumpRegistersHex:
     ld (uix),ix
     ld (uiy),iy
     push af ; fml
-    pop hl  ; thanks, zilog
+    pop hl ; thanks, zilog
     ld (uaf),hl
     push af ; dammit
 
@@ -899,8 +899,8 @@ dumpUDEUHLHex:
     call printString
     ld hl,(ude)
     call printHex24
-	ld a,'.'	; print a dot to separate the values
-	rst.lil 10h
+    ld a,'.' ; print a dot to separate the values
+    rst.lil 10h
     ld hl,(uhl)
     call printHex24
     call printNewLine
@@ -948,7 +948,7 @@ dumpFlags:
     pop hl ; flags are now in l
     ld a,l ; flags are now in a
     call printBin8
-	call printNewLine
+    call printNewLine
 ; restore everything
     ld hl, (uhl)
     ld bc, (ubc)

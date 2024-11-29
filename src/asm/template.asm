@@ -1,16 +1,16 @@
-    assume adl=1   
-    org 0x040000    
+    assume adl=1 
+    org 0x040000 
 
     ; include "mos_api.inc"
 
-    jp start       
+    jp start 
 
-    align 64      
-    db "MOS"       
-    db 00h         
+    align 64 
+    db "MOS" 
+    db 00h 
     db 01h
 
-start:              
+start: 
     push af
     push bc
     push de
@@ -36,15 +36,15 @@ exit:
 ; API includes
     ; include "functions.inc"
     ; include "vdu.inc"
-	; include "maths.inc"
-	; include "trig24fast.inc"
-	; include "fixed24.inc"
-	; include "files.inc"
+    ; include "maths.inc"
+    ; include "trig24fast.inc"
+    ; include "fixed24.inc"
+    ; include "files.inc"
     ; include "timer.inc"
 
 ; --- INITIALIZATION ---
 init:
-   ret
+    ret
 
 ; --- MAIN PROGRAM ---
 main:

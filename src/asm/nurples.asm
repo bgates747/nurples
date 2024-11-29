@@ -1,20 +1,20 @@
-    assume adl=1   
-    org 0x040000    
+    assume adl=1 
+    org 0x040000 
     include "mos_api.inc"
-    jp start       
-    align 64      
-    db "MOS"       
-    db 00h         
-    db 01h       
+    jp start 
+    align 64 
+    db "MOS" 
+    db 00h 
+    db 01h 
 
-start:              
+start: 
     push af
     push bc
     push de
     push ix
     push iy
-	call	init
-	call 	main
+    call init
+    call main
 
 exit:
     pop iy
@@ -26,23 +26,23 @@ exit:
 
     ret
 
-	include "functions.inc"
-	include "maths.inc"
-	include "enemies.inc"
-	include "files.inc"
-	include "fixed168.inc"
-	include "images.inc"
-	include "images_sprites.inc"
-	include "images_ui.inc"
-	include "laser.inc"
-	include "levels.inc"
-	include "player.inc"
-	include "sprites.inc"
-	include "tiles.inc"
-	include "timer.inc"
-	include "vdu.inc"
-	include "vdu_plot.inc"
-	include "vdu_sprites.inc"
+    include "functions.inc"
+    include "maths.inc"
+    include "enemies.inc"
+    include "files.inc"
+    include "fixed168.inc"
+    include "images.inc"
+    include "images_sprites.inc"
+    include "images_ui.inc"
+    include "laser.inc"
+    include "levels.inc"
+    include "player.inc"
+    include "sprites.inc"
+    include "tiles.inc"
+    include "timer.inc"
+    include "vdu.inc"
+    include "vdu_plot.inc"
+    include "vdu_sprites.inc"
 
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"
@@ -63,45 +63,45 @@ init:
 ; 	call vdu_enable_channels
 
 ; set text background color
-	ld a,26+128 ; violet
-	call vdu_colour_text
+    ld a,26+128 ; violet
+    call vdu_colour_text
 
 ; set text foreground color
-	ld a,47 ; aaaaff lavenderish
-	call vdu_colour_text
+    ld a,47 ; aaaaff lavenderish
+    call vdu_colour_text
 
 ; set gfx bg color
-	xor a ; plotting mode 0
-	ld a,26+128 ; violet
-	call vdu_gcol
-	call vdu_cls
+    xor a ; plotting mode 0
+    ld a,26+128 ; violet
+    call vdu_gcol
+    call vdu_cls
 
 ; set the cursor off
-	call vdu_cursor_off
+    call vdu_cursor_off
 
 ; VDU 28, left, bottom, right, top: Set text viewport **
 ; MIND THE LITTLE-ENDIANESS
 ; inputs: c=left,b=bottom,e=right,d=top
-	ld c,0 ; left
-	ld d,29 ; top
-	ld e,39 ; right
-	ld b,29; bottom
-	call vdu_set_txt_viewport
+    ld c,0 ; left
+    ld d,29 ; top
+    ld e,39 ; right
+    ld b,29; bottom
+    call vdu_set_txt_viewport
 
 ; print loading ui message
-	ld hl,loading_ui
-	call printString
-	call vdu_flip
+    ld hl,loading_ui
+    call printString
+    call vdu_flip
 
 ; load UI images
-	call load_ui_images
+    call load_ui_images
 
 ; ; load fonts ; TODO
 ; 	call load_font_rc
 
 ; load sprites
-	call img_load_init ; sets up the animated load screen
-	call load_sprite_images
+    call img_load_init ; sets up the animated load screen
+    call load_sprite_images
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers
@@ -112,51 +112,51 @@ init:
 ; 	call sfx_load_main
 
 ; print loading complete message and wait for user keypress
-	call vdu_cls
-	ld hl,loading_complete
-	call printString
-	call vdu_flip 
-	call waitKeypress
+    call vdu_cls
+    ld hl,loading_complete
+    call printString
+    call vdu_flip 
+    call waitKeypress
 
 ; set up display for gameplay
     ; ld a,8
-	ld a,20
+    ld a,20
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
-	call vdu_cursor_off
+    call vdu_cursor_off
 ; plot bezel art
-	ld hl,BUF_BEZEL_L
-	call vdu_buff_select
-	ld bc,0
-	ld de,0
-	call vdu_plot_bmp
-	ld hl,BUF_BEZEL_R
-	call vdu_buff_select
-	ld bc,384
-	ld de,0
-	call vdu_plot_bmp
+    ld hl,BUF_BEZEL_L
+    call vdu_buff_select
+    ld bc,0
+    ld de,0
+    call vdu_plot_bmp
+    ld hl,BUF_BEZEL_R
+    call vdu_buff_select
+    ld bc,384
+    ld de,0
+    call vdu_plot_bmp
 ; set gfx origin and viewport to playing field window
-	ld bc,origin_left
-	ld de,origin_top
-	call vdu_set_gfx_origin
-	ld bc,field_left
-	ld de,field_top
-	ld ix,field_right
-	ld iy,field_bottom
-	call vdu_set_gfx_viewport
+    ld bc,origin_left
+    ld de,origin_top
+    call vdu_set_gfx_origin
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
 ; set background color
-	ld a,26+128 ; violet
-	call vdu_gcol
-	call vdu_clg
+    ld a,26+128 ; violet
+    call vdu_gcol
+    call vdu_clg
 ; VDU 28, left, bottom, right, top: Set text viewport **
-	ld c,0 ; left
-	ld d,0 ; top
-	ld e,62 ; right
-	ld b,7; bottom
-	call vdu_set_txt_viewport
+    ld c,0 ; left
+    ld d,0 ; top
+    ld e,62 ; right
+    ld b,7; bottom
+    call vdu_set_txt_viewport
 
-	ret
+    ret
 
 ; origin_top: equ 48
 origin_top: equ 0 ; DEBUG
@@ -180,56 +180,56 @@ speed_player: equ 0x000300 ; 3 pixels per frame
 
 main:
 ; start a new game
-	call new_game
+    call new_game
 
 main_loop:
 ; scroll tiles
-	call tiles_plot
+    call tiles_plot
 
 ; get player input and update sprite position
-	call player_input
+    call player_input
 
 ; move enemies
-	call move_enemies
+    call move_enemies
 
 ; wait for the next vblank mitigate flicker and for loop timing
-	call vdu_vblank
+    call vdu_vblank
 
 ; poll keyboard
-    ld a, $08                           ; code to send to MOS
-    rst.lil $08                         ; get IX pointer to System Variables
+    ld a, $08 ; code to send to MOS
+    rst.lil $08 ; get IX pointer to System Variables
     
-    ld a, (ix + $05)                    ; get ASCII code of key pressed
-    cp 27                               ; check if 27 (ascii code for ESC)   
-    jp z, main_end                      ; if pressed, jump to exit
+    ld a, (ix + $05) ; get ASCII code of key pressed
+    cp 27 ; check if 27 (ascii code for ESC)   
+    jp z, main_end ; if pressed, jump to exit
 
     jp main_loop
 
 main_end:
     call vdu_cursor_on
-	ret
+    ret
 
 new_game:
 ; initialize sprites
-	call sprites_init
+    call sprites_init
 
 ; initialize the first level
-	xor a
-	ld (cur_level),a
-	call init_level
+    xor a
+    ld (cur_level),a
+    call init_level
 
 ; initialize player
-	call player_init
+    call player_init
 
 ; spawn an enemy sprite
-	ld b,table_max_records
+    ld b,table_max_records
 @spawn_enemy_loop:
-	push bc
-	call enemy_init_from_landing_pad
-	pop bc
-	djnz @spawn_enemy_loop
+    push bc
+    call enemy_init_from_landing_pad
+    pop bc
+    djnz @spawn_enemy_loop
 
-	ret
+    ret
 
 ; ; ###### INITIALIZE GAME #######
 ; ; clear the screen

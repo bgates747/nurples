@@ -11,25 +11,25 @@ sfx_load_main_loop:
 ; draw all the things
     call tmp_draw_all_the_things
 ; move bj
-	call move_bj
+    call move_bj
 ; print welcome message
-	ld ix,font_itc_honda
-	ld hl,hello_world
-	ld bc,32
-	ld de,2
-	call font_bmp_print
+    ld ix,font_itc_honda
+    ld hl,hello_world
+    ld bc,32
+    ld de,2
+    call font_bmp_print
 ; print current filename
-	call vdu_cls
-	ld hl,(cur_filename)
-	call printString
-	call printNewLine
+    call vdu_cls
+    ld hl,(cur_filename)
+    call printString
+    call printNewLine
 
 ; print current load stopwatch
-	ld hl,loading_time
-	call printString
-	call stopwatch_get ; hl = elapsed time in 120ths of a second
-	call printDec
-	
+    ld hl,loading_time
+    call printString
+    call stopwatch_get ; hl = elapsed time in 120ths of a second
+    call printDec
+    
 ; flip screen 
     call vdu_flip 
 ; ; delay for a bit so sound can play
@@ -37,7 +37,7 @@ sfx_load_main_loop:
 ;     call multiPurposeDelay
 ; decrement loop counter
     pop bc
-	dec bc
+    dec bc
     ld a,c
     or a
     jp nz,sfx_load_main_loop
@@ -48,30 +48,30 @@ sfx_load_main_loop:
 
 load_next_sound:
 ; look up the load routine for the current file index
-	ld hl,(cur_file_idx) 
-	add hl,hl ; multiply current index by 2 ...
-	ld de,(cur_file_idx)
-	add hl,de ; ... now by 3
-	ld de,(cur_load_jump_table) ; tack it on to the base address of the jump table
-	add hl,de 
-	ld hl,(hl) ; hl is pointing to load routine address
-	ld (@jump_addr+1),hl ; self-modifying code ...
+    ld hl,(cur_file_idx) 
+    add hl,hl ; multiply current index by 2 ...
+    ld de,(cur_file_idx)
+    add hl,de ; ... now by 3
+    ld de,(cur_load_jump_table) ; tack it on to the base address of the jump table
+    add hl,de 
+    ld hl,(hl) ; hl is pointing to load routine address
+    ld (@jump_addr+1),hl ; self-modifying code ...
 @jump_addr:
-	call 0 ; call the sound load routine
+    call 0 ; call the sound load routine
 ; look up the buffer id for the current file
-	ld hl,(cur_file_idx) 
-	add hl,hl ; multiply current index by 2 ...
-	ld de,(cur_file_idx)
-	add hl,de ; ... now by 3
-	ld de,(cur_buffer_id_lut) ; tack it on to the base address of the lookup table
-	add hl,de 
-	ld hl,(hl)
-	ld (cur_buffer_id),hl
+    ld hl,(cur_file_idx) 
+    add hl,hl ; multiply current index by 2 ...
+    ld de,(cur_file_idx)
+    add hl,de ; ... now by 3
+    ld de,(cur_buffer_id_lut) ; tack it on to the base address of the lookup table
+    add hl,de 
+    ld hl,(hl)
+    ld (cur_buffer_id),hl
 ; bump the current file index
-	ld hl,(cur_file_idx)
-	inc hl
-	ld (cur_file_idx),hl
-	ret
+    ld hl,(cur_file_idx)
+    inc hl
+    ld (cur_file_idx),hl
+    ret
 
 ; load a sound file to a buffer
 ; inputs: hl = bufferId ; ix = file size ; iy = pointer to filename
@@ -79,12 +79,12 @@ vdu_load_sfx:
 ; back up input parameters
     push hl ; bufferId
 ; load the sound
-	call vdu_load_buffer_from_file
+    call vdu_load_buffer_from_file
 ; now make the buffer a sound sample
     pop hl ; bufferId
-	xor a ; zero is the magic number for 8-bit signed PCM 16KHz
+    xor a ; zero is the magic number for 8-bit signed PCM 16KHz
     ; push hl ; bufferId
-	call vdu_buffer_to_sound 
+    call vdu_buffer_to_sound 
 ; ; play the loaded sound
 ;     ld c,0 ; channel
 ;     ld b,127 ; full volume

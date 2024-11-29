@@ -5,17 +5,17 @@
     include "macros.inc"
 
 ;MOS INITIALIATION MUST GO HERE BEFORE ANY OTHER CODE
-    .assume adl=1   
-    .org 0x040000    
+    .assume adl=1 
+    .org 0x040000 
 
-    jp start       
+    jp start 
 
-    .align 64      
-    .db "MOS"       
-    .db 00h         
-    .db 01h       
+    .align 64 
+    .db "MOS" 
+    .db 00h 
+    .db 01h 
 
-start:              
+start: 
     push af
     push bc
     push de
@@ -27,49 +27,49 @@ start:
 ; ###############################################
 
 ; ###############################################
-	call	init			; Initialization code
-	call 	main			; Call the main function
+    call init ; Initialization code
+    call main ; Call the main function
 ; ###############################################
 
 exit:
 
-    pop iy                              ; Pop all registers back from the stack
+    pop iy ; Pop all registers back from the stack
     pop ix
     pop de
     pop bc
     pop af
-    ld hl,0                             ; Load the MOS API return code (0) for no errors.
+    ld hl,0 ; Load the MOS API return code (0) for no errors.
 
-    ret                                 ; Return MOS
+    ret ; Return MOS
 
 ; after this we can put includes in any order we wish, even in between
 ; code blocks if there is any program-dependent or asethetic reason to do so
-	include "fonts.inc"
-	include "levels.inc"
-	include "sprites.inc"
+    include "fonts.inc"
+    include "levels.inc"
+    include "sprites.inc"
 ; API includes
     include "mos_api.inc"
     include "functions.inc"
     include "vdu.inc"
     include "vdu_buff.inc"
     include "vdu_plot.inc"
-	include "vdu_sprites.inc"
-	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
-	include "maths.inc"
-	include "trig24fast.inc"
-	include "fixed24.inc"
+    include "vdu_sprites.inc"
+    ; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
+    include "maths.inc"
+    include "trig24fast.inc"
+    include "fixed24.inc"
 ; App-specific includes
-	include "player.inc"
-	include "tiles.inc"
-	include "enemies.inc"
-	include "laser.inc"
-	include "timer.inc"
+    include "player.inc"
+    include "tiles.inc"
+    include "enemies.inc"
+    include "laser.inc"
+    include "timer.inc"
 
 ; new includes
-	include "images.inc"
-	include "images_sprites.inc"
-	include "images_ui.inc"
-	include "files.inc"
+    include "images.inc"
+    include "images_sprites.inc"
+    include "images_ui.inc"
+    include "files.inc"
 
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"
@@ -90,45 +90,45 @@ init:
 ; 	call vdu_enable_channels
 
 ; set text background color
-	ld a,4 + 128
-	call vdu_colour_text
+    ld a,4 + 128
+    call vdu_colour_text
 
 ; set text foreground color
-	ld a,47 ; aaaaff lavenderish
-	call vdu_colour_text
+    ld a,47 ; aaaaff lavenderish
+    call vdu_colour_text
 
 ; set gfx bg color
-	xor a ; plotting mode 0
-	ld c,4+128 ; dark blue bg
-	call vdu_gcol
-	call vdu_clg
+    xor a ; plotting mode 0
+    ld c,4+128 ; dark blue bg
+    call vdu_gcol
+    call vdu_clg
 
 ; set the cursor off
-	call vdu_cursor_off
+    call vdu_cursor_off
 
 ; VDU 28, left, bottom, right, top: Set text viewport **
 ; MIND THE LITTLE-ENDIANESS
 ; inputs: c=left,b=bottom,e=right,d=top
-	ld c,0 ; left
-	ld d,29 ; top
-	ld e,39 ; right
-	ld b,29; bottom
-	call vdu_set_txt_viewport
+    ld c,0 ; left
+    ld d,29 ; top
+    ld e,39 ; right
+    ld b,29; bottom
+    call vdu_set_txt_viewport
 
 ; print loading ui message
-	ld hl,loading_ui
-	call printString
-	call vdu_flip
+    ld hl,loading_ui
+    call printString
+    call vdu_flip
 
 ; load UI images
-	call load_ui_images
+    call load_ui_images
 
 ; ; load fonts ; TODO
 ; 	call load_font_rc
 
 ; load sprites
-	call img_load_init ; sets up the animated load screen
-	call load_sprite_images
+    call img_load_init ; sets up the animated load screen
+    call load_sprite_images
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers
@@ -139,57 +139,57 @@ init:
 ; 	call sfx_load_main
 
 ; print loading complete message and wait for user keypress
-	call vdu_cls
-	ld hl,loading_complete
-	call printString
-	call vdu_flip 
-	call waitKeypress
+    call vdu_cls
+    ld hl,loading_complete
+    call printString
+    call vdu_flip 
+    call waitKeypress
 
 ; set up display for gameplay
     ; ld a,8
-	ld a,20
+    ld a,20
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
-	ld bc,32
-	ld de,16
-	call vdu_set_gfx_origin
-	call vdu_cursor_off
+    ld bc,32
+    ld de,16
+    call vdu_set_gfx_origin
+    call vdu_cursor_off
 ; set gfx viewport to scrolling window
-	ld bc,0
-	ld de,0
-	ld ix,255
-	; ld iy,239-16
-	ld iy,384-32
-	call vdu_set_gfx_viewport
+    ld bc,0
+    ld de,0
+    ld ix,255
+    ; ld iy,239-16
+    ld iy,384-32
+    call vdu_set_gfx_viewport
 ; set background color
-	ld c,27+128 ; darkest purple in the palette
-	call vdu_gcol
-	call vdu_clg
+    ld c,27+128 ; darkest purple in the palette
+    call vdu_gcol
+    call vdu_clg
 
-	ret
+    ret
 
 new_game:
 ; initialize sprites
-	call sprites_init
+    call sprites_init
 
 ; initialize the first level
-	xor a
-	ld (cur_level),a
-	call init_level
+    xor a
+    ld (cur_level),a
+    call init_level
 
 ; initialize player
-	call player_init
+    call player_init
 
 ; spawn an enemy sprite
-	ld b,table_max_records
+    ld b,table_max_records
 @spawn_enemy_loop:
-	push bc
-	call enemy_init_from_landing_pad
-	pop bc
-	djnz @spawn_enemy_loop
+    push bc
+    call enemy_init_from_landing_pad
+    pop bc
+    djnz @spawn_enemy_loop
 
-	ret
+    ret
 
 ; ; ###### INITIALIZE GAME #######
 ; ; clear the screen
@@ -272,36 +272,36 @@ main:
 
 main_loop:
 ; move the background down one pixel
-	ld a,2 ; current gfx viewport
-	ld l,2 ; direction=down
-	ld h,1 ; speed=1 px
-	call vdu_scroll_down
+    ld a,2 ; current gfx viewport
+    ld l,2 ; direction=down
+    ld h,1 ; speed=1 px
+    call vdu_scroll_down
 
 ; scroll tiles
-	call tiles_plot
+    call tiles_plot
 
 ; get player input and update sprite position
-	call player_input
+    call player_input
 
 ; move enemies
-	call move_enemies
+    call move_enemies
 
 ; wait for the next vblank mitigate flicker and for loop timing
-	call vdu_vblank
+    call vdu_vblank
 
 ; poll keyboard
-    ld a, $08                           ; code to send to MOS
-    rst.lil $08                         ; get IX pointer to System Variables
+    ld a, $08 ; code to send to MOS
+    rst.lil $08 ; get IX pointer to System Variables
     
-    ld a, (ix + $05)                    ; get ASCII code of key pressed
-    cp 27                               ; check if 27 (ascii code for ESC)   
-    jp z, main_end                     ; if pressed, jump to exit
+    ld a, (ix + $05) ; get ASCII code of key pressed
+    cp 27 ; check if 27 (ascii code for ESC)   
+    jp z, main_end ; if pressed, jump to exit
 
     jp main_loop
 
 main_end:
     call vdu_cursor_on
-	ret
+    ret
 
 
 ; ; #### BEGIN GAME MAIN LOOP ####

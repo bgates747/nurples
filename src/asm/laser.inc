@@ -2,12 +2,12 @@
 ; uses the same offsets from its table base as the main sprite table:
 laser_start_variables: ; label marking beginning of table
 laser_id:               db table_max_records+1
-laser_type:             db     0x00 ; 1 bytes currently not used
+laser_type:             db 0x00 ; 1 bytes currently not used
 laser_base_bufferId:    dl BUF_LASER_A ; 3 bytes bitmap bufferId
 laser_move_program:     dl 0x000000 ; 3 bytes not currently used
-laser_collisions:       db     0x00 ; 1 bytes bit 0 set=alive, otherwise dead, bit 1 set=just died
-laser_dim_x:            db     0x00 ; 1 bytes sprite width in pixels
-laser_dim_y:            db     0x00 ; 1 bytes sprite height in pixels
+laser_collisions:       db 0x00 ; 1 bytes bit 0 set=alive, otherwise dead, bit 1 set=just died
+laser_dim_x:            db 0x00 ; 1 bytes sprite width in pixels
+laser_dim_y:            db 0x00 ; 1 bytes sprite height in pixels
 laser_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels
 laser_y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
 laser_xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
@@ -15,12 +15,12 @@ laser_yvel:             dl 0xFFF800 ; 3 bytes y-component velocity, 16.8 fixed, 
 laser_vel:              dl 0x000000 ; 3 bytes not currently used
 laser_heading:          dl 0x000000 ; 3 bytes sprite movement direction deg256 16.8 fixed
 laser_orientation:      dl 0x000000 ; 3 bytes not currently used
-laser_animation:        db     0x00 ; 1 bytes current sprite animation frame
-laser_animation_timer:  db     0x00 ; 1 bytes decremented every frame, when zero, advance animation
-laser_move_timer:       db     0x00 ; 1 bytes not currently used
-laser_move_step:        db     0x00 ; 1 bytes not currently used
-laser_points:           db     0x00 ; 1 bytes not currently used
-laser_shield_damage:    db     0x00 ; 1 bytes not currently used
+laser_animation:        db 0x00 ; 1 bytes current sprite animation frame
+laser_animation_timer:  db 0x00 ; 1 bytes decremented every frame, when zero, advance animation
+laser_move_timer:       db 0x00 ; 1 bytes not currently used
+laser_move_step:        db 0x00 ; 1 bytes not currently used
+laser_points:           db 0x00 ; 1 bytes not currently used
+laser_shield_damage:    db 0x00 ; 1 bytes not currently used
 laser_end_variables: ; for when we want to traverse this table in reverse
 
 ; laser_control:

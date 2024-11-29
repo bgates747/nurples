@@ -3,17 +3,17 @@
 ; outputs: sign flag set if HL is negative, zero flag set if HL is zero
 ; destroys: flags    
     MACRO sign_hlu
-        add hl,de
-        or a
-        sbc hl,de
+    add hl,de
+    or a
+    sbc hl,de
     ENDMACRO
 
 
 ;------------------------------------------------------------------------
 ; Scratch area for calculations
 ;------------------------------------------------------------------------
-scratch1:	dw24	0	;bit manipulation buffer 1
-scratch2:	dw24	0	;bit manipulation buffer 2
+scratch1: dw24 0 ;bit manipulation buffer 1
+scratch2: dw24 0 ;bit manipulation buffer 2
 
 ; absolute value of hlu
 ; returns: abs(hlu), flags set according to the incoming sign of hlu:
@@ -26,11 +26,11 @@ hlu_abs:
     or a
     sbc hl,de 
     jp m,@is_neg
-    ret         ; hlu is positive or zero so we're done
+    ret ; hlu is positive or zero so we're done
 @is_neg:
-    push af     ; otherwise, save current flags for return
+    push af ; otherwise, save current flags for return
     call neg_hlu ; negate hlu
-    pop af      ; get back flags
+    pop af ; get back flags
     ret
 
 ; flip the sign of hlu
@@ -41,27 +41,27 @@ hlu_abs:
 ;         s0,z0,pv0,n1,c1 if result is positive
 ; destroys a
 neg_hlu:
-    push de     ; save de
-    ex de,hl    ; put hl into de
-    ld hl,0     ; clear hl
-    xor a       ; clear carry
-    sbc hl,de   ; 0-hlu = -hlu
-    pop de      ; get de back
-    ret         ; easy peasy
+    push de ; save de
+    ex de,hl ; put hl into de
+    ld hl,0 ; clear hl
+    xor a ; clear carry
+    sbc hl,de ; 0-hlu = -hlu
+    pop de ; get de back
+    ret ; easy peasy
 
 ;------------------------------------------------------------------------
 ; divide hlu by 2, inspired by above
 ;------------------------------------------------------------------------
 hlu_div2:
-	ld		(scratch1),hl
-	ld		hl,scratch1+2
-	rr		(hl)
-	dec		hl
-	rr		(hl)
-	dec		hl
-	rr		(hl)
-	inc		hl
-	inc		hl
+    ld (scratch1),hl
+    ld hl,scratch1+2
+    rr (hl)
+    dec hl
+    rr (hl)
+    dec hl
+    rr (hl)
+    inc hl
+    inc hl
     ld hl,(scratch1)
     ret
 
@@ -101,37 +101,37 @@ hlu_sdiv256:
 ; returns: hlu / 256, fractional portion in a
 ; destroys: af
 hlu_udiv256:
-	xor a
-	ld (@buffer+3),a
-	ld a,l ; save the fractional portion
-	ld (@buffer),hl
-	ld hl,(@buffer+1)
-	ret
+    xor a
+    ld (@buffer+3),a
+    ld a,l ; save the fractional portion
+    ld (@buffer),hl
+    ld hl,(@buffer+1)
+    ret
 @buffer: ds 4
 
     MACRO hlu_mul256
-        add hl,hl ; * 2
-        add hl,hl ; * 4
-        add hl,hl ; * 8
-        add hl,hl ; * 16 
-        add hl,hl ; * 32
-        add hl,hl ; * 64
-        add hl,hl ; * 128
-        add hl,hl ; * 256
+    add hl,hl ; * 2
+    add hl,hl ; * 4
+    add hl,hl ; * 8
+    add hl,hl ; * 16 
+    add hl,hl ; * 32
+    add hl,hl ; * 64
+    add hl,hl ; * 128
+    add hl,hl ; * 256
     ENDMACRO
 
 ; compute the modulo of hlu by deu
 ; outputs: hlu = hlu % deu
 ; destroys: f, hl
 hlu_mod:
-	or a ; clear carry
+    or a ; clear carry
 @loop:
     sbc hl,de
     jp c, @end 
     jp @loop
 @end:
     add hl,de 
-	ret
+    ret
 
 
 add_bcd_arg1: db #00,#00,#00,#00

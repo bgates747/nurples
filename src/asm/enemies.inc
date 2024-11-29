@@ -59,7 +59,7 @@ move_enemies_loop:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
-    jp (hl)  ; ... and jump to it
+    jp (hl) ; ... and jump to it
 ; we always jp back here from behavior subroutines
 move_enemies_loop_return:
     ld iy,(table_pointer) ; get back table pointer
@@ -170,7 +170,7 @@ move_enemy_sprite:
     add hl,de
     ld (iy+sprite_y),hl
 ; detect screen edge collisions
-    xor a  ; reset screen edge collision flag and clear carry
+    xor a ; reset screen edge collision flag and clear carry
     ld (sprite_screen_edge),a
 ; y-axis first since we already have it in hl
     ld de,-sprite_top*256
@@ -296,7 +296,7 @@ enemy_init_from_landing_pad:
 ; copy coordinates of active sprite to new sprite
     ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
     ; ld hl,(iy+sprite_x)
-	; ld hl,0x008000 ; debug
+    ; ld hl,0x008000 ; debug
     
     call rand_8
     ld hl,0
@@ -322,26 +322,26 @@ enemy_init_from_landing_pad:
 ; finally, make the new sprite visible
     call vdu_sprite_show
     ret
-@id:               db     0x00 ; 1 bytes unique spriteId, zero-based
-@type:             db enemy_small ; 1 bytes type of sprite as defined in enemies.inc
-@base_bufferId:    dl BUF_SEEKER_000 ; 3 bytes bitmap bufferId
-@move_program:     dl move_enemy_small ; 3 bytes address of sprite's behavior subroutine
-@collisions:       db %00000011 ; 3 bytes collides with enemy and laser
-@dim_x:            db     0x10 ; 1 bytes sprite width in pixels
-@dim_y:            db     0x10 ; 1 bytes sprite height in pixels
-@x:                dl 0x000000 ; 1 bytes 16.8 fractional x position in pixels
-@y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
-@xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
-@yvel:             dl 0x000000 ; 3 bytes y-component velocity, 16.8 fixed, pixels
-@vel:              dl speed_seeker ; 3 bytes velocity, 16.8 fixed, pixels 
-@heading:          dl 0x008000 ; 3 bytes sprite movement direction deg256 16.8 fixed
-@orientation:      dl 0x008000 ; 3 bytes orientation bits
-@animation:        db     0x00 ; 1 bytes current animation index, zero-based
-@animation_timer:  db     0x00 ; 1 bytes when hits zero, draw next animation
-@move_timer:       db     0x01 ; 1 bytes when zero, go to next move program, or step
-@move_step:        db     0x00 ; 1 bytes stage in a move program sequence, varies
-@points:           db     0x20 ; 1 bytes points awarded for killing this sprite type, BCD
-@shield_damage:    db     0x02 ; 1 bytes shield points deducted for collision, binary
+@id:                    db 0x00 ; 1 bytes unique spriteId, zero-based
+@type:                  db enemy_small ; 1 bytes type of sprite as defined in enemies.inc
+@base_bufferId:         dl BUF_SEEKER_000 ; 3 bytes bitmap bufferId
+@move_program:          dl move_enemy_small ; 3 bytes address of sprite's behavior subroutine
+@collisions:            db %00000011 ; 3 bytes collides with enemy and laser
+@dim_x:                 db 0x10 ; 1 bytes sprite width in pixels
+@dim_y:                 db 0x10 ; 1 bytes sprite height in pixels
+@x:                     dl 0x000000 ; 1 bytes 16.8 fractional x position in pixels
+@y:                     dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
+@xvel:                  dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+@yvel:                  dl 0x000000 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+@vel:                   dl speed_seeker ; 3 bytes velocity, 16.8 fixed, pixels 
+@heading:               dl 0x008000 ; 3 bytes sprite movement direction deg256 16.8 fixed
+@orientation:           dl 0x008000 ; 3 bytes orientation bits
+@animation:             db 0x00 ; 1 bytes current animation index, zero-based
+@animation_timer:       db 0x00 ; 1 bytes when hits zero, draw next animation
+@move_timer:            db 0x01 ; 1 bytes when zero, go to next move program, or step
+@move_step:             db 0x00 ; 1 bytes stage in a move program sequence, varies
+@points:                db 0x20 ; 1 bytes points awarded for killing this sprite type, BCD
+@shield_damage:         db 0x02 ; 1 bytes shield points deducted for collision, binary
 
 ; move_laser_turret:
 ; ; compute orientation to player
