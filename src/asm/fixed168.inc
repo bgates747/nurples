@@ -1,91 +1,3 @@
-; multiply HL by 256
-; inputs: HL
-; outputs: HL*256
-; destroys: flags
-    MACRO hlu_mul256
-        add hl,hl ; * 2
-        add hl,hl ; * 4
-        add hl,hl ; * 8
-        add hl,hl ; * 16 
-        add hl,hl ; * 32
-        add hl,hl ; * 64
-        add hl,hl ; * 128
-        add hl,hl ; * 256
-    ENDMACRO
-
-; test the sign of HL
-; inputs: HL obviously
-; outputs: sign flag set if HL is negative, zero flag set if HL is zero
-; destroys: flags    
-    MACRO sign_hlu
-        add hl,de
-        or a
-        sbc hl,de
-    ENDMACRO
-
-; hlu signed division by 256
-; returns: hlu / 256
-; destroys: af
-hlu_sdiv256:
-    xor a ; assume hl is positive
-    ld (@buffer),hl
-    sign_hlu
-    jp p,@hl_pos
-    dec a
-@hl_pos:
-    ld (@buffer+3),a
-    ld hl,(@buffer+1)
-    ret
-@buffer: ds 4
-
-; hlu 1 byte right shift, unsigned
-; returns: hlu / 256, fractional portion in a
-; destroys: af
-hlu_udiv256:
-	xor a
-	ld (@buffer+3),a
-	ld a,l ; save the fractional portion
-	ld (@buffer),hl
-	ld hl,(@buffer+1)
-	ret
-@buffer: ds 4
-
-; absolute value of hlu
-; returns: abs(hlu), flags set according to the incoming sign of hlu:
-;         s1,z0,pv0,n1,c0 if hlu was negative
-;         s0,z1,pv0,n1,c0 if hlu was zero
-;         s0,z0,pv0,n1,c0 if hlu was positive
-; destroys: a
-hlu_abs:
-    add hl,de
-    or a
-    sbc hl,de 
-    jp m,@is_neg
-    ret         ; hlu is positive or zero so we're done
-@is_neg:
-    push af     ; otherwise, save current flags for return
-    call neg_hlu ; negate hlu
-    pop af      ; get back flags
-    ret
-
-; flip the sign of hlu
-; inputs: hlu
-; returns: 0-hlu, flags set appropriately for the result:
-;         s1,z0,pv0,n1,c1 if result is negative
-;         s0,z1,pv0,n1,c0 if result is zero
-;         s0,z0,pv0,n1,c1 if result is positive
-; destroys a
-neg_hlu:
-    push de     ; save de
-    ex de,hl    ; put hl into de
-    ld hl,0     ; clear hl
-    xor a       ; clear carry
-    sbc hl,de   ; 0-hlu = -hlu
-    pop de      ; get de back
-    ret         ; easy peasy
-
-    ; include "fixed24.inc"
-
 ; multiply a signed 24-bit number by an unsigned 8-bit number giving a signed 24-bit result
 ; uses EZ80 MLT instruction for speed
 ; operation: UHL * A --> UHL
@@ -149,7 +61,7 @@ mul24out: blkb 6,0
 mul24:
 	push ix ; preserve
 ; point to output buffer and clear it
-	ld ix,mul24out 
+	ld ix,mul24out
 	push bc
 	ld bc,0
 	ld (ix),bc
@@ -306,7 +218,7 @@ sdiv168:
 	ret
 
 ;------------------------------------------------------------------------
-;  arith24.asm 
+;  arith24.asm
 ;  24-bit ez80 arithmetic routines
 ;  Copyright (c) Shawn Sijnstra 2024
 ;  MIT license
@@ -314,14 +226,14 @@ sdiv168:
 ;  This library was created as a tool to help make ez80
 ;  24-bit native assembly routines for simple mathematical problems
 ;  more widely available.
-;  
+;
 ;------------------------------------------------------------------------
 ;
 ;------------------------------------------------------------------------
 ; udiv24
 ; Unsigned 24-bit division
 ; Divides HLU by DEU. Gives result in DEU (and BC), remainder in HLU.
-; 
+;
 ; Uses AF BC DE HL
 ; Uses Restoring Division algorithm
 ;------------------------------------------------------------------------
@@ -375,12 +287,30 @@ deg_360_to_256:
 ; make angle positive and store sign flag
 	call hlu_abs
 	push af
-; multiply by 256 first to keep precision
-	hlu_mul256 ; uh.l = uh.l * 256
-; divide uh.l by 360
-	ld de,360
-	call udiv24 ; ud.e = degrees / 360
-	ex de,hl    ; uh.l = degrees / 360
+; multiply by coversion factor of 256/360
+	ld de,0x0000B6 ; 0.711
+	call umul168 ; uh.l = uh.l * 0.711
+; restore sign flag and adjust output accordingly
+	pop af
+	jp p,@pos ; positive number
+	call neg_hlu
+@pos:
+; restore de and return uh.l as the result
+	pop de
+	ret
+
+; convert signed angles from a 256 to 360 degree circle
+; inputs: uh.l is the angle256 in 16.8 fixed format
+; outputs: uh.l is the angle360 in 16.8 fixed format
+; destroys: TODO
+deg_256_to_360:
+	push de ; preserve de
+; make angle positive and store sign flag
+	call hlu_abs
+	push af
+; multiply by coversion factor of 360/256
+    ld de,0x000168 ; 1.406
+	call umul168 ; uh.l = uh.l * 1.406
 ; restore sign flag and adjust output accordingly
 	pop af
 	jp p,@pos ; positive number
@@ -437,7 +367,7 @@ polar_to_cartesian:
     call sin168 ; uh.l = sin(uh.l)
 	ld de,(@radius)
 	call smul168 ; uh.l = dx
-    push hl      
+    push hl
 ; compute dy = -cos(uh.l) * ud.e
     ld hl,(@angle)
     call cos168 ; uh.l = cos(uh.l)
@@ -483,12 +413,14 @@ dy168: blkb 6,0
 ; output; uh.l is the 16.8 fixed format distance
 ;         also populates scratch locations dx168 and dy168
 ; destroys: a,hl,bc,de
+; NOTE: rounds both deltas down to the nearest integer to avoid overflow when squaring,
+;       thus the result will always be an integer, albeit in 16.8 format
 distance168:
 	call dxy168 ; ub.c = dx, ud.e = dy
 ; compute dy^2
 	ex de,hl
 	call hlu_abs
-	call hlu_udiv256 ; make integer to avoid overflow for dy >= 256
+	call hlu_udiv256 ; make integer to avoid overflow
 	push hl
 	pop de
 	call umul24 ; hl = dy^2
@@ -496,19 +428,17 @@ distance168:
 ; compute dx^2
 	ld hl,(dx168)
 	call hlu_abs
-	call hlu_udiv256 ; make integer to avoid overflow for dx >= 256
+	call hlu_udiv256 ; make integer to avoid overflow
 	push hl
 	pop de
 	call umul24 ; hl = dx^2
 ; add dx^2 and dy^2
 	pop de ; de = dy^2 (was hl)
 	add hl,de ; hl = dx^2 + dy^2
-	; hlu_mul256 ; multiply by 256 to get 16.8 fixed format
-	; hlu_mul256 ; multiply by 256 to get 16.8 fixed format
 ; compute the square root
-	; call sqrt168
 	call sqrt24 ; de = sqrt(dx^2 + dy^2)
-	ex de,hl ; return value in hl
+    ex de,hl ; hl = distance
+    hlu_mul256 ; convert back to 16.8 fixed
 	ret
 
 ; atan2_(ub.c,ud.e) --> uh.l
@@ -641,7 +571,6 @@ atan2_168fast:
 ; inputs: ub.c and ud.e are dx and dy in 16.8 fixed format
 ; output: uh.l is the 16.8 fixed format angle in degrees 256
 ; destroys: a,hl,bc,de
-; the following note was written by github copilot:
 ; note: only works for angles from 0 to 32 (45) degrees
 ;   use atan2_168fast (which calls this proc) to handle the full 256 (360) degrees
 atan_168fast:
@@ -653,7 +582,7 @@ atan_168fast:
 ; test uh.l for 0
     add hl,de
     or a
-    sbc hl,de 
+    sbc hl,de
     jr z,@is_zero
 ; test uh.l for 1
     xor a ; clear carry
@@ -685,8 +614,7 @@ atan_168fast:
 ; Expects  ADL mode
 ; Inputs:  UH.L
 ; Outputs: UH.L is the 16.8 square root
-;          UD.E is the difference inputHL-DE^2
-;          c flag reset  
+;          UDE is the integer difference inputHL-DE^2
 sqrt168:
     call sqrt24
     ex de,hl
@@ -696,207 +624,193 @@ sqrt168:
     add hl,hl
     ret
 
+; credit: xeda112358
+; https://www.cemetech.net/forum/viewtopic.php?t=11178&postdays=0&postorder=asc&start=0
 sqrt24:
 ; Expects ADL mode
 ; Inputs: HL
 ; Outputs: DE is the integer square root
-;          HL is the difference inputHL-DE^2
-;          c flag reset
-	ld de,0 ; clear output
-    xor a 
-    ld b,l 
-	; ld c, h     ; C = high byte of HL (CORRECTED)
-    push bc 
-    ld b,a 
-    ld d,a 
-    ld c,a  ; WRONG, should be h (see above)
-    ld l,a 
-    ld e,a
-; Iteration 1
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c
-    sub c 
-    jr nc,$+6 
-    inc e 
-    inc e 
-    cpl 
-    ld c,a
-	call debug_print
-; Iteration 2
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c 
-    rl e 
-    ld a,e
-    sub c 
-    jr nc,$+6 
-    inc e 
-    inc e 
-    cpl 
-    ld c,a
-	call debug_print
-; Iteration 3
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c 
-    rl e 
-    ld a,e
-    sub c 
-    jr nc,$+6 
-    inc e 
-    inc e 
-    cpl 
-    ld c,a
-	call debug_print
-; Iteration 4
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c 
-    rl e 
-    ld a,e
-    sub c 
-    jr nc,$+6 
-    inc e 
-    inc e 
-    cpl 
-    ld c,a
-	call debug_print
-; Iteration 5
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c 
-    rl e 
-    ld a,e
-    sub c 
-    jr nc,$+6 
-    inc e 
-    inc e 
-    cpl 
-    ld c,a
-	call debug_print
-; Iteration 6
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c 
-    rl e 
-    ld a,e
-    sub c 
-    jr nc,$+6 
-    inc e 
-    inc e 
-    cpl 
-    ld c,a
-	call debug_print
-; Iteration 7
-    add hl,hl 
-    rl c 
-    add hl,hl 
-    rl c 
-    rl b
-    ex de,hl 
-    add hl,hl 
-    push hl 
-    sbc hl,bc 
-    jr nc,$+8
-    ld a,h 
-    cpl 
+;  HL is the difference inputHL-DE^2
+;  c flag reset
+	ld bc,0 ; clear bcu
+	ld de,0 ; clear deu
+    xor a
+    ld b,l
+    push bc
     ld b,a
-    ld a,l 
-    cpl 
+    ld l,a
+; Iteration 1
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    sub c
+    jr nc,$+6
+    inc e
+    inc e
+    cpl
+    ld c,a
+; Iteration 2
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    rl e
+    ld a,e
+    sub c
+    jr nc,$+6
+    inc e
+    inc e
+    cpl
+    ld c,a
+; Iteration 3
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    rl e
+    ld a,e
+    sub c
+    jr nc,$+6
+    inc e
+    inc e
+    cpl
+    ld c,a
+; Iteration 4
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    rl e
+    ld a,e
+    sub c
+    jr nc,$+6
+    inc e
+    inc e
+    cpl
+    ld c,a
+; Iteration 5
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    rl e
+    ld a,e
+    sub c
+    jr nc,$+6
+    inc e
+    inc e
+    cpl
+    ld c,a
+; Iteration 6
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    rl e
+    ld a,e
+    sub c
+    jr nc,$+6
+    inc e
+    inc e
+    cpl
+    ld c,a
+; Iteration 7
+    add hl,hl
+    rl c
+    add hl,hl
+    rl c
+    rl b
+    ex de,hl
+    add hl,hl
+    push hl
+    sbc hl,bc
+    jr nc,$+8
+    ld a,h
+    cpl
+    ld b,a
+    ld a,l
+    cpl
     ld c,a
     pop hl
-    jr nc,$+4 
-    inc hl 
+    jr nc,$+4
+    inc hl
     inc hl
     ex de,hl
-	call debug_print
 ; Iteration 8
-    add hl,hl 
-    ld l,c 
-    ld h,b 
-    adc hl,hl 
+    add hl,hl
+    ld l,c
+    ld h,b
     adc hl,hl
-    ex de,hl 
-    add hl,hl 
-    sbc hl,de 
-    add hl,de 
+    adc hl,hl
     ex de,hl
-    jr nc,$+6 
-    sbc hl,de 
-    inc de 
+    add hl,hl
+    sbc hl,de
+    add hl,de
+    ex de,hl
+    jr nc,$+6
+    sbc hl,de
     inc de
-	call debug_print
+    inc de
 ; Iteration 9
     pop af
-    rla 
-    adc hl,hl 
-    rla 
+    rla
     adc hl,hl
-    ex de,hl 
-    add hl,hl 
-    sbc hl,de 
-    add hl,de 
+    rla
+    adc hl,hl
     ex de,hl
-    jr nc,$+6 
-    sbc hl,de 
-    inc de 
+    add hl,hl
+    sbc hl,de
+    add hl,de
+    ex de,hl
+    jr nc,$+6
+    sbc hl,de
     inc de
-	call debug_print
+    inc de
 ; Iteration 10
-    rla 
-    adc hl,hl 
-    rla 
+    rla
     adc hl,hl
-    ex de,hl 
-    add hl,hl 
-    sbc hl,de 
-    add hl,de 
+    rla
+    adc hl,hl
     ex de,hl
-    jr nc,$+6 
-    sbc hl,de 
-    inc de 
+    add hl,hl
+    sbc hl,de
+    add hl,de
+    ex de,hl
+    jr nc,$+6
+    sbc hl,de
     inc de
-	call debug_print
+    inc de
 ; Iteration 11
-    rla 
-    adc hl,hl 
-    rla 
+    rla
     adc hl,hl
-    ex de,hl 
-    add hl,hl 
-    sbc hl,de 
-    add hl,de 
+    rla
+    adc hl,hl
     ex de,hl
-    jr nc,$+6 
-    sbc hl,de 
-    inc de 
+    add hl,hl
+    sbc hl,de
+    add hl,de
+    ex de,hl
+    jr nc,$+6
+    sbc hl,de
     inc de
-	call debug_print
+    inc de
 ; Iteration 12
-    rla 
-    adc hl,hl 
-    rla 
+    rla
     adc hl,hl
-    ex de,hl 
-    add hl,hl 
-    sbc hl,de 
-    add hl,de 
+    rla
+    adc hl,hl
     ex de,hl
-    jr nc,$+6 
-    sbc hl,de 
-    inc de 
+    add hl,hl
+    sbc hl,de
+    add hl,de
+    ex de,hl
+    jr nc,$+6
+    sbc hl,de
     inc de
-	call debug_print
-; Final output
-    rr d 
-    rr e 
+    inc de
+    rr d
+    rr e
     ret
 
 sin_lut_168:
@@ -1416,593 +1330,3 @@ atan_lut_168:
 	dl 0x001FD7 ; 0000FE, 44.775
 	dl 0x001FEB ; 0000FF, 44.888
 	dl 0x002000 ; 000100, 45.000 only needed for interpolation
-
-	; include "functions.inc"
-
-    MACRO printChar char
-        LD A, char
-        RST.LIL 10h
-    ENDMACRO
-
-; put the value in HLU into the accumulator
-; destroys: af
-    MACRO HLU_TO_A
-        push hl ; 4 cycles
-        inc sp ; 1 cycle
-        pop af  ; 4 cycles
-        dec sp ; 1 cycle
-               ; 10 cycles total
-    ENDMACRO
-
-; put the value in the accumulator into HLU
-; destroys a
-A_TO_HLU:
-    ; call is 7 cycles
-    ld (@scratch),hl ; 7 cycles
-    ld (@scratch+2),a ; 5 cycles
-    ld hl,(@scratch) ; 7 cycles
-    ret ; 6 cycles
-        ; 25 cycles total
-@scratch: dl 0
-
-
-; Print a zero-terminated string inline with code, e.g.:
-;
-;    call printInline
-;    ASCIZ "Hello, world!\r\n"
-;
-; Destroys: HL,AF
-printInline:
-    pop hl ; get the return address = pointer to start of string
-    call printString ; HL advances to end of string
-    push hl ; restore the return address = pointer to end of string
-    ret
-    
-; https://github.com/envenomator/Agon/blob/master/ez80asm%20examples%20(annotated)/functions.s
-; Print a zero-terminated string
-; HL: Pointer to string
-printString:
-	PUSH	BC
-	LD		BC,0
-	LD 	 	A,0
-	RST.LIL 18h
-	POP		BC
-	RET
-; print a VDU sequence
-; HL: Pointer to VDU sequence - <1 byte length> <data>
-sendVDUsequence:
-	PUSH	BC
-	LD		BC, 0
-	LD		C, (HL)
-	RST.LIL	18h
-	POP		BC
-	RET
-; Print Newline sequence to VDP
-printNewLine:
-    push af ; for some reason rst.lil 10h sets carry flag
-	LD	A, '\r'
-	RST.LIL 10h
-	LD	A, '\n'
-	RST.LIL 10h
-    pop af
-	RET
-
-; Print a 24-bit HEX number
-; HLU: Number to print
-printHex24:
-    HLU_TO_A
-	CALL	printHex8
-; Print a 16-bit HEX number
-; HL: Number to print
-printHex16:
-	LD		A,H
-	CALL	printHex8
-	LD		A,L
-; Print an 8-bit HEX number
-; A: Number to print
-printHex8:
-	LD		C,A
-	RRA 
-	RRA 
-	RRA 
-	RRA 
-	CALL	@F
-	LD		A,C
-@@:
-	AND		0Fh
-	ADD		A,90h
-	DAA
-	ADC		A,40h
-	DAA
-	RST.LIL	10h
-	RET
-
-printHexUHL:
-	push hl
-	call printHex24
-	pop hl
-	ret
-
-; Prints the right justified decimal value in HL without leading zeroes
-; HL : Value to print
-; preserves all registers and flags
-printDec:
-; BEGIN MY CODE
-; back up all the things
-    push af
-    push bc
-    push de
-    push hl
-; END MY CODE
-	LD	 DE, _printDecBuffer
-	CALL u24_to_ascii
-; BEGIN MY CODE
-; replace leading zeroes with spaces
-    LD	 HL, _printDecBuffer
-    ld   B, 7 ; if HL was 0, we want to keep the final zero 
-@loop:
-    LD	 A, (HL)
-    CP	 '0'
-    JP	 NZ, @done
-    LD   A, ' '
-    LD	 (HL), A
-    INC	 HL
-    ; CALL vdu_cursor_forward
-    DJNZ @loop
-@done:
-; END MY CODE
-	LD	 HL, _printDecBuffer
-	CALL printString
-; BEGIN MY CODE
-; restore all the things
-    pop hl
-    pop de
-    pop bc
-    pop af
-; END MY CODE
-	RET
-_printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
-
-; This routine converts the unsigned 24-bit value in HLU into it's ASCII representation, 
-; starting to memory location pointing by DE, in decimal form and with leading zeroes 
-; so it will allways be 8 characters length
-; HL : Value to convert to string
-; DE : pointer to buffer, at least 8 byte + 0
-u24_to_ascii:
-	LD	 BC,-10000000
-	CALL @one_digit
-	LD	 BC,-1000000
-	CALL @one_digit
-	LD	 BC,-100000
-	CALL @one_digit
-	LD   BC,-10000
-	CALL @one_digit
-	LD   BC,-1000
-	CALL @one_digit
-	LD   BC,-100
-	CALL @one_digit
-	LD   C,-10
-	CALL @one_digit
-	LD   C,B
-@one_digit:
-	LD   A,'0'-1
-@divide_me:
-	INC  A
-	ADD  HL,BC
-	JR   C,@divide_me
-	SBC  HL,BC
-	LD   (DE),A
-	INC  DE
-	RET
-
-print_u24:
-    push de
-    push hl
-    ld de,_printDecBuffer
-    call u24_to_ascii
-    ld hl,_printDecBuffer
-    call printString
-    ld a,' '
-    rst.lil 10h
-    pop hl
-    pop de
-    ret
-
-; u168_to_ascii: Converts an unsigned 16.8 fixed-point value in HL to an ASCII string.
-; HL : Value to convert to string (integer part in H, fractional part in L)
-; DE : Pointer to buffer, requires at least 11 bytes (8 digits, sign, decimal point, and null terminator)
-u168_to_ascii:
-; add a leading space to make room for sign flag if needed
-    ld a,' '
-    ld (de),a
-    inc de
-; Convert integer part
-    push hl               ; Save HL (we’ll need the fractional part later)
-    call hlu_udiv256    ; Shift to get integer portion in HL
-    ld   bc, -10000
-    call @one_int
-    ld   bc, -1000
-    call @one_int
-    ld   bc, -100
-    call @one_int
-    ld   c, -10
-    call @one_int
-    ld   c, b
-    call @one_int
-    jp   @frac            ; Jump to fractional part conversion
-@one_int:
-    ld   a, '0' - 1       ; Start ASCII character at '0'
-@divide_me:
-    inc  a
-    add  hl, bc           ; Accumulate until overflow
-    jr   c, @divide_me
-    sbc  hl, bc           ; Remove excess after overflow
-    ld   (de), a          ; Store ASCII digit
-    inc  de
-    ret
-; Convert fractional part
-@frac:
-    ld   a, '.'           ; Decimal point
-    ld   (de), a
-    inc  de
-    pop  hl               ; Restore HL with original fraction
-    ld   b, 3             ; Loop counter for 3 fractional digits
-@frac_loop:
-    ld   h, 10            ; Load multiplier for fractional part
-    mlt  hl               ; Multiply by 10, result in HL (H holds the integer part)
-    ld   a, '0'
-    add  a, h             ; Convert integer part to ASCII
-    ld   (de), a
-    inc  de
-    djnz @frac_loop       ; Repeat for each fractional digit
-; Add null terminator
-    xor  a                ; Null terminator
-    ld   (de), a
-    ret
-
-print_u168:
-    push de
-    push hl
-    ld de,_printDecBuffer
-    call u168_to_ascii
-    ld hl,_printDecBuffer
-    call printString
-    pop hl
-    pop de
-    ret
-
-; signed version of u168_to_ascii
-s168_to_ascii:
-    push de ; save starting address of buffer
-    call hlu_abs
-    push af ; save sign flag
-    call u168_to_ascii
-    pop af ; restore sign flag
-    pop de ; restore starting address of buffer
-    ret p ; hlu was positive so nothing to do
-    ld a,'-'
-    ld (de),a
-    ret
-
-print_s168:
-    push de
-    push hl
-    ld de,_printDecBuffer
-    call s168_to_ascii
-    ld hl,_printDecBuffer
-    call printString
-    pop hl
-    pop de
-    ret
-
-	; include "parse.inc"
-
-;
-; Title:	Number Parsing Functions
-; Author:	Dean Belfield
-; Created:	15/11/2022
-; Last Updated:	15/11/2022
-; Last Updated: 29/12/2022 Lennart Benchop adapt for 24-bit mode.
-; Modinfo:
-; 2024/04/08    Adapt for ez80asm
-				
-; Read a number and convert to binary
-; If prefixed with &, will read as hex, otherwise decimal
-;   Inputs: HL: Pointer in string buffer
-;  Outputs: HL: Updated text pointer
-;           DE: Value
-;            A: Terminator (spaces skipped)
-;            F: Carry set if valid number, otherwise reset
-; Destroys: A,D,E,H,L,F
-;
-ASC_TO_NUMBER:		LD		DE, 0			; Initialise DE
-			; CALL		_skip_spaces		; Skip whitespace
-			LD		A, (HL)			; Read first character
-			OR		A			; Check for end of string
-			RET		Z			; Return with no carry if not
-			PUSH		BC			; Preserve BC
-			CP		'&'			; Is it prefixed with '&' (HEX number)?
-			JR		NZ, ASC_TO_NUMBER3	; Jump to decimal parser if not
-			INC		HL			; Otherwise fall through to ASC_TO_HEX
-;
-ASC_TO_NUMBER1:		LD		A, (HL)			; Fetch the character
-			CALL   	 	UPPRC			; Convert to uppercase  
-			SUB		'0'			; Normalise to 0
-			JR 		C, ASC_TO_NUMBER4	; Return if < ASCII '0'
-			CP 		10			; Check if >= 10
-			JR 		C, ASC_TO_NUMBER2	; No, so skip next bit
-			SUB 		7			; Adjust ASCII A-F to nibble
-			CP 		16			; Check for > F
-			JR 		NC, ASC_TO_NUMBER4	; Return if out of range
-;
-ASC_TO_NUMBER2:		PUSH		HL			; Stack HL
-			PUSH		DE			; LD HL, DE
-			POP		HL
-			ADD		HL, HL	
-			ADD		HL, HL	
-			ADD		HL, HL	
-			ADD		HL, HL	
-			PUSH		HL			; LD DE, HL
-			POP		DE
-			POP		HL			; Restore HL			
-			OR      	E			; OR the new digit in to the least significant nibble
-			LD      	E, A
-;			
-			INC		HL			; Onto the next character
-			JR      	ASC_TO_NUMBER1		; And loop
-;
-ASC_TO_NUMBER3:		LD		A, (HL)
-			SUB		'0'			; Normalise to 0
-			JR		C, ASC_TO_NUMBER4	; Return if < ASCII '0'
-			CP		10			; Check if >= 10
-			JR		NC, ASC_TO_NUMBER4	; Return if >= 10
-;
-			PUSH		HL			; Stack HL
-			PUSH		DE			; LD HL, DE
-			POP		HL
-			PUSH		HL			; LD BC, HL
-			POP		BC
-			ADD		HL, HL 			; x 2 
-			ADD		HL, HL 			; x 4
-			ADD		HL, BC 			; x 5
-			ADD		HL, HL 			; x 10
-			LD		BC, 0
-			LD 		C, A			; LD BCU, A
-			ADD		HL, BC			; Add BCU to HL
-			PUSH		HL			; LD DE, HL
-			POP		DE
-			POP		HL			; Restore HL
-;						
-			INC		HL
-			JR		ASC_TO_NUMBER3
-ASC_TO_NUMBER4:		POP		BC 			
-			SCF					; We have a valid number so set carry
-			RET
-
-
-; Convert a character to upper case
-;  A: Character to convert
-;
-UPPRC:  		AND     	7FH
-			CP      	'`'
-			RET     	C
-			AND     	5FH			; Convert to upper case
-			RET
-
-; -----------------------------------------------------------------------
-;
-; additional functions by Brandon R. Gates based on Dean's code
-;
-;------------------------------------------------------------------------
-; Read a number and convert to binary (decimal only)
-; Inputs: hl: Pointer in string buffer
-; Outputs: hl: Updated text pointer
-;         de: Value
-;         a: Terminator (spaces skipped)
-;         f: Carry set if valid number, otherwise reset
-; Destroys: a, d, e, h, l, f
-;------------------------------------------------------------------------
-asc_to_s24: 
-    ld a,1 ; set sign flag
-    ld (@sign),a ; store sign flag
-    
-    ld de, 0 ; initialise de
-    ; call _skip_spaces ; skip whitespace
-    
-    ld a, (hl) ; read first character
-    or a ; check for end of string
-    ret z ; return with no carry if not
-
-    push bc ; preserve bc
-
-    cp '-' ; check for negative number
-    jp nz,@loop ; number is positive, nothing more to do
-    xor a ; sign flag to zero
-    ld (@sign),a ; store sign flag
-    inc hl ; skip '-'
-
-@loop: 
-    ld a, (hl)
-    sub '0' ; normalise to 0
-    jr c, @integer_end ; return if < ascii '0'
-    cp 10 ; check if >= 10
-    jr nc, @integer_end ; return if >= 10
-    push hl ; stack hl
-    push de ; ld hl, de
-    pop hl
-    push hl ; ld bc, hl
-    pop bc
-    add hl, hl ; x 2 
-    add hl, hl ; x 4
-    add hl, bc ; x 5
-    add hl, hl ; x 10
-    ld bc, 0
-    ld c, a ; ld bcu, a
-    add hl, bc ; add bcu to hl
-    push hl ; ld de, hl
-    pop de
-    pop hl ; restore hl
-    inc hl
-    jr @loop
-
-@integer_end: 
-    pop bc ; send bc back how she came in
-    ld a, (@sign) ; get sign flag
-    dec a ; check if negative    
-    jp p,@pos ; positive number
-
-; Negate de
-    push hl ; save text pointer
-    ld hl, 0
-    xor a ; clear carry
-    sbc hl, de ; subtract DE from HL
-    ex de, hl ; DE = 0-HL
-    pop hl ; restore text pointer
-
-@pos:
-    scf ; we have a valid number so set carry
-    ret
-
-@sign: db 0 ; sign flag buffer
-
-
-;------------------------------------------------------------------------
-; Read a number and convert to binary (decimal only)
-; Inputs: hl: Pointer in string buffer
-; Outputs: hl: Updated text pointer
-;         de: Value
-;         a: Terminator (spaces skipped)
-;         f: Carry set if valid number, otherwise reset
-; Destroys: a, d, e, h, l, f
-;------------------------------------------------------------------------
-asc_to_s168: 
-    ld a,1 ; set sign flag
-    ld (@sign),a ; store sign flag
-    
-    ld de, 0 ; initialise de
-    ld (@result), de ; clear low bytes of result buffer
-    ld (@scratch), de ; clear low bytes of scratch buffer
-
-    ; call _skip_spaces ; skip whitespace
-    
-    ld a, (hl) ; read first character
-    or a ; check for end of string
-    ret z ; return with no carry if not
-
-    push bc ; preserve bc
-
-    cp '-' ; check for negative number
-    jp nz,@loop ; number is positive, nothing more to do
-    xor a ; sign flag to zero
-    ld (@sign),a ; store sign flag
-    inc hl ; skip '-'
-
-@loop: 
-    ld a, (hl)
-
-; chcek for decimal point
-    cp '.' ; check for decimal point
-    jp z,@fractional_start ; jump to fractional part
-
-; process integer part
-    sub '0' ; normalise to 0
-    jr c, @integer_end ; return if < ascii '0'
-    cp 10 ; check if >= 10
-    jr nc, @integer_end ; return if >= 10
-    push hl ; stack hl
-    push de ; ld hl, de
-    pop hl
-    push hl ; ld bc, hl
-    pop bc
-    add hl, hl ; x 2 
-    add hl, hl ; x 4
-    add hl, bc ; x 5
-    add hl, hl ; x 10
-    ld bc, 0
-    ld c, a ; ld bcu, a
-    add hl, bc ; add bcu to hl
-    push hl ; ld de, hl
-    pop de
-    pop hl ; restore hl
-    inc hl
-    jr @loop
-
-@integer_end:
-    ld (@result+1), de      ; Store integer part in result buffer (shifted up one byte)
-
-@end: 
-    pop bc ; send bc back how she came in
-    ld de,(@result) ; will contain shifted integer part combined with any fractional value
-    ld a, (@sign) ; get sign flag
-    dec a ; check if negative    
-    jp p,@pos ; positive number
-
-; Negate de
-    push hl ; save text pointer
-    ld hl, 0
-    xor a ; clear carry
-    sbc hl, de ; subtract DE from HL
-    ex de, hl ; DE = 0-HL
-    pop hl ; restore text pointer
-
-@pos:
-    scf ; we have a valid number so set carry
-    ret
-
-@fractional_start:
-    push ix                    ; preserve ix
-    ld (@result+1), de         ; Store integer part in result buffer (shifted up one byte)
-    ld b, 3                    ; Set loop counter to 3 for up to three fractional digits
-    ld de, 0                   ; Initialize DE as the fractional accumulator
-    ld ix, powers_of_10        ; Point IX to the lookup table for the scaling factor based on digits
-    inc hl                     ; Skip decimal point
-
-@fractional_loop:
-    ld a, (hl)                 ; Load next character
-    sub '0'                    ; Normalize ASCII to decimal
-    jr c, @end_fraction        ; Exit if < '0'
-    cp 10
-    jr nc, @end_fraction       ; Exit if >= 10
-
-    ; Multiply the current fractional accumulator by 10
-    push hl                    ; Save char pointer
-    push af                    ; Save the digit
-    ex de, hl
-    push hl
-    add hl,hl ; * 2
-    add hl,hl ; * 4
-    pop de 
-    add hl,de ; * 5
-    add hl,hl ; * 10
-    ld de, 0                   ; Clear DEU
-    pop af                     ; Restore the current digit
-    ld e, a                    ; Load the digit into E
-    add hl, de                 ; Add the digit to the accumulator
-    ex de, hl                  ; Result back to DE
-    lea ix,ix+3                ; Advance IX to the next scaling factor
-    pop hl                     ; Restore char pointer
-    inc hl                     ; Move to the next character
-    djnz @fractional_loop      ; Loop if more digits to process
-
-@end_fraction:
-; Final scaling based on number of fractional digits processed
-    ld (@scratch+1), de          ; Shift fractional part up a byte
-    ld hl,(@scratch)             ; Load the shifted fractional part into HL
-
-    ld de, (ix)                ; Load final scaling factor from IX based on digit count
-    call udiv24                ; Perform 24-bit division to scale down
-    ld a, e                    ; Load the low byte (8-bit fractional part) into A
-    ld (@result), a            ; Store fractional part in result buffer
-    pop ix                     ; Restore ix
-    jp @end                    ; Final sign check and flag setup
-
-@result: ds 4                  ; 32-bit result buffer to shift integer part up one byte
-@scratch: ds 4                 ; 32-bit scratch buffer for intermediate calculations
-@sign: db 0                    ; Sign flag buffer
-
-powers_of_10:
-    dl 1                       ; 10^0
-    dl 10                      ; 10^1
-    dl 100                     ; 10^2
-    dl 1000                    ; 10^3
-    dl 10000                   ; 10^4

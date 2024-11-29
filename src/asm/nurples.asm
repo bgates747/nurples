@@ -1,19 +1,11 @@
-; macro files generally want to go here, before any of the other includes
-; which call the macro, otherwise the assembler won't have the macro
-; available to run when it is called, and will fail with something 
-; along the lines of 'invalid label' at such and such a line
-    include "macros.inc"
-
-;MOS INITIALIATION MUST GO HERE BEFORE ANY OTHER CODE
-    .assume adl=1   
-    .org 0x040000    
-
+    assume adl=1   
+    org 0x040000    
+    include "mos_api.inc"
     jp start       
-
-    .align 64      
-    .db "MOS"       
-    .db 00h         
-    .db 01h       
+    align 64      
+    db "MOS"       
+    db 00h         
+    db 01h       
 
 start:              
     push af
@@ -21,50 +13,32 @@ start:
     push de
     push ix
     push iy
-
-; ###############################################
-; ez80asmLinker.py loader code goes here if used.
-; ###############################################
-
-; ###############################################
-	call	init			; Initialization code
-	call 	main			; Call the main function
-; ###############################################
+	call	init
+	call 	main
 
 exit:
-
-    pop iy                              ; Pop all registers back from the stack
+    pop iy
     pop ix
     pop de
     pop bc
     pop af
-    ld hl,0                             ; Load the MOS API return code (0) for no errors.
+    ld hl,0
 
-    ret                                 ; Return MOS
+    ret
 
-; after this we can put includes in any order we wish, even in between
-; code blocks if there is any program-dependent or asethetic reason to do so
-	include "fonts.inc"
 	include "levels.inc"
 	include "sprites.inc"
-; API includes
-    include "mos_api.inc"
     include "functions.inc"
     include "vdu.inc"
     include "vdu_plot.inc"
 	include "vdu_sprites.inc"
-	; include "div_168_signed.inc" ; deprecated in favor of fixed24.inc
 	include "maths.inc"
-	include "trig24fast.inc"
-	include "fixed24.inc"
-; App-specific includes
+	include "fixed168.inc"
 	include "player.inc"
 	include "tiles.inc"
 	include "enemies.inc"
 	include "laser.inc"
 	include "timer.inc"
-
-; new includes
 	include "images.inc"
 	include "images_sprites.inc"
 	include "images_ui.inc"
