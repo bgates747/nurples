@@ -721,6 +721,7 @@ sqrt24:
     xor a
     ld b,l
     push bc
+    ld b,a
     ld l,a
 ; Iteration 1
     add hl,hl
