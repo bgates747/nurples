@@ -174,10 +174,6 @@ collide_bottom: equ %00000100
 collide_left: equ %00000010
 collide_right: equ %00000001
 
-; ; #### BEGIN GAME VARIABLES ####
-speed_seeker: equ 0x000280 ; 2.5 pixels per frame
-speed_player: equ 0x000300 ; 3 pixels per frame
-
 main:
 ; start a new game
     call new_game

@@ -12,6 +12,8 @@ player_max_shields: db 16 ; binary
 ; can increase based on TODO
 player_ships: db 0x03 ; binary
 
+speed_player: equ 0x000300 ; 3 pixels per frame
+
 ; ######### PLAYER SPRITE PARAMETERS ##########
 ; uses the same offsets from its table base as the main sprite table:
 player_start_variables: ; label marking beginning of table
@@ -117,153 +119,17 @@ player_input:
     add hl,bc
     ld (player_yvel),hl
 @done_keyboard:
-; move player sprite according to velocities set by keypresses
-    ld hl,(player_xvel)
-; compute new x position
-    ld de,(player_x)
-    add hl,de ; hl = player_x + player_xvel
-    ; check for horizontal screen edge collisions
-    ; and adjust coordinate as necessary
-; TODO: make this work using 24-bit registers
-    ; cp 8 ; 0 + 1/2 bitmap dim_x
-    ; jr nc,@check_right ; x >= 8, no adjustment necessary
-    ; ld a,8 ; set x to leftmost allowable position
-; @check_right:
-;     cp 248 ; 256 - 1/2 bitmap dim_x
-;     jr c,@x_ok ; x < 248, no adjustment necessary
-;     ld a,248 ; set x to rightmost allowable position
-@x_ok:
-; save the updated drawing coordinate
-    ld (player_x),hl
-;compute new y position
-    ld hl,(player_y)
-    ld de,(player_yvel)
-    add hl,de ; hl = player_y + player_yvel
-; TODO: make this work using 24-bit registers
-;     ; check for vertical screen edge collisions
-;     ; and adjust coordinate as necessary
-;     cp 8 ; 0 + 1/2 bitmap dim_y
-;     jr nc,@check_top ; y >= 8, no adjustment necessary
-;     ld a,8 ; set y to topmost allowable position
-; @check_top:
-;     cp 232 ; 240 - 1/2 bitmap dim_y
-;     jr c,@y_ok ; y < 248, no adjustment necessary
-;     ld a,232 ; set y to bottommost allowable position
-@y_ok:
-    ld (player_y),hl ; do this here b/c next call destroys hl
 ; a should land here loaded with the correct frame
     call vdu_sprite_select_frame
 ; draw player at updated position
+    ld iy,player_start_variables
+    ld (table_pointer),iy
+    call move_sprite
     ld bc,(player_x)
-	ld de,(player_y)
-
-    ; call dumpRegistersHex
-
+    ld de,(player_y)
 	call vdu_sprite_move_abs168
-    
 ; end player_input
 	ret
-
-; ; THE BELOW WORKS WITH THE AGON BUT USES INTEGER COORDINATES 
-; ; INSTEAD OF FRACTIONAL
-; ; ----------------------------------------------------------------
-; ; process player keyboard input, set player bitmap
-; ; velocities and draw player bitmap at updated coordinates
-; ; Inputs: player_x/y set at desired position
-; ; Returns: player bitmap drawn at updated position
-; ; Destroys: probably everything except maybe iy
-; ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
-; ; TODO: requires sprite implementation
-; player_input:
-; ; reset player component velocities to zero as the default
-; 	ld hl,0
-; 	ld (player_xvel),hl
-; 	ld (player_yvel),hl
-; ; check for keypresses and branch accordingly
-; ; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
-;     MOSCALL	mos_getkbmap ;ix = pointer to MOS virtual keys table
-; ; we test all four arrow keys and add/subract velocities accordingly
-; ; this handles the case where two opposing movement keys
-; ; are down simultaneously (velocities will net to zero)
-; ; and allows diagonal movement when a vertical and horizontal key are down
-; ; it also allows movement and action keys to be detected simultaneously
-; ; so we can walk and chew gum at the same time
-; @left:
-;     bit 1,(ix+3) ; keycode 26
-;     jr z,@right
-;     ld hl,(player_xvel)
-;     ld bc,-3
-;     add hl,bc
-;     ld (player_xvel),hl
-; @right:
-;     bit 1,(ix+15) ; keycode 122
-; 	jr z,@up
-;     ld hl,(player_xvel)
-;     ld bc,3
-;     add hl,bc
-;     ld (player_xvel),hl
-; @up:
-;     bit 1,(ix+7) ; keycode 58
-; 	jr z,@down
-;     ld hl,(player_yvel)
-;     ld bc,-3
-;     add hl,bc
-;     ld (player_yvel),hl
-; @down:
-;     bit 1,(ix+5) ; keycode 42
-; 	jr z,@done_keyboard
-;     ld hl,(player_yvel)
-;     ld bc,3
-;     add hl,bc
-;     ld (player_yvel),hl
-; @done_keyboard:
-; ; move player sprite according to velocities set by keypresses
-;     ld hl,(player_xvel)
-; ; compute new x position
-;     ld de,(player_x)
-;     add hl,de ; hl = player_x + player_xvel
-;     ; check for horizontal screen edge collisions
-;     ; and adjust coordinate as necessary
-; ; TODO: make this work using 24-bit registers
-;     ; cp 8 ; 0 + 1/2 bitmap dim_x
-;     ; jr nc,@check_right ; x >= 8, no adjustment necessary
-;     ; ld a,8 ; set x to leftmost allowable position
-; ; @check_right:
-; ;     cp 248 ; 256 - 1/2 bitmap dim_x
-; ;     jr c,@x_ok ; x < 248, no adjustment necessary
-; ;     ld a,248 ; set x to rightmost allowable position
-; @x_ok:
-;     ; save the updated drawing coordinate
-;     ld (player_x),hl
-; ;compute new y position
-;     ld hl,(player_y)
-;     ld de,(player_yvel)
-;     add hl,de ; hl = player_y + player_yvel
-; ; TODO: make this work using 24-bit registers
-; ;     ; check for vertical screen edge collisions
-; ;     ; and adjust coordinate as necessary
-; ;     cp 8 ; 0 + 1/2 bitmap dim_y
-; ;     jr nc,@check_top ; y >= 8, no adjustment necessary
-; ;     ld a,8 ; set y to topmost allowable position
-; ; @check_top:
-; ;     cp 232 ; 240 - 1/2 bitmap dim_y
-; ;     jr c,@y_ok ; y < 248, no adjustment necessary
-; ;     ld a,232 ; set y to bottommost allowable position
-; @y_ok:
-;     ld (player_y),hl
-; ; draw player at updated position
-;     ld a,(player_id)
-;     call vdu_sprite_select
-;     ld hl,(player_xvel) ; we do a cheeky little hack
-;     call get_sign_hlu ; to set the proper animation
-;     add a,1 ; ...
-;     call vdu_sprite_select_frame
-;     ld bc,(player_x)
-; 	ld de,(player_y) 
-; 	call vdu_sprite_move_abs
-; ; end player_input
-; 	ret
-
 
 ; ###################################################################
 ; TODO: the below is all stuff from the original code we need to port

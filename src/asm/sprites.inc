@@ -150,3 +150,76 @@ sprites_init:
 
 ; all done
     ret
+
+; compute a sprite's new position based on its component x,y velocities
+; with screen boundary checking and update its sprite table record accordingly
+; inputs: iy pointing to sprite table record
+move_sprite:
+    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+; x-axis movement
+    ld hl,(iy+sprite_x)
+    ld de,(iy+sprite_xvel)
+    add hl,de
+    ld (iy+sprite_x),hl
+; y-axis movement
+    ld hl,(iy+sprite_y)
+    ld de,(iy+sprite_yvel)
+    add hl,de
+    ld (iy+sprite_y),hl
+; detect screen edge collisions
+    xor a ; reset screen edge collision flag and clear carry
+    ld (sprite_screen_edge),a
+; y-axis first since we already have it in hl
+    ld de,-sprite_top*256
+    adc hl,de
+    jp m,@top
+    sbc hl,de ; hl back to original value
+    ld de,-sprite_bottom*256
+    adc hl,de
+    jp p,@bottom
+@xaxis:
+    ld hl,(iy+sprite_x)
+    ld de,-sprite_left*256
+    adc hl,de
+    jp m,@left
+    sbc hl,de ; hl back to original value
+    ld de,-sprite_right*256
+    adc hl,de
+    jp p,@right
+; no edge collisions so go home
+    ret
+@top:
+    ld a,collide_top
+    ld hl,sprite_top*256
+    jp @collide_y
+@bottom:
+    ld a,collide_bottom
+    ld hl,sprite_bottom*256
+@collide_y:
+    ld (sprite_screen_edge),a
+    ld (iy+sprite_y),hl
+; reverse y-axis velocity
+    ld hl,(iy+sprite_yvel)
+    call neg_hlu
+    ld (iy+sprite_yvel),hl
+; go check for x-axis collisions
+    jp @xaxis
+@left:
+    ld a,(sprite_screen_edge)
+    or a,collide_left
+    ld hl,sprite_left*256
+    jp @collide_x
+@right:
+    ld a,(sprite_screen_edge)
+    or a,collide_right
+    ld hl,sprite_right*256
+@collide_x:
+    ld (sprite_screen_edge),a
+    ld (iy+sprite_x),hl
+; reverse x-axis velocity
+    ld hl,(iy+sprite_xvel)
+    call neg_hlu
+    ld (iy+sprite_xvel),hl
+; final collision flag to a and return
+    ld a,(sprite_screen_edge)
+    ret

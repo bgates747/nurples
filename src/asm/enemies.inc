@@ -156,76 +156,7 @@ en_nav_computevelocities:
     srl a
     srl a
     call vdu_sprite_select_frame
-
-move_enemy_sprite:
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
-; x-axis movement
-    ld hl,(iy+sprite_x)
-    ld de,(iy+sprite_xvel)
-    add hl,de
-    ld (iy+sprite_x),hl
-; y-axis movement
-    ld hl,(iy+sprite_y)
-    ld de,(iy+sprite_yvel)
-    add hl,de
-    ld (iy+sprite_y),hl
-; detect screen edge collisions
-    xor a ; reset screen edge collision flag and clear carry
-    ld (sprite_screen_edge),a
-; y-axis first since we already have it in hl
-    ld de,-sprite_top*256
-    adc hl,de
-    jp m,@top
-    sbc hl,de ; hl back to original value
-    ld de,-sprite_bottom*256
-    adc hl,de
-    jp p,@bottom
-@xaxis:
-    ld hl,(iy+sprite_x)
-    ld de,-sprite_left*256
-    adc hl,de
-    jp m,@left
-    sbc hl,de ; hl back to original value
-    ld de,-sprite_right*256
-    adc hl,de
-    jp p,@right
-; no edge collisions so go home
-    ret
-@top:
-    ld a,collide_top
-    ld hl,sprite_top*256
-    jp @collide_y
-@bottom:
-    ld a,collide_bottom
-    ld hl,sprite_bottom*256
-@collide_y:
-    ld (sprite_screen_edge),a
-    ld (iy+sprite_y),hl
-; reverse y-axis velocity
-    ld hl,(iy+sprite_yvel)
-    call neg_hlu
-    ld (iy+sprite_yvel),hl
-; go check for x-axis collisions
-    jp @xaxis
-@left:
-    ld a,(sprite_screen_edge)
-    or a,collide_left
-    ld hl,sprite_left*256
-    jp @collide_x
-@right:
-    ld a,(sprite_screen_edge)
-    or a,collide_right
-    ld hl,sprite_right*256
-@collide_x:
-    ld (sprite_screen_edge),a
-    ld (iy+sprite_x),hl
-; reverse x-axis velocity
-    ld hl,(iy+sprite_xvel)
-    call neg_hlu
-    ld (iy+sprite_xvel),hl
-; final collision flag to a and return
-    ld a,(sprite_screen_edge)
-    ret
+    jp move_sprite ; will return to caller from there
 
 ; ; ######### SPRITE BEHAVIOR ROUTINES #########
 ; ; each sprite in the table must have one of these defined
@@ -272,6 +203,7 @@ move_enemy_small:
 ;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
 ;     jp move_enemies_loop_return
 
+speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 enemy_init_from_landing_pad:
 ; get next available spriteId
     call table_get_next_id
@@ -408,7 +340,7 @@ enemy_init_from_landing_pad:
 ;     ret
 
 ; move_fireballs:
-;     call move_enemy_sprite ; move sprite 
+;     call move_sprite ; move sprite 
 ;     ld a,(sprite_screen_edge) ; check for collision with screen edge
 ;     and a ; if zero we're still within screen bounds
 ;     jr z,move_fireballs_alive
