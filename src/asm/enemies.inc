@@ -246,8 +246,8 @@ enemy_init_from_landing_pad:
 @animation_timer:       db 0x00 ; 1 bytes when hits zero, draw next animation
 @move_timer:            db 0x01 ; 1 bytes when zero, go to next move program, or step
 @move_step:             db 0x00 ; 1 bytes stage in a move program sequence, varies
-@points:                db 0x20 ; 1 bytes points awarded for killing this sprite type, BCD
-@shield_damage:         db 0x02 ; 1 bytes shield points deducted for collision, binary
+@points:                db 10 ; 1 bytes points awarded for killing this sprite type
+@shield_damage:         db 0x02 ; 1 bytes shield points deducted for collision
 
 ; move_laser_turret:
 ; ; compute orientation to player
@@ -438,17 +438,13 @@ Vt_y: dw #0000 ; 8.8 fixed
 ; destroys: everything except index registers
 ; returns: an incandescent ball of debris and gas
 kill_nurple:
-; ; tally up points
-;     ld bc,0
-;     ld a,(sprite_points)
-;     ld e,a
-;     ld d,0
-;     ld hl,add_bcd_arg2
-;     call set_bcd
-;     ld hl,player_score
-;     ld de,add_bcd_arg2
-;     ld a,3 ; number of bytes to add
-;     call add_bcd
+    ld iy,(table_pointer); TODO: see if we can get IY to land here with the proper value
+; tally up points
+    ld hl,(player_score)
+    ld bc,0 ; clear bcu
+    ld c,(iy+sprite_points)
+    add hl,bc
+    ld (player_score),hl
 ; ; initialize explosion
 ; init_explosion:
 ;     ld hl,explosion
@@ -488,7 +484,6 @@ kill_nurple:
 ;     ret ; now we go back to caller
 ; done_explosion:
     ld a,%10000000 ; high bit set is non-specific kill-me flag
-    ld iy,(table_pointer); TODO: see if we can get IY to land here with the proper value
     ld (iy+sprite_collisions),a
     ret ; now we go back to caller
 

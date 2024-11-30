@@ -18,8 +18,8 @@ sprite_animation:       equ 32 ; 1 bytes current animation index, zero-based
 sprite_animation_timer: equ 33 ; 1 bytes when hits zero, draw next animation
 sprite_move_timer:      equ 34 ; 1 bytes when zero, go to next move program, or step
 sprite_move_step:       equ 35 ; 1 bytes stage in a move program sequence, varies
-sprite_points:          equ 36 ; 1 bytes points awarded for killing this sprite type, BCD
-sprite_shield_damage:   equ 37 ; 1 bytes shield points deducted for collision, binary
+sprite_points:          equ 36 ; 1 bytes points awarded for killing this sprite type
+sprite_shield_damage:   equ 37 ; 1 bytes shield points deducted for collision
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites

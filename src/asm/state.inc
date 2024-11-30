@@ -49,10 +49,12 @@ game_initialize:
     ret
 
 game_playing:
-    ; Main gameplay loop
+; Main gameplay loop
     call tiles_plot
     call do_player
     call do_enemies
+; update UI: TODO make this a standalone function
+    call print_score
     ret
 
 game_paused:

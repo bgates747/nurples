@@ -202,22 +202,23 @@ kill_player:
 ;     djnz draw_shields_loop
     ; ret
 
+score_x: equ 0
+score_y: equ 1
 ; prints the player's score
-; print_score:
-; TODO: Agonize this
-; ; draw score (we do it twice for a totally unecessary drop-shadow effect)
-;     ld c,42 ; dark orange b74400
-;     ld hl,#5200+1+8+6*6
-;     ld a,3 ; print 6 bdc digits
-;     ld de,player_score
-;     call print_num
-
-;     ld c,58 ; golden yellow fec10a
-;     ld hl,#5100+8+6*6
-;     ld a,3 ; print 6 bdc digits
-;     ld de,player_score
-;     call print_num
-    ; ret
+print_score:
+; DEBUG
+    ld c,score_x
+    ld b,score_y-1
+    call vdu_move_cursor
+    call printInline
+    asciz "Score:"
+; END DEBUG
+    ld c,score_x
+    ld b,score_y
+    call vdu_move_cursor
+    ld hl,(player_score)
+    call printDec
+    ret
 
 ; draw_lives:
 ;     ld hl,player_small ; make small yellow ship the active sprite
