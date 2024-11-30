@@ -31,6 +31,8 @@ exit:
     include "enemies.inc"
     include "files.inc"
     include "fixed168.inc"
+    include "fonts.inc"
+    include "fonts_list.inc"
     include "images.inc"
     include "images_sprites.inc"
     include "images_ui.inc"
@@ -42,6 +44,7 @@ exit:
     include "tiles.inc"
     include "timer.inc"
     include "vdu.inc"
+    include "vdu_fonts.inc"
     include "vdu_plot.inc"
     include "vdu_sprites.inc"
 
@@ -97,9 +100,6 @@ init:
 ; load UI images
     call load_ui_images
 
-; ; load fonts ; TODO
-; 	call load_font_rc
-
 ; load sprites
     call img_load_init ; sets up the animated load screen
     call load_sprite_images
@@ -126,6 +126,12 @@ init:
     xor a
     call vdu_set_scaling
     call vdu_cursor_off
+; load fonts
+	call fonts_load
+; select font
+    ld hl,computer_pixel_7_8x16
+    ld a,1 ; flags
+    call vdu_font_select
 ; plot bezel art
     ld hl,BUF_BEZEL_L
     call vdu_buff_select
