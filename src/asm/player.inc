@@ -1,18 +1,18 @@
 ; ######## GAME STATE VARIABLES #######
-; THESE MUST BE IN THIS ORDER FOR new_game TO WORK PROPERLY
-player_score: db 0x00,#00,#00 ; bcd
+; THESE MUST BE IN THIS ORDER FOR game_initialize TO WORK PROPERLY
+player_score: dl 0 ; integer
 ; player current shields,binary
 ; when < 0 player splodes
 ; restores to player_max_shields when new ship spawns
-player_shields: db 16 ; binary
+player_shields: dl 16 ; integer
 ; max player shields,binary
 ; can increase with power-ups (todo)
-player_max_shields: db 16 ; binary
+player_max_shields: dl 16 ; integer
 ; when reaches zero,game ends
 ; can increase based on TODO
-player_ships: db 0x03 ; binary
+player_ships: db 3 ; integer
 
-speed_player: equ 0x000300 ; 3 pixels per frame
+speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
 
 ; ######### PLAYER SPRITE PARAMETERS ##########
 ; uses the same offsets from its table base as the main sprite table:
@@ -59,6 +59,8 @@ player_init:
     ld (player_y),de
     call vdu_sprite_move_abs168
     call vdu_sprite_show
+    ld hl,player_alive
+    ld (player_state),hl
     ret
 
 ; process player keyboard input, set player bitmap
@@ -69,6 +71,14 @@ player_init:
 ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
 ; TODO: requires sprite implementation
 player_input:
+; ; did we die last frame?
+;     ld a,(player_collisions)
+;     and %00000010 ; zero flag will be set if not dead
+;     jr z,player_not_dead
+; ; yes we died
+;     call kill_player  
+;     ret ; done
+player_not_dead: ; yay we didn't die
 ; reset player component velocities to zero as the default
 	ld hl,0
 	ld (player_xvel),hl
@@ -128,6 +138,8 @@ player_input:
     ld bc,(player_x)
     ld de,(player_y)
 	call vdu_sprite_move_abs168
+
+    ; call waitKeypress ; DEBUG
 ; end player_input
 	ret
 
@@ -135,7 +147,7 @@ player_input:
 ; TODO: the below is all stuff from the original code we need to port
 ; ###################################################################
 
-; kill_player:
+kill_player:
 ; ; set player status to dead
 ;     xor a; sets all player flags to zero
 ;     ld (player_collisions),a
@@ -155,49 +167,82 @@ player_input:
 ;     ld (player_move_timer),a
 ;     jr nz,kill_player_loop 
 ;     call player_init ; player respawn if timer zero
-;     ret ; and out
+    ret ; and out
 
+; draws the player's shields level
+; draw_shields:
+; TODO: Agonize this routine
+; ; prep the loop to draw the bars
+;     ld a,(player_shields) ; snag shields
+;     and a 
+;     ret z ; don't draw if zero shields
+; ; set loop counter and drawing position
+;     ld b,a ; loop counter
+;     ld hl,#5300+48+12
+; ; set color based on bars remaining
+;     ld c,103 ; bright green 28fe0a
+;     cp 9
+;     jp p,draw_shields_loop
+;     ld c,74 ; bright yellow eafe5b 
+;     cp 3
+;     jp p,draw_shields_loop
+;     ld c,28 ; bright red fe0a0a 
+; draw_shields_loop:
+;     push bc ; yup,outta
+;     push hl ; registers again
+;     ; ld a,#A8 ; ▀,168 
+;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
+;     ; call draw_char
+;     call draw_num ; we nuked draw_char for the time being
+;     pop hl
+;     ld a,8
+;     add a,l
+;     ld l,a
+;     pop bc
+;     djnz draw_shields_loop
+    ; ret
 
-; player_move:
-; ; begin setting player to active sprite
-;     ld hl,player
+; prints the player's score
+; print_score:
+; TODO: Agonize this
+; ; draw score (we do it twice for a totally unecessary drop-shadow effect)
+;     ld c,42 ; dark orange b74400
+;     ld hl,#5200+1+8+6*6
+;     ld a,3 ; print 6 bdc digits
+;     ld de,player_score
+;     call print_num
+
+;     ld c,58 ; golden yellow fec10a
+;     ld hl,#5100+8+6*6
+;     ld a,3 ; print 6 bdc digits
+;     ld de,player_score
+;     call print_num
+    ; ret
+
+; draw_lives:
+;     ld hl,player_small ; make small yellow ship the active sprite
 ;     ld (sprite_base_bufferId),hl
+;     ; ld a,#80 ; northern orientation
+;     ; ld (sprite_orientation),a
 ;     ld hl,0 ; north
 ;     ld (sprite_heading),hl
-;     ld a,#01 ; animation 1 is center,which we set here as a default
+;     xor a
 ;     ld (sprite_animation),a
-;     ; we set position here for the time being as a default
-;     ; in case the player doesn't move,or is flagged for deletion
-;     ld hl,(player_x)
-;     ld (sprite_x),hl
-;     ld hl,(player_y)
-;     ld (sprite_y),hl
-; ; did we just die?
-;     ld a,(player_collisions)
-;     and %00000010 ; zero flag will be set if not dead
-;     jr z,player_not_dead
-; ; yes we died
-;     call kill_player  
-;     ret ; done
-; ; yay we didn't die
-; player_not_dead:
-; ; set player movements to zero by default
-;     ld hl,0
-;     ld (player_xvel),hl
-;     ld (player_yvel),hl
-; ; do we move it?
-;     in a,(#82) ; keyboard
-;     or a ; if zero,don't move
-;     jr z,player_draw
-; ; move it
-;     call player_move_calc
-; player_draw:
+;     ld a,#56 ; top of visible screen
+;     ld (sprite_y+1),a
 ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     ld a,(player_ships)
+;     dec a ; we draw one fewer ships than lives
+;     ret z ; nothing to draw here, move along
+;     ld b,a ; loop counter
+;     ld a,256-16 ; initial x position
+; draw_lives_loop:
+;     ld (sprite_x+1),a
+;     push af
+;     push bc
 ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-; player_move_done:
-;     ; write updated x,y coordinates back to player table
-;     ld hl,(sprite_x)
-;     ld (player_x),hl
-;     ld hl,(sprite_y)
-;     ld (player_y),hl
-;     ret
+;     pop bc
+;     pop af
+;     sub 10
+;     djnz draw_lives_loop
+;     ret 

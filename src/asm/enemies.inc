@@ -10,42 +10,15 @@ laser_turret: equ 5
 fireballs: equ 6
 explosion: equ 7
 
-
-respawn_countdown:
-    ld hl,(respawn_timer)
-    dec hl
-    ld (respawn_timer),hl
-; check hl for zero
-    add hl,de
-    or a
-    sbc hl,de 
-    ret nz
-    ld a,(max_enemy_sprites)
-    ld b,a ; loop counter
-@respawn_loop:
-    push bc
-    call enemy_init_from_landing_pad
-    pop bc
-    djnz @respawn_loop
-    ld hl,1*60 ; 1 second
-    ld (respawn_timer),hl
-    ret 
-respawn_timer: dl 1*60
-
 move_enemies:
 ; are there any active enemies or explosions?
-    ld hl,0
     ld a,(table_active_sprites)
-    ld l,a
-    ; call dumpRegistersHex
     and a ; will be zero if no alive enemies or explosions
-    ; ret z ; so nothing to do but go back
-    ; ld hl,(respawn_timer)
-    ; call dumpRegistersHex
-    jr nz,move_enemies_do
-    call respawn_countdown
+    jp nz,@they_live
+    ld hl,enemies_dead
+    ld (enemies_state),hl
     ret
-move_enemies_do:
+@they_live:
 ; initialize pointers and loop counter
     ld iy,table_base ; set iy to first record in table
     ld b,table_max_records ; loop counter
@@ -60,9 +33,8 @@ move_enemies_loop:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
-    jp (hl) ; ... and jump to it
-; we always jp back here from behavior subroutines
-move_enemies_loop_return:
+    callHL
+; move_enemies_loop_return: return from behavior subroutines
     ld iy,(table_pointer) ; get back table pointer
 ; now we check results of all the moves
     ld a,(iy+sprite_collisions)
@@ -168,26 +140,26 @@ en_nav_computevelocities:
 ; move_programs: ; bookmark in case we want to know the first address of the first subroutine
 
 ; move_nop: ; does nothing but burn a few cycles changing the PC
-;     jp move_enemies_loop_return
+;     ret
 
 ; move_explosion:
 ;     call animate_explosion 
-;     jp move_enemies_loop_return
+;     ret
 
 move_enemy_small:
     call en_nav
     call check_collisions
-    jp move_enemies_loop_return
+    ret
 
 ; move_enemy_medium:
 ;     call en_nav
 ;     call check_collisions
-;     jp move_enemies_loop_return
+;     ret
 
 ; move_enemy_large:
 ;     call en_nav
 ;     call check_collisions
-;     jp move_enemies_loop_return
+;     ret
 
 ; move_landing_pad:
 ;     call move_active_tiles
@@ -202,9 +174,10 @@ move_enemy_small:
 ;     and %00011111   ; keep only 5 lowest bits (max 31)
 ;     add a,64 ; range is now 64-127
 ;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
-;     jp move_enemies_loop_return
+;     ret
 
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
+
 enemy_init_from_landing_pad:
 ; get next available spriteId
     call table_get_next_id
@@ -300,7 +273,7 @@ enemy_init_from_landing_pad:
 ; move_laser_turret_boilerplate:
 ;     call move_active_tiles
 ;     call check_collisions
-;     jp move_enemies_loop_return
+;     ret
 
 ; fireballs_init:
 ;     call sprite_variables_to_stack
@@ -348,7 +321,7 @@ enemy_init_from_landing_pad:
 ; ; otherwise kill sprite
 ;     ld a,%10000000 ; any bit set in high nibble means sprite will die
 ;     ld (iy+sprite_collisions),a
-;     jp move_enemies_loop_return
+;     ret
 ; move_fireballs_alive:
 ;     ld a,(sprite_animation_timer)
 ;     dec a
@@ -365,7 +338,7 @@ enemy_init_from_landing_pad:
 ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ;     call check_collisions
-;     jp move_enemies_loop_return
+;     ret
 
 ; compute orientation to player 
 ; based on relative positions
@@ -520,7 +493,7 @@ kill_nurple:
     ret ; now we go back to caller
 
 ; game_over:
-;     jp new_game
+;     jp game_initialize
 
 ; it's presumed we've already checked that laser is alive
 collision_enemy_with_laser:

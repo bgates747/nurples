@@ -245,7 +245,6 @@ timestamp_chg: dl 0
 ; update the global timestamp from the system clock
 ; inputs: none
 ; returns: hl = time elapsed in 1/120ths of a second
-;          de = current time
 ;          ix = pointer to syvars table
 ; destroys: af,hl,de,ix
 timestamp_tick:

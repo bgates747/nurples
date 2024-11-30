@@ -129,7 +129,7 @@ Addresses are 24-bit, unless otherwise specified
 
 0434A5 CD C9 35 04 0247*      call check_collisions
 
-0434A9 C3 5D 33 04 0248*      jp move_enemies_loop_return
+0434A9 C3 5D 33 04 0248*      ret
 
 000b00
 

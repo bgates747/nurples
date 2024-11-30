@@ -157,28 +157,27 @@ init:
     ld b,7; bottom
     call vdu_set_txt_viewport
 
+; initialize the global timestamp
+    call timestamp_tick
+
+; done with init
     ret
-
-
 
 main:
 ; start a new game
-    call new_game
+    call game_initialize
 
 main_loop:
-; scroll tiles
-    call tiles_plot
+; update the global timestamp
+    call timestamp_tick
 
-; call state-specific player routines
-    call player_do
-
-; move enemies
-    call move_enemies
+; do gamestate logic
+    call do_game
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
 
-; poll keyboard
+; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
     rst.lil $08 ; get IX pointer to System Variables
     
@@ -191,201 +190,3 @@ main_loop:
 main_end:
     call vdu_cursor_on
     ret
-
-new_game:
-; initialize sprites
-    call sprites_init
-
-; initialize the first level
-    xor a
-    ld (cur_level),a
-    call init_level
-
-; initialize player
-    call player_init
-
-; spawn an enemy sprite
-    ld b,table_max_records
-@spawn_enemy_loop:
-    push bc
-    call enemy_init_from_landing_pad
-    pop bc
-    djnz @spawn_enemy_loop
-
-    ret
-
-; ; ###### INITIALIZE GAME #######
-; ; clear the screen
-;     ld a,3
-;     out (81h),a
-
-; ; reset the sprite table
-;     xor a
-;     ld (table_active_sprites),a
-;     ld hl,table_limit
-;     ld (table_base),hl
-;     ld (table_pointer),hl
-
-; ; draw a starfield over the entire screen
-;     ld b,#50 ; first row of visible screen
-; new_game_draw_stars_loop:
-;     push bc
-;     call draw_stars
-;     pop bc
-;     ld a,#10
-;     add a,b
-;     ld b,a
-;     jr nz,new_game_draw_stars_loop
-
-; ; ; print a welcome message
-; ;     ld de,msg_welcome
-; ;     ld hl,#581C
-; ;     ld c,218 ; a bright pastel purple d677e3
-; ;     call print_string
-
-; ; push all that to frame buffer
-;     ld a,#01 ; send video to frame buffer
-;     out (81h),a
-
-; ; reset score, lives, shields
-;     xor a
-;     ld hl,player_score
-;     ld (hl),a ; player_score 0
-;     inc hl
-;     ld (hl),a ; player_score 1
-;     inc hl
-;     ld (hl),a ; player_score 3
-;     inc hl
-;     ld a,16
-;     ld (hl),a ; player_shields
-;     inc hl
-;     ld (hl),a ; player_max_shields
-;     inc hl
-;     ld a,3
-;     ld (hl),a ; player_ships
-;     inc hl
-
-; ; initialize first level
-;     ld a,1 ; levels are zero-based, so this will wrap around
-;     ld (cur_level),a
-;     ld a,3 ; set max enemy sprites to easy street
-;     ld (max_enemy_sprites),a 
-;     call dt_next_level
-;     call dt
-
-; ; spawn our intrepid hero
-;     call player_init
-
-
-; ; #### BEGIN GAME MAIN LOOP ####
-; main_loop:
-; ; ; debug: start execution counter 
-; ;     ld a,1
-; ;     out (#e0),a ; start counting instructions
-    
-; ; refresh background from frame buffer
-;     ld a,#02
-;     out (81h),a
-;     call move_background ; now move it
-;     ld a,#01
-;     out (81h),a ; save it back to buffer
-; ; do all the things
-;     call move_enemies
-;     call player_move
-;     call laser_control
-;     call print_score
-;     call draw_shields
-;     call draw_lives
-; ; ; debug: stop execution counter and print results
-; ;     ld a,0
-; ;     out (#e0),a ; stop counting instructions
-
-; ; ; debug: start execution counter 
-; ;     ld a,1
-; ;     out (#e0),a ; start counting instructions
-
-;     call vdu_vblank
-; ; ; debug: stop execution counter and print results
-; ;     ld a,0
-; ;     out (#e0),a ; stop counting instructions
-
-;     jr main_loop
-; #### END GAME MAIN LOOP ####
-
-; draws the player's shields level
-; draw_shields:
-; TODO: Agonize this routine
-; ; prep the loop to draw the bars
-;     ld a,(player_shields) ; snag shields
-;     and a 
-;     ret z ; don't draw if zero shields
-; ; set loop counter and drawing position
-;     ld b,a ; loop counter
-;     ld hl,#5300+48+12
-; ; set color based on bars remaining
-;     ld c,103 ; bright green 28fe0a
-;     cp 9
-;     jp p,draw_shields_loop
-;     ld c,74 ; bright yellow eafe5b 
-;     cp 3
-;     jp p,draw_shields_loop
-;     ld c,28 ; bright red fe0a0a 
-; draw_shields_loop:
-;     push bc ; yup,outta
-;     push hl ; registers again
-;     ; ld a,#A8 ; ▀,168 
-;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
-;     ; call draw_char
-;     call draw_num ; we nuked draw_char for the time being
-;     pop hl
-;     ld a,8
-;     add a,l
-;     ld l,a
-;     pop bc
-;     djnz draw_shields_loop
-    ; ret
-
-; prints the player's score
-; print_score:
-; TODO: Agonize this
-; ; draw score (we do it twice for a totally unecessary drop-shadow effect)
-;     ld c,42 ; dark orange b74400
-;     ld hl,#5200+1+8+6*6
-;     ld a,3 ; print 6 bdc digits
-;     ld de,player_score
-;     call print_num
-
-;     ld c,58 ; golden yellow fec10a
-;     ld hl,#5100+8+6*6
-;     ld a,3 ; print 6 bdc digits
-;     ld de,player_score
-;     call print_num
-    ; ret
-
-; draw_lives:
-;     ld hl,player_small ; make small yellow ship the active sprite
-;     ld (sprite_base_bufferId),hl
-;     ; ld a,#80 ; northern orientation
-;     ; ld (sprite_orientation),a
-;     ld hl,0 ; north
-;     ld (sprite_heading),hl
-;     xor a
-;     ld (sprite_animation),a
-;     ld a,#56 ; top of visible screen
-;     ld (sprite_y+1),a
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
-;     ld a,(player_ships)
-;     dec a ; we draw one fewer ships than lives
-;     ret z ; nothing to draw here, move along
-;     ld b,a ; loop counter
-;     ld a,256-16 ; initial x position
-; draw_lives_loop:
-;     ld (sprite_x+1),a
-;     push af
-;     push bc
-;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-;     pop bc
-;     pop af
-;     sub 10
-;     djnz draw_lives_loop
-;     ret 

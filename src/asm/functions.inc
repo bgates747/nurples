@@ -9,9 +9,10 @@
 ; outputs: whatever the subroutine does, including HL and BC
 ; destroys: only what the subroutine does, but always BC
     MACRO callHL
-    ld bc,$+7 ; Address of first instruction after the jump
+    ld bc,@F ; Address of first instruction after the jump
     push bc ; which constitutes the return address
     jp (hl) ; Jump to the address in HL
+@@:
     ENDMACRO
 
 ; Simulated call to subroutine at IX
@@ -19,9 +20,10 @@
 ; outputs: whatever the subroutine does, including IX and BC
 ; destroys: only what the subroutine does, but always BC
     MACRO callIX
-    ld bc,$+7 ; Address of first instruction after the jump
+    ld bc,@F ; Address of first instruction after the jump
     push bc ; which constitutes the return address
     jp (ix) ; Jump to the address in IX
+@@:
     ENDMACRO
 
 ; Simulated call to soubroutinte at IY
@@ -29,9 +31,10 @@
 ; outputs: whatever the subroutine does, including IY and BC
 ; destroys: only what the subroutine does, but always BC
     MACRO callIY
-    ld bc,$+7 ; Address of first instruction after the jump
+    ld bc,@F ; Address of first instruction after the jump
     push bc ; which constitutes the return address
     jp (iy) ; Jump to the address in IY
+@@:
     ENDMACRO
 
 ; put the value in HLU into the accumulator
