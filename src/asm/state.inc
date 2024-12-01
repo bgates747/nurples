@@ -131,6 +131,7 @@ do_player:
 
 player_alive:
     call player_input     ; Handle player input
+    call laser_control    ; Handle laser movement and collision detection
     ret
 
 player_dead:

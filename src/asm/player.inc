@@ -98,37 +98,43 @@ player_not_dead: ; yay we didn't die
     ld a,1 ; set ship's default animation to center
         ; if left and right are both down a will net to 
 
-@left:
-    bit 1,(ix+3) ; keycode 26
-    jr z,@right
+; 99 Space: fire main weapon
+    bit 2,(ix+12)
+    push af ; save flags for after player movement processed
+; 26 Left: move player left
+    bit 1,(ix+3)
+    jp z,@F
     ld hl,(player_xvel)
     ld bc,-speed_player
     add hl,bc
     ld (player_xvel),hl
     dec a ; set ship's animation to left
-@right:
-    bit 1,(ix+15) ; keycode 122
-	jr z,@up
+@@:
+; 122 Right: move player right
+    bit 1,(ix+15)
+	jp z,@F
     ld hl,(player_xvel)
     ld bc,speed_player
     add hl,bc
     ld (player_xvel),hl
     inc a ; set ship's animation to right
-@up:
-    bit 1,(ix+7) ; keycode 58
-	jr z,@down
+@@:
+; 58 Up: move player up
+    bit 1,(ix+7)
+	jp z,@F
     ld hl,(player_yvel)
     ld bc,-speed_player
     add hl,bc
     ld (player_yvel),hl
-@down:
-    bit 1,(ix+5) ; keycode 42
-	jr z,@done_keyboard
+@@:
+; 42 Down: move player down
+    bit 1,(ix+5)
+	jp z,@F
     ld hl,(player_yvel)
     ld bc,speed_player
     add hl,bc
     ld (player_yvel),hl
-@done_keyboard:
+@@:
 ; a should land here loaded with the correct frame
     call vdu_sprite_select_frame
 ; draw player at updated position
@@ -138,10 +144,11 @@ player_not_dead: ; yay we didn't die
     ld bc,(player_x)
     ld de,(player_y)
 	call vdu_sprite_move_abs168
-
-    ; call waitKeypress ; DEBUG
+; process player laser fire
+    pop af ; restore flags from spacebar check
+    jp nz,fire_laser ; will return to caller from there
+    ret
 ; end player_input
-	ret
 
 ; ###################################################################
 ; TODO: the below is all stuff from the original code we need to port

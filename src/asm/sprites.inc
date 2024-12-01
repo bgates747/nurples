@@ -4,7 +4,7 @@ sprite_id:              equ 00 ; 1 bytes unique spriteId, zero-based
 sprite_type:            equ 01 ; 1 bytes type of sprite as defined in enemies.inc
 sprite_base_bufferId:   equ 02 ; 3 bytes bitmap bufferId
 sprite_move_program:    equ 05 ; 3 bytes address of sprite's behavior subroutine
-sprite_collisions:      equ 08 ; 1 bytes low/high nibble: collision details
+sprite_collisions:      equ 08 ; 1 bytes see collisions.inc constants for bit definitions
 sprite_dim_x:           equ 09 ; 1 bytes sprite width in pixels
 sprite_dim_y:           equ 10 ; 1 bytes sprite height in pixels
 sprite_x:               equ 11 ; 3 bytes 16.8 fractional x position in pixels
@@ -109,6 +109,7 @@ table_get_next_id:
     ld (sprite_next_id),a
     scf ; sets carry flag indicating we found a free sprite
     ret ; done
+; end table_get_next_id
 
 ; deactivate the sprite with the given id
 ; inputs: a = sprite id
@@ -131,6 +132,7 @@ table_deactivate_sprite:
     ld ix,table_active_sprites
     dec (ix)
     ret
+; end table_deactivate_sprite
 
 sprites_init:
 ; initialize sprites
@@ -162,10 +164,24 @@ sprites_init:
 	inc hl
 	pop bc
 	djnz @sprite_player_loop
-	call vdu_sprite_show
 
+; define laser sprite
+	ld a,(laser_id)
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_LASER_A
+	ld bc,2 ; two bitmaps for laser
+@sprite_laser_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @sprite_laser_loop
 ; all done
     ret
+; end sprites_init
 
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly
@@ -242,3 +258,14 @@ move_sprite:
 ; final collision flag to a and return
     ld a,(sprite_screen_edge)
     ret
+; end move_sprite
+
+sprite_compute_velocities:
+    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld de,(iy+sprite_vel) 
+    call polar_to_cartesian
+    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld (iy+sprite_xvel),bc ; save x-velocity component
+    ld (iy+sprite_yvel),de ; save y-velocity component 
+    ret
+; end sprite_compute_velocities

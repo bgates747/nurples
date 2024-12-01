@@ -22,50 +22,63 @@ laser_move_step:        db 0x00 ; 1 bytes not currently used
 laser_points:           db 0x00 ; 1 bytes not currently used
 laser_shield_damage:    db 0x00 ; 1 bytes not currently used
 laser_end_variables: ; for when we want to traverse this table in reverse
+laser_speed: equ 6*256 ; 6 pixels per frame 16.8 fixed
 
-; laser_control:
-; ; is laser already active?
-;     ld a,(laser_collisions)
-;     and %00000001 ; bit zero is lit if laser is active
-;     jr nz,laser_move ; move laser if not zero
-; ; otherwise check if laser fired
-;     in a,(#82) ; keyboard
-;     and %00010000 ; bit 4 is lit if space bar pressed
-;     ret z ; go back if laser not fired
-; ; otherwise,FIRE ZEE LASER!!1111
-; ; set laser status to active (set bit 0)
-;     ld a,%1
-;     ld (laser_collisions),a
-; ; initialize laser position
-;     ld a,(player_x+1) ; we only need the integer part
-;     ; add a,6 ; horizontal center with player sprite
-;     ld (laser_x+1),a ; store laser x coordinate
-;     ld a,(player_y+1) ; we only need the integer part
-;     add a,-6 ; set laser y a few pixels above player
-;     ld (laser_y+1),a ; store laser y coordinate
-;     ; fall through to laser_move
+laser_control: ; TODO
 
-; laser_move:
-; ; begin setting laser to active sprite
-;     ld hl,lasers
-;     ld (sprite_base_bufferId),hl
-;     ld hl,0 ; north
-;     ld (sprite_heading),hl
-;     xor a ; laser has no animations yet :-(
-;     ld (sprite_animation),a
-;     ; we set position here for the time being as a default
-;     ; in case the laser is flagged for deletion
-;     ; load sprite_x with laser x position (we do y further down)
-;     ld hl,(laser_x)
-;     ld (sprite_x),hl
+    ret
+
+fire_laser:
+; point to laser sprite variables
+    ld iy,laser_start_variables
+    ld (table_pointer),iy
+; is laser already active?
+    ld a,(iy+sprite_collisions)
+    and %00000001 ; bit zero is lit if laser is active
+    ret nz ; laser already active
+; otherwise,FIRE ZEE LASER!!1111
+; set laser status to active (set bit 0)
+    ld a,%1
+    ld (iy+sprite_collisions),a
+; initialize laser sprite parameters
+; x-coordinate
+    ld ix,player_start_variables
+    ld hl,(ix+sprite_x)
+    ld de,6 ; horizontal center with player sprite
+    add hl,de
+    ld (iy+sprite_x),hl
+; y-coordinate
+    ld hl,(ix+sprite_y)
+    ld de,-6 ; set laser y a few pixels above player
+    ld (iy+sprite_y),hl
+; set laser velocity
+    ld hl,laser_speed
+    ld (iy+sprite_yvel),hl
+; set laser animation frame and timer
+    xor a ; first frame
+    ld (iy+sprite_animation),a
+    ld a,2 ; animate every two frames
+    ld (iy+sprite_animation_timer),a
+; plot the sprite and make it visible
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    ld bc,(iy+sprite_x)
+    ld de,(iy+sprite_y)
+    call vdu_sprite_move_abs168
+    call vdu_sprite_show
+; return to caller
+    ret
+
+laser_move: ; TODO
 ; ; did laser just die?
 ;     ld a,(laser_collisions)
 ;     bit 1,a ; z if laser didn't just die
 ;     jr z,laser_not_dead_yet
 ; ; yes laser died
 ;     call kill_laser
-;     ret ; done
-; laser_not_dead_yet:
+    ret ; done
+
+laser_not_dead_yet: ; TODO
 ; ; draw it
 ; ; update laser y position
 ;     ld hl,(laser_y) ; grab laser y position
@@ -79,16 +92,16 @@ laser_end_variables: ; for when we want to traverse this table in reverse
 ;     jr c,finally_draw_the_frikken_laser
 ;     ; if at top of screen,laser dies
 ;     call kill_laser
-;     ret
-; ; otherwise,finally draw the frikken laser
-; finally_draw_the_frikken_laser:
+    ret
+; otherwise,finally draw the frikken laser
+finally_draw_the_frikken_laser: ; TODO
 ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
 ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ; ; all done
-;     ret
+    ret
 
-; kill_laser:
+kill_laser: ; TODO
 ; ; update status to inactive
 ;     xor a ; zero out a
 ;     ld (laser_collisions),a
-;     ret
+    ret

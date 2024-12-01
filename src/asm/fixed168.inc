@@ -408,17 +408,15 @@ dy168: blkb 6,0
 
 ; compute the euclidian distance between two cartesian coordinates
 ; using the formula d = sqrt(dx^2+dy^2)
-; inputs: ub.c and ud.e are x0 and y0 in 16.8 fixed format
-;         ui.x and ui.y are x1 and y1 in 16.8 fixed format
+; inputs: dx168 and dy168 are dx and dy in 16.8 fixed format
 ; output; uh.l is the 16.8 fixed format distance
 ;         also populates scratch locations dx168 and dy168
 ; destroys: a,hl,bc,de
 ; NOTE: rounds both deltas down to the nearest integer to avoid overflow when squaring,
 ;       thus the result will always be an integer, albeit in 16.8 format
 distance168:
-    call dxy168 ; ub.c = dx, ud.e = dy
 ; compute dy^2
-    ex de,hl
+    ld hl,(dy168)
     call hlu_abs
     call hlu_udiv256 ; make integer to avoid overflow
     push hl

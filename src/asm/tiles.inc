@@ -285,3 +285,85 @@ move_active_tiles_draw_sprite:
     ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
     ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
     ret ; and done
+
+
+; move_landing_pad:
+;     call move_active_tiles
+;     call check_collisions
+; ; is it time to launch an enemy?
+;     ld hl,sprite_move_timer
+;     dec (hl)
+;     jp nz,move_enemies_loop_return
+;     call enemy_init_from_landing_pad
+;     ; reset move timer so can spawn again if player doesn't take us out
+;     call rand_8     ; snag a random number
+;     and %00011111   ; keep only 5 lowest bits (max 31)
+;     add a,64 ; range is now 64-127
+;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
+;     ret
+
+
+; move_laser_turret:
+; ; compute orientation to player
+;     call orientation_to_player
+; ; h.l 8.8 fixed angle256 to player
+; ; bc and de as signed 16-bit integers
+; ; representing delta-x/y *to* target respectively
+;     ld (Bearing_t),hl
+;     ld hl,0x0400
+;     ld (Vp),hl
+;     call targeting_computer
+;     ld (sprite_heading),hl ; store bearing to player
+; ; is it time to launch a fireball?
+;     ld hl,sprite_move_timer
+;     dec (hl)
+;     jp nz,move_laser_turret_boilerplate
+;     call fireballs_init
+;     ; reset move timer so can fire again if player doesn't take us out
+;     call rand_8     ; snag a random number
+;     and %00011111   ; keep only 5 lowest bits (max 31)
+;     add a,64 ; range is now 64-127
+;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+; move_laser_turret_boilerplate:
+;     call move_active_tiles
+;     call check_collisions
+;     ret
+
+
+; fireballs_init:
+;     call sprite_variables_to_stack
+
+;     ld hl,fireballs
+;     ld (sprite_base_bufferId),hl
+
+;     ld hl,move_fireballs
+;     ld (sprite_move_program),hl 
+
+;     ld a,%11 ; collides with laser and player
+;     ; ld a,%10 ; collides with laser DEBUG
+;     ld (iy+sprite_collisions),a
+
+;     ld hl,(Vp)
+;     ld (sprite_vel),hl
+;     ld hl,(Vp_x)
+;     ld (sprite_xvel),hl
+;     ld hl,(Vp_y)
+;     inc h ; account for ground movement
+;     ld (sprite_yvel),hl
+
+;     xor a ; zero a
+;     ld (sprite_animation),a
+;     ld (sprite_move_step),a
+;     ld (sprite_move_timer),a
+
+;     ld a,6 ; 1/10th of a second timer
+;     ld (sprite_animation_timer),a
+
+;     ld a,0x00 ; BCD
+;     ld (sprite_points),a
+;     ld a,1 ; binary
+;     ld (sprite_shield_damage),a
+
+;     call table_add_record ; plops that on the sprite stack for later
+;     call sprite_variables_from_stack ; come back to where we started
+;     ret

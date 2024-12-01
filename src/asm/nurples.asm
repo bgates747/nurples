@@ -1,6 +1,5 @@
     assume adl=1 
     org 0x040000 
-    include "mos_api.inc"
     jp start 
     align 64 
     db "MOS" 
@@ -26,14 +25,24 @@ exit:
 
     ret
 
+; API INCLUDES
+    include "mos_api.inc"
     include "functions.inc"
     include "maths.inc"
-    include "enemies.inc"
     include "files.inc"
     include "fixed168.inc"
     include "fonts.inc"
-    include "fonts_list.inc"
     include "images.inc"
+    include "timer.inc"
+    include "vdu.inc"
+    include "vdu_fonts.inc"
+    include "vdu_plot.inc"
+    include "vdu_sprites.inc"
+
+; APPLICATION INCLUDES
+    include "collisions.inc"
+    include "enemies.inc"
+    include "fonts_list.inc"
     include "images_sprites.inc"
     include "images_ui.inc"
     include "laser.inc"
@@ -42,11 +51,6 @@ exit:
     include "sprites.inc"
     include "state.inc"
     include "tiles.inc"
-    include "timer.inc"
-    include "vdu.inc"
-    include "vdu_fonts.inc"
-    include "vdu_plot.inc"
-    include "vdu_sprites.inc"
 
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"
