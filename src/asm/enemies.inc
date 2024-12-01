@@ -73,14 +73,21 @@ speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 move_enemy_seeker:
 ; run the movement program for the seeker enemy
     call en_nav_seek_zag
-; check for collisions with laser or player
+    jp check_enemy_player_collisions
+; end move_enemy_seeker
+
+check_enemy_player_collisions:
+; check for collisions with laser
     ld ix,laser_start_variables
     bit sprite_alive,(ix+sprite_collisions)
     jp z,@player ; laser dead, check player
     call check_collision
     jp p,@player ; no collision
+    ld ix,laser_start_variables
+    set sprite_just_died,(ix+sprite_collisions)
+    set sprite_alive,(ix+sprite_collisions)
     jp enemy_kill
-@player:
+@player: ; check for collisions with player
     ld ix,player_start_variables
     bit sprite_alive,(ix+sprite_collisions)
     ret z ; player dead, no collision

@@ -157,7 +157,7 @@ sprites_init:
 	call vdu_sprite_select
 	call vdu_sprite_clear_frames
 	ld hl,BUF_LASER_A
-	ld bc,2 ; two bitmaps for laser
+	ld b,2 ; two bitmaps for laser
 @sprite_laser_loop:
 	push bc
 	push hl
@@ -172,7 +172,7 @@ sprites_init:
 
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly
-; inputs: iy pointing to sprite table record
+; inputs: table_pointer set to sprite record
 ; returns: updated x, y positions and edge collision flags in sprite table record
 ; destroys: everything
 ; note: actual rendering of sprite must be handled by caller

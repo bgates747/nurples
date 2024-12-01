@@ -135,7 +135,7 @@ player_alive:
     ret
 
 player_dead:
-    ; Player is dead, no input handled
+    call laser_control    ; Handle laser movement and collision detection
     ret
 
 do_enemies: 

@@ -186,7 +186,7 @@ main_loop:
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
-    call vdu_vblank ; DEBUG
+    ; call vdu_vblank ; DEBUG
 
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
