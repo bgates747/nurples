@@ -1,4 +1,4 @@
-max_enemy_sprites: db 1 
+max_enemy_sprites: db 4
 
 ; sprite_type
 enemy_dead: equ 0
@@ -37,24 +37,17 @@ move_enemies:
 ; move_enemies_loop_return: return from behavior subroutines
     ld iy,(table_pointer) ; get back table pointer
 ; now we check results of all the moves
-    ld a,(iy+sprite_collisions)
-    and sprite_just_died
-    ld a,(iy+sprite_id) ; get spriteId for the deactivate_sprite call if needed
-    jp z,@draw_sprite ; if not dead,draw sprite
-    call table_deactivate_sprite ; otherwise we ded
-    res sprite_just_died,(iy+sprite_collisions) ; clear just died flag
+    bit sprite_just_died,(iy+sprite_collisions)
+    jp z,@draw_sprite ; if not dead, draw sprite
+    call table_deactivate_sprite 
     jp @next_record ; and to the next record
-    
 @draw_sprite:
-; if we got here sprite will have already been activated
-; so all we need to do is set its coordinates and draw it
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
-; fall through to next record
+; fall through to @next_record
 @next_record:
-    ld de,table_bytes_per_record
-    add iy,de ; point to next record
+    lea iy,iy+table_bytes_per_record
     xor a ; clears carry flag
     ld (sprite_screen_edge),a ; clear screen edge collision flag
     pop bc ; get back our loop counter
@@ -76,19 +69,25 @@ move_enemies:
 ;     call animate_explosion 
 ;     ret
 
+speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 move_enemy_seeker:
+; run the movement program for the seeker enemy
     call en_nav_seek_zag
-    ld ix,(laser_start_variables)
+; check for collisions with laser or player
+    ld ix,laser_start_variables
+    bit sprite_alive,(ix+sprite_collisions)
+    jp z,@player ; laser dead, check player
     call check_collision
-    jp p,@F ; no collision
+    jp p,@player ; no collision
     jp enemy_kill
-@@:
-    ld ix,(player_start_variables)
+@player:
+    ld ix,player_start_variables
+    bit sprite_alive,(ix+sprite_collisions)
+    ret z ; player dead, no collision
     call check_collision
     ret p ; no collision
     jp enemy_kill
-
-speed_seeker: equ 0x000280 ; 2.5 pixels per frame
+; end move_enemy_seeker
 
 ; contains the logic for how to move the enemy
 ; and then does the moving
@@ -108,12 +107,11 @@ en_nav_seek_zag:
     jp nc,@zig_zag ; player is below,evade
 ; player is even or above,so home in on current heading
     ld (iy+sprite_heading),hl ; save sprite heading
-    push hl ; we need it back to set rotation frame
 ; fall through to @compute_velocities
 @compute_velocities:
     call sprite_compute_velocities
 ; change the animation frame to match heading
-    pop af ; get back heading
+    ld a,(iy+sprite_heading+1) ; we want the integer portion
     srl a ; divide integer portion by 8
     srl a
     srl a
@@ -329,12 +327,5 @@ enemy_kill:
 ;     ret ; now we go back to caller
 ; done_explosion:
     set sprite_just_died,(iy+sprite_collisions)
-; TODO: remove this once the generic logic for this has been reimplemented
-    ld hl,(ix+sprite_id)
-    call vdu_sprite_select
-    call vdu_sprite_hide
-; END TODO
     ret ; now we go back to caller
-
-; game_over:
-;     jp game_initialize
+; end enemy_kill

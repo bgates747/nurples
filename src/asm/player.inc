@@ -21,7 +21,7 @@ player_id:               db table_max_records
 player_type:             db     0x00 ; 1 bytes currently not used
 player_base_bufferId:    dl BUF_SHIP_0L ; 3 bytes bitmap bufferId
 player_move_program:     dl 0x000000 ; 3 bytes not currently used
-player_collisions:       db     0x00 ; 1 bytes bit 0 set=alive, otherwise dead, bit 1 set=just died
+player_collisions:       db     0x00 ; 1 bytes uses sprite_alive and sprite_just_died flags
 player_dim_x:            db     0x00 ; 1 bytes sprite width in pixels
 player_dim_y:            db     0x00 ; 1 bytes sprite height in pixels
 player_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels
@@ -61,6 +61,8 @@ player_init:
     call vdu_sprite_show
     ld hl,player_alive
     ld (player_state),hl
+    ld hl,player_collisions
+    set sprite_alive,(hl)
     ret
 
 ; process player keyboard input, set player bitmap

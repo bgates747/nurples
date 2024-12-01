@@ -5,7 +5,7 @@ laser_id:               db table_max_records+1
 laser_type:             db 0x00 ; 1 bytes currently not used
 laser_base_bufferId:    dl BUF_LASER_A ; 3 bytes bitmap bufferId
 laser_move_program:     dl 0x000000 ; 3 bytes not currently used
-laser_collisions:       db 0x00 ; 1 bytes bit 0 set=alive, otherwise dead, bit 1 set=just died
+laser_collisions:       db 0x00 ; 1 bytes uses sprite_alive and sprite_just_died flags
 laser_dim_x:            db 0x00 ; 1 bytes sprite width in pixels
 laser_dim_y:            db 0x00 ; 1 bytes sprite height in pixels
 laser_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels

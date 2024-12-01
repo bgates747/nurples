@@ -3,7 +3,15 @@
 ; sprite_collisions flags
 collides_with_player: equ 0
 collides_with_laser: equ 1
+sprite_alive: equ 6 ; set when sprite is alive
 sprite_just_died: equ 7 ; set when sprite just died
+
+; TODO: make these bit numbers instead of masks
+collide_top: equ %00001000
+collide_bottom: equ %00000100
+collide_left: equ %00000010
+collide_right: equ %00000001
+; END TODO
 
 ; this routine detects collisions between two collidable objects,
 ; which can include sprites, active tiles, or any screen coordinate
@@ -40,4 +48,4 @@ check_collision:
     or a ; clear carry
     sbc hl,de ; uh.l = distance - sum of radii
     ret
-
+; end check_collision

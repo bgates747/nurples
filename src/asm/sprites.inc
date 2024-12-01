@@ -52,10 +52,6 @@ sprite_top: equ 0
 sprite_bottom: equ field_bottom-16
 sprite_left: equ field_left
 sprite_right: equ field_right-16
-collide_top: equ %00001000
-collide_bottom: equ %00000100
-collide_left: equ %00000010
-collide_right: equ %00000001
 
 ; ######### COLLISION SPRITE PARAMETERS ##########
 ; integer coordinates are all that are needed for collision calculations
@@ -112,25 +108,16 @@ table_get_next_id:
 ; end table_get_next_id
 
 ; deactivate the sprite with the given id
-; inputs: a = sprite id
+; inputs: iy set to sprite record, vdu_sprite_select called
 ; outputs: nothing
-; destroys: a,ix,de
+; destroys: a,hl
 ; affects: decrements table_active_sprites by one
 table_deactivate_sprite:
-    push af ; save sprite id bc we need it later
-    call vdu_sprite_select
     call vdu_sprite_hide
-    pop af ; restore sprite id
-    ld de,0 ; clear deu
-    ld d,a
-    ld e,table_bytes_per_record
-    mlt de
-    ld ix,table_base
-    add ix,de
     xor a
-    ld (ix+sprite_type),a
-    ld ix,table_active_sprites
-    dec (ix)
+    ld (iy+sprite_type),a
+    ld hl,table_active_sprites
+    dec (hl)
     ret
 ; end table_deactivate_sprite
 
