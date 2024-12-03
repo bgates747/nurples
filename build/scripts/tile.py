@@ -3,7 +3,7 @@ import os
 import shutil
 import hashlib
 
-def chop_and_deduplicate_tiles(source_dir, file_name, tile_width=8, tile_height=8, h_pitch=8, v_pitch=8, tiles_x=28, tiles_y=31, start_x=152, start_y=64):
+def chop_and_deduplicate_tiles(source_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns):
     """
     Chops an image into tiles with specified width, height, and pitch,
     deduplicates the tiles based on their content, saves unique tiles, and generates a CSV map and review image.
@@ -11,10 +11,10 @@ def chop_and_deduplicate_tiles(source_dir, file_name, tile_width=8, tile_height=
     Args:
         source_dir (str): Path to the source directory.
         file_name (str): Name of the source image file.
-        tile_width (int): Width of each tile (default: 8).
-        tile_height (int): Height of each tile (default: 8).
-        h_pitch (int): Horizontal pitch between tiles (default: 8).
-        v_pitch (int): Vertical pitch between tiles (default: 8).
+        tile_width (int): Width of each tile.
+        tile_height (int): Height of each tile.
+        h_pitch (int): Horizontal pitch between tiles.
+        v_pitch (int): Vertical pitch between tiles.
         tiles_x (int): Number of tiles horizontally.
         tiles_y (int): Number of tiles vertically.
         start_x (int): Starting x-coordinate of the grid.
@@ -71,7 +71,7 @@ def chop_and_deduplicate_tiles(source_dir, file_name, tile_width=8, tile_height=
     save_csv_map(tile_map, os.path.join(target_dir, f"{base_file_name}.csv"))
 
     # Generate a review image of unique tiles
-    generate_review_image(base_file_name, unique_tiles, target_dir, tile_width, tile_height, columns=8)
+    generate_review_image(base_file_name, unique_tiles, target_dir, tile_width, tile_height, columns)
 
 def save_csv_map(tile_map, output_path):
     """
@@ -85,7 +85,7 @@ def save_csv_map(tile_map, output_path):
         csv_file.write("\n".join(tile_map))
     print(f"Saved CSV map to {output_path}")
 
-def generate_review_image(base_file_name, unique_tiles, target_dir, tile_width, tile_height, columns=8):
+def generate_review_image(base_file_name, unique_tiles, target_dir, tile_width, tile_height, columns):
     """
     Generates a single image containing all unique tiles for review.
 
@@ -110,5 +110,46 @@ def generate_review_image(base_file_name, unique_tiles, target_dir, tile_width, 
     review_img.save(review_img_path)
     print(f"Saved review image to {review_img_path}")
 
-# Example usage
-chop_and_deduplicate_tiles("beegee747/src/assets/design/sprites", "maze_pellets.png")
+if __name__ == "__main__":
+    # source_dir = "assets/img/design"
+    # file_name = "dead_gunner_sms.png"
+    # tile_width = 512
+    # tile_height = 224
+    # h_pitch = tile_width
+    # v_pitch = tile_height
+    # tiles_x = 3
+    # tiles_y = 2
+    # start_x = 0
+    # start_y = 0
+    # columns = 2
+
+    # chop_and_deduplicate_tiles(source_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
+
+    # source_dir = "assets/img/design"
+    # file_name = "dead_gunner_sms.png"
+    # tile_width = 256
+    # tile_height = 240
+    # h_pitch = tile_width
+    # v_pitch = tile_height
+    # tiles_x = 1
+    # tiles_y = 2
+    # start_x = 1536
+    # start_y = 0
+    # columns = 2
+
+    # chop_and_deduplicate_tiles(source_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
+
+    source_dir = "assets/img/design/dead_gunner_sms_lg"
+    tile_width = 16
+    tile_height = 16
+    h_pitch = tile_width
+    v_pitch = tile_height
+    tiles_x = 32
+    tiles_y = 14
+    start_x = 0
+    start_y = 0
+    columns = 8
+
+    for file_name in os.listdir(source_dir):
+        if file_name.endswith(".png") and file_name != "review_image.png":
+            chop_and_deduplicate_tiles(source_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
