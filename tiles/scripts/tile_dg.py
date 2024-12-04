@@ -25,7 +25,7 @@ def chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, til
             tile_hash = hashlib.md5(tile.tobytes()).hexdigest()
             if tile_hash not in unique_tiles:
                 output_path = os.path.join(target_dir, f"{base_name}_{set_num}_{tile_count:03}.png")
-                # tile.save(output_path)
+                tile.save(output_path)
                 unique_tiles[tile_hash] = tile_count
                 output_images.append(output_path)
                 tile_count += 1
