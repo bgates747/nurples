@@ -5,44 +5,40 @@ tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
 tiles_row: db 0 ; decrements each time a row is drawn. level is over when hits zero
     ; initialize to zero for a maximum of 256 rows in a level
 cur_level: db 0
-num_levels: equ 2 ; number of levels,duh
-
-; lookup table for level definitions
-tiles_levels: dl tiles_level_00,tiles_level_01
 
 ; tiles_bufferId: dl 0
 tiles_x_plot: dl 0
 tiles_y_plot: dl -15
 
-bg_y_plot: dl -1
-bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
+; bg_y_plot: dl -1
+; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
 
-bg_plot:
-; load current bg tile bufferId as default
-    ld hl,(bg_bufferId)
-; check whether it is time for a new background tile
-    ld a,(bg_y_plot)
-    inc a
-    ld (bg_y_plot),a
-    jp nz,@F ; not time for a new tile so draw current one
-; load the next background tile
-    ld hl,BUF_STATION_BG_00
-    call rand_8
-    and %0000011
-    add a,l
-    ld l,a
-    ld a,0
-    adc a,h
-    ld h,a
-    ld (bg_bufferId),hl
-@@:
-    call vdu_buff_select
-    ld bc,0
-    ld de,(bg_y_plot)
-    inc de
-    call vdu_plot_bmp
-; all done
-    ret
+; bg_plot:
+; ; load current bg tile bufferId as default
+;     ld hl,(bg_bufferId)
+; ; check whether it is time for a new background tile
+;     ld a,(bg_y_plot)
+;     inc a
+;     ld (bg_y_plot),a
+;     jp nz,@F ; not time for a new tile so draw current one
+; ; load the next background tile
+;     ld hl,BUF_STATION_BG_00
+;     call rand_8
+;     and %0000011
+;     add a,l
+;     ld l,a
+;     ld a,0
+;     adc a,h
+;     ld h,a
+;     ld (bg_bufferId),hl
+; @@:
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,(bg_y_plot)
+;     inc de
+;     call vdu_plot_bmp
+; ; all done
+;     ret
 
 ; xevious_plot:
 ; ; load current bg tile bufferId as default
@@ -93,7 +89,7 @@ tiles_plot:
     ld iy,0 ; bottommost y-coord
     call vdu_set_gfx_viewport
 ; plot the background
-    call bg_plot
+    ; call bg_plot
     ; call xevious_plot
     ; ret ; DEBUG
 ; initialize tiles loop
@@ -174,19 +170,19 @@ init_level:
     ld (tiles_row),a
     inc ix ; now ix points first element of first row tile def
     ld (tiles_row_defs),ix ; ... so we save it
-; draw initial background tiles 
-; TODO: make this a stars background
-    ld hl,BUF_STATION_BG_00
-    call vdu_buff_select
-    ld bc,0
-    ld de,field_top
-    call vdu_plot_bmp
+; ; draw initial background tiles 
+; ; TODO: make this a stars background
+;     ld hl,BUF_STATION_BG_00
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,field_top
+;     call vdu_plot_bmp
 
-    ld hl,BUF_STATION_BG_01
-    call vdu_buff_select
-    ld bc,0
-    ld de,field_top+256
-    call vdu_plot_bmp
+;     ld hl,BUF_STATION_BG_01
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,field_top+256
+;     call vdu_plot_bmp
 
     ret
 

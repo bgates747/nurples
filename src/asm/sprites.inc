@@ -128,7 +128,7 @@ sprites_init:
 @sprite_loop:
 	push af
 	call vdu_sprite_select
-	ld hl,BUF_0TILE_EMPTY ; can be anything, but why not blank?
+	ld hl,BUF_CRATER ; can be anything, but why not blank?
 	call vdu_sprite_add_buff
 	pop af
 	inc a
