@@ -5,10 +5,14 @@ tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
 tiles_row: db 0 ; decrements each time a row is drawn. level is over when hits zero
     ; initialize to zero for a maximum of 256 rows in a level
 cur_level: db 0
-
-; tiles_bufferId: dl 0
+cur_baseBufferId: dl 0
 tiles_x_plot: dl 0
 tiles_y_plot: dl -15
+
+tilesets_num: equ 1
+tileset: dl tiles_dg_levels
+tilesets:
+    dl tiles_dg_levels
 
 ; bg_y_plot: dl -1
 ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
@@ -156,9 +160,8 @@ tiles_plot:
 
 init_level:
 ; look up address of level's tile defintion
-    ld hl,tiles_levels
+    ld hl,(tileset)
     ld a,(cur_level)
-    ld de,0 ; just in case deu is non-zero
     ld d,a
     ld e,3
     mlt de 
@@ -170,6 +173,7 @@ init_level:
     ld (tiles_row),a
     inc ix ; now ix points first element of first row tile def
     ld (tiles_row_defs),ix ; ... so we save it
+
 ; ; draw initial background tiles 
 ; ; TODO: make this a stars background
 ;     ld hl,BUF_STATION_BG_00

@@ -43,10 +43,12 @@ exit:
     include "collisions.inc"
     include "enemies.inc"
     include "fonts_list.inc"
+    include "images_tiles_dg.inc"
     include "images_sprites.inc"
     include "images_ui.inc"
     include "laser.inc"
-    include "levels.inc"
+    ; include "levels.inc"
+    include "levels_dg.inc"
     include "player.inc"
     include "sprites.inc"
     include "state.inc"
@@ -107,6 +109,9 @@ init:
 ; load sprites
     call img_load_init ; sets up the animated load screen
     call load_sprite_images
+
+; load tilesets
+    call load_tilesets
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers

@@ -11,6 +11,23 @@ cur_file_idx: dl 0
 cur_filename: dl 0
 cur_buffer_id: dl 0
 
+img_load_init:
+; initialize logo's position parameters
+    ld hl,0
+    ld (logo_xvel),hl
+    ld (logo_xpos),hl
+; begin 16.8 maths to determine logo's y position and velocity
+    ld hl,240-16*256 ; allow space for text at bottom of screen
+    ld (logo_ypos),hl
+    ex de,hl
+    ld hl,-8*256 ; 8 pixels from top of screen
+    add hl,de ; distance for logo to travel
+    ld de,-sprites_num_images-tiles_dg_num_images*256
+    call sdiv168 ; ud.e = distance / num images = y velocity
+    ld (logo_yvel),de
+; all done
+    ret
+
 load_ui_images:
 ; initialize image loading variables
     ld hl,0
@@ -33,6 +50,17 @@ load_sprite_images:
     ld hl,sprites_image_list
     ld (cur_image_list),hl
     ld bc,sprites_num_images
+; load images
+    call img_load_main
+    ret
+
+load_tilesets:
+; initialize image loading variables
+    ld hl,0
+    ld (cur_file_idx),hl
+    ld hl,tiles_dg_image_list
+    ld (cur_image_list),hl
+    ld bc,tiles_dg_num_images
 ; load images
     call img_load_main
     ret
@@ -104,23 +132,6 @@ load_next_image:
     call vdu_load_img
     ld iy,cur_file_idx
     inc (iy)
-    ret
-
-img_load_init:
-; initialize logo's position parameters
-    ld hl,0
-    ld (logo_xvel),hl
-    ld (logo_xpos),hl
-; begin 16.8 maths to determine logo's y position and velocity
-    ld hl,240-16*256 ; allow space for text at bottom of screen
-    ld (logo_ypos),hl
-    ex de,hl
-    ld hl,-8*256 ; 8 pixels from top of screen
-    add hl,de ; distance for logo to travel
-    ld de,-sprites_num_images*256
-    call sdiv168 ; ud.e = distance / num images = y velocity
-    ld (logo_yvel),de
-; all done
     ret
 
 move_logo:
