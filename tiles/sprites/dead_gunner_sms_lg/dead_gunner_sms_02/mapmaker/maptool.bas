@@ -1,0 +1,1 @@
+/home/smith/Agon/emulator/sdcard/mystuff/nurples/tiles/mapmaker/maptool.bas

@@ -173,7 +173,7 @@
  1730 DEFPROCload_bitmap(D$,F$,N%,W%,H%)
  1740 IF N%=9 THEN PRINTTAB(15,18);"  "
  1750 PRINTTAB(13,18);N% :REM SHOW LOAD SPRITE
- 1760 OSCLI("LOAD " + D$ + "/" + F$ + ".rgb" + " " + STR$(MB%+graphics))
+ 1760 OSCLI("LOAD " + D$ + "/" + F$ + ".rgba8" + " " + STR$(MB%+graphics))
  1770 VDU 23,27,0,N% : REM SELECT SPRITE n (equating to buffer ID numbered 64000+n).
  1780 VDU 23,27,1,W%;H%; : REM LOAD COLOUR BITMAP DATA INTO CURRENT SPRITE.
  1790 FOR I%=0 TO (W%*H%*4)-1 STEP 4 : REM LOOP 16x16x3 EACH PIXEL R,G,B,A
