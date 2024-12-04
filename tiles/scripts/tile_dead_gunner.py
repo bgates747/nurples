@@ -142,6 +142,7 @@ if __name__ == "__main__":
     start_y = 0
     start_num = chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height,h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns, start_num, set_num, make_dirs)
 
+    make_dirs = False
     start_num = (start_num + 9) // 10 * 10
     set_num += 1
     start_x = 512
