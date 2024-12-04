@@ -8,7 +8,7 @@ BUF_BEZEL_R: equ 1
 BUF_SPLASH_BG: equ 2
 BUF_SPLASH_LOGO: equ 3
 
-ui_image_list: ; type; width; height; filename; bufferId:
+ui_image_list: ; type; width; height; size; filename; bufferId:
 	dl 1, 128, 384, 49152, fn_bezel_l, 0
 	dl 1, 128, 384, 49152, fn_bezel_r, 1
 	dl 1, 320, 240, 76800, fn_splash_bg, 2

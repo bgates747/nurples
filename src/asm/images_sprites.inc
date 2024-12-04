@@ -83,7 +83,7 @@ BUF_TURRET_232: equ 332
 BUF_TURRET_240: equ 333
 BUF_TURRET_248: equ 334
 
-sprites_image_list: ; type; width; height; filename; bufferId:
+sprites_image_list: ; type; width; height; size; filename; bufferId:
 	dl 1, 16, 16, 256, fn_crater, 256
 	dl 1, 16, 16, 256, fn_explosion_a, 257
 	dl 1, 16, 16, 256, fn_explosion_b, 258

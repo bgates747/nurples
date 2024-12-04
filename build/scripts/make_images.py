@@ -232,7 +232,7 @@ def make_images(buffer_id, img_width, img_height, images_type, asm_images_filepa
         f.write(''.join(buffer_ids))
         f.write(f'\n') 
 
-        f.write(f'{images_type}_image_list: ; type; width; height; filename; bufferId:\n')
+        f.write(f'{images_type}_image_list: ; type; width; height; size; filename; bufferId:\n')
         f.write(''.join(image_list))
         f.write(f'\n') 
 
