@@ -120,7 +120,7 @@ def generate_review_image(review_file, image_paths, tile_width, tile_height, col
     print(f"Saved review image to {review_file}")
 
 if __name__ == "__main__":
-    base_name = "dead_gunner"
+    base_name = "dg"
     source_dir = f"tiles/{base_name}"
     file_name = f"{base_name}.png"
     target_dir = f"tiles/{base_name}/tiled"
