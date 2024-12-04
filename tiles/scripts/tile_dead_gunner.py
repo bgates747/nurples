@@ -111,10 +111,10 @@ def generate_review_image(base_file_name, unique_tiles, target_dir, tile_width, 
 
 if __name__ == "__main__":
     source_dir = "tiles/sprites"
-    target_dir = "tiles/sprites/dead_gunner_sms_lg"
+    target_dir = "tiles/sprites/dead_gunner"
     file_name = "dead_gunner_sms.png"
-    tile_width = 512
-    tile_height = 224
+    tile_width = 16
+    tile_height = 16
     h_pitch = tile_width
     v_pitch = tile_height
     tiles_x = 3
@@ -123,47 +123,3 @@ if __name__ == "__main__":
     start_y = 0
     columns = 2
     chop_and_deduplicate_tiles(source_dir, target_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
-
-    source_dir = "tiles/sprites"
-    target_dir = "tiles/sprites/dead_gunner_sms_sm"
-    file_name = "dead_gunner_sms.png"
-    tile_width = 256
-    tile_height = 240
-    h_pitch = tile_width
-    v_pitch = tile_height
-    tiles_x = 1
-    tiles_y = 2
-    start_x = 1536
-    start_y = 0
-    columns = 2
-    chop_and_deduplicate_tiles(source_dir, target_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
-
-    source_dir = "tiles/sprites/dead_gunner_sms_lg"
-    tile_width = 16
-    tile_height = 16
-    h_pitch = tile_width
-    v_pitch = tile_height
-    tiles_x = 32
-    tiles_y = 14
-    start_x = 0
-    start_y = 0
-    columns = 8
-    for file_name in os.listdir(source_dir):
-        if file_name.endswith(".png") and file_name != "review_image.png":
-            target_dir = os.path.join(source_dir, os.path.splitext(file_name)[0])
-            chop_and_deduplicate_tiles(source_dir, target_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
-
-    source_dir = "tiles/sprites/dead_gunner_sms_sm"
-    tile_width = 16
-    tile_height = 16
-    h_pitch = tile_width
-    v_pitch = tile_height
-    tiles_x = 32
-    tiles_y = 14
-    start_x = 0
-    start_y = 0
-    columns = 8
-    for file_name in os.listdir(source_dir):
-        if file_name.endswith(".png") and file_name != "review_image.png":
-            target_dir = os.path.join(source_dir, os.path.splitext(file_name)[0])
-            chop_and_deduplicate_tiles(source_dir, target_dir, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, columns)
