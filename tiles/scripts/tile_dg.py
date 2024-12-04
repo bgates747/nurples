@@ -3,6 +3,8 @@ from PIL import Image
 import hashlib
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import shutil
+from agonImages import img_to_rgba2, img_to_rgba8, convert_to_agon_palette
 
 def chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num):
     source_path = os.path.join(source_dir, file_name)
@@ -146,6 +148,46 @@ def generate_asm_img_load(combined_xml_filepath, asm_images_filepath, rgba_targe
 
     print(f"Assembly images file created at {asm_images_filepath}")
 
+
+def make_images(combined_xml_filepath, rgba_target_dir, image_type, do_palette, palette_conv_type, transparent_rgb):
+    # # Delete and recreate the RGBA output directory
+    # if os.path.exists(rgba_target_dir):
+    #     shutil.rmtree(rgba_target_dir)
+    # os.makedirs(rgba_target_dir)
+
+    # Parse the master XML file
+    tree = ET.parse(combined_xml_filepath)
+    root = tree.getroot()
+
+    # Process each TileSet
+    for tile_set in root.findall("TileSet"):
+        tiles_file = tile_set.find("TilesFile").text
+
+        # Parse the individual TilesFile XML
+        tiles_tree = ET.parse(tiles_file)
+        tiles_root = tiles_tree.getroot()
+
+        # Process each tile in the TilesFile
+        for tile in tiles_root.find("Tiles"):
+            input_image_path = tile.text
+            file_name, ext = os.path.splitext(os.path.basename(input_image_path))
+
+            # Open the input image
+            with Image.open(input_image_path) as img:
+                # Apply palette conversion if required
+                if do_palette:
+                    img = convert_to_agon_palette(img, 64, palette_conv_type, transparent_rgb)
+
+                # Generate the appropriate RGBA file
+                if image_type == 1:
+                    rgba_filepath = os.path.join(rgba_target_dir, f"{file_name}.rgba2")
+                    img_to_rgba2(img, rgba_filepath)
+                else:
+                    rgba_filepath = os.path.join(rgba_target_dir, f"{file_name}.rgba8")
+                    img_to_rgba8(img, rgba_filepath)
+
+                print(f"Processed {input_image_path} -> {rgba_filepath}")
+
 if __name__ == "__main__":
 # chop up the source image into tiles and create metadata files
     base_name = "dg"
@@ -172,3 +214,9 @@ if __name__ == "__main__":
     rgba_target_dir = "tgt/tiles"
     generate_combined_xml(combined_xml_filepath, base_name, target_dir, buffer_id)
     generate_asm_img_load(combined_xml_filepath, asm_images_filepath, rgba_target_dir)
+    
+    image_type=1
+    do_palette=False
+    palette_conv_type='rgb'
+    transparent_rgb = (0, 0, 0, 0)
+    make_images(combined_xml_filepath, rgba_target_dir, image_type, do_palette, palette_conv_type, transparent_rgb)
