@@ -7,7 +7,6 @@ image_bufferId: equ image_filename+3
 image_record_size: equ image_bufferId+3
 
 cur_image_list: dl 0
-cur_file_idx: dl 0
 cur_filename: dl 0
 cur_buffer_id: dl 0
 
@@ -28,49 +27,8 @@ img_load_init:
 ; all done
     ret
 
-load_ui_images:
-; initialize image loading variables
-    ld hl,0
-    ld (cur_file_idx),hl
-    ld hl,ui_image_list
-    ld (cur_image_list),hl
-; load images
-    ld b,ui_num_images
-@loop:
-    push bc
-    call load_next_image
-    pop bc
-    djnz @loop
-    ret
-
-load_sprite_images:
-; initialize image loading variables
-    ld hl,0
-    ld (cur_file_idx),hl
-    ld hl,sprites_image_list
-    ld (cur_image_list),hl
-    ld bc,sprites_num_images
-; load images
-    call img_load_main
-    ret
-
-load_tilesets:
-; initialize image loading variables
-    ld hl,0
-    ld (cur_file_idx),hl
-    ld hl,tiles_dg_image_list
-    ld (cur_image_list),hl
-    ld bc,tiles_dg_num_images
-; load images
-    call img_load_main
-    ret
-
 ; inputs: bc is the number of images to load, cur_image_list set
 img_load_main:
-    xor a
-    ld (cur_file_idx),a
-
-img_load_main_loop:
 ; back up loop counter
     push bc
 
@@ -107,20 +65,15 @@ img_load_main_loop:
     dec bc
     ld a,c
     or a
-    jp nz,img_load_main_loop
+    jp nz,img_load_main
     ld a,b
     or a
-    jp nz,img_load_main_loop
+    jp nz,img_load_main
     ret
 
 load_next_image:
-    ld d,image_record_size
-    ld a,(cur_file_idx)
-    ld e,a
-    mlt de
     ld iy,(cur_image_list)
-    add iy,de
-
+    push iy
     ld a,(iy+image_type) ; get image type
     ld bc,(iy+image_width) ; get image width
     ld de,(iy+image_height) ; get image height
@@ -130,8 +83,9 @@ load_next_image:
     ld iy,(iy+image_filename) ; get image filename
     ld (cur_filename),iy
     call vdu_load_img
-    ld iy,cur_file_idx
-    inc (iy)
+    pop iy
+    lea iy,iy+image_record_size
+    ld (cur_image_list),iy
     ret
 
 move_logo:
@@ -154,3 +108,34 @@ logo_xpos: dl 0
 
 logo_yvel: dl 0
 logo_ypos: dl 0
+
+load_ui_images:
+; initialize image loading variables
+    ld hl,ui_image_list
+    ld (cur_image_list),hl
+; load images
+    ld b,ui_num_images
+@loop:
+    push bc
+    call load_next_image
+    pop bc
+    djnz @loop
+    ret
+
+load_sprite_images:
+; initialize image loading variables
+    ld hl,sprites_image_list
+    ld (cur_image_list),hl
+    ld bc,sprites_num_images
+; load images
+    call img_load_main
+    ret
+
+load_tilesets:
+; initialize image loading variables
+    ld hl,tiles_dg_image_list
+    ld (cur_image_list),hl
+    ld bc,tiles_dg_num_images
+; load images
+    call img_load_main
+    ret

@@ -122,9 +122,9 @@ init:
 ; 	call sfx_load_main
 
 ; print loading complete message and wait for user keypress
-    call vdu_cls
-    ld hl,loading_complete
-    call printString
+    ; call vdu_cls
+    ; ld hl,loading_complete
+    ; call printString
     call vdu_flip 
     call waitKeypress
 
@@ -188,14 +188,6 @@ main_loop:
 
 ; do gamestate logic
     call do_game
-
-; DEBUG
-    ld hl,BUF_DG_5_32
-    call vdu_buff_select
-    ld bc,64
-    ld de,64
-    call vdu_plot_bmp
-; END DEBUG
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
