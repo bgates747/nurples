@@ -21,7 +21,7 @@ img_load_init:
     ex de,hl
     ld hl,-8*256 ; 8 pixels from top of screen
     add hl,de ; distance for logo to travel
-    ld de,-sprites_num_images-tiles_dg_num_images*256
+    ld de,-sprites_num_images*256
     call sdiv168 ; ud.e = distance / num images = y velocity
     ld (logo_yvel),de
 ; all done
@@ -132,10 +132,17 @@ load_sprite_images:
     ret
 
 load_tilesets:
+; ; initialize image loading variables
+;     ld hl,tiles_dg_image_list
+;     ld (cur_image_list),hl
+;     ld bc,tiles_dg_num_images
+; ; load images
+;     call img_load_main
+
 ; initialize image loading variables
-    ld hl,tiles_dg_image_list
+    ld hl,tiles_xevious_image_list
     ld (cur_image_list),hl
-    ld bc,tiles_dg_num_images
+    ld bc,tiles_xevious_num_images
 ; load images
     call img_load_main
     ret
