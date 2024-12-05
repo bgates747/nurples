@@ -60,7 +60,8 @@ level_y: equ 0
     ret
 ; end init_level
 
-cur_tileset: dl tilesets
+cur_tileset: dl tiles_dg_levels
+cur_tileset_idx: dl 0
 tilesets:
     dl tiles_dg_levels
     dl tiles_xevious_levels
@@ -69,8 +70,6 @@ tilesets:
 ; intialize a tileset
 ; inputs: ix = pointer to tileset definition
 init_tileset:
-    ld ix,(cur_tileset)
-    ld ix,(ix)
     ld a,(ix-1) ; number of levels in the tileset
     ld (num_levels),a
     xor a
@@ -80,13 +79,17 @@ init_tileset:
 ; end init_tileset
 
 next_tileset:
-    ld ix,(cur_tileset)
-    lea ix,ix+3 ; ix points to next tileset
+    ld de,(cur_tileset_idx)
+    ld d,3
+    mlt de
+    ld ix,tilesets
+    add ix,de
     ld hl,(ix)
     sign_hlu
     jp nz,@F
     ld ix,tilesets
 @@:
     ld ix,(ix)
+    ld (cur_tileset),ix
     call init_tileset
     ret
