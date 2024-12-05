@@ -2,17 +2,171 @@
 ; TODO: implement buffering of tiles here when there isn't other stuff to do
 ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
 tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
-tiles_row: db 0 ; decrements each time a row is drawn. level is over when hits zero
+tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
     ; initialize to zero for a maximum of 256 rows in a level
+tiles_cols: db 0 ; number of tile columns in the current level
 cur_level: db 0
+num_levels: db 0
 cur_baseBufferId: dl 0
 tiles_x_plot: dl 0
 tiles_y_plot: dl -15
+cur_tileset: dl 0
 
-tilesets_num: equ 1
-tileset: dl tiles_dg_levels
-tilesets:
-    dl tiles_dg_levels
+; intialize a tileset
+; inputs: ix = pointer to tileset definition
+init_tileset:
+    ld a,(ix-1) ; number of levels in the tileset
+    ld (num_levels),a
+    ld (cur_tileset),ix
+    xor a
+    ld (cur_level),a
+    ret
+; end init_tileset
+
+init_level:
+    ; call vdu_home_cursor ; DEBUG
+; look up address of level's tile defintion
+    ld a,(cur_level)
+    ld d,a
+    ld e,3
+    mlt de ; de = index into tileset lut
+    ld ix,(cur_tileset)
+    add ix,de ; ix = pointer to level lookup record
+    ld ix,(ix) ; ix = pointer to level definintion
+; set tiles_cols
+    ld a,(ix+0)
+    ld (tiles_cols),a
+; set tiles_row counter
+    ld a,(ix+1)
+    ld (tiles_row),a
+; set cur_baseBufferId
+    ld hl,(ix+4)
+    ld (cur_baseBufferId),hl
+; set tiles_row_defs
+    lea ix,ix+7 ; ix points to definition of first tile of first row
+    ld (tiles_row_defs),ix
+
+; print level
+level_x: equ 0
+level_y: equ 0
+    ld c,level_x
+    ld b,level_y
+    call vdu_move_cursor
+    call printInline
+    asciz "Level: "
+    ld a,(cur_level)
+    call printHexA
+    call printNewLine
+    ld hl,(cur_baseBufferId)
+    call printDec
+
+; ; DEBUG
+;     call dumpRegistersHex
+;     call waitKeypress
+; ; END DEBUG
+
+; ; draw initial background tiles 
+; ; TODO: make this a stars background
+;     ld hl,BUF_STATION_BG_00
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,field_top
+;     call vdu_plot_bmp
+
+;     ld hl,BUF_STATION_BG_01
+;     call vdu_buff_select
+;     ld bc,0
+;     ld de,field_top+256
+;     call vdu_plot_bmp
+
+    ret
+; end init_level
+
+tiles_plot:
+; set gfx viewport to playing field window
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
+; move the background down one pixel
+    ld a,2 ; current gfx viewport
+    ld l,2 ; direction=down
+    ld h,1 ; speed=1 px
+    call vdu_scroll_down
+; set gfx viewport to one scanline to optimise plotting tiles
+    ld bc,0 ; leftmost x-coord
+    ld de,0 ; topmost y-coord
+    ld ix,255 ; rightmost x-coord
+    ld iy,0 ; bottommost y-coord
+    call vdu_set_gfx_viewport
+; plot the background
+    ; call bg_plot
+    ; call xevious_plot
+    ; ret ; DEBUG
+; initialize tiles loop
+    ld hl,0 ; init plotting x-coordinate
+    ld (tiles_x_plot),hl
+    ld hl,(tiles_row_defs)
+    ld a,(tiles_cols)
+    ld b,a ; column loop counter
+@loop:
+    push bc ; save the loop counter
+; read the tile defintion for the current column
+    ld a,(hl) ; a has tile definition
+    push hl ; save pointer to tile definition
+    ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
+    ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
+    call vdu_buff_select ; tile bitmap buffer is now active
+; plot the active bitmap
+    ld bc,(tiles_x_plot)
+    ld de,(tiles_y_plot)
+    call vdu_plot_bmp
+; bump x-coords the width of one tile and save it
+    ld hl,(tiles_x_plot)
+    ld bc,16
+    add hl,bc
+    ld (tiles_x_plot),hl
+; prepare to loop to next column
+    pop hl ; get back pointer to tile def
+    inc hl ; bump it to the next column
+    pop bc ; snag our loop counter
+    djnz @loop
+; increment tiles plotting y-coordinate
+; when it hits zero, we go to next row of tiles in the map
+; (we use ix b/c we want to preserve hl for the next step)
+    ld ix,tiles_y_plot
+    inc (ix)
+    ret nz
+; time to bump tiles_row_defs to next row
+; (hl was already there at the end of the loop)
+    ld (tiles_row_defs),hl
+; reset coords to plot next row of tiles
+    ld hl,0
+    ld (tiles_x_plot),hl
+    ld hl,-15
+    ld (tiles_y_plot),hl
+; decrement tiles row counter
+    ld hl,tiles_row
+    dec (hl)
+    ret nz
+; queue up next level
+    ld hl,cur_level
+    inc (hl) ; bump to next level
+    ld a,(num_levels)
+    cp (hl) ; are we past max levels?
+    jp nz,@inc_level ; no, so load next level
+    xor a ; reset to first level
+    ld (hl),a ; and fall through to @inc_level
+@inc_level:
+; increase the number of enemy sprites
+    ld a,(max_enemy_sprites)
+    inc a
+    cp table_max_records ; if we're at the global limit,skip ahead at max level
+    jp z,init_level
+    ld (max_enemy_sprites),a ; otherwise save the updated number
+    jp init_level
+; end tiles_plot
 
 ; bg_y_plot: dl -1
 ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
@@ -73,122 +227,6 @@ tilesets:
 ; ; all done
 ;     ret
 ; Xevious_tile: db 0
-
-tiles_plot:
-; set gfx viewport to playing field window
-    ld bc,field_left
-    ld de,field_top
-    ld ix,field_right
-    ld iy,field_bottom
-    call vdu_set_gfx_viewport
-; move the background down one pixel
-    ld a,2 ; current gfx viewport
-    ld l,2 ; direction=down
-    ld h,1 ; speed=1 px
-    call vdu_scroll_down
-; set gfx viewport to one scanline to optimise plotting tiles
-    ld bc,0 ; leftmost x-coord
-    ld de,0 ; topmost y-coord
-    ld ix,255 ; rightmost x-coord
-    ld iy,0 ; bottommost y-coord
-    call vdu_set_gfx_viewport
-; plot the background
-    ; call bg_plot
-    ; call xevious_plot
-    ; ret ; DEBUG
-; initialize tiles loop
-    ld hl,0 ; init plotting x-coordinate
-    ld (tiles_x_plot),hl
-    ld hl,(tiles_row_defs)
-    ld b,16 ; loop counter
-@loop:
-    push bc ; save the loop counter
-; read the tile defintion for the current column
-    ld a,(hl) ; a has tile definition
-    push hl ; save pointer to tile definition
-    ld hl,0 ; hlu is non-zero
-    ld l,a ; l is tile defintion
-    ld h,0x01 ; hl = 256 + tile index = the tile's bitmapId
-    call vdu_buff_select ; tile bitmap buffer is now active
-; plot the active bitmap
-    ld bc,(tiles_x_plot)
-    ld de,(tiles_y_plot)
-    call vdu_plot_bmp
-; bump x-coords the width of one tile and save it
-    ld hl,(tiles_x_plot)
-    ld bc,16
-    add hl,bc
-    ld (tiles_x_plot),hl
-; prepare to loop to next column
-    pop hl ; get back pointer to tile def
-    inc hl ; bump it to the next column
-    pop bc ; snag our loop counter
-    djnz @loop
-; increment tiles plotting y-coordinate
-; when it hits zero, we go to next row of tiles in the map
-; (we use ix b/c we want to preserve hl for the next step)
-    ld ix,tiles_y_plot
-    inc (ix)
-    ret nz
-; time to bump tiles_row_defs to next row
-; (hl was already there at the end of the loop)
-    ld (tiles_row_defs),hl
-; reset coords to plot next row of tiles
-    ld hl,0
-    ld (tiles_x_plot),hl
-    ld hl,-15
-    ld (tiles_y_plot),hl
-; decrement tiles row counter
-    ld hl,tiles_row
-    dec (hl)
-    ret nz
-; queue up next level
-    ld a,(cur_level)
-    cp num_levels-1
-    jr nz,@inc_level
-    ld a,-1 ; will wrap around to zero when we fall through
-@inc_level:
-    inc a
-    ld (cur_level),a
-; increase the number of enemy sprites
-    ld a,(max_enemy_sprites)
-    inc a
-    cp table_max_records ; if we're at the global limit,skip ahead at max level
-    jr z,init_level
-    ld (max_enemy_sprites),a ; otherwise save the updated number
-; fall through to init_level
-
-init_level:
-; look up address of level's tile defintion
-    ld hl,(tileset)
-    ld a,(cur_level)
-    ld d,a
-    ld e,3
-    mlt de 
-    add hl,de
-    ld ix,(hl)
-    ld (tiles_row_defs),ix
-; set tiles_row counter
-    ld a,(ix)
-    ld (tiles_row),a
-    inc ix ; now ix points first element of first row tile def
-    ld (tiles_row_defs),ix ; ... so we save it
-
-; ; draw initial background tiles 
-; ; TODO: make this a stars background
-;     ld hl,BUF_STATION_BG_00
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,field_top
-;     call vdu_plot_bmp
-
-;     ld hl,BUF_STATION_BG_01
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,field_top+256
-;     call vdu_plot_bmp
-
-    ret
 
 ; ###### TODO: NEW CODE TO IMPLEMENT ######
 ; dt_is_active:

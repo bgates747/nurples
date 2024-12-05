@@ -9,14 +9,14 @@
     <TileHeight>16</TileHeight>
     <HPitch>16</HPitch>
     <VPitch>16</VPitch>
-    <TilesX>32</TilesX>
-    <TilesY>16</TilesY>
-    <StartX>0</StartX>
-    <StartY>0</StartY>
+    <TilesX>16</TilesX>
+    <TilesY>32</TilesY>
+    <StartX>256</StartX>
+    <StartY>1024</StartY>
     <SetNum>0</SetNum>
     <MapFile>tiles/dg/tiled/dg_0_map.csv</MapFile>
     <TilesFile>tiles/dg/tiled/dg_0_files.xml</TilesFile>
-    <FileCount>66</FileCount>
+    <FileCount>68</FileCount>
     <BaseBufferId>512</BaseBufferId>
   </TileSet>
   <TileSet>
@@ -28,14 +28,14 @@
     <TileHeight>16</TileHeight>
     <HPitch>16</HPitch>
     <VPitch>16</VPitch>
-    <TilesX>32</TilesX>
-    <TilesY>16</TilesY>
-    <StartX>512</StartX>
-    <StartY>0</StartY>
+    <TilesX>16</TilesX>
+    <TilesY>32</TilesY>
+    <StartX>256</StartX>
+    <StartY>512</StartY>
     <SetNum>1</SetNum>
     <MapFile>tiles/dg/tiled/dg_1_map.csv</MapFile>
     <TilesFile>tiles/dg/tiled/dg_1_files.xml</TilesFile>
-    <FileCount>62</FileCount>
+    <FileCount>47</FileCount>
     <BaseBufferId>768</BaseBufferId>
   </TileSet>
   <TileSet>
@@ -47,14 +47,14 @@
     <TileHeight>16</TileHeight>
     <HPitch>16</HPitch>
     <VPitch>16</VPitch>
-    <TilesX>32</TilesX>
-    <TilesY>16</TilesY>
-    <StartX>1024</StartX>
+    <TilesX>16</TilesX>
+    <TilesY>32</TilesY>
+    <StartX>256</StartX>
     <StartY>0</StartY>
     <SetNum>2</SetNum>
     <MapFile>tiles/dg/tiled/dg_2_map.csv</MapFile>
     <TilesFile>tiles/dg/tiled/dg_2_files.xml</TilesFile>
-    <FileCount>88</FileCount>
+    <FileCount>65</FileCount>
     <BaseBufferId>1024</BaseBufferId>
   </TileSet>
   <TileSet>
@@ -66,14 +66,14 @@
     <TileHeight>16</TileHeight>
     <HPitch>16</HPitch>
     <VPitch>16</VPitch>
-    <TilesX>32</TilesX>
-    <TilesY>16</TilesY>
+    <TilesX>16</TilesX>
+    <TilesY>32</TilesY>
     <StartX>0</StartX>
-    <StartY>240</StartY>
+    <StartY>1024</StartY>
     <SetNum>3</SetNum>
     <MapFile>tiles/dg/tiled/dg_3_map.csv</MapFile>
     <TilesFile>tiles/dg/tiled/dg_3_files.xml</TilesFile>
-    <FileCount>68</FileCount>
+    <FileCount>53</FileCount>
     <BaseBufferId>1280</BaseBufferId>
   </TileSet>
   <TileSet>
@@ -85,14 +85,14 @@
     <TileHeight>16</TileHeight>
     <HPitch>16</HPitch>
     <VPitch>16</VPitch>
-    <TilesX>32</TilesX>
-    <TilesY>16</TilesY>
-    <StartX>512</StartX>
-    <StartY>240</StartY>
+    <TilesX>16</TilesX>
+    <TilesY>32</TilesY>
+    <StartX>0</StartX>
+    <StartY>512</StartY>
     <SetNum>4</SetNum>
     <MapFile>tiles/dg/tiled/dg_4_map.csv</MapFile>
     <TilesFile>tiles/dg/tiled/dg_4_files.xml</TilesFile>
-    <FileCount>47</FileCount>
+    <FileCount>50</FileCount>
     <BaseBufferId>1536</BaseBufferId>
   </TileSet>
   <TileSet>
@@ -104,14 +104,14 @@
     <TileHeight>16</TileHeight>
     <HPitch>16</HPitch>
     <VPitch>16</VPitch>
-    <TilesX>32</TilesX>
-    <TilesY>16</TilesY>
-    <StartX>1024</StartX>
-    <StartY>240</StartY>
+    <TilesX>16</TilesX>
+    <TilesY>32</TilesY>
+    <StartX>0</StartX>
+    <StartY>0</StartY>
     <SetNum>5</SetNum>
     <MapFile>tiles/dg/tiled/dg_5_map.csv</MapFile>
     <TilesFile>tiles/dg/tiled/dg_5_files.xml</TilesFile>
-    <FileCount>65</FileCount>
+    <FileCount>85</FileCount>
     <BaseBufferId>1792</BaseBufferId>
   </TileSet>
 </TileSets>

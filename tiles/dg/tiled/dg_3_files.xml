@@ -8,14 +8,14 @@
   <TileHeight>16</TileHeight>
   <HPitch>16</HPitch>
   <VPitch>16</VPitch>
-  <TilesX>32</TilesX>
-  <TilesY>16</TilesY>
+  <TilesX>16</TilesX>
+  <TilesY>32</TilesY>
   <StartX>0</StartX>
-  <StartY>240</StartY>
+  <StartY>1024</StartY>
   <SetNum>3</SetNum>
   <MapFile>tiles/dg/tiled/dg_3_map.csv</MapFile>
   <TilesFile>tiles/dg/tiled/dg_3_files.xml</TilesFile>
-  <FileCount>68</FileCount>
+  <FileCount>53</FileCount>
   <Tiles>
     <Tile00>tiles/dg/tiled/dg_3_00.png</Tile00>
     <Tile01>tiles/dg/tiled/dg_3_01.png</Tile01>
@@ -70,20 +70,5 @@
     <Tile32>tiles/dg/tiled/dg_3_32.png</Tile32>
     <Tile33>tiles/dg/tiled/dg_3_33.png</Tile33>
     <Tile34>tiles/dg/tiled/dg_3_34.png</Tile34>
-    <Tile35>tiles/dg/tiled/dg_3_35.png</Tile35>
-    <Tile36>tiles/dg/tiled/dg_3_36.png</Tile36>
-    <Tile37>tiles/dg/tiled/dg_3_37.png</Tile37>
-    <Tile38>tiles/dg/tiled/dg_3_38.png</Tile38>
-    <Tile39>tiles/dg/tiled/dg_3_39.png</Tile39>
-    <Tile3A>tiles/dg/tiled/dg_3_3A.png</Tile3A>
-    <Tile3B>tiles/dg/tiled/dg_3_3B.png</Tile3B>
-    <Tile3C>tiles/dg/tiled/dg_3_3C.png</Tile3C>
-    <Tile3D>tiles/dg/tiled/dg_3_3D.png</Tile3D>
-    <Tile3E>tiles/dg/tiled/dg_3_3E.png</Tile3E>
-    <Tile3F>tiles/dg/tiled/dg_3_3F.png</Tile3F>
-    <Tile40>tiles/dg/tiled/dg_3_40.png</Tile40>
-    <Tile41>tiles/dg/tiled/dg_3_41.png</Tile41>
-    <Tile42>tiles/dg/tiled/dg_3_42.png</Tile42>
-    <Tile43>tiles/dg/tiled/dg_3_43.png</Tile43>
   </Tiles>
 </TileSet>

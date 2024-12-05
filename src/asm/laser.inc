@@ -69,12 +69,12 @@ fire_laser:
 ; x-coordinate
     ld ix,player_start_variables
     ld hl,(ix+sprite_x)
-    ld de,6 ; horizontal center with player sprite
+    ld de,5*256 ; horizontal center with player sprite
     add hl,de
     ld (iy+sprite_x),hl
 ; y-coordinate
     ld hl,(ix+sprite_y)
-    ld de,-6 ; set laser y a few pixels above player
+    ld de,-6*256 ; set laser y a few pixels above player
     ld (iy+sprite_y),hl
 ; set laser velocity
     ld hl,laser_speed

@@ -212,7 +212,7 @@ kill_player:
     ; ret
 
 score_x: equ 0
-score_y: equ 1
+score_y: equ 3
 ; prints the player's score
 print_score:
 ; DEBUG

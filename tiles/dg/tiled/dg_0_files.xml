@@ -8,14 +8,14 @@
   <TileHeight>16</TileHeight>
   <HPitch>16</HPitch>
   <VPitch>16</VPitch>
-  <TilesX>32</TilesX>
-  <TilesY>16</TilesY>
-  <StartX>0</StartX>
-  <StartY>0</StartY>
+  <TilesX>16</TilesX>
+  <TilesY>32</TilesY>
+  <StartX>256</StartX>
+  <StartY>1024</StartY>
   <SetNum>0</SetNum>
   <MapFile>tiles/dg/tiled/dg_0_map.csv</MapFile>
   <TilesFile>tiles/dg/tiled/dg_0_files.xml</TilesFile>
-  <FileCount>66</FileCount>
+  <FileCount>68</FileCount>
   <Tiles>
     <Tile00>tiles/dg/tiled/dg_0_00.png</Tile00>
     <Tile01>tiles/dg/tiled/dg_0_01.png</Tile01>
@@ -83,5 +83,7 @@
     <Tile3F>tiles/dg/tiled/dg_0_3F.png</Tile3F>
     <Tile40>tiles/dg/tiled/dg_0_40.png</Tile40>
     <Tile41>tiles/dg/tiled/dg_0_41.png</Tile41>
+    <Tile42>tiles/dg/tiled/dg_0_42.png</Tile42>
+    <Tile43>tiles/dg/tiled/dg_0_43.png</Tile43>
   </Tiles>
 </TileSet>
