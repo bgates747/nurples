@@ -17,7 +17,7 @@
     <MapFile>tiles/xevious/tiled/xevious_0_map.csv</MapFile>
     <TilesFile>tiles/xevious/tiled/xevious_0_files.xml</TilesFile>
     <FileCount>133</FileCount>
-    <BaseBufferId>512</BaseBufferId>
+    <BaseBufferId>2048</BaseBufferId>
   </TileSet>
   <TileSet>
     <SourceDir>tiles/xevious</SourceDir>
@@ -36,7 +36,7 @@
     <MapFile>tiles/xevious/tiled/xevious_1_map.csv</MapFile>
     <TilesFile>tiles/xevious/tiled/xevious_1_files.xml</TilesFile>
     <FileCount>226</FileCount>
-    <BaseBufferId>768</BaseBufferId>
+    <BaseBufferId>2304</BaseBufferId>
   </TileSet>
   <TileSet>
     <SourceDir>tiles/xevious</SourceDir>
@@ -55,7 +55,7 @@
     <MapFile>tiles/xevious/tiled/xevious_2_map.csv</MapFile>
     <TilesFile>tiles/xevious/tiled/xevious_2_files.xml</TilesFile>
     <FileCount>184</FileCount>
-    <BaseBufferId>1024</BaseBufferId>
+    <BaseBufferId>2560</BaseBufferId>
   </TileSet>
   <TileSet>
     <SourceDir>tiles/xevious</SourceDir>
@@ -74,6 +74,6 @@
     <MapFile>tiles/xevious/tiled/xevious_3_map.csv</MapFile>
     <TilesFile>tiles/xevious/tiled/xevious_3_files.xml</TilesFile>
     <FileCount>256</FileCount>
-    <BaseBufferId>1280</BaseBufferId>
+    <BaseBufferId>2816</BaseBufferId>
   </TileSet>
 </TileSets>

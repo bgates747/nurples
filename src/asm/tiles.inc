@@ -5,82 +5,10 @@ tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
 tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
     ; initialize to zero for a maximum of 256 rows in a level
 tiles_cols: db 0 ; number of tile columns in the current level
-cur_level: db 0
-num_levels: db 0
+
 cur_baseBufferId: dl 0
 tiles_x_plot: dl 0
 tiles_y_plot: dl -15
-cur_tileset: dl 0
-
-; intialize a tileset
-; inputs: ix = pointer to tileset definition
-init_tileset:
-    ld a,(ix-1) ; number of levels in the tileset
-    ld (num_levels),a
-    ld (cur_tileset),ix
-    xor a
-    ld (cur_level),a
-    ret
-; end init_tileset
-
-init_level:
-    ; call vdu_home_cursor ; DEBUG
-; look up address of level's tile defintion
-    ld a,(cur_level)
-    ld d,a
-    ld e,3
-    mlt de ; de = index into tileset lut
-    ld ix,(cur_tileset)
-    add ix,de ; ix = pointer to level lookup record
-    ld ix,(ix) ; ix = pointer to level definintion
-; set tiles_cols
-    ld a,(ix+0)
-    ld (tiles_cols),a
-; set tiles_row counter
-    ld a,(ix+1)
-    ld (tiles_row),a
-; set cur_baseBufferId
-    ld hl,(ix+4)
-    ld (cur_baseBufferId),hl
-; set tiles_row_defs
-    lea ix,ix+7 ; ix points to definition of first tile of first row
-    ld (tiles_row_defs),ix
-
-; print level
-level_x: equ 0
-level_y: equ 0
-    ld c,level_x
-    ld b,level_y
-    call vdu_move_cursor
-    call printInline
-    asciz "Level: "
-    ld a,(cur_level)
-    call printHexA
-    call printNewLine
-    ld hl,(cur_baseBufferId)
-    call printDec
-
-; ; DEBUG
-;     call dumpRegistersHex
-;     call waitKeypress
-; ; END DEBUG
-
-; ; draw initial background tiles 
-; ; TODO: make this a stars background
-;     ld hl,BUF_STATION_BG_00
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,field_top
-;     call vdu_plot_bmp
-
-;     ld hl,BUF_STATION_BG_01
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,field_top+256
-;     call vdu_plot_bmp
-
-    ret
-; end init_level
 
 tiles_plot:
 ; set gfx viewport to playing field window
@@ -156,8 +84,8 @@ tiles_plot:
     ld a,(num_levels)
     cp (hl) ; are we past max levels?
     jp nz,@inc_level ; no, so load next level
-    xor a ; reset to first level
-    ld (hl),a ; and fall through to @inc_level
+    call next_tileset ; yes, so load next tileset
+    ; fall through to @inc_level
 @inc_level:
 ; increase the number of enemy sprites
     ld a,(max_enemy_sprites)
@@ -197,36 +125,6 @@ tiles_plot:
 ;     call vdu_plot_bmp
 ; ; all done
 ;     ret
-
-; xevious_plot:
-; ; load current bg tile bufferId as default
-;     ld hl,(bg_bufferId)
-; ; check whether it is time for a new background tile
-;     ld a,(bg_y_plot)
-;     inc a
-;     ld (bg_y_plot),a
-;     jp nz,@F ; not time for a new tile so draw current one
-; ; load the next background tile
-;     ld hl,Xevious_tile
-;     inc (hl)
-;     ld a,%00011111 ; 31
-;     and (hl)
-;     ld hl,BUF_XEVIOUS_00
-;     add a,l
-;     ld l,a
-;     ld a,0
-;     adc a,h
-;     ld h,a
-;     ld (bg_bufferId),hl
-; @@:
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,(bg_y_plot)
-;     inc de
-;     call vdu_plot_bmp
-; ; all done
-;     ret
-; Xevious_tile: db 0
 
 ; ###### TODO: NEW CODE TO IMPLEMENT ######
 ; dt_is_active:

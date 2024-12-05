@@ -132,12 +132,12 @@ load_sprite_images:
     ret
 
 load_tilesets:
-; ; initialize image loading variables
-;     ld hl,tiles_dg_image_list
-;     ld (cur_image_list),hl
-;     ld bc,tiles_dg_num_images
-; ; load images
-;     call img_load_main
+; initialize image loading variables
+    ld hl,tiles_dg_image_list
+    ld (cur_image_list),hl
+    ld bc,tiles_dg_num_images
+; load images
+    call img_load_main
 
 ; initialize image loading variables
     ld hl,tiles_xevious_image_list

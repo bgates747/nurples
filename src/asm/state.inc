@@ -26,12 +26,7 @@ game_initialize:
 ; initialize sprites
     call sprites_init
 ; initialize the first level
-    ; ld ix,tiles_dg_levels
-    ld ix,tiles_xevious_levels
     call init_tileset
-    xor a
-    ld (cur_level),a
-    call init_level
 ; initialize player
     ld hl,0
     ld (player_score),hl

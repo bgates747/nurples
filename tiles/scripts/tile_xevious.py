@@ -197,7 +197,7 @@ if __name__ == "__main__":
     tiles_x = 16
     tiles_y = 128
     ranges = [(768, 0), (512, 0), (256, 0), (0, 0)]
-    # ranges = [(768, 1024), (768, 0), (512, 1024), (512, 0), (256, 1024), (256, 0), (0, 1024), (0, 0)]
+    # ranges = [(768, 0)]
     if os.path.exists(target_dir):
         shutil.rmtree(target_dir)
     os.makedirs(target_dir)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
 
 # generate the assembly code to load the tileS
     asm_images_filepath = f"src/asm/images_tiles_{base_name}.inc"
-    buffer_id = 512
+    buffer_id = 2048
     combined_xml_filepath = os.path.join(target_dir, f"{base_name}.xml")
     asm_img_dir = f"tiles/{base_name}"
     generate_combined_xml(combined_xml_filepath, base_name, target_dir, buffer_id)
