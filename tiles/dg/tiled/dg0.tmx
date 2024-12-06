@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="9" height="6" tilewidth="16" tileheight="16" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="dg_0.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="9" height="6">
+  <data encoding="csv">
+1,427,428,231,232,237,238,235,166,
+59,443,444,247,248,253,254,40,373,
+413,269,228,0,270,429,430,328,333,
+381,243,244,245,286,445,446,329,330,
+261,415,200,75,48,71,72,239,240,
+56,391,215,408,300,87,88,255,256
+</data>
+ </layer>
+</map>

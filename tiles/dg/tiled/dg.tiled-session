@@ -1,0 +1,56 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "dg0.tmx": {
+            "scale": 3,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 122.16666666666664,
+                "y": 82.5
+            }
+        },
+        "dg0.tsx": {
+            "scaleInDock": 4,
+            "scaleInEditor": 5.5
+        },
+        "dg0_00.tmx": {
+            "scale": 3.0763671875,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 128.2356675766618,
+                "y": 128.2356675766618
+            }
+        },
+        "dg_0.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "/home/smith/Agon/emulator/sdcard/mystuff/nurples/tiles/dg/tiled",
+    "map.height": 16,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 16,
+    "openFiles": [
+    ],
+    "project": "dg.tiled-project",
+    "recentFiles": [
+        "dg0.tsx",
+        "dg0_00.tmx",
+        "dg_0.tsx",
+        "dg0.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}
