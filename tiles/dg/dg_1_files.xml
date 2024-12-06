@@ -15,7 +15,7 @@
   <SetNum>1</SetNum>
   <MapFile>tiles/dg/dg_1_map.csv</MapFile>
   <TilesFile>tiles/dg/dg_1_files.xml</TilesFile>
-  <FileCount>47</FileCount>
+  <FileCount>140</FileCount>
   <Tiles>
     <Tile00>tiles/dg/1/00.png</Tile00>
     <Tile01>tiles/dg/1/01.png</Tile01>
@@ -64,5 +64,98 @@
     <Tile2C>tiles/dg/1/2C.png</Tile2C>
     <Tile2D>tiles/dg/1/2D.png</Tile2D>
     <Tile2E>tiles/dg/1/2E.png</Tile2E>
+    <Tile2F>tiles/dg/1/2F.png</Tile2F>
+    <Tile30>tiles/dg/1/30.png</Tile30>
+    <Tile31>tiles/dg/1/31.png</Tile31>
+    <Tile32>tiles/dg/1/32.png</Tile32>
+    <Tile33>tiles/dg/1/33.png</Tile33>
+    <Tile34>tiles/dg/1/34.png</Tile34>
+    <Tile35>tiles/dg/1/35.png</Tile35>
+    <Tile36>tiles/dg/1/36.png</Tile36>
+    <Tile37>tiles/dg/1/37.png</Tile37>
+    <Tile38>tiles/dg/1/38.png</Tile38>
+    <Tile39>tiles/dg/1/39.png</Tile39>
+    <Tile3A>tiles/dg/1/3A.png</Tile3A>
+    <Tile3B>tiles/dg/1/3B.png</Tile3B>
+    <Tile3C>tiles/dg/1/3C.png</Tile3C>
+    <Tile3D>tiles/dg/1/3D.png</Tile3D>
+    <Tile3E>tiles/dg/1/3E.png</Tile3E>
+    <Tile3F>tiles/dg/1/3F.png</Tile3F>
+    <Tile40>tiles/dg/1/40.png</Tile40>
+    <Tile41>tiles/dg/1/41.png</Tile41>
+    <Tile42>tiles/dg/1/42.png</Tile42>
+    <Tile43>tiles/dg/1/43.png</Tile43>
+    <Tile44>tiles/dg/1/44.png</Tile44>
+    <Tile45>tiles/dg/1/45.png</Tile45>
+    <Tile46>tiles/dg/1/46.png</Tile46>
+    <Tile47>tiles/dg/1/47.png</Tile47>
+    <Tile48>tiles/dg/1/48.png</Tile48>
+    <Tile49>tiles/dg/1/49.png</Tile49>
+    <Tile4A>tiles/dg/1/4A.png</Tile4A>
+    <Tile4B>tiles/dg/1/4B.png</Tile4B>
+    <Tile4C>tiles/dg/1/4C.png</Tile4C>
+    <Tile4D>tiles/dg/1/4D.png</Tile4D>
+    <Tile4E>tiles/dg/1/4E.png</Tile4E>
+    <Tile4F>tiles/dg/1/4F.png</Tile4F>
+    <Tile50>tiles/dg/1/50.png</Tile50>
+    <Tile51>tiles/dg/1/51.png</Tile51>
+    <Tile52>tiles/dg/1/52.png</Tile52>
+    <Tile53>tiles/dg/1/53.png</Tile53>
+    <Tile54>tiles/dg/1/54.png</Tile54>
+    <Tile55>tiles/dg/1/55.png</Tile55>
+    <Tile56>tiles/dg/1/56.png</Tile56>
+    <Tile57>tiles/dg/1/57.png</Tile57>
+    <Tile58>tiles/dg/1/58.png</Tile58>
+    <Tile59>tiles/dg/1/59.png</Tile59>
+    <Tile5A>tiles/dg/1/5A.png</Tile5A>
+    <Tile5B>tiles/dg/1/5B.png</Tile5B>
+    <Tile5C>tiles/dg/1/5C.png</Tile5C>
+    <Tile5D>tiles/dg/1/5D.png</Tile5D>
+    <Tile5E>tiles/dg/1/5E.png</Tile5E>
+    <Tile5F>tiles/dg/1/5F.png</Tile5F>
+    <Tile60>tiles/dg/1/60.png</Tile60>
+    <Tile61>tiles/dg/1/61.png</Tile61>
+    <Tile62>tiles/dg/1/62.png</Tile62>
+    <Tile63>tiles/dg/1/63.png</Tile63>
+    <Tile64>tiles/dg/1/64.png</Tile64>
+    <Tile65>tiles/dg/1/65.png</Tile65>
+    <Tile66>tiles/dg/1/66.png</Tile66>
+    <Tile67>tiles/dg/1/67.png</Tile67>
+    <Tile68>tiles/dg/1/68.png</Tile68>
+    <Tile69>tiles/dg/1/69.png</Tile69>
+    <Tile6A>tiles/dg/1/6A.png</Tile6A>
+    <Tile6B>tiles/dg/1/6B.png</Tile6B>
+    <Tile6C>tiles/dg/1/6C.png</Tile6C>
+    <Tile6D>tiles/dg/1/6D.png</Tile6D>
+    <Tile6E>tiles/dg/1/6E.png</Tile6E>
+    <Tile6F>tiles/dg/1/6F.png</Tile6F>
+    <Tile70>tiles/dg/1/70.png</Tile70>
+    <Tile71>tiles/dg/1/71.png</Tile71>
+    <Tile72>tiles/dg/1/72.png</Tile72>
+    <Tile73>tiles/dg/1/73.png</Tile73>
+    <Tile74>tiles/dg/1/74.png</Tile74>
+    <Tile75>tiles/dg/1/75.png</Tile75>
+    <Tile76>tiles/dg/1/76.png</Tile76>
+    <Tile77>tiles/dg/1/77.png</Tile77>
+    <Tile78>tiles/dg/1/78.png</Tile78>
+    <Tile79>tiles/dg/1/79.png</Tile79>
+    <Tile7A>tiles/dg/1/7A.png</Tile7A>
+    <Tile7B>tiles/dg/1/7B.png</Tile7B>
+    <Tile7C>tiles/dg/1/7C.png</Tile7C>
+    <Tile7D>tiles/dg/1/7D.png</Tile7D>
+    <Tile7E>tiles/dg/1/7E.png</Tile7E>
+    <Tile7F>tiles/dg/1/7F.png</Tile7F>
+    <Tile80>tiles/dg/1/80.png</Tile80>
+    <Tile81>tiles/dg/1/81.png</Tile81>
+    <Tile82>tiles/dg/1/82.png</Tile82>
+    <Tile83>tiles/dg/1/83.png</Tile83>
+    <Tile84>tiles/dg/1/84.png</Tile84>
+    <Tile85>tiles/dg/1/85.png</Tile85>
+    <Tile86>tiles/dg/1/86.png</Tile86>
+    <Tile87>tiles/dg/1/87.png</Tile87>
+    <Tile88>tiles/dg/1/88.png</Tile88>
+    <Tile89>tiles/dg/1/89.png</Tile89>
+    <Tile8A>tiles/dg/1/8A.png</Tile8A>
+    <Tile8B>tiles/dg/1/8B.png</Tile8B>
   </Tiles>
 </TileSet>
