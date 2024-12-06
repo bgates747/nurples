@@ -240,17 +240,15 @@ def generate_asm_levels(combined_xml_filepath, asm_levels_filepath):
         asm_levels_file.write("\n".join(levels_data) + "\n")
     print(f"Assembly levels file created at {asm_levels_filepath}")
 
-def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges):
+def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir):
     file_name = f"{base_name}.png"
-    source_dir = f"tiles/{base_name}"
-    target_dir = f"tiles/{base_name}"
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
     for set_num, (start_x, start_y) in enumerate(ranges):
         chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num)
 
-    asm_images_filepath = f"src/asm/images_tiles_{base_name}.inc"
+    asm_images_filepath = f"{asm_src_dir}images_tiles_{base_name}.inc"
     combined_xml_filepath = os.path.join(target_dir, f"{base_name}.xml")
     asm_img_dir = f"tiles/{base_name}"
     next_bufferId = generate_combined_xml(combined_xml_filepath, base_name, target_dir, bufferId)
@@ -266,12 +264,14 @@ def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x
     os.makedirs(rgba_target_dir)
     make_images(combined_xml_filepath, rgba_target_dir, image_type, do_palette, palette_conv_type, transparent_rgb)
 
-    asm_levels_filepath = f"src/asm/levels_{base_name}.inc"
+    asm_levels_filepath = f"{asm_src_dir}levels_{base_name}.inc"
     generate_asm_levels(combined_xml_filepath, asm_levels_filepath)
 
     return next_bufferId
 
 if __name__ == "__main__":
+    root_src_dir = "tiles/proc"
+    asm_src_dir = "src/asm"
     next_bufferId = 512
     tile_width = 16
     tile_height = 16
@@ -279,17 +279,10 @@ if __name__ == "__main__":
     v_pitch = tile_height
 
     base_name = "dg"
-    tiles_x = 16
-    tiles_y = 32
-    ranges = [(256, 1024), (256, 512), (256, 0), (0, 1024), (0, 512), (0, 0)]
-    # ranges = [(256, 1024)]
-    next_bufferId = main(next_bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges)
-    print(f"Next buffer ID: {next_bufferId}")
-
-    base_name = "xevious"
-    tiles_x = 16
-    tiles_y = 128
-    ranges = [(768, 0), (512, 0), (256, 0), (0, 0)]
-    # ranges = [(768, 0)]
+    source_dir = f"{root_src_dir}/{base_name}"
+    target_dir = f"{root_src_dir}/{base_name}"
+    tiles_x = 9
+    tiles_y = 6
+    ranges = [(0, 0)]
     next_bufferId = main(next_bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges)
     print(f"Next buffer ID: {next_bufferId}")
