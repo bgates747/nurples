@@ -139,10 +139,10 @@ load_tilesets:
 ; load images
     call img_load_main
 
-; initialize image loading variables
-    ld hl,tiles_xevious_image_list
-    ld (cur_image_list),hl
-    ld bc,tiles_xevious_num_images
-; load images
-    call img_load_main
+; ; initialize image loading variables
+;     ld hl,tiles_xevious_image_list
+;     ld (cur_image_list),hl
+;     ld bc,tiles_xevious_num_images
+; ; load images
+;     call img_load_main
     ret

@@ -13,14 +13,19 @@ def chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, til
         shutil.rmtree(level_dir)
     os.makedirs(level_dir)
 
+    # Create a completely transparent tile for index 0
+    transparent_tile = Image.new("RGBA", (tile_width, tile_height), (255, 255, 255, 0))
+    transparent_tile_path = os.path.join(level_dir, "000.png")  # 3-digit decimal
+    transparent_tile.save(transparent_tile_path)
+    print(f"Created transparent tile at {transparent_tile_path}")
+
     img = Image.open(source_path)
     crop_width = tiles_x * h_pitch
     crop_height = tiles_y * v_pitch
     cropped_img = img.crop((start_x, start_y, start_x + crop_width, start_y + crop_height))
     unique_tiles = {}
     tile_map = []
-    tile_count = 0
-    set_num_hex = f"{set_num:1X}"
+    tile_count = 1  # Start from 1 because 0 is reserved for the null tile
 
     for row in range(tiles_y):
         row_tiles = []
@@ -30,19 +35,19 @@ def chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, til
             tile = cropped_img.crop((x, y, x + tile_width, y + tile_height))
             tile_hash = hashlib.md5(tile.tobytes()).hexdigest()
             if tile_hash not in unique_tiles:
-                output_path = os.path.join(level_dir, f"{tile_count:02X}.png")
+                output_path = os.path.join(level_dir, f"{tile_count:03}.png")  # 3-digit decimal
                 tile.save(output_path)
                 unique_tiles[tile_hash] = tile_count
                 tile_count += 1
-            row_tiles.append(f"{unique_tiles[tile_hash]:02X}")
+            row_tiles.append(f"{unique_tiles[tile_hash]:03}")  # 3-digit decimal
         tile_map.append(row_tiles)
 
-    map_filepath = os.path.join(target_dir, f"{base_name}_{set_num_hex}_map.csv")
+    map_filepath = os.path.join(target_dir, f"{base_name}_{set_num}_map.csv")
     with open(map_filepath, "w") as csv_file:
         csv_file.write("\n".join(",".join(row) for row in tile_map))
     print(f"Saved CSV map to {map_filepath}")
 
-    xml_filepath = os.path.join(target_dir, f"{base_name}_{set_num_hex}_files.xml")
+    xml_filepath = os.path.join(target_dir, f"{base_name}_{set_num}_files.xml")
     root = ET.Element("TileSet")
     ET.SubElement(root, "SourceDir").text = source_dir
     ET.SubElement(root, "TargetDir").text = target_dir
@@ -62,9 +67,91 @@ def chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, til
     ET.SubElement(root, "FileCount").text = str(tile_count)
     tiles_element = ET.SubElement(root, "Tiles")
 
+    # Include the transparent tile as the first entry
+    tile_element = ET.SubElement(tiles_element, "Tile000")
+    tile_element.text = transparent_tile_path
+
     for tile_hash, idx in unique_tiles.items():
-        tile_file = os.path.join(level_dir, f"{idx:02X}.png")
-        tile_element = ET.SubElement(tiles_element, f"Tile{idx:02X}")
+        tile_file = os.path.join(level_dir, f"{idx:03}.png")  # 3-digit decimal
+        tile_element = ET.SubElement(tiles_element, f"Tile{idx:03}")
+        tile_element.text = tile_file
+
+    rough_string = ET.tostring(root, encoding="utf-8")
+    parsed = minidom.parseString(rough_string)
+    pretty_xml = parsed.toprettyxml(indent="  ")
+    with open(xml_filepath, "w") as xml_file:
+        xml_file.write(pretty_xml)
+    print(f"Saved files.xml to {xml_filepath}")
+
+def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num):
+    """
+    Chops tiles from a source image, saves each tile to the target directory, and generates XML and CSV files.
+    """
+    source_path = os.path.join(source_dir, file_name)
+    level_dir = os.path.join(target_dir, str(set_num))
+    if os.path.exists(level_dir):
+        shutil.rmtree(level_dir)
+    os.makedirs(level_dir)
+
+    # Create a completely transparent tile for index 0
+    transparent_tile = Image.new("RGBA", (tile_width, tile_height), (255, 255, 255, 0))
+    transparent_tile_path = os.path.join(level_dir, "000.png")  # 3-digit decimal
+    transparent_tile.save(transparent_tile_path)
+    print(f"Created transparent tile at {transparent_tile_path}")
+
+    img = Image.open(source_path)
+    crop_width = tiles_x * h_pitch
+    crop_height = tiles_y * v_pitch
+    cropped_img = img.crop((start_x, start_y, start_x + crop_width, start_y + crop_height))
+    tile_map = []
+
+    tile_count = 1  # Start from 1 because 0 is reserved for the null tile
+
+    for row in range(tiles_y):
+        row_tiles = []
+        for col in range(tiles_x):
+            x = col * h_pitch
+            y = row * v_pitch
+            tile = cropped_img.crop((x, y, x + tile_width, y + tile_height))
+            output_path = os.path.join(level_dir, f"{tile_count:03}.png")  # 3-digit decimal
+            tile.save(output_path)
+            print(f"Saved tile {tile_count:03} to {output_path}")
+            row_tiles.append(f"{tile_count:03}")  # 3-digit decimal
+            tile_count += 1
+        tile_map.append(row_tiles)
+
+    map_filepath = os.path.join(target_dir, f"{base_name}_{set_num}_map.csv")
+    with open(map_filepath, "w") as csv_file:
+        csv_file.write("\n".join(",".join(row) for row in tile_map))
+    print(f"Saved CSV map to {map_filepath}")
+
+    xml_filepath = os.path.join(target_dir, f"{base_name}_{set_num}_files.xml")
+    root = ET.Element("TileSet")
+    ET.SubElement(root, "SourceDir").text = source_dir
+    ET.SubElement(root, "TargetDir").text = target_dir
+    ET.SubElement(root, "BaseName").text = base_name
+    ET.SubElement(root, "FileName").text = file_name
+    ET.SubElement(root, "TileWidth").text = str(tile_width)
+    ET.SubElement(root, "TileHeight").text = str(tile_height)
+    ET.SubElement(root, "HPitch").text = str(h_pitch)
+    ET.SubElement(root, "VPitch").text = str(v_pitch)
+    ET.SubElement(root, "TilesX").text = str(tiles_x)
+    ET.SubElement(root, "TilesY").text = str(tiles_y)
+    ET.SubElement(root, "StartX").text = str(start_x)
+    ET.SubElement(root, "StartY").text = str(start_y)
+    ET.SubElement(root, "SetNum").text = str(set_num)
+    ET.SubElement(root, "MapFile").text = map_filepath
+    ET.SubElement(root, "TilesFile").text = xml_filepath
+    ET.SubElement(root, "FileCount").text = str(tile_count)
+    tiles_element = ET.SubElement(root, "Tiles")
+
+    # Include the transparent tile as the first entry
+    tile_element = ET.SubElement(tiles_element, "Tile000")
+    tile_element.text = transparent_tile_path
+
+    for idx in range(1, tile_count):  # Iterate over all tiles except transparent
+        tile_file = os.path.join(level_dir, f"{idx:03}.png")  # 3-digit decimal
+        tile_element = ET.SubElement(tiles_element, f"Tile{idx:03}")
         tile_element.text = tile_file
 
     rough_string = ET.tostring(root, encoding="utf-8")
@@ -91,7 +178,7 @@ def generate_combined_xml(combined_xml_filepath, base_name, target_dir, bufferId
             if child.tag != "Tiles":
                 ET.SubElement(tile_set_header, child.tag).text = child.text
         file_count = int(root.find("FileCount").text)
-        ET.SubElement(tile_set_header, "BaseBufferId").text = str(current_bufferId)
+        ET.SubElement(tile_set_header, "BaseBufferId").text = str(current_bufferId)  # Decimal
         current_bufferId += file_count
         current_bufferId = ((current_bufferId + 255) // 256) * 256
     rough_string = ET.tostring(combined_root, encoding="utf-8")
@@ -118,7 +205,7 @@ def generate_asm_img_load(combined_xml_filepath, asm_images_filepath, asm_img_di
         file_count = int(tile_set.find("FileCount").text)
         base_name = tile_set.find("BaseName").text
         set_num = int(tile_set.find("SetNum").text)
-        asm_bufferIds.append(f"BUF_{base_name.upper()}_{set_num:1X}_00: equ {base_bufferId}")
+        asm_bufferIds.append(f"BUF_{base_name.upper()}_{set_num:02}_00: equ {base_bufferId}")  # Decimal buffer ID
 
         tiles_tree = ET.parse(tiles_file)
         tiles_root = tiles_tree.getroot()
@@ -127,9 +214,8 @@ def generate_asm_img_load(combined_xml_filepath, asm_images_filepath, asm_img_di
 
         for tile_idx, tile in enumerate(tiles_root.find("Tiles")):
             tile_filename = tile.text
-            image_name = os.path.splitext(os.path.basename(tile_filename))[0]  
-            asm_label = f"fn_{base_name.lower()}_{set_num}_{image_name}"
-
+            image_name = os.path.splitext(os.path.basename(tile_filename))[0]
+            asm_label = f"fn_{base_name.lower()}_{set_num}_{int(image_name, 16):03}"  # Handle hexadecimal
             bufferId = base_bufferId + tile_idx
             tile_width = int(tile_set.find("TileWidth").text)
             tile_height = int(tile_set.find("TileHeight").text)
@@ -217,7 +303,7 @@ def generate_asm_levels(combined_xml_filepath, asm_levels_filepath):
         with open(map_file, "r") as csv_file:
             reader = csv.reader(csv_file)
             for row in reversed(list(reader)):  # Reverse rows for top-scroller
-                row_data = [f"0x{value.upper()}" for value in row]
+                row_data = [f"{int(value.strip()):03}" for value in row if value.strip().isdigit()]  # 3-digit decimal
                 level_data.append(f"\tdb {','.join(row_data)}")
         levels_list.append(f"\tdl tiles_{base_name.lower()}_level_{set_num}")
         levels_data.append(
@@ -240,15 +326,55 @@ def generate_asm_levels(combined_xml_filepath, asm_levels_filepath):
         asm_levels_file.write("\n".join(levels_data) + "\n")
     print(f"Assembly levels file created at {asm_levels_filepath}")
 
+def generate_asm_tiled_level(tiled_map_filepath, asm_levels_filepath, tileset_number, level_number, bufferId):
+    """
+    Generates assembly level data from a Tiled map file (.tmx).
+
+    Args:
+        tiled_map_filepath (str): Path to the Tiled map file (.tmx).
+        asm_levels_filepath (str): Path to save the generated assembly level file.
+        tileset_number (int): Number of the tileset.
+        level_number (int): Number of the level.
+    """
+    tree = ET.parse(tiled_map_filepath)
+    root = tree.getroot()
+    num_cols = root.attrib['width']
+    num_rows = root.attrib['height']
+    layer = root.find('layer')
+    csv_data = layer.find('data').text.strip()
+    rows = [row.split(',') for row in csv_data.split('\n')]
+    rows = list(reversed(rows))
+    level_data = []
+    for row in rows:
+        row_data = [f"{int(value.strip()):03}" for value in row if value.strip().isdigit()]
+        level_data.append(f"\tdb {','.join(row_data)}")
+    tileset_base_name = f"tileset_{tileset_number:02X}"
+    level_label = f"{tileset_base_name}_level_{level_number:02X}"
+    level_asm = (
+        f"{level_label}: ; Level {level_number}\n"
+        f"\tdb {num_cols}          ; num cols\n"
+        f"\tdl {num_rows}          ; num rows\n"
+        f"\tdl {bufferId} ; base bufferId\n"
+        + "\n".join(level_data)
+    )
+    with open(asm_levels_filepath, "w") as asm_file:
+        asm_file.write(f"; Generated from {tiled_map_filepath}\n\n")
+        asm_file.write(f"{tileset_base_name}_num_levels: db 1\n\n")  # Only one level
+        asm_file.write(f"{tileset_base_name}_levels:\n")
+        asm_file.write(f"\tdl {level_label}\n")
+        asm_file.write("\tdl 0 ; list terminator\n\n")
+        asm_file.write(level_asm)
+    print(f"Assembly levels file created at {asm_levels_filepath}")
+
 def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir):
     file_name = f"{base_name}.png"
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
     for set_num, (start_x, start_y) in enumerate(ranges):
-        chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num)
+        chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num)
 
-    asm_images_filepath = f"{asm_src_dir}images_tiles_{base_name}.inc"
+    asm_images_filepath = f"{asm_src_dir}/images_tiles_{base_name}.inc"
     combined_xml_filepath = os.path.join(target_dir, f"{base_name}.xml")
     asm_img_dir = f"tiles/{base_name}"
     next_bufferId = generate_combined_xml(combined_xml_filepath, base_name, target_dir, bufferId)
@@ -264,7 +390,7 @@ def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x
     os.makedirs(rgba_target_dir)
     make_images(combined_xml_filepath, rgba_target_dir, image_type, do_palette, palette_conv_type, transparent_rgb)
 
-    asm_levels_filepath = f"{asm_src_dir}levels_{base_name}.inc"
+    asm_levels_filepath = f"{asm_src_dir}/levels_{base_name}.inc"
     generate_asm_levels(combined_xml_filepath, asm_levels_filepath)
 
     return next_bufferId
@@ -272,7 +398,7 @@ def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x
 if __name__ == "__main__":
     root_src_dir = "tiles/proc"
     asm_src_dir = "src/asm"
-    next_bufferId = 512
+    bufferId = 512
     tile_width = 16
     tile_height = 16
     h_pitch = tile_width
@@ -284,5 +410,11 @@ if __name__ == "__main__":
     tiles_x = 9
     tiles_y = 6
     ranges = [(0, 0)]
-    next_bufferId = main(next_bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges)
+    next_bufferId = main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir)
     print(f"Next buffer ID: {next_bufferId}")
+
+    tiled_map_filepath = "tiles/dg/tiled/dg_0_00.tmx"
+    tileset_number = 0
+    level_number = 0
+    asm_levels_tiled_filepath = f"{asm_src_dir}/levels_tileset_{tileset_number}.inc"
+    generate_asm_tiled_level(tiled_map_filepath, asm_levels_tiled_filepath, tileset_number, level_number, bufferId)

@@ -31,6 +31,14 @@
         "dg_0.tsx": {
             "scaleInDock": 2,
             "scaleInEditor": 1
+        },
+        "dg_0_01.tmx": {
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 144,
+                "y": 119.25
+            }
         }
     },
     "last.imagePath": "/home/smith/Agon/emulator/sdcard/mystuff/nurples/tiles/dg/tiled",
@@ -43,8 +51,8 @@
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
-        "dg0.tsx",
         "dg0_00.tmx",
+        "dg0.tsx",
         "dg_0.tsx",
         "dg0.tmx"
     ],
