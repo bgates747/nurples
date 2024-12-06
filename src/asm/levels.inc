@@ -1,16 +1,107 @@
+; tileset indices
+tiles_dg: equ 0
+tiles_xevious: equ 1
+tileset_ptr_idx: dl 0
+tileset_ptrs:
+    dl tiles_dg_levels
+    dl tiles_xevious_levels
+tileset_ptrs_end: dl 0 ; list terminator
+
+; get a pointer to the current tileset
+; inputs: tileset_ptr_idx
+; returns: ix = pointer to tileset levels lut
+get_tileset_ptr:
+    ld a,(tileset_ptr_idx)
+    ld d,a ; d = tileset index
+    ld e,3 ; three bytes per index record
+    mlt de ; offset into tileset_ptrs lut
+    ld ix,tileset_ptrs
+    add ix,de ; ix = pointer to tileset_ptrs record
+    ret
+; end get_tileset_ptr
+
+; intialize a tileset
+; inputs: a = index into tileset_ptrs
+init_tileset:
+    ld (tileset_ptr_idx),a ; store new tileset index
+    call get_tileset_ptr ; ix points to tileset levels lut
+    ld ix,(ix) ; ix = pointer to tileset levels lut
+    ld a,(ix-1) ; number of levels in the tileset
+    ld (num_levels),a
+    xor a ; reset current level to zero
+    ld (cur_level),a
+    jp init_level
+; end init_tileset
+
+next_tileset:
+    ld hl,tileset_ptr_idx
+    inc (hl) ; bump to next index
+    call get_tileset_ptr ; ix points to tileset levels lut
+    lea ix,ix+3 ; ix points to next tileset lut record
+    ld hl,(ix) ; ix = pointer to tileset levels lut
+    sign_hlu ; check for list terminator (0)
+    jp nz,@F ; not end of list
+    xor a ; reset index to zero
+    ld (tileset_ptr_idx),a
+    jp next_tileset ; try again
+@@:
+    jp init_tileset
+; end next_tileset
+
 cur_level: db 0
 num_levels: db 0
 
-init_level:
-    ; call vdu_home_cursor ; DEBUG
-; look up address of level's tile defintion
+; get a pointer to the current level lookup record
+; inputs: tileset_ptr_idx, cur_level
+; returns: ix = pointer to level definition
+get_level_ptr:
+    call get_tileset_ptr
+    ld ix,(ix) ; ix = pointer to tileset levels lut
     ld a,(cur_level)
-    ld d,a
-    ld e,3
-    mlt de ; de = index into tileset lut
-    ld ix,(cur_tileset)
-    add ix,de ; ix = pointer to level lookup record
-    ld ix,(ix) ; ix = pointer to level definintion
+    ld d,a ; d = level index
+    ld e,3 ; three bytes per level record
+    mlt de ; offset into tileset levels lut
+    add ix,de ; ix = pointer to level record
+    ret
+; end get_level_ptr
+
+; advance to the next level in the current tileset
+; inputs: tileset_ptr_idx, cur_level
+next_level:
+; DEBUG
+    PUSH_ALL
+    ld c,0 ; x
+    ld b,score_y+3 ; y
+    call vdu_move_cursor
+    POP_ALL
+; END DEBUG
+
+    ld hl,cur_level
+    inc (hl) ; bump to next level
+    call get_level_ptr ; ix points to current level lookup record
+    lea ix,ix+3 ; ix points to next level lookup record
+    ld hl,(ix) ; hl = pointer to next level lookup record
+    sign_hlu ; check for list terminator (0)
+
+; DEBUG
+    PUSH_ALL
+    call dumpRegistersHex
+    call waitKeypress
+    POP_ALL
+; END DEBUG
+
+    jp nz,@F ; not end of list
+    xor a ; reset level to zero
+    ld (cur_level),a
+    jp next_tileset ; try next tileset
+
+@@: ; fall through to init_level
+; end next_level
+
+; inputs: ix pointed to tileset level definition
+init_level:
+    call get_level_ptr ; ix points to level lookup record
+    ld ix,(ix) ; ix points to level definition
 ; set tiles_cols
     ld a,(ix+0)
     ld (tiles_cols),a
@@ -59,37 +150,3 @@ level_y: equ 0
 
     ret
 ; end init_level
-
-cur_tileset: dl tiles_dg_levels
-cur_tileset_idx: dl 0
-tilesets:
-    dl tiles_dg_levels
-    dl tiles_xevious_levels
-    dl 0 ; list terminator
-
-; intialize a tileset
-; inputs: ix = pointer to tileset definition
-init_tileset:
-    ld a,(ix-1) ; number of levels in the tileset
-    ld (num_levels),a
-    xor a
-    ld (cur_level),a
-    call init_level
-    ret
-; end init_tileset
-
-next_tileset:
-    ld de,(cur_tileset_idx)
-    ld d,3
-    mlt de
-    ld ix,tilesets
-    add ix,de
-    ld hl,(ix)
-    sign_hlu
-    jp nz,@F
-    ld ix,tilesets
-@@:
-    ld ix,(ix)
-    ld (cur_tileset),ix
-    call init_tileset
-    ret

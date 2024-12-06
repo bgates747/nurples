@@ -26,6 +26,7 @@ game_initialize:
 ; initialize sprites
     call sprites_init
 ; initialize the first level
+    ld a,tiles_dg
     call init_tileset
 ; initialize player
     ld hl,0

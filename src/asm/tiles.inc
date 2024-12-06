@@ -78,22 +78,14 @@ tiles_plot:
     ld hl,tiles_row
     dec (hl)
     ret nz
-; queue up next level
-    ld hl,cur_level
-    inc (hl) ; bump to next level
-    ld a,(num_levels)
-    cp (hl) ; are we past max levels?
-    jp nz,@inc_level ; no, so load next level
-    call next_tileset ; yes, so load next tileset
-    ; fall through to @inc_level
 @inc_level:
 ; increase the number of enemy sprites
     ld a,(max_enemy_sprites)
     inc a
     cp table_max_records ; if we're at the global limit,skip ahead at max level
-    jp z,init_level
+    jp z,next_level
     ld (max_enemy_sprites),a ; otherwise save the updated number
-    jp init_level
+    jp next_level
 ; end tiles_plot
 
 ; bg_y_plot: dl -1

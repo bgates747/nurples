@@ -56,6 +56,7 @@ exit:
     include "state.inc"
     include "tiles.inc"
 
+; --- MAIN PROGRAM FILE ---
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"
 loading_time: asciz "Loading time:"
@@ -112,7 +113,7 @@ init:
     call img_load_init ; sets up the animated load screen
     call load_sprite_images
 
-; load tilesets
+; load tileset_ptrs
     call load_tilesets
 
 ; ; load sound effects ; TODO
