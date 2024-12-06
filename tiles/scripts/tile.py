@@ -235,6 +235,7 @@ if __name__ == "__main__":
     tiles_x = 16
     tiles_y = 32
     ranges = [(256, 1024), (256, 512), (256, 0), (0, 1024), (0, 512), (0, 0)]
+    # ranges = [(256, 1024)]
     next_bufferId = main(next_bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges)
     print(f"Next buffer ID: {next_bufferId}")
 
@@ -242,5 +243,6 @@ if __name__ == "__main__":
     tiles_x = 16
     tiles_y = 128
     ranges = [(768, 0), (512, 0), (256, 0), (0, 0)]
+    # ranges = [(768, 0)]
     next_bufferId = main(next_bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges)
     print(f"Next buffer ID: {next_bufferId}")

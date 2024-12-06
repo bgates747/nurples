@@ -24,7 +24,7 @@ get_tileset_ptr:
 ; inputs: a = index into tileset_ptrs
 init_tileset:
     ld (tileset_ptr_idx),a ; store new tileset index
-    call get_tileset_ptr ; ix points to tileset levels lut
+    call get_tileset_ptr ; ix = pointer to tileset_ptrs record
     ld ix,(ix) ; ix = pointer to tileset levels lut
     ld a,(ix-1) ; number of levels in the tileset
     ld (num_levels),a
@@ -36,12 +36,11 @@ init_tileset:
 next_tileset:
     ld hl,tileset_ptr_idx
     inc (hl) ; bump to next index
-    call get_tileset_ptr ; ix points to tileset levels lut
-    lea ix,ix+3 ; ix points to next tileset lut record
+    call get_tileset_ptr ; ix = pointer to tileset_ptrs record
     ld hl,(ix) ; ix = pointer to tileset levels lut
     sign_hlu ; check for list terminator (0)
     jp nz,@F ; not end of list
-    xor a ; reset index to zero
+    ld a,-1 ; will wrap around to zero on the next iteration
     ld (tileset_ptr_idx),a
     jp next_tileset ; try again
 @@:
@@ -68,33 +67,15 @@ get_level_ptr:
 ; advance to the next level in the current tileset
 ; inputs: tileset_ptr_idx, cur_level
 next_level:
-; DEBUG
-    PUSH_ALL
-    ld c,0 ; x
-    ld b,score_y+3 ; y
-    call vdu_move_cursor
-    POP_ALL
-; END DEBUG
-
     ld hl,cur_level
     inc (hl) ; bump to next level
     call get_level_ptr ; ix points to current level lookup record
-    lea ix,ix+3 ; ix points to next level lookup record
     ld hl,(ix) ; hl = pointer to next level lookup record
     sign_hlu ; check for list terminator (0)
-
-; DEBUG
-    PUSH_ALL
-    call dumpRegistersHex
-    call waitKeypress
-    POP_ALL
-; END DEBUG
-
     jp nz,@F ; not end of list
     xor a ; reset level to zero
     ld (cur_level),a
     jp next_tileset ; try next tileset
-
 @@: ; fall through to init_level
 ; end next_level
 
