@@ -22,6 +22,7 @@ def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_he
 
     # Load and crop the source image
     img = Image.open(os.path.join(source_dir, file_name))
+    img = img.convert("RGBA")
     cropped_img = img.crop((start_x, start_y, start_x + tiles_x * h_pitch, start_y + tiles_y * v_pitch))
 
     tile_map = []
