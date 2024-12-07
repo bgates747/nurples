@@ -85,7 +85,8 @@ def chop_and_deduplicate_tiles(source_dir, target_dir, base_name, file_name, til
 
 def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num):
     """
-    Chops tiles from a source image, saves each tile to the target directory, and generates XML and CSV files.
+    Chops tiles from a source image, saves non-transparent tiles to the target directory, and generates XML and CSV files.
+    Separate counters for tile index (consistent grid mapping) and file count (non-transparent tiles saved).
     """
     source_path = os.path.join(source_dir, file_name)
     level_dir = os.path.join(target_dir, str(set_num))
@@ -93,19 +94,15 @@ def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_he
         shutil.rmtree(level_dir)
     os.makedirs(level_dir)
 
-    # Create a completely transparent tile for index 0
-    transparent_tile = Image.new("RGBA", (tile_width, tile_height), (255, 255, 255, 0))
-    transparent_tile_path = os.path.join(level_dir, "000.png")  # 3-digit decimal
-    transparent_tile.save(transparent_tile_path)
-    print(f"Created transparent tile at {transparent_tile_path}")
-
     img = Image.open(source_path)
     crop_width = tiles_x * h_pitch
     crop_height = tiles_y * v_pitch
     cropped_img = img.crop((start_x, start_y, start_x + crop_width, start_y + crop_height))
     tile_map = []
+    saved_tiles = {}  # Dictionary to store mappings of indices to file paths
 
-    tile_count = 1  # Start from 1 because 0 is reserved for the null tile
+    tile_index = 1  # Start from 1 because 0 is reserved for the null tile
+    file_count = 0  # Count only non-transparent tiles
 
     for row in range(tiles_y):
         row_tiles = []
@@ -113,18 +110,29 @@ def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_he
             x = col * h_pitch
             y = row * v_pitch
             tile = cropped_img.crop((x, y, x + tile_width, y + tile_height))
-            output_path = os.path.join(level_dir, f"{tile_count:03}.png")  # 3-digit decimal
-            tile.save(output_path)
-            print(f"Saved tile {tile_count:03} to {output_path}")
-            row_tiles.append(f"{tile_count:03}")  # 3-digit decimal
-            tile_count += 1
+
+            # Check if the tile is completely transparent
+            if tile.getextrema()[3][1] == 0:  # Alpha channel's max value is 0
+                print(f"Tile at index {tile_index:03} is completely transparent. Skipping.")
+                row_tiles.append("000")  # Mark this grid position as null
+            else:
+                # Save non-transparent tiles
+                output_path = os.path.join(level_dir, f"{tile_index:03}.png")  # 3-digit decimal
+                tile.save(output_path)
+                saved_tiles[tile_index] = output_path  # Map tile index to its file path
+                print(f"Saved tile {tile_index:03} to {output_path}")
+                row_tiles.append(f"{tile_index:03}")  # Record this index in the map
+                file_count += 1  # Increment file count only for non-transparent tiles
+            tile_index += 1  # Always bump the tile index, regardless of transparency
         tile_map.append(row_tiles)
 
+    # Save the CSV map
     map_filepath = os.path.join(target_dir, f"{base_name}_{set_num}_map.csv")
     with open(map_filepath, "w") as csv_file:
         csv_file.write("\n".join(",".join(row) for row in tile_map))
     print(f"Saved CSV map to {map_filepath}")
 
+    # Save the XML file
     xml_filepath = os.path.join(target_dir, f"{base_name}_{set_num}_files.xml")
     root = ET.Element("TileSet")
     ET.SubElement(root, "SourceDir").text = source_dir
@@ -142,17 +150,13 @@ def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_he
     ET.SubElement(root, "SetNum").text = str(set_num)
     ET.SubElement(root, "MapFile").text = map_filepath
     ET.SubElement(root, "TilesFile").text = xml_filepath
-    ET.SubElement(root, "FileCount").text = str(tile_count)
+    ET.SubElement(root, "FileCount").text = str(file_count)  # Total non-transparent tiles
     tiles_element = ET.SubElement(root, "Tiles")
 
-    # Include the transparent tile as the first entry
-    tile_element = ET.SubElement(tiles_element, "Tile000")
-    tile_element.text = transparent_tile_path
-
-    for idx in range(1, tile_count):  # Iterate over all tiles except transparent
-        tile_file = os.path.join(level_dir, f"{idx:03}.png")  # 3-digit decimal
+    # Record only non-transparent tiles in the XML
+    for idx, path in saved_tiles.items():
         tile_element = ET.SubElement(tiles_element, f"Tile{idx:03}")
-        tile_element.text = tile_file
+        tile_element.text = path
 
     rough_string = ET.tostring(root, encoding="utf-8")
     parsed = minidom.parseString(rough_string)
@@ -407,13 +411,13 @@ if __name__ == "__main__":
     base_name = "dg"
     source_dir = f"{root_src_dir}/{base_name}"
     target_dir = f"{root_src_dir}/{base_name}"
-    tiles_x = 9
-    tiles_y = 6
+    tiles_x = 16
+    tiles_y = 16
     ranges = [(0, 0)]
-    next_bufferId = main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir)
-    print(f"Next buffer ID: {next_bufferId}")
+    # next_bufferId = main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir)
+    # print(f"Next buffer ID: {next_bufferId}")
 
-    tiled_map_filepath = "tiles/dg/tiled/dg_0_00.tmx"
+    tiled_map_filepath = "tiles/dg/tiled/dg0_00.tmx"
     tileset_number = 0
     level_number = 0
     asm_levels_tiled_filepath = f"{asm_src_dir}/levels_tileset_{tileset_number}.inc"
