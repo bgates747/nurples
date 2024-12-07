@@ -177,5 +177,7 @@ def main():
         main_size = final_address - mp_start + 1
         print(f"MAIN PROGRAM: {mp_start:06X} - {final_address:06X} size: {main_size} bytes")
 
+    print(f"TOTAL PROGRAM SIZE: {final_address - start_address + 1} bytes")
+
 if __name__ == "__main__":
     main()

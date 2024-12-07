@@ -5,8 +5,20 @@
     },
     "activeFile": "",
     "expandedProjectPaths": [
+        "."
     ],
     "fileStates": {
+        "dg0.tsx": {
+            "scaleInDock": 1.7982
+        },
+        "dg0_00.tmx": {
+            "scale": 1.15,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 147.39130434782612,
+                "y": 247.39130434782615
+            }
+        }
     },
     "last.imagePath": "/home/smith/Agon/emulator/sdcard/mystuff/nurples/tiles/dg",
     "map.height": 64,
@@ -18,6 +30,7 @@
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
+        "dg0_00.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
