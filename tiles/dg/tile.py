@@ -331,15 +331,6 @@ def generate_asm_levels(combined_xml_filepath, asm_levels_filepath):
     print(f"Assembly levels file created at {asm_levels_filepath}")
 
 def generate_asm_tiled_level(tiled_map_filepath, asm_levels_filepath, tileset_number, level_number, bufferId):
-    """
-    Generates assembly level data from a Tiled map file (.tmx).
-
-    Args:
-        tiled_map_filepath (str): Path to the Tiled map file (.tmx).
-        asm_levels_filepath (str): Path to save the generated assembly level file.
-        tileset_number (int): Number of the tileset.
-        level_number (int): Number of the level.
-    """
     tree = ET.parse(tiled_map_filepath)
     root = tree.getroot()
     num_cols = root.attrib['width']
@@ -370,8 +361,8 @@ def generate_asm_tiled_level(tiled_map_filepath, asm_levels_filepath, tileset_nu
         asm_file.write(level_asm)
     print(f"Assembly levels file created at {asm_levels_filepath}")
 
-def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir):
-    file_name = f"{base_name}.png"
+def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir,tileset_number):
+    file_name = f"{base_name}{tileset_number}.png"
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
@@ -400,7 +391,7 @@ def main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x
     return next_bufferId
 
 if __name__ == "__main__":
-    root_src_dir = "tiles/proc"
+    root_src_dir = "tiles"
     asm_src_dir = "src/asm"
     bufferId = 512
     tile_width = 16
@@ -409,16 +400,16 @@ if __name__ == "__main__":
     v_pitch = tile_height
 
     base_name = "dg"
-    source_dir = f"{root_src_dir}/{base_name}"
-    target_dir = f"{root_src_dir}/{base_name}"
+    tileset_number = 0
     tiles_x = 16
     tiles_y = 16
     ranges = [(0, 0)]
-    # next_bufferId = main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir)
-    # print(f"Next buffer ID: {next_bufferId}")
+    source_dir = f"{root_src_dir}/{base_name}"
+    target_dir = f"{root_src_dir}/{base_name}"
+    next_bufferId = main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir, tileset_number)
+    print(f"Next buffer ID: {next_bufferId}")
 
-    tiled_map_filepath = "tiles/dg/tiled/dg0_00.tmx"
-    tileset_number = 0
     level_number = 0
+    tiled_map_filepath = "tiles/dg/dg0_00.tmx"
     asm_levels_tiled_filepath = f"{asm_src_dir}/levels_tileset_{tileset_number}.inc"
     generate_asm_tiled_level(tiled_map_filepath, asm_levels_tiled_filepath, tileset_number, level_number, bufferId)
