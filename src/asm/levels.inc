@@ -3,7 +3,6 @@ tiles_dg: equ 0
 ; tiles_xevious: equ 1
 tileset_ptr_idx: dl 0
 tileset_ptrs:
-    ; dl tiles_dg_levels
     ; dl tiles_xevious_levels
     dl tileset_00_levels
 tileset_ptrs_end: dl 0 ; list terminator

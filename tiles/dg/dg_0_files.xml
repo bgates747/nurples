@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+<TileSet>
+  <BaseName>dg</BaseName>
+  <SourceDir>tiles/dg</SourceDir>
+  <TargetDir>tiles/dg</TargetDir>
+  <BaseName>dg</BaseName>
+  <FileName>dg0.png</FileName>
+  <TileWidth>16</TileWidth>
+  <TileHeight>16</TileHeight>
+  <HPitch>16</HPitch>
+  <VPitch>16</VPitch>
+  <TilesX>16</TilesX>
+  <TilesY>16</TilesY>
+  <StartX>0</StartX>
+  <StartY>0</StartY>
+  <SetNum>0</SetNum>
+  <MapFile>tiles/dg/dg_0_map.csv</MapFile>
+  <TilesFile>tiles/dg/dg_0_files.xml</TilesFile>
+  <FileCount>67</FileCount>
+  <BaseBufferId>512</BaseBufferId>
+  <Tiles>
+    <Tile index="0">tiles/dg/0/000.png</Tile>
+    <Tile index="1">tiles/dg/0/001.png</Tile>
+    <Tile index="2">tiles/dg/0/002.png</Tile>
+    <Tile index="3">tiles/dg/0/003.png</Tile>
+    <Tile index="4">tiles/dg/0/004.png</Tile>
+    <Tile index="5">tiles/dg/0/005.png</Tile>
+    <Tile index="6">tiles/dg/0/006.png</Tile>
+    <Tile index="17">tiles/dg/0/017.png</Tile>
+    <Tile index="18">tiles/dg/0/018.png</Tile>
+    <Tile index="19">tiles/dg/0/019.png</Tile>
+    <Tile index="20">tiles/dg/0/020.png</Tile>
+    <Tile index="21">tiles/dg/0/021.png</Tile>
+    <Tile index="22">tiles/dg/0/022.png</Tile>
+    <Tile index="23">tiles/dg/0/023.png</Tile>
+    <Tile index="24">tiles/dg/0/024.png</Tile>
+    <Tile index="33">tiles/dg/0/033.png</Tile>
+    <Tile index="34">tiles/dg/0/034.png</Tile>
+    <Tile index="35">tiles/dg/0/035.png</Tile>
+    <Tile index="36">tiles/dg/0/036.png</Tile>
+    <Tile index="37">tiles/dg/0/037.png</Tile>
+    <Tile index="38">tiles/dg/0/038.png</Tile>
+    <Tile index="39">tiles/dg/0/039.png</Tile>
+    <Tile index="40">tiles/dg/0/040.png</Tile>
+    <Tile index="41">tiles/dg/0/041.png</Tile>
+    <Tile index="42">tiles/dg/0/042.png</Tile>
+    <Tile index="43">tiles/dg/0/043.png</Tile>
+    <Tile index="49">tiles/dg/0/049.png</Tile>
+    <Tile index="50">tiles/dg/0/050.png</Tile>
+    <Tile index="51">tiles/dg/0/051.png</Tile>
+    <Tile index="52">tiles/dg/0/052.png</Tile>
+    <Tile index="53">tiles/dg/0/053.png</Tile>
+    <Tile index="54">tiles/dg/0/054.png</Tile>
+    <Tile index="55">tiles/dg/0/055.png</Tile>
+    <Tile index="56">tiles/dg/0/056.png</Tile>
+    <Tile index="57">tiles/dg/0/057.png</Tile>
+    <Tile index="58">tiles/dg/0/058.png</Tile>
+    <Tile index="59">tiles/dg/0/059.png</Tile>
+    <Tile index="65">tiles/dg/0/065.png</Tile>
+    <Tile index="66">tiles/dg/0/066.png</Tile>
+    <Tile index="67">tiles/dg/0/067.png</Tile>
+    <Tile index="68">tiles/dg/0/068.png</Tile>
+    <Tile index="69">tiles/dg/0/069.png</Tile>
+    <Tile index="70">tiles/dg/0/070.png</Tile>
+    <Tile index="71">tiles/dg/0/071.png</Tile>
+    <Tile index="72">tiles/dg/0/072.png</Tile>
+    <Tile index="73">tiles/dg/0/073.png</Tile>
+    <Tile index="74">tiles/dg/0/074.png</Tile>
+    <Tile index="75">tiles/dg/0/075.png</Tile>
+    <Tile index="146">tiles/dg/0/146.png</Tile>
+    <Tile index="147">tiles/dg/0/147.png</Tile>
+    <Tile index="148">tiles/dg/0/148.png</Tile>
+    <Tile index="149">tiles/dg/0/149.png</Tile>
+    <Tile index="150">tiles/dg/0/150.png</Tile>
+    <Tile index="151">tiles/dg/0/151.png</Tile>
+    <Tile index="154">tiles/dg/0/154.png</Tile>
+    <Tile index="155">tiles/dg/0/155.png</Tile>
+    <Tile index="156">tiles/dg/0/156.png</Tile>
+    <Tile index="161">tiles/dg/0/161.png</Tile>
+    <Tile index="162">tiles/dg/0/162.png</Tile>
+    <Tile index="163">tiles/dg/0/163.png</Tile>
+    <Tile index="164">tiles/dg/0/164.png</Tile>
+    <Tile index="165">tiles/dg/0/165.png</Tile>
+    <Tile index="166">tiles/dg/0/166.png</Tile>
+    <Tile index="167">tiles/dg/0/167.png</Tile>
+    <Tile index="171">tiles/dg/0/171.png</Tile>
+    <Tile index="172">tiles/dg/0/172.png</Tile>
+    <Tile index="173">tiles/dg/0/173.png</Tile>
+  </Tiles>
+</TileSet>
