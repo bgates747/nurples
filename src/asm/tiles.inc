@@ -43,8 +43,6 @@ tiles_plot:
 ; read the tile defintion for the current column
     ld a,(hl) ; a has tile definition
     push hl ; save pointer to tile definition
-    cp 17 ; carry set if active tile (or null tile which we will ignore when the time comes)
-    push af ; save active tile flag and type
     ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
     ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
     call vdu_buff_select ; tile bitmap buffer is now active
@@ -57,11 +55,6 @@ tiles_plot:
     ld bc,16
     add hl,bc
     ld (tiles_x_plot),hl
-; process active tiles
-    pop af ; a = type, carry = active flag
-    jp z,@F ; is null tile,skip ahead
-    call c,dt_is_active
-@@:
 ; prepare to loop to next column
     pop hl ; get back pointer to tile def
     inc hl ; bump it to the next column
@@ -73,6 +66,10 @@ tiles_plot:
     ld ix,tiles_y_plot
     inc (ix)
     ret nz
+; do active tiles
+    push hl ; save pointer to next row tile def
+    call do_active_tiles
+    pop hl ; get back pointer to next row tile def
 ; time to bump tiles_row_defs to next row
 ; (hl was already there at the end of the loop)
     ld (tiles_row_defs),hl
@@ -94,6 +91,41 @@ tiles_plot:
     ld (max_enemy_sprites),a ; otherwise save the updated number
     jp next_level
 ; end tiles_plot
+
+do_active_tiles:
+; initialize tiles loop
+    ld hl,0 ; init plotting x-coordinate
+    ld (tiles_x_plot),hl
+    ld hl,(tiles_row_defs)
+    ld a,(tiles_cols)
+    ld b,a ; column loop counter
+@loop:
+    push bc ; save the loop counter
+; read the tile defintion for the current column
+    ld a,(hl) ; a has tile definition
+    push hl ; save pointer to tile definition
+    cp 17 ; carry set if active tile (or null tile which we will ignore when the time comes)
+    jp nc,@next_tile ; skip to next tile if not active
+; call the tile activation routine
+    ld hl,tile_activation_routines
+    ld d,3 ; three bytes per table entry
+    ld e,a ; a is the tile type
+    add hl,de ; hl is now the address of the table entry
+    ld hl,(hl) ; hl is now the activation routine address
+    callHL ; call the activation routine
+@next_tile:
+; bump x-coords the width of one tile and save it
+    ld hl,(tiles_x_plot)
+    ld bc,16
+    add hl,bc
+    ld (tiles_x_plot),hl
+; prepare to loop to next column
+    pop hl ; get back pointer to tile def
+    inc hl ; bump it to the next column
+    pop bc ; snag our loop counter
+    djnz @loop
+    ret ; done
+; end do_active_tiles
 
 ; bg_y_plot: dl -1
 ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
@@ -143,56 +175,58 @@ tile_spark_u: equ 14
 tile_flame_r: equ 15
 tile_flame_u: equ 16
 
-dt_is_active: ; TODO: implement this
-; ; a lands here containing a tile index in the low nibble
-; ; we test the values for the tiles which are active
-;     cp #07
-;     call z,ld_act_landing_pad
-;     cp #08
-;     call z,ld_act_laser_turret
-;     ; fall through
-;     ret
+active_tile_timer: equ 24 ; 2/10ths of a second
+tile_activation_routines:
+    dl activate_null_tile ; dummy spacer since tiled is 1-based
+    dl activate_pad_small
+    dl activate_null_tile  ;  activate_pad_med
+    dl activate_null_tile  ;  activate_pad_large
+    dl activate_null_tile  ;  activate_pad_huge
+    dl activate_null_tile  ;  activate_fireball_turret
+    dl activate_null_tile  ;  activate_laser_turret
+    dl activate_null_tile  ;  activate_twin_laser_turret
+    dl activate_null_tile  ;  activate_gatling_turret
+    dl activate_null_tile  ;  activate_electrode_r
+    dl activate_null_tile  ;  activate_electrode_u
+    dl activate_null_tile  ;  activate_piston_r
+    dl activate_null_tile  ;  activate_piston_u
+    dl activate_null_tile  ;  activate_spark_r
+    dl activate_null_tile  ;  activate_spark_u
+    dl activate_null_tile  ;  activate_flame_r
+    dl activate_null_tile  ;  activate_flame_u
+; end tile_activation_routines
 
-; ; some tiles become active sprites,so we load those here
-; ; sprite_x/y have already been loaded
-; ; sprite_dim_x/y are loaded by table_add_record
-; ; we don't want sprite drawn to background like other tiles
-; ; so this routine only adds them to the sprite table
-; dt_ld_act:
-;     ld a,#48 ; top of screen + 1/2 tile height
-;     ld (sprite_y+1),a ; just the integer part
-;     ld (sprite_base_bufferId),hl
-;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-;     call table_add_record
-;     ; call sprite_variables_from_stack
-;     ld a,#FF ; lets calling proc know we loaded an active tile
-    ret ; and back
-; end dt_is_active
+activate_null_tile:
+    ret ; dummy routine, do nothing
 
-; ld_act_landing_pad:
-;     ; call sprite_variables_to_stack
-
-;     ld hl,move_landing_pad
-;     ld (sprite_move_program),hl
-
-;     xor a 
-;     ld (sprite_animation),a ; animation 0
-
-;     call rand_8     ; snag a random number
-;     and %00011111   ; keep only 5 lowest bits (max 31)
-;     add a,64 ; range is now 64-127
-;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
-
-;     ld a,%10 ; collides with laser but not player
-;     ld (iy+sprite_collisions),a 
-
-;     ld a,#05 ; BCD
-;     ld (sprite_points),a
-;     ld a,0 ; binary
-;     ld (sprite_shield_damage),a
-
-;     ld hl,tile_pad_small ; dt_ld_act loads this to sprite_base_bufferId
-;     jr dt_ld_act
+; create a new sprite at the same location as an active tile
+; inputs: iy = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set, b = number of frames
+spawn_sprite_from_tile:
+    push bc ; b = number of frames
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars, b = number of frames
+    pop bc ; restore number of frames to b
+    ret nc ; no carry means no free sprite slots, so we go home
+; initialize the new sprite
+    ld (ix+sprite_id),a
+    call vdu_sprite_select ; select sprite
+    ld hl,(ix+sprite_base_bufferId)
+    call sprite_load_frames
+; copy default settings to new sprite
+    push iy ; pointer to new sprite defaults
+    pop hl ; address to copy from
+    push ix ; pointer to new sprite table record
+    pop de ; address to copy to
+    ld bc,table_bytes_per_record ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+; update the new sprite's position and make it visible
+    ld bc,(tiles_x_plot)
+    ld (ix+sprite_x),bc
+    ld de,(tiles_y_plot)
+    ld (ix+sprite_y),de
+    call vdu_sprite_move_abs168
+    call vdu_sprite_show
+    ret
+; end spawn_sprite_from_tile
 
 ; ld_act_laser_turret:
 ;     ; call sprite_variables_to_stack

@@ -36,10 +36,10 @@ game_initialize:
     ld a,3
     ld (player_ships),a
     call player_init
-; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
-    ld hl,enemies_dead
-    ld (enemies_state),hl
-; END TODO
+; ; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
+;     ld hl,enemies_dead
+;     ld (enemies_state),hl
+; ; END TODO
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl
@@ -138,40 +138,40 @@ player_dead:
     ret
 
 do_enemies: 
-    ld hl, (enemies_state)
+    ld hl,(enemies_state)
     callHL
     ret
-enemies_state: dl enemies_dead
-enemies_dead:
-    ld iy,enemies_respawn_tmr
-    ld hl,120*2 ; 120ths of a second
-    call timestamp_tmr_set
-    ld hl,enemies_respawning
-    ld (enemies_state),hl
-    ret
+enemies_state: dl enemies_alive
+; enemies_dead:
+;     ld iy,enemies_respawn_tmr
+;     ld hl,120*2 ; 120ths of a second
+;     call timestamp_tmr_set
+;     ld hl,enemies_respawning
+;     ld (enemies_state),hl
+;     ret
 
-; DEBUG: FOR TESTING UNTIL WE PROPERLY IMPLEMENT MAP LOGIC
-enemies_respawning:
-    ld iy,enemies_respawn_tmr
-    call timestamp_tmr_get
-    ret p ; not time to respawn yet
-    call enemies_respawn
-    ret
-enemies_respawn_tmr: ds 6
+; ; DEBUG: FOR TESTING UNTIL WE PROPERLY IMPLEMENT MAP LOGIC
+; enemies_respawning:
+;     ld iy,enemies_respawn_tmr
+;     call timestamp_tmr_get
+;     ret p ; not time to respawn yet
+;     call enemies_respawn
+;     ret
+; enemies_respawn_tmr: ds 6
 
-enemies_respawn:
-; initialize enemy sprites
-    ld a,(max_enemy_sprites)
-    ld b,a ; loop counter
-@respawn_loop:
-    push bc
-    call enemy_spawn_seeker
-    pop bc
-    djnz @respawn_loop
-    ld hl,enemies_alive
-    ld (enemies_state),hl
-    ret 
-; END DEBUG
+; enemies_respawn:
+; ; initialize enemy sprites
+;     ld a,(max_enemy_sprites)
+;     ld b,a ; loop counter
+; @respawn_loop:
+;     push bc
+;     call enemy_spawn_seeker
+;     pop bc
+;     djnz @respawn_loop
+;     ld hl,enemies_alive
+;     ld (enemies_state),hl
+;     ret 
+; ; END DEBUG
 
 enemies_alive:
     call move_enemies

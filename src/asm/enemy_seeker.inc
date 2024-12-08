@@ -29,7 +29,9 @@ enemy_spawn_seeker:
 ; ix comes back with the pointer to the new sprite variables
 ; a comes back with the spriteId of the new sprite
 ; initialize the new sprite
-    ld (iy+sprite_id),a
+    ld (ix+sprite_id),a
+    ld b,32 ; number of frames
+    ld hl,(ix+sprite_base_bufferId)
     call sprite_load_frames
 ; copy coordinates of active sprite to new sprite
     ld iy,(table_pointer) 

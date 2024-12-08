@@ -56,6 +56,7 @@ exit:
     include "sprites.inc"
     include "state.inc"
     include "tiles.inc"
+    include "tile_pad_small.inc"
 
 ; --- MAIN PROGRAM FILE ---
 hello_world: asciz "Welcome to Purple Nurples!"

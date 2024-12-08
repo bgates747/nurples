@@ -258,10 +258,17 @@ sprite_compute_velocities:
 ; end sprite_compute_velocities
 
 ; create a new sprite at the same location as an existing sprite
-; inputs: iy = pointer to new sprite default settings, table_pointer = existing sprite
+; inputs: iy = pointer to new sprite default settings, table_pointer = existing sprite, b = number of frames
 spawn_sprite_from_sprite:
+    push bc ; b = number of frames
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    pop bc ; restore number of frames to b
     ret nc ; no carry means no free sprite slots, so we go home
+; initialize the new sprite
+    ld (ix+sprite_id),a
+    call vdu_sprite_select ; select sprite
+    ld hl,(ix+sprite_base_bufferId)
+    call sprite_load_frames
 ; copy default settings to new sprite
     push iy ; pointer to new sprite defaults
     pop hl ; address to copy from
@@ -277,6 +284,11 @@ spawn_sprite_from_sprite:
     push ix
     pop de ; address to copy to
     ld bc, sprite_orientation-sprite_x+1 ; number of bytes to copy
+; update the new sprite's position and make it visible
+    ld bc,(ix+sprite_x)
+    ld de,(ix+sprite_y)
+    call vdu_sprite_move_abs168
+    call vdu_sprite_show
     ret
 
 ; load a sprite with animation bitmaps

@@ -12,8 +12,10 @@ move_enemies:
     ld a,(table_active_sprites)
     and a ; will be zero if no alive enemies or explosions
     jp nz,@they_live
-    ld hl,enemies_dead
-    ld (enemies_state),hl
+    ; DEPRECATED: though may be used in the future
+    ; ld hl,enemies_dead
+    ; ld (enemies_state),hl
+    ; END DEPRECATED
     ret
 @they_live:
 ; initialize pointers and loop counter
