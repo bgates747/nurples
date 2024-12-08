@@ -156,39 +156,56 @@ def generate_asm_img_load(xml_tile_filepath, asm_images_filepath, asm_img_dir):
     print(f"Assembly images file created at {asm_images_filepath}")
 
 def make_images(xml_tile_filepath, rgba_target_dir, image_type, do_palette, palette_conv_type, transparent_rgb):
+    # Parse the XML file
     tree = ET.parse(xml_tile_filepath)
     root = tree.getroot()
-    target_dir = None
-    first_set = root.find("TileSet")
-    if first_set is not None:
-        target_dir = first_set.find("TargetDir").text
 
-    for tile_set in root.findall("TileSet"):
-        tiles_file = tile_set.find("TilesFile").text
-        tiles_tree = ET.parse(tiles_file)
-        tiles_root = tiles_tree.getroot()
-        for tile in tiles_root.find("Tiles"):
-            input_image_path = tile.text
-            if target_dir:
-                relative_path = os.path.relpath(input_image_path, target_dir)
-            else:
-                relative_path = os.path.basename(input_image_path)
+    # Ensure the root element is <TileSet>
+    if root.tag != "TileSet":
+        raise ValueError("Root element is not <TileSet>.")
 
-            base_name_no_ext = os.path.splitext(relative_path)[0]
+    # Get the SetNum value to create a subdirectory
+    set_num = root.find("SetNum")
+    if set_num is None or not set_num.text.isdigit():
+        raise ValueError("No valid <SetNum> found in the <TileSet>.")
+    set_num_dir = os.path.join(rgba_target_dir, f"{int(set_num.text)}")
+
+    # Ensure subdirectory exists and is cleared of non-recursive files
+    if not os.path.exists(set_num_dir):
+        os.makedirs(set_num_dir, exist_ok=True)
+    else:
+        for file in os.listdir(set_num_dir):
+            file_path = os.path.join(set_num_dir, file)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+    # Find the Tiles section in the XML
+    tiles = root.find("Tiles")
+    if tiles is None:
+        raise ValueError("No <Tiles> section found in the <TileSet>.")
+
+    # Process each tile in the Tiles section
+    for tile in tiles:
+        input_image_path = tile.text
+        relative_path = os.path.basename(input_image_path)
+        base_name_no_ext = os.path.splitext(relative_path)[0]
+        
+        # Construct target file path within the set_num subdirectory
+        if image_type == 1:
+            rgba_filepath = os.path.join(set_num_dir, base_name_no_ext + ".rgba2")
+        else:
+            rgba_filepath = os.path.join(set_num_dir, base_name_no_ext + ".rgba8")
+        
+        with Image.open(input_image_path) as img:
+            # Apply palette conversion if needed
+            if do_palette:
+                img = convert_to_agon_palette(img, 64, palette_conv_type, transparent_rgb)
+            
+            # Save image in the specified format
             if image_type == 1:
-                rgba_filepath = os.path.join(rgba_target_dir, base_name_no_ext + ".rgba2")
+                img_to_rgba2(img, rgba_filepath)
             else:
-                rgba_filepath = os.path.join(rgba_target_dir, base_name_no_ext + ".rgba8")
-
-            os.makedirs(os.path.dirname(rgba_filepath), exist_ok=True)
-
-            with Image.open(input_image_path) as img:
-                if do_palette:
-                    img = convert_to_agon_palette(img, 64, palette_conv_type, transparent_rgb)
-                if image_type == 1:
-                    img_to_rgba2(img, rgba_filepath)
-                else:
-                    img_to_rgba8(img, rgba_filepath)
+                img_to_rgba8(img, rgba_filepath)
 
 def generate_asm_levels(xml_tile_filepath, asm_levels_filepath):
     tree = ET.parse(xml_tile_filepath)

@@ -3,12 +3,9 @@ max_enemy_sprites: db 4
 ; sprite_type
 enemy_dead: equ 0
 enemy_seeker: equ 1
-enemy_medium: equ 2
-enemy_large: equ 3
-landing_pad: equ 4
-laser_turret: equ 5
+
 fireballs: equ 6
-explosion: equ 7
+explosion: equ 255
 
 move_enemies:
 ; are there any active enemies or explosions?
@@ -69,13 +66,6 @@ move_enemies:
 ;     call animate_explosion 
 ;     ret
 
-speed_seeker: equ 0x000280 ; 2.5 pixels per frame
-move_enemy_seeker:
-; run the movement program for the seeker enemy
-    call en_nav_seek_zag
-    jp check_enemy_player_collisions
-; end move_enemy_seeker
-
 check_enemy_player_collisions:
 ; check for collisions with laser
     ld ix,laser_start_variables
@@ -96,141 +86,6 @@ check_enemy_player_collisions:
     jp enemy_kill
 ; end move_enemy_seeker
 
-; contains the logic for how to move the enemy
-; and then does the moving
-; inputs: a fully-populated active sprite table
-;         player position variables
-; destroys: everything except index registers
-; outputs: moving enemies
-en_nav_seek_zag:
-; set velocity and orientation by player's relative location
-; move enemies y-axis
-; where is player relative to us?
-    call orientation_to_player ; uh.l angle to player, ub.c, ud.e = dx, dy
-; is player above or below us?
-    ld (ude),de ; dy
-    ld a,(ude+2) ; deu
-    rla ; shift sign bit into carry
-    jp nc,@zig_zag ; player is below,evade
-; player is even or above,so home in on current heading
-    ld (iy+sprite_heading),hl ; save sprite heading
-; fall through to @compute_velocities
-@compute_velocities:
-    call sprite_compute_velocities
-; change the animation frame to match heading
-    ld a,(iy+sprite_heading+1) ; we want the integer portion
-    srl a ; divide integer portion by 8
-    srl a
-    srl a
-    call vdu_sprite_select_frame
-    jp move_sprite ; will return to caller from there
-@zig_zag_start:
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
-    call rand_8
-    and %00111111 ; limit it to 64
-    set 3,a ; make sure it's at least 8
-    ld (iy+sprite_move_timer),a ; store it
-    ; fall through to @zig_zag
-@zig_zag:
-    ld a,(iy+sprite_move_timer)
-    dec a
-    ld (iy+sprite_move_timer),a
-    jp nz,@zig_zag_no_switch
-    ; otherwise flip direction and restart timer
-    ld a,(iy+sprite_move_step)
-    xor %1 ; flips bit one
-    ld (iy+sprite_move_step),a ; store it
-    jp nz,@F ; zag right
-;otherwise zag left
-    ld hl,160*256; southwest heading
-    ld (iy+sprite_heading),hl ; save sprite heading
-    jp @zig_zag_start
-@@: ; zag right
-    ld hl,96*256; southeast heading
-    ld (iy+sprite_heading),hl ; save sprite heading
-    jp @zig_zag_start
-@zig_zag_no_switch:
-    ; ld a,(sprite_orientation)
-    ld hl,(iy+sprite_heading)
-    jp @compute_velocities
-; end en_nav_seek_zag
-
-enemy_init_from_landing_pad:
-; get next available spriteId
-    call table_get_next_id
-    ret nc ; no carry means no free sprite slots, so we go home
-; ix comes back with the pointer to the new sprite variables
-    push ix ; de picks it up when we're ready for the copy to the table
-; a comes back with the spriteId of the new sprite
-    ld (@id),a
-; initialize the new sprite
-    call vdu_sprite_select
-    call vdu_sprite_clear_frames
-    ld hl,BUF_SEEKER_000
-    ld b,32
-@load_frames:
-    push bc
-    push hl
-    call vdu_sprite_add_buff
-    pop hl
-    inc hl
-    pop bc
-    djnz @load_frames
-; copy coordinates of active sprite to new sprite
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
-    ; ld hl,(iy+sprite_x)
-    ; ld hl,0x008000 ; debug
-    
-    call rand_8
-    ld hl,0
-    ld h,a
-
-    ld (@x),hl
-    ; ld hl,(iy+sprite_y)
-    ; ld hl,0x002000 ; debug
-
-    call rand_8
-    ld hl,0
-    ld h,a
-
-    ld (@y),hl
-    call rand_8
-    and %00000001 ; 50/50 chance of moving left or right on spanw
-    ld (@move_step),a 
-; now copy to the table
-    ld hl,@id ; address to copy from
-    pop de ; address to copy to (was ix)
-    ld bc,table_bytes_per_record ; number of bytes to copy
-    ldir ; copy the records from local scratch to sprite table
-; set collision flags
-    set collides_with_laser,(iy+sprite_collisions)
-    set collides_with_player,(iy+sprite_collisions)
-; update the new sprite's position and make it visible
-    ld bc,(iy+sprite_x)
-    ld de,(iy+sprite_y)
-    call vdu_sprite_move_abs168
-    call vdu_sprite_show
-    ret
-@id:                    db 0x00 ; 1 bytes unique spriteId, zero-based
-@type:                  db enemy_seeker ; 1 bytes type of sprite as defined in enemies.inc
-@base_bufferId:         dl BUF_SEEKER_000 ; 3 bytes bitmap bufferId
-@move_program:          dl move_enemy_seeker ; 3 bytes address of sprite's behavior subroutine
-@collisions:            db 0 ; 3 bytes, set by spawing routine
-@dim_x:                 db 16 ; 1 bytes sprite width in pixels
-@dim_y:                 db 16 ; 1 bytes sprite height in pixels
-@x:                     dl 0x000000 ; 1 bytes 16.8 fractional x position in pixels
-@y:                     dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
-@xvel:                  dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
-@yvel:                  dl 0x000000 ; 3 bytes y-component velocity, 16.8 fixed, pixels
-@vel:                   dl speed_seeker ; 3 bytes velocity, 16.8 fixed, pixels 
-@heading:               dl 0x008000 ; 3 bytes sprite movement direction deg256 16.8 fixed
-@orientation:           dl 0x008000 ; 3 bytes orientation bits
-@animation:             db 0x00 ; 1 bytes current animation index, zero-based
-@animation_timer:       db 0x00 ; 1 bytes when hits zero, draw next animation
-@move_timer:            db 0x01 ; 1 bytes when zero, go to next move program, or step
-@move_step:             db 0x00 ; 1 bytes stage in a move program sequence, varies
-@points:                db 10 ; 1 bytes points awarded for killing this sprite type
-@shield_damage:         db 0x02 ; 1 bytes shield points deducted for collision
 
 
 ; move_fireballs:
@@ -255,7 +110,7 @@ enemy_init_from_landing_pad:
 ;     ; fall through
 
 ; move_fireballs_draw:
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_buff_select ; TODO: convert to vdu_buff_select
 ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ;     call check_collisions
 ;     ret
@@ -311,7 +166,7 @@ enemy_kill:
 ;     ld (sprite_animation_timer),a
 ;     xor a
 ;     ld (sprite_move_timer),a
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_buff_select ; TODO: convert to vdu_buff_select
 ; ; fall through to next_explosion
 ; next_explosion:
 ;     ld a,(sprite_animation)
@@ -329,7 +184,7 @@ enemy_kill:
 ;     dec (hl) ; if timer is zero,we do next animation
 ;     jp z,next_explosion
 ;     ;otherwise we fall through to draw the current one
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_buff_select ; TODO: convert to vdu_buff_select
 ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
 ;     ret ; now we go back to caller
 ; done_explosion:

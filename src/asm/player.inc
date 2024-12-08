@@ -240,7 +240,7 @@ print_score:
 ;     ld (sprite_animation),a
 ;     ld a,#56 ; top of visible screen
 ;     ld (sprite_y+1),a
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_buff_select ; TODO: convert to vdu_buff_select
 ;     ld a,(player_ships)
 ;     dec a ; we draw one fewer ships than lives
 ;     ret z ; nothing to draw here, move along

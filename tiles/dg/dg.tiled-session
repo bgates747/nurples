@@ -7,16 +7,18 @@
     "expandedProjectPaths": [
         "."
     ],
+    "file.lastUsedOpenFilter": "Tiled Projects (*.tiled-project)",
     "fileStates": {
         "dg0.tsx": {
-            "scaleInDock": 1.7982
+            "scaleInDock": 1.7982,
+            "scaleInEditor": 1
         },
         "dg0_00.tmx": {
-            "scale": 1.15,
+            "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 147.39130434782612,
-                "y": 247.39130434782615
+                "x": 121.5,
+                "y": 872.25
             }
         }
     },
@@ -30,7 +32,8 @@
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
-        "dg0_00.tmx"
+        "dg0_00.tmx",
+        "dg0.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

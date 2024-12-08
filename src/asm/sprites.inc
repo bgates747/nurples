@@ -256,3 +256,46 @@ sprite_compute_velocities:
     ld (iy+sprite_yvel),de ; save y-velocity component 
     ret
 ; end sprite_compute_velocities
+
+; create a new sprite at the same location as an existing sprite
+; inputs: iy = pointer to new sprite default settings, table_pointer = existing sprite
+spawn_sprite_from_sprite:
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    ret nc ; no carry means no free sprite slots, so we go home
+; copy default settings to new sprite
+    push iy ; pointer to new sprite defaults
+    pop hl ; address to copy from
+    push ix ; pointer to new sprite table record
+    pop de ; address to copy to
+    ld bc,table_bytes_per_record ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+; copy sprite position, velocity and orientation from existing sprite
+    ld iy,(table_pointer) ; pointer to current sprite record
+    lea iy,iy+sprite_x ; bump pointer to copy from position
+    push iy
+    pop hl ; address to copy from
+    push ix
+    pop de ; address to copy to
+    ld bc, sprite_orientation-sprite_x+1 ; number of bytes to copy
+    ret
+
+; load a sprite with animation bitmaps
+; inputs: a = sprite id, hl = base bufferId, b = number of frames
+sprite_load_frames:
+; back up input parameters
+    push hl
+    push bc
+    call vdu_sprite_select
+    call vdu_sprite_clear_frames
+    pop bc ; = number of frames
+    pop hl ; = base bufferId
+@load_frames:
+    push bc ; back up loop counter
+    push hl ; back up base bufferId
+    call vdu_sprite_add_buff
+    pop hl ; restore base bufferId
+    inc hl ; bump it to the next frame
+    pop bc ; restore loop counter
+    djnz @load_frames ; loop until all frames loaded
+    ret
+; end sprite_load_frames

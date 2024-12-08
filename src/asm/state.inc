@@ -165,7 +165,7 @@ enemies_respawn:
     ld b,a ; loop counter
 @respawn_loop:
     push bc
-    call enemy_init_from_landing_pad
+    call enemy_spawn_seeker
     pop bc
     djnz @respawn_loop
     ld hl,enemies_alive

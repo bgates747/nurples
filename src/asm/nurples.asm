@@ -42,6 +42,7 @@ exit:
 ; APPLICATION INCLUDES
     include "collisions.inc"
     include "enemies.inc"
+    include "enemy_seeker.inc"
     include "fonts_list.inc"
     include "images_tiles_dg.inc"
     ; include "images_tiles_xevious.inc"

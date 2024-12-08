@@ -43,6 +43,8 @@ tiles_plot:
 ; read the tile defintion for the current column
     ld a,(hl) ; a has tile definition
     push hl ; save pointer to tile definition
+    cp 17 ; carry set if active tile (or null tile which we will ignore when the time comes)
+    push af ; save active tile flag and type
     ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
     ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
     call vdu_buff_select ; tile bitmap buffer is now active
@@ -55,6 +57,11 @@ tiles_plot:
     ld bc,16
     add hl,bc
     ld (tiles_x_plot),hl
+; process active tiles
+    pop af ; a = type, carry = active flag
+    jp z,@F ; is null tile,skip ahead
+    call c,dt_is_active
+@@:
 ; prepare to loop to next column
     pop hl ; get back pointer to tile def
     inc hl ; bump it to the next column
@@ -119,7 +126,24 @@ tiles_plot:
 ;     ret
 
 ; ###### TODO: NEW CODE TO IMPLEMENT ######
-; dt_is_active:
+tile_pad_small: equ 1
+tile_pad_med: equ 2
+tile_pad_large: equ 3
+tile_pad_huge: equ 4
+tile_fireball_turret: equ 5
+tile_laser_turret: equ 6
+tile_twin_laser_turret: equ 7
+tile_gatling_turret: equ 8
+tile_electrode_r: equ 9
+tile_electrode_u: equ 10
+tile_piston_r: equ 11
+tile_piston_u: equ 12
+tile_spark_r: equ 13
+tile_spark_u: equ 14
+tile_flame_r: equ 15
+tile_flame_u: equ 16
+
+dt_is_active: ; TODO: implement this
 ; ; a lands here containing a tile index in the low nibble
 ; ; we test the values for the tiles which are active
 ;     cp #07
@@ -138,14 +162,15 @@ tiles_plot:
 ;     ld a,#48 ; top of screen + 1/2 tile height
 ;     ld (sprite_y+1),a ; just the integer part
 ;     ld (sprite_base_bufferId),hl
-;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
+;     call vdu_buff_select ; TODO: convert to vdu_buff_select
 ;     call table_add_record
-;     call sprite_variables_from_stack
+;     ; call sprite_variables_from_stack
 ;     ld a,#FF ; lets calling proc know we loaded an active tile
-;     ret ; and back
+    ret ; and back
+; end dt_is_active
 
 ; ld_act_landing_pad:
-;     call sprite_variables_to_stack
+;     ; call sprite_variables_to_stack
 
 ;     ld hl,move_landing_pad
 ;     ld (sprite_move_program),hl
@@ -166,11 +191,11 @@ tiles_plot:
 ;     ld a,0 ; binary
 ;     ld (sprite_shield_damage),a
 
-;     ld hl,landing_pad ; dt_ld_act loads this to sprite_base_bufferId
+;     ld hl,tile_pad_small ; dt_ld_act loads this to sprite_base_bufferId
 ;     jr dt_ld_act
 
 ; ld_act_laser_turret:
-;     call sprite_variables_to_stack
+;     ; call sprite_variables_to_stack
 
 ;     ld hl,move_laser_turret
 ;     ld (sprite_move_program),hl
@@ -192,27 +217,27 @@ tiles_plot:
 ;     ld a,0 ; binary
 ;     ld (sprite_shield_damage),a
 
-;     ld hl,laser_turret ; dt_ld_act loads this to sprite_base_bufferId
+;     ld hl,tile_fireball_turret ; dt_ld_act loads this to sprite_base_bufferId
 ;     jp dt_ld_act
 
 
-; moves active tile sprites down one pixel in sync with tiles movement
-; deletes sprites from table when they wrap around to top of screen
-move_active_tiles:
-; get current position
-    ld a,(sprite_y+1) ; we only need the integer part
-    inc a 
-; are we at the bottom of the screen?
-    jr nz,move_active_tiles_draw_sprite ; nope
-; otherwise kill sprite
-    ld a,%10000000 ; any bit set in high nibble means sprite will die
-    ld (iy+sprite_collisions),a
-    ret ; debug
-move_active_tiles_draw_sprite:
-    ld (sprite_y+1),a ; update tile y position integer part
-    ;     call vdu_bmp_select ; TODO: convert to vdu_buff_select
-    ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
-    ret ; and done
+; ; moves active tile sprites down one pixel in sync with tiles movement
+; ; deletes sprites from table when they wrap around to top of screen
+; move_active_tiles:
+; ; get current position
+;     ld a,(sprite_y+1) ; we only need the integer part
+;     inc a 
+; ; are we at the bottom of the screen?
+;     jr nz,move_active_tiles_draw_sprite ; nope
+; ; otherwise kill sprite
+;     ld a,%10000000 ; any bit set in high nibble means sprite will die
+;     ld (iy+sprite_collisions),a
+;     ret ; debug
+; move_active_tiles_draw_sprite:
+;     ld (sprite_y+1),a ; update tile y position integer part
+;     ;     call vdu_buff_select ; TODO: convert to vdu_buff_select
+;     ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
+;     ret ; and done
 
 
 ; move_landing_pad:
@@ -222,7 +247,7 @@ move_active_tiles_draw_sprite:
 ;     ld hl,sprite_move_timer
 ;     dec (hl)
 ;     jp nz,move_enemies_loop_return
-;     call enemy_init_from_landing_pad
+;     call enemy_spawn_seeker
 ;     ; reset move timer so can spawn again if player doesn't take us out
 ;     call rand_8     ; snag a random number
 ;     and %00011111   ; keep only 5 lowest bits (max 31)
@@ -259,7 +284,7 @@ move_active_tiles_draw_sprite:
 
 
 ; fireballs_init:
-;     call sprite_variables_to_stack
+;     ; call sprite_variables_to_stack
 
 ;     ld hl,fireballs
 ;     ld (sprite_base_bufferId),hl
@@ -293,5 +318,5 @@ move_active_tiles_draw_sprite:
 ;     ld (sprite_shield_damage),a
 
 ;     call table_add_record ; plops that on the sprite stack for later
-;     call sprite_variables_from_stack ; come back to where we started
+;     ; call sprite_variables_from_stack ; come back to where we started
 ;     ret
