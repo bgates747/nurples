@@ -93,6 +93,8 @@ tiles_plot:
 ; end tiles_plot
 
 do_active_tiles:
+    ret ; DEBUG
+    
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -104,14 +106,28 @@ do_active_tiles:
 ; read the tile defintion for the current column
     ld a,(hl) ; a has tile definition
     push hl ; save pointer to tile definition
-    cp 17 ; carry set if active tile (or null tile which we will ignore when the time comes)
+    or a ; check for null tile
+    jp z,@next_tile ; skip to next tile if null
+    cp 17 ; carry reset if active tile
     jp nc,@next_tile ; skip to next tile if not active
 ; call the tile activation routine
     ld hl,tile_activation_routines
     ld d,3 ; three bytes per table entry
     ld e,a ; a is the tile type
+    mlt de ; de is now the offset to the table entry
     add hl,de ; hl is now the address of the table entry
     ld hl,(hl) ; hl is now the activation routine address
+
+; ; DEBUG
+;     push af
+;     push hl
+;     call vdu_home_cursor
+;     call dumpRegistersHex
+;     call waitKeypress
+;     pop hl
+;     pop af
+; ; END DEBUG
+
     callHL ; call the activation routine
 @next_tile:
 ; bump x-coords the width of one tile and save it
@@ -126,6 +142,48 @@ do_active_tiles:
     djnz @loop
     ret ; done
 ; end do_active_tiles
+
+; create a new sprite at the same location as an active tile
+; inputs: iy = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
+spawn_sprite_from_tile:
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    ret nc ; no carry means no free sprite slots, so we go home
+; copy default settings to new sprite
+    push iy ; pointer to new sprite defaults
+    pop hl ; address to copy from
+    push ix ; back up pointer to new sprite table record
+    lea ix,ix+sprite_definitions ; bump pointer to copy to
+    push ix ; pointer to default sprite settings
+    pop de ; address to copy to
+    ld bc,table_bytes_per_record ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+    pop ix ; restore pointer to top of new sprite table record
+; initialize the new sprite
+    ld a,(ix+sprite_id)
+    call vdu_sprite_select ; select sprite
+    ld hl,(ix+sprite_base_bufferId)
+    ld b,(ix+sprite_num_animations)
+    call sprite_load_frames
+; update the new sprite's position and make it visible
+    ld bc,(tiles_x_plot)
+    ld (ix+sprite_x),bc
+    ld de,(tiles_y_plot)
+    ld (ix+sprite_y),de
+    call vdu_sprite_move_abs168
+    call vdu_sprite_show
+    ret
+; end spawn_sprite_from_tile
+
+; DEBUG
+    push af
+    push hl
+    call vdu_home_cursor
+    call dumpRegistersHex
+    call waitKeypress
+    pop hl
+    pop af
+; END DEBUG
+
 
 ; bg_y_plot: dl -1
 ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
@@ -198,35 +256,6 @@ tile_activation_routines:
 
 activate_null_tile:
     ret ; dummy routine, do nothing
-
-; create a new sprite at the same location as an active tile
-; inputs: iy = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set, b = number of frames
-spawn_sprite_from_tile:
-    push bc ; b = number of frames
-    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars, b = number of frames
-    pop bc ; restore number of frames to b
-    ret nc ; no carry means no free sprite slots, so we go home
-; initialize the new sprite
-    ld (ix+sprite_id),a
-    call vdu_sprite_select ; select sprite
-    ld hl,(ix+sprite_base_bufferId)
-    call sprite_load_frames
-; copy default settings to new sprite
-    push iy ; pointer to new sprite defaults
-    pop hl ; address to copy from
-    push ix ; pointer to new sprite table record
-    pop de ; address to copy to
-    ld bc,table_bytes_per_record ; number of bytes to copy
-    ldir ; copies defaults to new sprite record
-; update the new sprite's position and make it visible
-    ld bc,(tiles_x_plot)
-    ld (ix+sprite_x),bc
-    ld de,(tiles_y_plot)
-    ld (ix+sprite_y),de
-    call vdu_sprite_move_abs168
-    call vdu_sprite_show
-    ret
-; end spawn_sprite_from_tile
 
 ; ld_act_laser_turret:
 ;     ; call sprite_variables_to_stack

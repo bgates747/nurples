@@ -789,7 +789,7 @@ dumpRegistersHex:
 
     ; call vdu_vblank
 
-    call printNewLine
+    ; call printNewLine
 ; restore everything
     ld hl, (uhl)
     ld bc, (ubc)

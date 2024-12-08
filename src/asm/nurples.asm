@@ -172,9 +172,9 @@ init:
     call vdu_clg
 ; VDU 28, left, bottom, right, top: Set text viewport **
     ld c,0 ; left
-    ld d,0 ; top
+    ld d,2 ; top
     ld e,62 ; right
-    ld b,7; bottom
+    ld b,40; bottom
     call vdu_set_txt_viewport
 
 ; initialize the global timestamp

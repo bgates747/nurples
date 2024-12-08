@@ -20,6 +20,14 @@
                 "x": 121.5,
                 "y": 807.75
             }
+        },
+        "dg0_01.tmx": {
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 90.5,
+                "y": 886.75
+            }
         }
     },
     "last.imagePath": "/home/smith/Agon/emulator/sdcard/mystuff/nurples/tiles/dg",
@@ -33,6 +41,7 @@
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
+        "dg0_01.tmx",
         "dg0_00.tmx",
         "dg0.tsx"
     ],

@@ -1,26 +1,20 @@
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 
 seeker_defaults:
-    db 0x00	                ; id
     db enemy_seeker	        ; type
     dl BUF_SEEKER_000	    ; base_bufferId
     dl move_enemy_seeker	; move_program
     db collides_with_laser | collides_with_player ; collisions
     db 16	                ; dim_x
     db 16                   ; dim_y
-    dl 0x000000	            ; x
-    dl 0x000000	            ; y
-    dl 0x000000	            ; xvel
-    dl 0x000000	            ; yvel
-    dl speed_seeker	        ; vel
-    dl 0x008000	            ; heading
-    dl 0x008000	            ; orientation
-    db 0x00	                ; animation
-    db 0x00	                ; animation_timer
-    db 0x01	                ; move_timer
-    db 0x00	                ; move_step
+    db 32                   ; num_orientations
+    db 1                    ; num_animations
+    db 0	                ; animation
+    db 0	                ; animation_timer
+    db 1	                ; move_timer
+    db 0	                ; move_step
     db 10	                ; points
-    db 0x02	                ; shield_damage
+    db 2	                ; shield_damage
 
 enemy_spawn_seeker:
     ld iy,seeker_defaults

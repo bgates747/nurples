@@ -1,25 +1,31 @@
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_bytes_per_record: equ 38 ; 38 bytes per sprite record
-sprite_id:              equ 00 ; 1 bytes unique spriteId, zero-based
-sprite_type:            equ 01 ; 1 bytes type of sprite as defined in enemies.inc
-sprite_base_bufferId:   equ 02 ; 3 bytes bitmap bufferId
-sprite_move_program:    equ 05 ; 3 bytes address of sprite's behavior subroutine
-sprite_collisions:      equ 08 ; 1 bytes see collisions.inc constants for bit definitions
-sprite_dim_x:           equ 09 ; 1 bytes sprite width in pixels
-sprite_dim_y:           equ 10 ; 1 bytes sprite height in pixels
-sprite_x:               equ 11 ; 3 bytes 16.8 fractional x position in pixels
-sprite_y:               equ 14 ; 3 bytes 16.8 fractional y position in pixels
-sprite_xvel:            equ 17 ; 3 bytes x-component velocity, 16.8 fixed, pixels
-sprite_yvel:            equ 20 ; 3 bytes y-component velocity, 16.8 fixed, pixels
-sprite_vel:             equ 23 ; 3 bytes velocity px/frame (16.8 fixed)
-sprite_heading:         equ 26 ; 3 bytes sprite movement direction deg256 16.8 fixed
-sprite_orientation:     equ 29 ; 3 bytes orientation bits
-sprite_animation:       equ 32 ; 1 bytes current animation index, zero-based
-sprite_animation_timer: equ 33 ; 1 bytes when hits zero, draw next animation
-sprite_move_timer:      equ 34 ; 1 bytes when zero, go to next move program, or step
-sprite_move_step:       equ 35 ; 1 bytes stage in a move program sequence, varies
-sprite_points:          equ 36 ; 1 bytes points awarded for killing this sprite type
-sprite_shield_damage:   equ 37 ; 1 bytes shield points deducted for collision
+table_bytes_per_record:    equ  40; 40 bytes ;40 bytes per sprite record
+sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
+; sprite state variables
+sprite_state_variables:    equ   1; beginning of sprite state variables
+sprite_x:                  equ   1; 3 bytes ;16.8 fractional x position in pixels
+sprite_y:                  equ   4; 3 bytes ;16.8 fractional y position in pixels
+sprite_xvel:               equ   7; 3 bytes ;x-component velocity, 16.8 fixed, pixels
+sprite_yvel:               equ  10; 3 bytes ;y-component velocity, 16.8 fixed, pixels
+sprite_vel:                equ  13; 3 bytes ;velocity px/frame (16.8 fixed)
+sprite_heading:            equ  16; 3 bytes ;sprite movement direction deg256 16.8 fixed
+sprite_orientation:        equ  19; 3 bytes ;orientation bits
+; sprite definition variables
+sprite_definitions:        equ  22; beginnning of sprite definition variables
+sprite_type:               equ  22; 1 bytes ;type of sprite as defined in enemies.inc
+sprite_base_bufferId:      equ  23; 3 bytes ;bitmap bufferId
+sprite_move_program:       equ  26; 3 bytes ;address of sprite's behavior subroutine
+sprite_collisions:         equ  29; 1 bytes ;see collisions.inc constants for bit definitions
+sprite_dim_x:              equ  30; 1 bytes ;sprite width in pixels
+sprite_dim_y:              equ  31; 1 bytes ;sprite height in pixels
+sprite_num_orientations:   equ  32; 1 bytes ;number of orientations for this sprite
+sprite_num_animations:     equ  33; 1 bytes ;number of animations for this sprite
+sprite_animation:          equ  34; 1 bytes ;current animation index, zero-based
+sprite_animation_timer:    equ  35; 1 bytes ;when hits zero, draw next animation
+sprite_move_timer:         equ  36; 1 bytes ;when zero, go to next move program, or step
+sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, varies
+sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
+sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites
@@ -38,17 +44,15 @@ table_active_sprites: db 0x00
 ; flag indicating collision with screen edge
 ; uses orientation codes to specify which edge(s)
 sprite_screen_edge: db #00 
-; next sprite id to use
-sprite_next_id: db 0
 
 ; origin_top: equ 48
-origin_top: equ 0 ; DEBUG
+origin_top: equ 0
 origin_left: equ 128
-field_top: equ 0
+field_top: equ 64
 field_bottom: equ 383-origin_top
 field_left: equ 0
 field_right: equ 255
-sprite_top: equ 0
+sprite_top: equ field_top + 0
 sprite_bottom: equ field_bottom-16
 sprite_left: equ field_left
 sprite_right: equ field_right-16
@@ -75,22 +79,34 @@ radius: dl 0x000000 ; signed fixed 16.8 (but should always be positive)
 sin_sprite_heading: dl 0x000000 ; signed fixed 16.8
 cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 
+table_init:
+    ld ix,table_base
+    xor a ; sprite id
+    ld b,table_max_records ; loop counter
+@loop:
+    ld (ix+sprite_id),a
+    lea ix,ix+table_bytes_per_record
+    inc a
+    djnz @loop
+    ret
+
 ; gets the next available sprite id
 ; inputs; none
 ; returns: if new sprite available, a = sprite id, 
 ;           ix pointing to new sprite vars, carry set
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
-; destroys: a,b,hl,ix
+; destroys: a,b,c,hl,ix
 ; affects: bumps table_active_sprites by one
 table_get_next_id:
     ld ix,table_base
-    ld de,table_bytes_per_record
     ld b,table_max_records
+    ld c,0 ; sprite id counter
 @loop:
     ld a,(ix+sprite_type)
     and a
     jr z,@found
-    add ix,de
+    lea ix,ix+table_bytes_per_record
+    inc c
     djnz @loop
 @notfound:
     xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
@@ -100,9 +116,7 @@ table_get_next_id:
     ld hl,table_active_sprites
     inc (hl)
 ; return sprite id
-    ld a,table_max_records
-    sub b
-    ld (sprite_next_id),a
+    ld a,c
     scf ; sets carry flag indicating we found a free sprite
     ret ; done
 ; end table_get_next_id
@@ -128,7 +142,7 @@ sprites_init:
 @sprite_loop:
 	push af
 	call vdu_sprite_select
-	ld hl,BUF_CRATER ; can be anything, but why not blank?
+	ld hl,BUF_CRATER ; can be anything, but why not a smoking hole in the ground?
 	call vdu_sprite_add_buff
 	pop af
 	inc a
@@ -177,17 +191,28 @@ sprites_init:
 ; destroys: everything
 ; note: actual rendering of sprite must be handled by caller
 move_sprite:
-    ld iy,(table_pointer) 
+    ; ld iy,(table_pointer) 
 ; x-axis movement
     ld hl,(iy+sprite_x)
     ld de,(iy+sprite_xvel)
     add hl,de
+
+; DEBUG
+    PUSH_ALL
+    call vdu_home_cursor
+    call dumpRegistersHex
+    ; CALL waitKeypress ; DEBUG
+    POP_ALL
+    ret 
+; END DEBUG
+
     ld (iy+sprite_x),hl
 ; y-axis movement
     ld hl,(iy+sprite_y)
     ld de,(iy+sprite_yvel)
     add hl,de
     ld (iy+sprite_y),hl
+
 ; detect screen edge collisions
     xor a ; reset screen edge collision flag and clear carry
     ld (sprite_screen_edge),a
@@ -258,32 +283,35 @@ sprite_compute_velocities:
 ; end sprite_compute_velocities
 
 ; create a new sprite at the same location as an existing sprite
-; inputs: iy = pointer to new sprite default settings, table_pointer = existing sprite, b = number of frames
+; inputs: iy = pointer to new sprite default settings, table_pointer = existing sprite
 spawn_sprite_from_sprite:
-    push bc ; b = number of frames
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-    pop bc ; restore number of frames to b
     ret nc ; no carry means no free sprite slots, so we go home
-; initialize the new sprite
-    ld (ix+sprite_id),a
-    call vdu_sprite_select ; select sprite
-    ld hl,(ix+sprite_base_bufferId)
-    call sprite_load_frames
 ; copy default settings to new sprite
     push iy ; pointer to new sprite defaults
     pop hl ; address to copy from
-    push ix ; pointer to new sprite table record
+    push ix ; back up pointer to new sprite table record
+    lea ix,ix+sprite_definitions ; bump pointer to copy to
+    push ix ; pointer to default sprite settings
     pop de ; address to copy to
     ld bc,table_bytes_per_record ; number of bytes to copy
     ldir ; copies defaults to new sprite record
+    pop ix ; restore pointer to top of new sprite table record
 ; copy sprite position, velocity and orientation from existing sprite
     ld iy,(table_pointer) ; pointer to current sprite record
-    lea iy,iy+sprite_x ; bump pointer to copy from position
+    lea iy,iy+sprite_state_variables ; bump pointer to copy from position
     push iy
     pop hl ; address to copy from
     push ix
     pop de ; address to copy to
-    ld bc, sprite_orientation-sprite_x+1 ; number of bytes to copy
+    ld bc, sprite_definitions-sprite_state_variables+1 ; number of bytes to copy
+    ldir ; copies position, velocity and orientation
+; initialize the new sprite
+    ld a,(ix+sprite_id)
+    call vdu_sprite_select ; select sprite
+    ld hl,(ix+sprite_base_bufferId)
+    ld b,(ix+sprite_num_animations)
+    call sprite_load_frames
 ; update the new sprite's position and make it visible
     ld bc,(ix+sprite_x)
     ld de,(ix+sprite_y)
@@ -295,11 +323,11 @@ spawn_sprite_from_sprite:
 ; inputs: a = sprite id, hl = base bufferId, b = number of frames
 sprite_load_frames:
 ; back up input parameters
-    push hl
-    push bc
+    push hl ; base bufferId
+    push bc ; b = number of frames
     call vdu_sprite_select
     call vdu_sprite_clear_frames
-    pop bc ; = number of frames
+    pop bc ; b = number of frames
     pop hl ; = base bufferId
 @load_frames:
     push bc ; back up loop counter

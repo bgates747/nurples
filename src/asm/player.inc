@@ -141,7 +141,7 @@ player_not_dead: ; yay we didn't die
     call vdu_sprite_select_frame
 ; draw player at updated position
     ld iy,player_start_variables
-    ld (table_pointer),iy
+    ; ld (table_pointer),iy
     call move_sprite
     ld bc,(player_x)
     ld de,(player_y)
@@ -227,6 +227,31 @@ print_score:
     call vdu_move_cursor
     ld hl,(player_score)
     call printDec
+; DEBUG
+    ld c,score_x
+    ld b,score_y+4
+    call vdu_move_cursor
+    ld hl,(player_x)
+    call print_s168_hl
+    
+    ld c,score_x
+    ld b,score_y+5
+    call vdu_move_cursor
+    ld hl,(player_y)
+    call print_s168_hl
+
+    ld c,score_x
+    ld b,score_y+6
+    call vdu_move_cursor
+    ld hl,(player_xvel)
+    call print_s168_hl
+    
+    ld c,score_x
+    ld b,score_y+7
+    call vdu_move_cursor
+    ld hl,(player_yvel)
+    call print_s168_hl
+; END DEBUG
     ret
 
 ; draw_lives:
