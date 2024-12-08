@@ -48,7 +48,7 @@ sprite_screen_edge: db #00
 ; origin_top: equ 48
 origin_top: equ 0
 origin_left: equ 128
-field_top: equ 64
+field_top: equ 0
 field_bottom: equ 383-origin_top
 field_left: equ 0
 field_right: equ 255
@@ -191,21 +191,11 @@ sprites_init:
 ; destroys: everything
 ; note: actual rendering of sprite must be handled by caller
 move_sprite:
-    ; ld iy,(table_pointer) 
+    ld iy,(table_pointer) 
 ; x-axis movement
     ld hl,(iy+sprite_x)
     ld de,(iy+sprite_xvel)
     add hl,de
-
-; DEBUG
-    PUSH_ALL
-    call vdu_home_cursor
-    call dumpRegistersHex
-    ; CALL waitKeypress ; DEBUG
-    POP_ALL
-    ret 
-; END DEBUG
-
     ld (iy+sprite_x),hl
 ; y-axis movement
     ld hl,(iy+sprite_y)

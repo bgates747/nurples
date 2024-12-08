@@ -1,26 +1,30 @@
 ; ##### LASER SPRITE PARAMETERS #####
 ; uses the same offsets from its table base as the main sprite table:
 laser_start_variables: ; label marking beginning of table
-laser_id:               db table_max_records+1
-laser_type:             db 0x00 ; 1 bytes currently not used
-laser_base_bufferId:    dl BUF_LASER_A ; 3 bytes bitmap bufferId
-laser_move_program:     dl 0x000000 ; 3 bytes not currently used
-laser_collisions:       db 0x00 ; 1 bytes uses sprite_alive and sprite_just_died flags
-laser_dim_x:            db 0x00 ; 1 bytes sprite width in pixels
-laser_dim_y:            db 0x00 ; 1 bytes sprite height in pixels
-laser_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels
-laser_y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
-laser_xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
-laser_yvel:             dl 0xFFF800 ; 3 bytes y-component velocity, 16.8 fixed, pixels
-laser_vel:              dl 0x000000 ; 3 bytes not currently used
-laser_heading:          dl 0x000000 ; 3 bytes sprite movement direction deg256 16.8 fixed
-laser_orientation:      dl 0x000000 ; 3 bytes not currently used
-laser_animation:        db 0x00 ; 1 bytes current sprite animation frame
-laser_animation_timer:  db 0x00 ; 1 bytes decremented every frame, when zero, advance animation
-laser_move_timer:       db 0x00 ; 1 bytes not currently used
-laser_move_step:        db 0x00 ; 1 bytes not currently used
-laser_points:           db 0x00 ; 1 bytes not currently used
-laser_shield_damage:    db 0x00 ; 1 bytes not currently used
+laser_id:                db table_max_records+1 ; 1 bytes unique spriteId, zero-based
+; sprite state variables
+laser_x:                 dl                   0 ; 3 bytes 16.8 fractional x position in pixels
+laser_y:                 dl                   0 ; 3 bytes 16.8 fractional y position in pixels
+laser_xvel:              dl                   0 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+laser_yvel:              dl              -6*256 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+laser_vel:               dl              -6*256 ; 3 bytes velocity px/frame (16.8 fixed)
+laser_heading:           dl                   0 ; 3 bytes sprite movement direction deg256 16.8 fixed
+laser_orientation:       dl                   0 ; 3 bytes orientation bits
+; sprite definition variables
+laser_type:              db                   0 ; 1 bytes not currently used
+laser_base_bufferId:     dl         BUF_LASER_A ; 3 bytes bitmap bufferId
+laser_move_program:      dl                   0 ; 3 bytes not currently used
+laser_collisions:        db                   0 ; 1 bytes see collisions.inc constants for bit definitions
+laser_dim_x:             db                  16 ; 1 bytes sprite width in pixels
+laser_dim_y:             db                  16 ; 1 bytes sprite height in pixels
+laser_num_orientations:  db                   1 ; 1 bytes number of orientations for this sprite
+laser_num_animations:    db                   2 ; 1 bytes number of animations for this sprite
+laser_animation:         db                   1 ; 1 bytes current animation index, zero-based
+laser_animation_timer:   db                   0 ; 1 bytes when hits zero, draw next animation
+laser_move_timer:        db                   0 ; 1 bytes when zero, go to next move program, or step
+laser_move_step:         db                   0 ; 1 bytes stage in a move program sequence, varies
+laser_points:            db                   0 ; 1 bytes points awarded for killing this sprite type
+laser_shield_damage:     db                   0 ; 1 bytes shield points deducted for collision
 laser_end_variables: ; for when we want to traverse this table in reverse
 laser_speed: equ -6*256 ; 6 pixels per frame 16.8 fixed
 laser_animation_timer_reset: equ 2 ; animate every two frames

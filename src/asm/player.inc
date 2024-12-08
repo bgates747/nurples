@@ -17,26 +17,30 @@ speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
 ; ######### PLAYER SPRITE PARAMETERS ##########
 ; uses the same offsets from its table base as the main sprite table:
 player_start_variables: ; label marking beginning of table
-player_id:               db table_max_records
-player_type:             db     0x00 ; 1 bytes currently not used
-player_base_bufferId:    dl BUF_SHIP_0L ; 3 bytes bitmap bufferId
-player_move_program:     dl 0x000000 ; 3 bytes not currently used
-player_collisions:       db     0x00 ; 1 bytes uses sprite_alive and sprite_just_died flags
-player_dim_x:            db     0x00 ; 1 bytes sprite width in pixels
-player_dim_y:            db     0x00 ; 1 bytes sprite height in pixels
-player_x:                dl 0x000000 ; 3 bytes 16.8 fractional x position in pixels
-player_y:                dl 0x000000 ; 3 bytes 16.8 fractional y position in pixels
-player_xvel:             dl 0x000000 ; 3 bytes x-component velocity, 16.8 fixed, pixels
-player_yvel:             dl 0x000000 ; 3 bytes y-component velocity, 16.8 fixed, pixels
-player_vel:              dl 0x000000 ; 3 bytes velocity px/frame (16.8 fixed)
-player_heading:          dl 0x000000 ; 3 bytes sprite movement direction deg256 16.8 fixed
-player_orientation:      dl 0x000000 ; 3 bytes not currently used
-player_animation:        db     0x00 ; 1 bytes not currently used
-player_animation_timer:  db     0x00 ; 1 bytes not currently used
-player_move_timer:       db     0x00 ; 1 bytes not currently used
-player_move_step:        db     0x00 ; 1 bytes not currently used
-player_points:           db     0x00 ; 1 bytes not currently used
-player_shield_damage:    db     0x00 ; 1 bytes not currently used
+player_id:                db table_max_records ; 1 bytes unique spriteId, zero-based
+; sprite state variables
+player_x:                 dl                 0 ; 3 bytes 16.8 fractional x position in pixels
+player_y:                 dl                 0 ; 3 bytes 16.8 fractional y position in pixels
+player_xvel:              dl                 0 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+player_yvel:              dl                 0 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+player_vel:               dl             3*256 ; 3 bytes velocity px/frame (16.8 fixed)
+player_heading:           dl                 0 ; 3 bytes sprite movement direction deg256 16.8 fixed
+player_orientation:       dl                 0 ; 3 bytes orientation bits
+; sprite definition variables
+player_type:              db                 0 ; 1 bytes not currently used
+player_base_bufferId:     dl       BUF_SHIP_0L ; 3 bytes bitmap bufferId
+player_move_program:      dl                 0 ; 3 bytes not currently used
+player_collisions:        db                 0 ; 1 bytes see collisions.inc constants for bit definitions
+player_dim_x:             db                16 ; 1 bytes sprite width in pixels
+player_dim_y:             db                16 ; 1 bytes sprite height in pixels
+player_num_orientations:  db                 1 ; 1 bytes number of orientations for this sprite
+player_num_animations:    db                 3 ; 1 bytes number of animations for this sprite
+player_animation:         db                 1 ; 1 bytes current animation index, zero-based
+player_animation_timer:   db                 0 ; 1 bytes when hits zero, draw next animation
+player_move_timer:        db                 0 ; 1 bytes when zero, go to next move program, or step
+player_move_step:         db                 0 ; 1 bytes stage in a move program sequence, varies
+player_points:            db                 0 ; 1 bytes points awarded for killing this sprite type
+player_shield_damage:     db                 0 ; 1 bytes shield points deducted for collision
 player_end_variables: ; for when we want to traverse this table in reverse
 
 ; set initial player position
@@ -141,7 +145,7 @@ player_not_dead: ; yay we didn't die
     call vdu_sprite_select_frame
 ; draw player at updated position
     ld iy,player_start_variables
-    ; ld (table_pointer),iy
+    ld (table_pointer),iy
     call move_sprite
     ld bc,(player_x)
     ld de,(player_y)
@@ -151,6 +155,21 @@ player_not_dead: ; yay we didn't die
     jp nz,fire_laser ; will return to caller from there
     ret
 ; end player_input
+
+score_x: equ 0
+score_y: equ 1
+; prints the player's score
+print_score:
+    ld c,score_x
+    ld b,score_y
+    call vdu_move_cursor
+; TODO: make this part of the UI setup and only print as needed
+    call printInline
+    asciz "Score:"
+; END TODO
+    ld hl,(player_score)
+    call printDec
+    ret
 
 ; ###################################################################
 ; TODO: the below is all stuff from the original code we need to port
@@ -211,48 +230,6 @@ kill_player:
 ;     djnz draw_shields_loop
     ; ret
 
-score_x: equ 0
-score_y: equ 3
-; prints the player's score
-print_score:
-; DEBUG
-    ld c,score_x
-    ld b,score_y-1
-    call vdu_move_cursor
-    call printInline
-    asciz "Score:"
-; END DEBUG
-    ld c,score_x
-    ld b,score_y
-    call vdu_move_cursor
-    ld hl,(player_score)
-    call printDec
-; DEBUG
-    ld c,score_x
-    ld b,score_y+4
-    call vdu_move_cursor
-    ld hl,(player_x)
-    call print_s168_hl
-    
-    ld c,score_x
-    ld b,score_y+5
-    call vdu_move_cursor
-    ld hl,(player_y)
-    call print_s168_hl
-
-    ld c,score_x
-    ld b,score_y+6
-    call vdu_move_cursor
-    ld hl,(player_xvel)
-    call print_s168_hl
-    
-    ld c,score_x
-    ld b,score_y+7
-    call vdu_move_cursor
-    ld hl,(player_yvel)
-    call print_s168_hl
-; END DEBUG
-    ret
 
 ; draw_lives:
 ;     ld hl,player_small ; make small yellow ship the active sprite

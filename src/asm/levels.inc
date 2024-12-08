@@ -106,9 +106,9 @@ level_y: equ 0
     asciz "Level: "
     ld a,(cur_level)
     call printHexA
-    call printNewLine
-    ld hl,(cur_baseBufferId)
-    call printDec
+    ; call printNewLine
+    ; ld hl,(cur_baseBufferId)
+    ; call printDec
 
 ; ; DEBUG
 ;     call dumpRegistersHex
