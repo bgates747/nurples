@@ -177,7 +177,7 @@ sprites_init:
 ; destroys: everything
 ; note: actual rendering of sprite must be handled by caller
 move_sprite:
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
 ; x-axis movement
     ld hl,(iy+sprite_x)
     ld de,(iy+sprite_xvel)
@@ -248,10 +248,10 @@ move_sprite:
 ; end move_sprite
 
 sprite_compute_velocities:
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
     ld de,(iy+sprite_vel) 
     call polar_to_cartesian
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
     ld (iy+sprite_xvel),bc ; save x-velocity component
     ld (iy+sprite_yvel),de ; save y-velocity component 
     ret

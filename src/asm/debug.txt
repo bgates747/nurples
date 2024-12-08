@@ -99,13 +99,13 @@ Addresses are 24-bit, unless otherwise specified
 ------
 0433DC             0142*  en_nav_computevelocities:
 0433DC             0143*  ; set x/y component velocities based on bearing to player
-0433DC FD 2A 42 18 0144*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+0433DC FD 2A 42 18 0144*      ld iy,(table_pointer) 
        04          
 0433E1 E5          0145*      push hl ; we need it back to set rotation frame
 0433E2 FD 17 17    0146*      ld de,(iy+sprite_vel)
 0433E5 CD 44 26 04 0147*      call polar_to_cartesian
 
-0433E9 FD 2A 42 18 0148*      ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+0433E9 FD 2A 42 18 0148*      ld iy,(table_pointer) 
 
        04          
 0433EE FD 0F 11    0149*      ld (iy+sprite_xvel),bc ; save x-velocity component

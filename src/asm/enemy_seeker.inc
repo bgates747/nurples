@@ -5,7 +5,7 @@ seeker_defaults:
     db enemy_seeker	        ; type
     dl BUF_SEEKER_000	    ; base_bufferId
     dl move_enemy_seeker	; move_program
-    db 0	                ; collisions
+    db collides_with_laser | collides_with_player ; collisions
     db 16	                ; dim_x
     db 16                   ; dim_y
     dl 0x000000	            ; x
@@ -32,12 +32,9 @@ enemy_spawn_seeker:
     ld (iy+sprite_id),a
     call sprite_load_frames
 ; copy coordinates of active sprite to new sprite
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
     and %00000001 ; 50/50 chance of moving left or right on spanw
     ld (iy+sprite_move_step),a 
-; set collision flags
-    set collides_with_laser,(iy+sprite_collisions)
-    set collides_with_player,(iy+sprite_collisions)
 ; update the new sprite's position and make it visible
     call vdu_sprite_move_abs168
     call vdu_sprite_show
@@ -79,7 +76,7 @@ en_nav_seek_zag:
     call vdu_sprite_select_frame
     jp move_sprite ; will return to caller from there
 @zig_zag_start:
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
     call rand_8
     and %00111111 ; limit it to 64
     set 3,a ; make sure it's at least 8

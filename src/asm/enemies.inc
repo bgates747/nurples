@@ -121,7 +121,7 @@ check_enemy_player_collisions:
 ;    ub.c and ud.e as 16.8 signed fixed point numbers
 ;    representing delta-x/y *to* target respectively
 orientation_to_player:
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     ld ix,(player_x)
@@ -132,7 +132,7 @@ orientation_to_player:
     call atan2_168fast
     pop de
     pop bc
-    ld iy,(table_pointer) ; TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer) 
     ret
 
 ; this routine vanquishes the enemy sprite
@@ -143,7 +143,7 @@ orientation_to_player:
 ; destroys: everything except index registers
 ; returns: an incandescent ball of debris and gas
 enemy_kill:
-    ld iy,(table_pointer); TODO: see if we can get IY to land here with the proper value
+    ld iy,(table_pointer)
 ; tally up points
     ld hl,(player_score)
     ld bc,0 ; clear bcu
