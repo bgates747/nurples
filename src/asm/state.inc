@@ -143,36 +143,15 @@ do_enemies:
     callHL
     ret
 enemies_state: dl enemies_alive
-; enemies_dead:
-;     ld iy,enemies_respawn_tmr
-;     ld hl,120*2 ; 120ths of a second
-;     call timestamp_tmr_set
-;     ld hl,enemies_respawning
-;     ld (enemies_state),hl
-;     ret
 
-; ; DEBUG: FOR TESTING UNTIL WE PROPERLY IMPLEMENT MAP LOGIC
-; enemies_respawning:
-;     ld iy,enemies_respawn_tmr
-;     call timestamp_tmr_get
-;     ret p ; not time to respawn yet
-;     call enemies_respawn
-;     ret
-; enemies_respawn_tmr: ds 6
+enemies_dead:
+    ret
 
-; enemies_respawn:
-; ; initialize enemy sprites
-;     ld a,(max_enemy_sprites)
-;     ld b,a ; loop counter
-; @respawn_loop:
-;     push bc
-;     call enemy_spawn_seeker
-;     pop bc
-;     djnz @respawn_loop
-;     ld hl,enemies_alive
-;     ld (enemies_state),hl
-;     ret 
-; ; END DEBUG
+enemies_respawning:
+    ret
+
+enemies_respawn:
+    ret 
 
 enemies_alive:
     call move_enemies

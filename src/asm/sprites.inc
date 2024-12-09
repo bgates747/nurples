@@ -80,20 +80,19 @@ sin_sprite_heading: dl 0x000000 ; signed fixed 16.8
 cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 
 table_init:
-    ld ix,table_base
-    xor a ; sprite id
-    ld b,table_max_records ; loop counter
-@loop:
-    ld (ix+sprite_id),a
-    lea ix,ix+table_bytes_per_record
-    inc a
-    djnz @loop
+;     ld ix,table_base
+;     xor a ; sprite id
+;     ld b,table_max_records ; loop counter
+; @loop:
+;     ld (ix+sprite_id),a
+;     lea ix,ix+table_bytes_per_record
+;     inc a
+;     djnz @loop
     ret
 
 ; gets the next available sprite id
 ; inputs; none
-; returns: if new sprite available, a = sprite id, 
-;           ix pointing to new sprite vars, carry set
+; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
 ; destroys: a,b,c,hl,ix
 ; affects: bumps table_active_sprites by one
@@ -329,3 +328,121 @@ sprite_load_frames:
     djnz @load_frames ; loop until all frames loaded
     ret
 ; end sprite_load_frames
+
+dump_sprite_record:
+    call vdu_home_cursor
+
+    ld iy,(table_pointer)
+
+    call printInline
+    asciz "id:   "
+    ld a,(iy+sprite_id)
+    call printHexA
+
+    call printInline
+    asciz "\r\nx:   "
+    ld hl,(iy+sprite_x)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\ny:   "
+    ld hl,(iy+sprite_y)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nxv:  "
+    ld hl,(iy+sprite_xvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nyv:  "
+    ld hl,(iy+sprite_yvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nv:   "
+    ld hl,(iy+sprite_vel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nhdg  "
+    ld hl,(iy+sprite_heading)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nori: "
+    ld hl,(iy+sprite_orientation)
+    call print_s168_hl
+    
+    call printInline
+    asciz "\r\ntyp: "
+    ld a,(iy+sprite_type)
+    call printHexA
+    
+    call printInline
+    asciz "\r\nBId: "
+    ld hl,(iy+sprite_base_bufferId)
+    call printHex24
+
+    call printInline
+    asciz "\r\nmPg: "
+    ld hl,(iy+sprite_move_program)
+    call printHex24
+
+    call printInline
+    asciz "\r\ncol: "
+    ld a,(iy+sprite_collisions)
+    call printBin8
+
+    call printInline
+    asciz "\r\nszx: "
+    ld a,(iy+sprite_dim_x)
+    call printHexA
+    
+    call printInline
+    asciz "\r\nszy: "
+    ld a,(iy+sprite_dim_y)
+    call printHexA
+
+    call printInline
+    asciz "\r\n#ori:"
+    ld a,(iy+sprite_num_orientations)
+    call printHexA
+
+    call printInline
+    asciz "\r\n#ani:"
+    ld a,(iy+sprite_num_animations)
+    call printHexA
+
+    call printInline
+    asciz "\r\nani: "
+    ld a,(iy+sprite_animation)
+    call printHexA
+
+    call printInline
+    asciz "\r\nanit:"
+    ld a,(iy+sprite_animation_timer)
+    call printHexA
+
+    call printInline
+    asciz "\r\nmvt: "
+    ld a,(iy+sprite_move_timer)
+    call printHexA
+
+    call printInline
+    asciz "\r\nmvs: "
+    ld a,(iy+sprite_move_step)
+    call printHexA
+
+    call printInline
+    asciz "\r\npts: "
+    ld a,(iy+sprite_points)
+    call printHexA
+
+    call printInline
+    asciz "\r\ndmg: "
+    ld a,(iy+sprite_shield_damage)
+    call printHexA
+
+    call waitKeypress
+    ret

@@ -29,9 +29,7 @@ tiles_plot:
     ld iy,0 ; bottommost y-coord
     call vdu_set_gfx_viewport
 ; plot the background
-    ; call bg_plot
-    ; call xevious_plot
-    ; ret ; DEBUG
+    call bg_plot
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -163,6 +161,8 @@ spawn_sprite_from_tile:
     ld (ix+sprite_y),de
     call vdu_sprite_move_abs168
     call vdu_sprite_show
+; return to caller
+    scf ; set carry flag to indicate success
     ret
 ; end spawn_sprite_from_tile
 
@@ -191,7 +191,7 @@ move_active_tile:
 ; bg_y_plot: dl -1
 ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
 
-; bg_plot:
+bg_plot: ; TODO: implement this
 ; ; load current bg tile bufferId as default
 ;     ld hl,(bg_bufferId)
 ; ; check whether it is time for a new background tile
@@ -215,8 +215,8 @@ move_active_tile:
 ;     ld de,(bg_y_plot)
 ;     inc de
 ;     call vdu_plot_bmp
-; ; all done
-;     ret
+; all done
+    ret
 
 ; ###### TODO: NEW CODE TO IMPLEMENT ######
 tile_pad_small: equ 1
@@ -359,7 +359,6 @@ activate_null_tile:
 ;     ld (sprite_move_program),hl 
 
 ;     ld a,%11 ; collides with laser and player
-;     ; ld a,%10 ; collides with laser DEBUG
 ;     ld (iy+sprite_collisions),a
 
 ;     ld hl,(Vp)

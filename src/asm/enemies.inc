@@ -68,25 +68,36 @@ move_enemies:
 ;     call animate_explosion 
 ;     ret
 
-check_enemy_player_collisions:
-; check for collisions with laser
+check_enemy_collisions:
+; check what we collide with
+    ld a,(iy+sprite_collisions)
+    push af ; save collision flags
+    and collides_with_player ; check for collisions with player
+    call nz,check_enemy_collision_player
+    pop af ; restore collision flags
+    and collides_with_laser ; check for collisions with laser
+    call nz,check_enemy_collision_laser
+    ret
+check_enemy_collision_laser: ; check for collisions with laser
     ld ix,laser_start_variables
     bit sprite_alive,(ix+sprite_collisions)
-    jp z,@player ; laser dead, check player
+    ret z ; laser dead, nothing to do
     call check_collision
-    jp p,@player ; no collision
+    ret p ; no collision
     ld ix,laser_start_variables
     set sprite_just_died,(ix+sprite_collisions)
     set sprite_alive,(ix+sprite_collisions)
-    jp enemy_kill
-@player: ; check for collisions with player
+    call enemy_kill
+    ret
+check_enemy_collision_player: ; check for collisions with player
     ld ix,player_start_variables
     bit sprite_alive,(ix+sprite_collisions)
     ret z ; player dead, no collision
     call check_collision
     ret p ; no collision
-    jp enemy_kill
-; end check_enemy_player_collisions
+    call enemy_kill
+    ret
+; end check_enemy_collisions
 
 ; move_fireballs:
 ;     call move_sprite ; move sprite 
@@ -189,5 +200,6 @@ enemy_kill:
 ;     ret ; now we go back to caller
 ; done_explosion:
     set sprite_just_died,(iy+sprite_collisions)
+    ld a,-1 ; return -1 to indicate enemy died
     ret ; now we go back to caller
 ; end enemy_kill

@@ -110,11 +110,6 @@ level_y: equ 0
     ; ld hl,(cur_baseBufferId)
     ; call printDec
 
-; ; DEBUG
-;     call dumpRegistersHex
-;     call waitKeypress
-; ; END DEBUG
-
 ; ; draw initial background tiles 
 ; ; TODO: make this a stars background
 ;     ld hl,BUF_STATION_BG_00
