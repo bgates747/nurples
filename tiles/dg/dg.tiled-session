@@ -14,11 +14,11 @@
             "scaleInEditor": 1
         },
         "dg0_00.tmx": {
-            "scale": 2,
+            "scale": 1.6569335937499998,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 121.5,
-                "y": 807.75
+                "x": 127.94719160723757,
+                "y": 879.6369422997584
             }
         },
         "dg0_01.tmx": {
@@ -31,7 +31,7 @@
         }
     },
     "last.imagePath": "/home/smith/Agon/emulator/sdcard/mystuff/nurples/tiles/dg",
-    "map.height": 64,
+    "map.height": 32,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
@@ -41,9 +41,9 @@
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
-        "dg0_01.tmx",
+        "dg0.tsx",
         "dg0_00.tmx",
-        "dg0.tsx"
+        "dg0_01.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
