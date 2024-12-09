@@ -159,8 +159,8 @@ spawn_sprite_from_tile:
     ld (ix+sprite_x),bc
     ld de,-1*256 ; TODO: implement y-coord for reals
     ld (ix+sprite_y),de
-    call vdu_sprite_move_abs168
-    call vdu_sprite_show
+    ; call vdu_sprite_move_abs168
+    ; call vdu_sprite_show
 ; return to caller
     scf ; set carry flag to indicate success
     ret

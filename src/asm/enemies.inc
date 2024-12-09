@@ -6,7 +6,6 @@ enemy_seeker: equ 1
 
 fireballs: equ 6
 explosion: equ 255
-
 move_enemies:
 ; are there any active enemies or explosions?
     ld a,(table_active_sprites)
@@ -24,8 +23,11 @@ move_enemies:
 @move_loop:
     ld (table_pointer),iy ; update table pointer
     push bc ; backup loop counter
-; check sprite_type to see if sprite is active
+; check top bit of sprite_type to see if sprite is just spawned
     ld a,(iy+sprite_type)
+    bit 7,a
+    jp nz,@next_record ; if just spawned, skip to next record
+; check sprite_type to see if sprite is active
     and a ; if zero, sprite is dead 
     jp z,@next_record ; ... and we skip to next record
 ; otherwise we prepare to move the sprite
@@ -51,7 +53,29 @@ move_enemies:
     ld (sprite_screen_edge),a ; clear screen edge collision flag
     pop bc ; get back our loop counter
     djnz @move_loop ; loop until we've checked all the records
-    ret ; and we're out
+; reset all just spawned flags
+    ld iy,table_base
+    ld b,table_max_records
+@reset_just_spawned:
+    push bc ; back up loop counter
+    bit 7,(iy+sprite_type) ; check if just spawned
+    jp z,@F
+    res 7,(iy+sprite_type) ; clear just spawned flag
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    ld bc,(iy+sprite_x)
+    ld de,(iy+sprite_y)
+
+    ; CALL DEBUG_PRINT
+    
+    call vdu_sprite_move_abs168
+    call vdu_sprite_show
+@@:
+    lea iy,iy+table_bytes_per_record
+    pop bc ; get back loop counter
+    djnz @reset_just_spawned
+; and done
+    ret
 
 ; ; ######### SPRITE BEHAVIOR ROUTINES #########
 ; ; each sprite in the table must have one of these defined

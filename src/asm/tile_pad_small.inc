@@ -1,5 +1,5 @@
 pad_small_defaults:
-    db tile_pad_small       ; type
+    db tile_pad_small | 128       ; type
     dl BUF_PAD              ; base_bufferId
     dl move_pad_small       ; move_program
     db collides_with_laser  ; collisions
