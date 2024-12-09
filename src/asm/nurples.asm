@@ -211,3 +211,18 @@ main_loop:
 main_end:
     call vdu_cursor_on
     ret
+
+DEBUG_PRINT:
+    PUSH_ALL
+    ld c,score_x
+    ld b,score_y+7
+    call vdu_move_cursor
+    POP_ALL
+    PUSH_ALL
+    call dumpFlags
+    POP_ALL
+    PUSH_ALL
+    call dumpRegistersHex
+    call waitKeypress
+    POP_ALL
+    ret

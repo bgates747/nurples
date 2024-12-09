@@ -86,9 +86,7 @@ check_enemy_player_collisions:
     call check_collision
     ret p ; no collision
     jp enemy_kill
-; end move_enemy_seeker
-
-
+; end check_enemy_player_collisions
 
 ; move_fireballs:
 ;     call move_sprite ; move sprite 
@@ -143,7 +141,7 @@ orientation_to_player:
 ; we want to return to differing locations in the loop
 ; depending on whether we're still sploding
 ; destroys: everything except index registers
-; returns: an incandescent ball of debris and gas
+; returns: a=-1 to indicate enemy died, and an incandescent ball of debris and gas
 enemy_kill:
     ld iy,(table_pointer)
 ; tally up points

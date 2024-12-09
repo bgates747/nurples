@@ -93,8 +93,6 @@ tiles_plot:
 ; end tiles_plot
 
 do_active_tiles:
-    ret ; DEBUG
-    
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -117,17 +115,6 @@ do_active_tiles:
     mlt de ; de is now the offset to the table entry
     add hl,de ; hl is now the address of the table entry
     ld hl,(hl) ; hl is now the activation routine address
-
-; ; DEBUG
-;     push af
-;     push hl
-;     call vdu_home_cursor
-;     call dumpRegistersHex
-;     call waitKeypress
-;     pop hl
-;     pop af
-; ; END DEBUG
-
     callHL ; call the activation routine
 @next_tile:
 ; bump x-coords the width of one tile and save it
@@ -164,25 +151,41 @@ spawn_sprite_from_tile:
     ld hl,(ix+sprite_base_bufferId)
     ld b,(ix+sprite_num_animations)
     call sprite_load_frames
+    ld hl,1*256 ; set y velocity to 1 pixel per frame
+    ld (ix+sprite_yvel),hl
 ; update the new sprite's position and make it visible
-    ld bc,(tiles_x_plot)
+    ld hl,(tiles_x_plot)
+    hlu_mul256
+    push hl
+    pop bc
     ld (ix+sprite_x),bc
-    ld de,(tiles_y_plot)
+    ld de,-1*256 ; TODO: implement y-coord for reals
     ld (ix+sprite_y),de
     call vdu_sprite_move_abs168
     call vdu_sprite_show
     ret
 ; end spawn_sprite_from_tile
 
-; DEBUG
-    push af
-    push hl
-    call vdu_home_cursor
-    call dumpRegistersHex
-    call waitKeypress
-    pop hl
-    pop af
-; END DEBUG
+move_active_tile:
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+; y-axis movement
+    ld hl,(iy+sprite_y)
+    ld de,(iy+sprite_yvel)
+    add hl,de
+    ld (iy+sprite_y),hl
+; detect screen edge collisions
+    xor a ; reset screen edge collision flag and clear carry
+    ld (sprite_screen_edge),a
+; y-axis bottom is all we need to test
+    ld de,-sprite_bottom*256
+    adc hl,de    
+    jp p,@bottom ; scrolled off screen so deactivate
+    ret ; still on screen so do nothing further
+@bottom:
+    ld a,collide_bottom
+    ld (sprite_screen_edge),a
+    ret
 
 
 ; bg_y_plot: dl -1
