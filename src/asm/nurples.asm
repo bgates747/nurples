@@ -59,7 +59,7 @@ exit:
     include "targeting.inc"
     include "tiles.inc"
     include "tile_pad_small.inc"
-    ; include "tile_turret_fireball.inc"
+    include "tile_turret_fireball.inc"
 
     align 256
 

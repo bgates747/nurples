@@ -2,7 +2,7 @@
 speed_fireball: equ 0x000280 ; 2.5 pixels per frame
 
 fireball_defaults:
-    db enemy_fireball        ; type
+    db enemy_projectile        ; type
     dl BUF_FIREBALL_A	    ; base_bufferId
     dl move_enemy_fireball	; move_program
     db collides_with_laser | collides_with_player ; collisions

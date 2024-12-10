@@ -2,8 +2,9 @@ max_enemy_sprites: db 4
 
 ; sprite_type
 enemy_dead: equ 0
-enemy_seeker: equ 1
-enemy_fireball: equ 6
+enemy_air: equ 1
+enemy_ground: equ 2
+enemy_projectile: equ 3
 explosion: equ 255
 move_enemies:
 ; are there any active enemies or explosions?

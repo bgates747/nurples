@@ -2,7 +2,7 @@
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 
 seeker_defaults:
-    db enemy_seeker         ; type
+    db enemy_air         ; type
     dl BUF_SEEKER_000	    ; base_bufferId
     dl move_enemy_seeker	; move_program
     db collides_with_laser | collides_with_player ; collisions

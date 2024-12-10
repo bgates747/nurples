@@ -1,8 +1,9 @@
     align 256
-pad_small_defaults:
-    db tile_pad_small       ; type
-    dl BUF_PAD              ; base_bufferId
-    dl move_pad_small       ; move_program
+
+turret_fireball_defaults:
+    db enemy_ground         ; type
+    dl BUF_TURRET_000       ; base_bufferId
+    dl move_turret_fireball ; move_program
     db collides_with_laser  ; collisions
     db 16                   ; dim_x
     db 16                   ; dim_y
@@ -16,8 +17,8 @@ pad_small_defaults:
     db 0                    ; shield_damage
     db 0                    ; animation_frame
 
-activate_pad_small:
-    ld hl,pad_small_defaults
+activate_turret_fireball:
+    ld hl,turret_fireball_defaults
 ; get next available sprite id
     call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
@@ -25,9 +26,9 @@ activate_pad_small:
     ld a,64
     ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
     ret
-; end activate_pad_small
+; end activate_turret_fireball
 
-move_pad_small:
+move_turret_fireball:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
@@ -38,7 +39,7 @@ move_pad_small:
 ; check whether it is time to spawn a seeker
     dec (iy+sprite_move_timer)
     ret nz
-pad_small_reset_move_timer:
+turret_fireball_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,64 ; range is now 64-127
