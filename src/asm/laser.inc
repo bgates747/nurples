@@ -87,7 +87,7 @@ fire_laser:
     ld (iy+sprite_yvel),hl
 ; set laser animation frame and timer
     xor a ; first frame
-    ld (iy+sprite_animation),a
+    ld (iy+sprite_frame),a
     ld a,laser_animation_timer_reset
     ld (iy+sprite_animation_timer),a
 ; plot the sprite and make it visible

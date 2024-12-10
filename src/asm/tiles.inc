@@ -205,10 +205,10 @@ tile_pad_small: equ 1
 tile_pad_med: equ 2
 tile_pad_large: equ 3
 tile_pad_huge: equ 4
-tile_fireball_turret: equ 5
-tile_laser_turret: equ 6
-tile_twin_laser_turret: equ 7
-tile_gatling_turret: equ 8
+tile_turret_fireball: equ 5
+tile_turret_laser: equ 6
+tile_turret_twin_laser: equ 7
+tile_turret_gatling: equ 8
 tile_electrode_r: equ 9
 tile_electrode_u: equ 10
 tile_piston_r: equ 11
@@ -225,10 +225,10 @@ tile_activation_routines:
     dl activate_null_tile  ;  activate_pad_med
     dl activate_null_tile  ;  activate_pad_large
     dl activate_null_tile  ;  activate_pad_huge
-    dl activate_null_tile  ;  activate_fireball_turret
-    dl activate_null_tile  ;  activate_laser_turret
-    dl activate_null_tile  ;  activate_twin_laser_turret
-    dl activate_null_tile  ;  activate_gatling_turret
+    dl activate_turret_fireball
+    dl activate_null_tile  ;  activate_turret_laser
+    dl activate_null_tile  ;  activate_turret_twin_laser
+    dl activate_null_tile  ;  activate_turret_gatling
     dl activate_null_tile  ;  activate_electrode_r
     dl activate_null_tile  ;  activate_electrode_u
     dl activate_null_tile  ;  activate_piston_r
@@ -242,10 +242,10 @@ tile_activation_routines:
 activate_null_tile:
     ret ; dummy routine, do nothing
 
-; ld_act_laser_turret:
+; ld_act_turret_laser:
 ;     ; call sprite_variables_to_stack
 
-;     ld hl,move_laser_turret
+;     ld hl,move_turret_laser
 ;     ld (sprite_move_program),hl
 
 ;     xor a 
@@ -265,11 +265,11 @@ activate_null_tile:
 ;     ld a,0 ; binary
 ;     ld (sprite_shield_damage),a
 
-;     ld hl,tile_fireball_turret ; dt_ld_act loads this to sprite_base_bufferId
+;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
 ;     jp dt_ld_act
 
 
-; move_laser_turret:
+; move_turret_laser:
 ; ; compute orientation to player
 ;     call orientation_to_player
 ; ; h.l 8.8 fixed angle256 to player
@@ -283,14 +283,14 @@ activate_null_tile:
 ; ; is it time to launch a fireball?
 ;     ld hl,sprite_move_timer
 ;     dec (hl)
-;     jp nz,move_laser_turret_boilerplate
+;     jp nz,move_turret_laser_boilerplate
 ;     call fireballs_init
 ;     ; reset move timer so can fire again if player doesn't take us out
 ;     call rand_8     ; snag a random number
 ;     and %00011111   ; keep only 5 lowest bits (max 31)
 ;     add a,64 ; range is now 64-127
 ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
-; move_laser_turret_boilerplate:
+; move_turret_laser_boilerplate:
 ;     call move_active_tiles
 ;     call check_collisions
 ;     ret
@@ -299,7 +299,7 @@ activate_null_tile:
 ; fireballs_init:
 ;     ; call sprite_variables_to_stack
 
-;     ld hl,fireballs
+;     ld hl,enemy_fireball
 ;     ld (sprite_base_bufferId),hl
 
 ;     ld hl,move_fireballs

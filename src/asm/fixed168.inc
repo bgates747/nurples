@@ -382,6 +382,28 @@ polar_to_cartesian:
     ret
 @angle: ds 3
 @radius: ds 3
+; end polar_to_cartesian
+
+; 16.8 fixed inputs / outputs
+; inputs: ub.c as dx, ud.e as dy
+;        displacements from origin (0,0)
+; returns: uh.l as angle in degrees 256
+;        ud.e as radius
+; destroys: everything except indexes
+cartesian_to_polar:
+    push bc ; preserve dx
+    push de ; preserve dy
+; compute radius
+    call distance168 ; uh.l = radius, dx168, dy168 populated
+    push hl ; save radius
+; compute angle
+    pop de ; restore dy
+    pop bc ; restore dx
+    call atan2_168fast ; uh.l = angle
+; return result
+    pop de ; de = radius (was hl)
+    ret
+; end cartesian_to_polar
 
 ; inputs: ub.c and ud.e are x0 and y0 in 16.8 fixed format
 ;         ui.x and ui.y are x1 and y1 in 16.8 fixed format

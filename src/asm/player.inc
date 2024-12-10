@@ -241,7 +241,7 @@ kill_player:
 ;     ld hl,0 ; north
 ;     ld (sprite_heading),hl
 ;     xor a
-;     ld (sprite_animation),a
+;     ld (sprite_frame),a
 ;     ld a,#56 ; top of visible screen
 ;     ld (sprite_y+1),a
 ;     call vdu_buff_select ; TODO: convert to vdu_buff_select

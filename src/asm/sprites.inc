@@ -1,31 +1,32 @@
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_bytes_per_record:    equ  40; 40 bytes ;40 bytes per sprite record
-sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
-; sprite state variables
-sprite_state_variables:    equ   1; beginning of sprite state variables
-sprite_x:                  equ   1; 3 bytes ;16.8 fractional x position in pixels
-sprite_y:                  equ   4; 3 bytes ;16.8 fractional y position in pixels
-sprite_xvel:               equ   7; 3 bytes ;x-component velocity, 16.8 fixed, pixels
-sprite_yvel:               equ  10; 3 bytes ;y-component velocity, 16.8 fixed, pixels
-sprite_vel:                equ  13; 3 bytes ;velocity px/frame (16.8 fixed)
-sprite_heading:            equ  16; 3 bytes ;sprite movement direction deg256 16.8 fixed
-sprite_orientation:        equ  19; 3 bytes ;orientation bits
-; sprite definition variables
-sprite_definitions:        equ  22; beginnning of sprite definition variables
-sprite_type:               equ  22; 1 bytes ;type of sprite as defined in enemies.inc
-sprite_base_bufferId:      equ  23; 3 bytes ;bitmap bufferId
-sprite_move_program:       equ  26; 3 bytes ;address of sprite's behavior subroutine
-sprite_collisions:         equ  29; 1 bytes ;see collisions.inc constants for bit definitions
-sprite_dim_x:              equ  30; 1 bytes ;sprite width in pixels
-sprite_dim_y:              equ  31; 1 bytes ;sprite height in pixels
-sprite_num_orientations:   equ  32; 1 bytes ;number of orientations for this sprite
-sprite_num_animations:     equ  33; 1 bytes ;number of animations for this sprite
-sprite_animation:          equ  34; 1 bytes ;current animation index, zero-based
-sprite_animation_timer:    equ  35; 1 bytes ;when hits zero, draw next animation
-sprite_move_timer:         equ  36; 1 bytes ;when zero, go to next move program, or step
-sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, varies
-sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
-sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
+table_bytes_per_record:    equ  41
+sprite_id:                 equ   0 ; 1 bytes ; unique spriteId, zero-based
+ ; sprite state variables
+sprite_state_variables:    equ   1 ; beginning of sprite state variables
+sprite_x:                  equ   1 ; 3 bytes ; 16.8 fractional x position in pixels
+sprite_y:                  equ   4 ; 3 bytes ; 16.8 fractional y position in pixels
+sprite_xvel:               equ   7 ; 3 bytes ; x-component velocity, 16.8 fixed, pixels
+sprite_yvel:               equ  10 ; 3 bytes ; y-component velocity, 16.8 fixed, pixels
+sprite_vel:                equ  13 ; 3 bytes ; velocity px/frame (16.8 fixed)
+sprite_heading:            equ  16 ; 3 bytes ; sprite movement direction deg256 16.8 fixed
+sprite_orientation:        equ  19 ; 3 bytes ; orientation bits
+ ; sprite definition variables
+sprite_definitions:        equ  22 ; beginnning of sprite definition variables
+sprite_type:               equ  22 ; 1 bytes ; type of sprite as defined in enemies.inc
+sprite_base_bufferId:      equ  23 ; 3 bytes ; bitmap bufferId
+sprite_move_program:       equ  26 ; 3 bytes ; address of sprite's behavior subroutine
+sprite_collisions:         equ  29 ; 1 bytes ; see collisions.inc constants for bit definitions
+sprite_dim_x:              equ  30 ; 1 bytes ; sprite width in pixels
+sprite_dim_y:              equ  31 ; 1 bytes ; sprite height in pixels
+sprite_num_orientations:   equ  32 ; 1 bytes ; number of orientations for this sprite
+sprite_num_animations:     equ  33 ; 1 bytes ; number of animations for this sprite
+sprite_animation:          equ  34 ; 1 bytes ; current animation index, zero-based
+sprite_animation_timer:    equ  35 ; 1 bytes ; when hits zero, draw next animation
+sprite_move_timer:         equ  36 ; 1 bytes ; when zero, go to next move program, or step
+sprite_move_step:          equ  37 ; 1 bytes ; stage in a move program sequence, varies
+sprite_points:             equ  38 ; 1 bytes ; points awarded for killing this sprite type
+sprite_shield_damage:      equ  39 ; 1 bytes ; shield points deducted for collision
+sprite_frame:              equ  40 ; 1 bytes ; current frame of animation zero-based
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites
@@ -96,7 +97,7 @@ table_init:
 ; gets the next available sprite id
 ; inputs; none
 ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+;     otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
 ; destroys: a,b,c,hl,ix
 ; affects: bumps table_active_sprites by one
 table_get_next_id:
@@ -337,6 +338,35 @@ sprite_load_frames:
     ret
 ; end sprite_load_frames
 
+; compute the sprite frame based on the sprite's heading / 8
+; inputs: table_pointer = sprite record
+; outputs: sprite_frame updated, both h and l = frame number
+; destroys: hl
+sprite_frame_orientation:
+    ld h,(iy+sprite_heading+1) ; we just want the integer portion
+    srl h ; divide integer portion by 8
+    srl h
+    srl h
+    ld (iy+sprite_frame),h ; modulo 256 since sprite_frame is one byte
+    ld l,h ; return frame number in l for parity with sprite_frame_orientation_animation
+    ret
+
+; compute the sprite frame based on the sprite's heading / 8 and animation
+; inputs: table_pointer = sprite record
+; outputs: sprite_frame updated, l = frame number
+; destroys: hl
+sprite_frame_orientation_animation:
+    ld h,(iy+sprite_heading+1) ; we just want the integer portion
+    srl h ; divide integer portion by 8
+    srl h
+    srl h
+    ld l,(iy+sprite_animation)
+    inc l ; make 1-based so the mlt works
+    mlt hl ; hl = heading * (animation + 1)
+    ld (iy+sprite_frame),l ; modulo 256 since sprite_frame is one byte
+    ret
+; end sprite_frame_orientation_animation
+
 dump_sprite_record:
     ; call vdu_home_cursor
     call printInline
@@ -447,6 +477,11 @@ dump_sprite_record:
     call printInline
     asciz "\r\ndmg: "
     ld a,(ix+sprite_shield_damage)
+    call printHexA
+
+    call printInline
+    asciz "\r\nfrm: "
+    ld a,(ix+sprite_frame)
     call printHexA
 
     ; call waitKeypress

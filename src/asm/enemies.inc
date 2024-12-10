@@ -3,8 +3,7 @@ max_enemy_sprites: db 4
 ; sprite_type
 enemy_dead: equ 0
 enemy_seeker: equ 1
-
-fireballs: equ 6
+enemy_fireball: equ 6
 explosion: equ 255
 move_enemies:
 ; are there any active enemies or explosions?
@@ -43,7 +42,7 @@ move_enemies:
 @draw_sprite:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
-    ld a,(iy+sprite_animation)
+    ld a,(iy+sprite_frame)
     call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
@@ -70,7 +69,7 @@ move_enemies:
     ld c,(iy+sprite_num_orientations)
     mlt bc ; bc total frames
     call sprite_load_frames
-    ld a,(iy+sprite_animation)
+    ld a,(iy+sprite_frame)
     call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
@@ -129,52 +128,6 @@ check_enemy_collision_player: ; check for collisions with player
     ret
 ; end check_enemy_collisions
 
-; move_fireballs:
-;     call move_sprite ; move sprite 
-;     ld a,(sprite_screen_edge) ; check for collision with screen edge
-;     and a ; if zero we're still within screen bounds
-;     jp z,move_fireballs_alive
-; ; otherwise kill sprite
-;     ld a,%10000000 ; any bit set in high nibble means sprite will die
-;     ld (iy+sprite_collisions),a
-;     ret
-; move_fireballs_alive:
-;     ld a,(sprite_animation_timer)
-;     dec a
-;     ld (sprite_animation_timer),a
-;     jp nz,move_fireballs_draw
-;     ld a,(sprite_animation)
-;     xor %1
-;     ld (sprite_animation),a
-;     ld a,6 ; 1/10th of a second timer
-;     ld (sprite_animation_timer),a
-;     ; fall through
-
-; move_fireballs_draw:
-;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-;     call check_collisions
-;     ret
-
-; compute orientation to player 
-; based on relative positions
-; returns: h.l 16.8 fixed angle256 to player
-;    ub.c and ud.e as 16.8 signed fixed point numbers
-;    representing delta-x/y *to* target respectively
-orientation_to_player:
-    ld iy,(table_pointer) 
-    ld bc,(iy+sprite_x)
-    ld de,(iy+sprite_y)
-    ld ix,(player_x)
-    ld iy,(player_y)
-    call dxy168
-    push bc
-    push de
-    call atan2_168fast
-    pop de
-    pop bc
-    ld iy,(table_pointer) 
-    ret
 
 ; this routine vanquishes the enemy sprite
 ; and replaces it with an animated explosion
