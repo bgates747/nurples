@@ -1,3 +1,5 @@
+    align 256
+
 ; multiply a signed 24-bit number by an unsigned 8-bit number giving a signed 24-bit result
 ; uses EZ80 MLT instruction for speed
 ; operation: UHL * A --> UHL

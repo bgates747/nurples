@@ -1,3 +1,4 @@
+    align 256
 
 ; targeting_computer variables
 Bearing_t: dw #0000 ; 8.8 fixed

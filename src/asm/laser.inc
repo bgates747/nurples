@@ -1,3 +1,5 @@
+    align 256
+
 ; ##### LASER SPRITE PARAMETERS #####
 ; uses the same offsets from its table base as the main sprite table:
 laser_start_variables: ; label marking beginning of table

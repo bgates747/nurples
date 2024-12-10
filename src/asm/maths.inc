@@ -1,3 +1,5 @@
+    align 256
+
 ; test the sign of HL
 ; inputs: HL obviously
 ; outputs: sign flag set if HL is negative, zero flag set if HL is zero

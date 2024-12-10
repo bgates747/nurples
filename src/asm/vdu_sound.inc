@@ -1,3 +1,5 @@
+
+    align 256
 last_channel: db 0
 max_channels: equ 6
 

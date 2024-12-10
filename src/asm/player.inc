@@ -1,3 +1,5 @@
+    align 256
+
 ; ######## GAME STATE VARIABLES #######
 ; THESE MUST BE IN THIS ORDER FOR game_initialize TO WORK PROPERLY
 player_score: dl 0 ; integer
@@ -156,7 +158,7 @@ player_not_dead: ; yay we didn't die
     ret
 ; end player_input
 
-score_x: equ 0
+score_x: equ 48
 score_y: equ 1
 ; prints the player's score
 print_score:

@@ -1,3 +1,5 @@
+    align 256
+
 fonts_load:
     ld ix,font_list ; pointer to font list lookup
     ld b,num_fonts ; loop counter

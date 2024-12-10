@@ -1,3 +1,4 @@
+    align 256
 
 ; VDU 30: Home cursor
 vdu_home_cursor:

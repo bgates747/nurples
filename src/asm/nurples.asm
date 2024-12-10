@@ -58,6 +58,8 @@ exit:
     include "tiles.inc"
     include "tile_pad_small.inc"
 
+    align 256
+
 ; --- MAIN PROGRAM FILE ---
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_ui: asciz "Loading UI"
@@ -143,7 +145,8 @@ init:
 ; load fonts
 	call fonts_load
 ; select font
-    ld hl,computer_pixel_7_8x16
+    ; ld hl,computer_pixel_7_8x16
+    ld hl,amiga_forever_8x8 ; DEBUG
     ld a,1 ; flags
     call vdu_font_select
 ; plot bezel art
@@ -174,7 +177,7 @@ init:
     ld c,0 ; left
     ld d,0 ; top
     ld e,62 ; right
-    ld b,40; bottom
+    ld b,48; bottom
     call vdu_set_txt_viewport
 
 ; initialize the global timestamp
@@ -194,8 +197,12 @@ main_loop:
 ; do gamestate logic
     call do_game
 
+    CALL DEBUG_PRINT_TABLE
+
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
+    ; call vdu_vblank ; DEBUG
+    ; call vdu_vblank ; DEBUG
 
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
@@ -213,8 +220,8 @@ main_end:
 
 DEBUG_PRINT:
     PUSH_ALL
-    ld c,score_x
-    ld b,score_y+7
+    ld c,0
+    ld b,0
     call vdu_move_cursor
     POP_ALL
     PUSH_ALL
@@ -225,3 +232,22 @@ DEBUG_PRINT:
     call waitKeypress
     POP_ALL
     ret
+
+DEBUG_PRINT_TABLE:
+    PUSH_ALL
+    call vdu_home_cursor
+    ; LIST_FIELD sprite_move_program,3 ; DEBUG
+    ; LIST_FIELD sprite_type,1 ; DEBUG
+
+    ld ix,table_base
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
+
+    lea ix,ix+table_bytes_per_record
+    call dump_sprite_record
+    call printNewLine
+
+    ; call waitKeypress
+    POP_ALL
+    RET

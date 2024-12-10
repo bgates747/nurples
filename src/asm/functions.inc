@@ -1,3 +1,4 @@
+    align 256
 
     MACRO printChar char
     LD A, char

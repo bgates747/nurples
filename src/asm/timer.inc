@@ -1,3 +1,5 @@
+    align 256
+
 ; Table 32. Timer Control Registers
 ; this constant is the base address of the timer control registers
 ; each timer takes three bytes:

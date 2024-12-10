@@ -1,3 +1,4 @@
+    align 256
 ; ; https://github.com/AgonConsole8/agon-docs/blob/main/VDP---Bitmaps-API.md
 ; the VDP can support up to 256 sprites. They must be defined 
 ; contiguously, and so the first sprite is sprite 0. 

@@ -1,3 +1,5 @@
+    align 256
+
 ; tileset indices
 tiles_dg: equ 0
 ; tiles_xevious: equ 1
@@ -97,7 +99,7 @@ init_level:
     ld (tiles_row_defs),ix
 
 ; print level
-level_x: equ 0
+level_x: equ 48
 level_y: equ 0
     ld c,level_x
     ld b,level_y

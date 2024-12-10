@@ -33,6 +33,7 @@ table_max_records: equ 16 ; it can handle more but this is pushing it
 table_total_bytes: equ table_max_records*table_bytes_per_record
 
 ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
+    align 256
 table_base: 
 sprite_start_variables:  blkb table_total_bytes, 0 ; fill with zeroes
 sprite_end_variables: ; in case we want to traverse the table in reverse
@@ -80,14 +81,16 @@ sin_sprite_heading: dl 0x000000 ; signed fixed 16.8
 cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 
 table_init:
-;     ld ix,table_base
-;     xor a ; sprite id
-;     ld b,table_max_records ; loop counter
-; @loop:
-;     ld (ix+sprite_id),a
-;     lea ix,ix+table_bytes_per_record
-;     inc a
-;     djnz @loop
+    ld ix,table_base
+    xor a ; sprite id
+    ld c,0 ; sprite type
+    ld b,table_max_records ; loop counter
+@loop:
+    ld (ix+sprite_id),a
+    ld (ix+sprite_type),c
+    lea ix,ix+table_bytes_per_record
+    inc a
+    djnz @loop
     ret
 
 ; gets the next available sprite id
@@ -272,51 +275,54 @@ sprite_compute_velocities:
 ; end sprite_compute_velocities
 
 ; create a new sprite at the same location as an existing sprite
-; inputs: iy = pointer to new sprite default settings, table_pointer = existing sprite
-spawn_sprite_from_sprite:
+; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+spawn_sprite:
+    push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    pop hl ; restore pointer to new sprite defaults
+
+    ; CALL DEBUG_PRINT
+
     ret nc ; no carry means no free sprite slots, so we go home
 ; copy default settings to new sprite
-    push iy ; pointer to new sprite defaults
-    pop hl ; address to copy from
-    push ix ; back up pointer to new sprite table record
+    push ix ; back up pointer to new sprite record
     lea ix,ix+sprite_definitions ; bump pointer to copy to
     push ix ; pointer to default sprite settings
     pop de ; address to copy to
-    ld bc,table_bytes_per_record ; number of bytes to copy
+    ld bc,table_bytes_per_record-sprite_definitions ; number of bytes to copy
     ldir ; copies defaults to new sprite record
-    pop ix ; restore pointer to top of new sprite table record
+; return to caller
+    pop ix ; restore pointer to new sprite record
+    set 7,(ix+sprite_type) ; set just spawned flag
+
+    ; CALL DEBUG_PRINT_TABLE
+
+    scf ; set carry flag to indicate success
+    ret
+
+; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+spawn_sprite_from_sprite: 
+    call spawn_sprite
+    ret nc ; no carry means no free sprite slots, so we go home
 ; copy sprite position, velocity and orientation from existing sprite
-    ld iy,(table_pointer) ; pointer to current sprite record
-    lea iy,iy+sprite_state_variables ; bump pointer to copy from position
-    push iy
-    pop hl ; address to copy from
-    push ix
-    pop de ; address to copy to
-    ld bc, sprite_definitions-sprite_state_variables+1 ; number of bytes to copy
-    ldir ; copies position, velocity and orientation
-; initialize the new sprite
-    ld a,(ix+sprite_id)
-    call vdu_sprite_select ; select sprite
-    ld hl,(ix+sprite_base_bufferId)
-    ld b,(ix+sprite_num_animations)
-    call sprite_load_frames
-; update the new sprite's position and make it visible
-    ld bc,(ix+sprite_x)
-    ld de,(ix+sprite_y)
-    call vdu_sprite_move_abs168
-    call vdu_sprite_show
+    ld iy,(table_pointer) ; get existing sprite record
+    ld hl,(iy+sprite_x)
+    ld (ix+sprite_x),hl
+    ld hl,(iy+sprite_y)
+    ld (ix+sprite_y),hl
+; return to caller
+    scf ; set carry flag to indicate success
     ret
 
 ; load a sprite with animation bitmaps
-; inputs: a = sprite id, hl = base bufferId, b = number of frames
+; inputs: a = sprite id, hl = base bufferId, bc = number of frames
 sprite_load_frames:
 ; back up input parameters
     push hl ; base bufferId
-    push bc ; b = number of frames
+    push bc ; bc = number of frames
     call vdu_sprite_select
     call vdu_sprite_clear_frames
-    pop bc ; b = number of frames
+    pop bc ; bc = number of frames
     pop hl ; = base bufferId
 @load_frames:
     push bc ; back up loop counter
@@ -324,125 +330,129 @@ sprite_load_frames:
     call vdu_sprite_add_buff
     pop hl ; restore base bufferId
     inc hl ; bump it to the next frame
-    pop bc ; restore loop counter
-    djnz @load_frames ; loop until all frames loaded
+; decrement loop counter
+    pop bc
+    dec bc
+    ld a,c
+    or a
+    jp nz,@load_frames
+    ld a,b
+    or a
+    jp nz,@load_frames
     ret
 ; end sprite_load_frames
 
 dump_sprite_record:
-    call vdu_home_cursor
-
-    ld iy,(table_pointer)
-
+    ; call vdu_home_cursor
     call printInline
     asciz "id:   "
-    ld a,(iy+sprite_id)
+    ld a,(ix+sprite_id)
     call printHexA
 
     call printInline
     asciz "\r\nx:   "
-    ld hl,(iy+sprite_x)
+    ld hl,(ix+sprite_x)
     call print_s168_hl
 
     call printInline
     asciz "\r\ny:   "
-    ld hl,(iy+sprite_y)
+    ld hl,(ix+sprite_y)
     call print_s168_hl
 
     call printInline
     asciz "\r\nxv:  "
-    ld hl,(iy+sprite_xvel)
+    ld hl,(ix+sprite_xvel)
     call print_s168_hl
 
     call printInline
     asciz "\r\nyv:  "
-    ld hl,(iy+sprite_yvel)
+    ld hl,(ix+sprite_yvel)
     call print_s168_hl
 
     call printInline
     asciz "\r\nv:   "
-    ld hl,(iy+sprite_vel)
+    ld hl,(ix+sprite_vel)
     call print_s168_hl
 
     call printInline
     asciz "\r\nhdg  "
-    ld hl,(iy+sprite_heading)
+    ld hl,(ix+sprite_heading)
     call print_s168_hl
 
     call printInline
     asciz "\r\nori: "
-    ld hl,(iy+sprite_orientation)
+    ld hl,(ix+sprite_orientation)
     call print_s168_hl
     
     call printInline
     asciz "\r\ntyp: "
-    ld a,(iy+sprite_type)
+    ld a,(ix+sprite_type)
     call printHexA
     
     call printInline
     asciz "\r\nBId: "
-    ld hl,(iy+sprite_base_bufferId)
+    ld hl,(ix+sprite_base_bufferId)
     call printHex24
 
     call printInline
     asciz "\r\nmPg: "
-    ld hl,(iy+sprite_move_program)
+    ld hl,(ix+sprite_move_program)
     call printHex24
 
     call printInline
     asciz "\r\ncol: "
-    ld a,(iy+sprite_collisions)
+    ld a,(ix+sprite_collisions)
     call printBin8
 
     call printInline
     asciz "\r\nszx: "
-    ld a,(iy+sprite_dim_x)
+    ld a,(ix+sprite_dim_x)
     call printHexA
     
     call printInline
     asciz "\r\nszy: "
-    ld a,(iy+sprite_dim_y)
+    ld a,(ix+sprite_dim_y)
     call printHexA
 
     call printInline
     asciz "\r\n#ori:"
-    ld a,(iy+sprite_num_orientations)
+    ld a,(ix+sprite_num_orientations)
     call printHexA
 
     call printInline
     asciz "\r\n#ani:"
-    ld a,(iy+sprite_num_animations)
+    ld a,(ix+sprite_num_animations)
     call printHexA
 
     call printInline
     asciz "\r\nani: "
-    ld a,(iy+sprite_animation)
+    ld a,(ix+sprite_animation)
     call printHexA
 
     call printInline
     asciz "\r\nanit:"
-    ld a,(iy+sprite_animation_timer)
+    ld a,(ix+sprite_animation_timer)
     call printHexA
 
     call printInline
     asciz "\r\nmvt: "
-    ld a,(iy+sprite_move_timer)
+    ld a,(ix+sprite_move_timer)
     call printHexA
 
     call printInline
     asciz "\r\nmvs: "
-    ld a,(iy+sprite_move_step)
+    ld a,(ix+sprite_move_step)
     call printHexA
 
     call printInline
     asciz "\r\npts: "
-    ld a,(iy+sprite_points)
+    ld a,(ix+sprite_points)
     call printHexA
 
     call printInline
     asciz "\r\ndmg: "
-    ld a,(iy+sprite_shield_damage)
+    ld a,(ix+sprite_shield_damage)
     call printHexA
 
-    call waitKeypress
+    ; call waitKeypress
     ret

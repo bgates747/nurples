@@ -1,4 +1,5 @@
 ; Generated from tiles/dg/dg0_00.tmx
+    align 256
 
 tileset_00_num_levels: db 1
 

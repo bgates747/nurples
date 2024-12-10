@@ -1,3 +1,5 @@
+    align 256
+
 image_type: equ 0
 image_width: equ image_type+3
 image_height: equ image_width+3

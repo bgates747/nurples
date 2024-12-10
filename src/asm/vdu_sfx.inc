@@ -1,3 +1,4 @@
+    align 256
 
 ; inputs: bc is the number of sounds to load, cur_buffer_id_lut and cur_load_jump_table set to the address of the first entry in the respective lookup tables
 sfx_load_main:

@@ -1,3 +1,5 @@
+    align 256
+
 ; ######### TILES ######### 
 ; TODO: implement buffering of tiles here when there isn't other stuff to do
 ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
@@ -129,28 +131,10 @@ do_active_tiles:
 ; end do_active_tiles
 
 ; create a new sprite at the same location as an active tile
-; inputs: iy = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
+; inputs: hl = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
 spawn_sprite_from_tile:
-    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    call spawn_sprite
     ret nc ; no carry means no free sprite slots, so we go home
-; copy default settings to new sprite
-    push iy ; pointer to new sprite defaults
-    pop hl ; address to copy from
-    push ix ; back up pointer to new sprite table record
-    lea ix,ix+sprite_definitions ; bump pointer to copy to
-    push ix ; pointer to default sprite settings
-    pop de ; address to copy to
-    ld bc,table_bytes_per_record ; number of bytes to copy
-    ldir ; copies defaults to new sprite record
-    pop ix ; restore pointer to top of new sprite table record
-; initialize the new sprite
-    ld a,(ix+sprite_id)
-    call vdu_sprite_select ; select sprite
-    ld hl,(ix+sprite_base_bufferId)
-    ld b,(ix+sprite_num_animations)
-    call sprite_load_frames
-    ld hl,1*256 ; set y velocity to 1 pixel per frame
-    ld (ix+sprite_yvel),hl
 ; update the new sprite's position and make it visible
     ld hl,(tiles_x_plot)
     hlu_mul256
@@ -159,16 +143,14 @@ spawn_sprite_from_tile:
     ld (ix+sprite_x),bc
     ld de,-1*256 ; TODO: implement y-coord for reals
     ld (ix+sprite_y),de
-    ; call vdu_sprite_move_abs168
-    ; call vdu_sprite_show
+    ld hl,1*256
+    ld (ix+sprite_yvel),hl
 ; return to caller
     scf ; set carry flag to indicate success
     ret
 ; end spawn_sprite_from_tile
 
 move_active_tile:
-    ld a,(iy+sprite_id)
-    call vdu_sprite_select
 ; y-axis movement
     ld hl,(iy+sprite_y)
     ld de,(iy+sprite_yvel)

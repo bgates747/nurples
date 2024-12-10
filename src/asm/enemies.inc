@@ -63,11 +63,13 @@ move_enemies:
     res 7,(iy+sprite_type) ; clear just spawned flag
     ld a,(iy+sprite_id)
     call vdu_sprite_select
+    ld hl,(iy+sprite_base_bufferId)
+    ld b,(iy+sprite_num_animations)
+    ld c,(iy+sprite_num_orientations)
+    mlt bc ; bc total frames
+    call sprite_load_frames
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
-
-    ; CALL DEBUG_PRINT
-    
     call vdu_sprite_move_abs168
     call vdu_sprite_show
 @@:

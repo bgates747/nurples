@@ -1,7 +1,8 @@
+    align 256
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 
 seeker_defaults:
-    db enemy_seeker	        ; type
+    db enemy_seeker         ; type
     dl BUF_SEEKER_000	    ; base_bufferId
     dl move_enemy_seeker	; move_program
     db collides_with_laser | collides_with_player ; collisions
@@ -17,23 +18,10 @@ seeker_defaults:
     db 2	                ; shield_damage
 
 enemy_spawn_seeker:
-    ld iy,seeker_defaults
+    ld hl,seeker_defaults
     call spawn_sprite_from_sprite
     ret nc ; no carry means no free sprite slots, so we go home
-; ix comes back with the pointer to the new sprite variables
-; a comes back with the spriteId of the new sprite
-; initialize the new sprite
-    ld (ix+sprite_id),a
-    ld b,32 ; number of frames
-    ld hl,(ix+sprite_base_bufferId)
-    call sprite_load_frames
-; copy coordinates of active sprite to new sprite
-    ld iy,(table_pointer) 
-    and %00000001 ; 50/50 chance of moving left or right on spanw
-    ld (iy+sprite_move_step),a 
-; update the new sprite's position and make it visible
-    call vdu_sprite_move_abs168
-    call vdu_sprite_show
+; TODO: other specific initialization
     ret
 ; end enemy_spawn_seeker
 
