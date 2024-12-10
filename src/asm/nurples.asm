@@ -42,6 +42,7 @@ exit:
 ; APPLICATION INCLUDES
     include "collisions.inc"
     include "enemies.inc"
+    ; include "enemy_fireball.inc"
     include "enemy_seeker.inc"
     include "fonts_list.inc"
     include "images_tiles_dg.inc"
@@ -55,8 +56,10 @@ exit:
     include "player.inc"
     include "sprites.inc"
     include "state.inc"
+    include "targeting.inc"
     include "tiles.inc"
     include "tile_pad_small.inc"
+    ; include "tile_turret_fireball.inc"
 
     align 256
 

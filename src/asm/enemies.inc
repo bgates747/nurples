@@ -156,26 +156,6 @@ check_enemy_collision_player: ; check for collisions with player
 ;     call check_collisions
 ;     ret
 
-; compute orientation to player 
-; based on relative positions
-; returns: h.l 16.8 fixed angle256 to player
-;    ub.c and ud.e as 16.8 signed fixed point numbers
-;    representing delta-x/y *to* target respectively
-orientation_to_player:
-    ld iy,(table_pointer) 
-    ld bc,(iy+sprite_x)
-    ld de,(iy+sprite_y)
-    ld ix,(player_x)
-    ld iy,(player_y)
-    call dxy168
-    push bc
-    push de
-    call atan2_168fast
-    pop de
-    pop bc
-    ld iy,(table_pointer) 
-    ret
-
 ; this routine vanquishes the enemy sprite
 ; and replaces it with an animated explosion
 ; we jump here instead of call because
