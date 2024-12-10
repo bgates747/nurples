@@ -21,6 +21,8 @@ activate_pad_small:
     call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
 ; TODO: other specific initialization
+    ld a,64
+    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 ; end activate_pad_small
 
@@ -35,8 +37,10 @@ move_pad_small:
 ; check whether it is time to spawn a seeker
     dec (iy+sprite_move_timer)
     ret nz
-    ; ld a,24 ; TODO: make this a random number
-    ; ld (iy+sprite_move_timer),a
-    ; ld iy,pad_small_defaults
-    ; call enemy_spawn_seeker
+move_pad_reset_timer:
+    call rand_8     ; snag a random number
+    and %00011111   ; keep only 5 lowest bits (max 31)
+    add a,64 ; range is now 64-127
+    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+    call enemy_spawn_seeker
     ret

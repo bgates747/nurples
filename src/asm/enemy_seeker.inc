@@ -21,7 +21,9 @@ enemy_spawn_seeker:
     ld hl,seeker_defaults
     call spawn_sprite_from_sprite
     ret nc ; no carry means no free sprite slots, so we go home
-; TODO: other specific initialization
+; other specific initialization
+    ld hl,speed_seeker
+    ld (ix+sprite_vel),hl
     ret
 ; end enemy_spawn_seeker
 
@@ -57,7 +59,7 @@ en_nav_seek_zag:
     srl a ; divide integer portion by 8
     srl a
     srl a
-    call vdu_sprite_select_frame
+    ld (iy+sprite_animation),a
     jp move_sprite ; will return to caller from there
 @zig_zag_start:
     ld iy,(table_pointer) 
@@ -73,7 +75,7 @@ en_nav_seek_zag:
     jp nz,@zig_zag_no_switch
     ; otherwise flip direction and restart timer
     ld a,(iy+sprite_move_step)
-    xor %1 ; flips bit one
+    xor %1 ; flips bit zero
     ld (iy+sprite_move_step),a ; store it
     jp nz,@F ; zag right
 ;otherwise zag left

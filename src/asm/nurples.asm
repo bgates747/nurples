@@ -197,12 +197,10 @@ main_loop:
 ; do gamestate logic
     call do_game
 
-    CALL DEBUG_PRINT_TABLE
+    ; CALL DEBUG_PRINT_TABLE
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
-    ; call vdu_vblank ; DEBUG
-    ; call vdu_vblank ; DEBUG
 
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
@@ -229,7 +227,7 @@ DEBUG_PRINT:
     POP_ALL
     PUSH_ALL
     call dumpRegistersHex
-    call waitKeypress
+    ; call waitKeypress
     POP_ALL
     ret
 
@@ -249,5 +247,11 @@ DEBUG_PRINT_TABLE:
     call printNewLine
 
     ; call waitKeypress
+    POP_ALL
+    RET
+
+DEBUG_WAITKEYPRESS:
+    PUSH_ALL
+    call waitKeypress
     POP_ALL
     RET

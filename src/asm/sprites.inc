@@ -124,11 +124,13 @@ table_get_next_id:
 ; end table_get_next_id
 
 ; deactivate the sprite with the given id
-; inputs: iy set to sprite record, vdu_sprite_select called
+; inputs: iy set to sprite record
 ; outputs: nothing
 ; destroys: a,hl
 ; affects: decrements table_active_sprites by one
 table_deactivate_sprite:
+    ld a,(iy+sprite_id) ; get spriteId
+    call vdu_sprite_select ; select sprite 
     call vdu_sprite_hide
     xor a
     ld (iy+sprite_type),a
@@ -189,7 +191,7 @@ sprites_init:
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly
 ; inputs: table_pointer set to sprite record
-; returns: updated x, y positions and edge collision flags in sprite table record
+; returns: updated x, y positions and edge collision flags in sprite_screen_edge
 ; destroys: everything
 ; note: actual rendering of sprite must be handled by caller
 move_sprite:
@@ -204,7 +206,6 @@ move_sprite:
     ld de,(iy+sprite_yvel)
     add hl,de
     ld (iy+sprite_y),hl
-
 ; detect screen edge collisions
     xor a ; reset screen edge collision flag and clear carry
     ld (sprite_screen_edge),a
@@ -280,9 +281,6 @@ spawn_sprite:
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
     pop hl ; restore pointer to new sprite defaults
-
-    ; CALL DEBUG_PRINT
-
     ret nc ; no carry means no free sprite slots, so we go home
 ; copy default settings to new sprite
     push ix ; back up pointer to new sprite record
@@ -294,9 +292,6 @@ spawn_sprite:
 ; return to caller
     pop ix ; restore pointer to new sprite record
     set 7,(ix+sprite_type) ; set just spawned flag
-
-    ; CALL DEBUG_PRINT_TABLE
-
     scf ; set carry flag to indicate success
     ret
 
@@ -311,16 +306,16 @@ spawn_sprite_from_sprite:
     ld hl,(iy+sprite_y)
     ld (ix+sprite_y),hl
 ; return to caller
+    set 7,(ix+sprite_type) ; set just spawned flag
     scf ; set carry flag to indicate success
     ret
 
 ; load a sprite with animation bitmaps
-; inputs: a = sprite id, hl = base bufferId, bc = number of frames
+; inputs: a = sprite id, hl = base bufferId, bc = number of frames, sprite_select
 sprite_load_frames:
 ; back up input parameters
     push hl ; base bufferId
     push bc ; bc = number of frames
-    call vdu_sprite_select
     call vdu_sprite_clear_frames
     pop bc ; bc = number of frames
     pop hl ; = base bufferId

@@ -269,41 +269,6 @@ activate_null_tile:
 ;     jp dt_ld_act
 
 
-; ; moves active tile sprites down one pixel in sync with tiles movement
-; ; deletes sprites from table when they wrap around to top of screen
-; move_active_tiles:
-; ; get current position
-;     ld a,(sprite_y+1) ; we only need the integer part
-;     inc a 
-; ; are we at the bottom of the screen?
-;     jr nz,move_active_tiles_draw_sprite ; nope
-; ; otherwise kill sprite
-;     ld a,%10000000 ; any bit set in high nibble means sprite will die
-;     ld (iy+sprite_collisions),a
-;     ret ; debug
-; move_active_tiles_draw_sprite:
-;     ld (sprite_y+1),a ; update tile y position integer part
-;     ;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-;     ; call vdu_bmp_draw ; convert to vdu_bmp_plot ; draw it
-;     ret ; and done
-
-
-; move_landing_pad:
-;     call move_active_tiles
-;     call check_collisions
-; ; is it time to launch an enemy?
-;     ld hl,sprite_move_timer
-;     dec (hl)
-;     jp nz,move_enemies_loop_return
-;     call enemy_spawn_seeker
-;     ; reset move timer so can spawn again if player doesn't take us out
-;     call rand_8     ; snag a random number
-;     and %00011111   ; keep only 5 lowest bits (max 31)
-;     add a,64 ; range is now 64-127
-;     ld (sprite_move_timer),a ; when this hits zero,will spawn an enemy
-;     ret
-
-
 ; move_laser_turret:
 ; ; compute orientation to player
 ;     call orientation_to_player

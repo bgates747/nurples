@@ -31,8 +31,6 @@ move_enemies:
     and a ; if zero, sprite is dead 
     jp z,@next_record ; ... and we skip to next record
 ; otherwise we prepare to move the sprite
-    ld a,(iy+sprite_id) ; get spriteId
-    call vdu_sprite_select ; select sprite 
     ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
     callHL
 ; move_enemies_loop_return: return from behavior subroutines
@@ -43,6 +41,10 @@ move_enemies:
     call table_deactivate_sprite 
     jp @next_record ; and to the next record
 @draw_sprite:
+    ld a,(iy+sprite_id) ; get spriteId
+    call vdu_sprite_select ; select sprite 
+    ld a,(iy+sprite_animation)
+    call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
@@ -68,6 +70,8 @@ move_enemies:
     ld c,(iy+sprite_num_orientations)
     mlt bc ; bc total frames
     call sprite_load_frames
+    ld a,(iy+sprite_animation)
+    call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
