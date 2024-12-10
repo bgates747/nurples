@@ -14,6 +14,7 @@ pad_small_defaults:
     db 0                    ; move_step
     db 5                    ; points
     db 0                    ; shield_damage
+    db 0                    ; animation_frame
 
 activate_pad_small:
     ld hl,pad_small_defaults

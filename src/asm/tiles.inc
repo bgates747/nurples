@@ -299,7 +299,7 @@ activate_null_tile:
 ; fireballs_init:
 ;     ; call sprite_variables_to_stack
 
-;     ld hl,fireballs
+;     ld hl,enemy_fireball
 ;     ld (sprite_base_bufferId),hl
 
 ;     ld hl,move_fireballs

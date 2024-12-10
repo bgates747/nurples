@@ -1,5 +1,5 @@
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_bytes_per_record:    equ  40; 40 bytes ;40 bytes per sprite record
+table_bytes_per_record:    equ  41; 40 bytes ;40 bytes per sprite record
 sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
 ; sprite state variables
 sprite_state_variables:    equ   1; beginning of sprite state variables
@@ -26,6 +26,7 @@ sprite_move_timer:         equ  36; 1 bytes ;when zero, go to next move program,
 sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, varies
 sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
 sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
+sprite_animation_frame:    equ  40; 1 bytes ;current animation frame
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites
