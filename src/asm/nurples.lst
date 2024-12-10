@@ -11403,7 +11403,7 @@ PC     Output      Line
 04644F             0205*   tile_pad_med: equ 2
 04644F             0206*   tile_pad_large: equ 3
 04644F             0207*   tile_pad_huge: equ 4
-04644F             0208*   tile_fireball_turret: equ 5
+04644F             0208*   tile_turret_fireball: equ 5
 04644F             0209*   tile_laser_turret: equ 6
 04644F             0210*   tile_twin_laser_turret: equ 7
 04644F             0211*   tile_gatling_turret: equ 8
@@ -11423,7 +11423,7 @@ PC     Output      Line
 046455 82 64 04    0225*       dl activate_null_tile  ;  activate_pad_med
 046458 82 64 04    0226*       dl activate_null_tile  ;  activate_pad_large
 04645B 82 64 04    0227*       dl activate_null_tile  ;  activate_pad_huge
-04645E 82 64 04    0228*       dl activate_null_tile  ;  activate_fireball_turret
+04645E 13 66 04    0228*       dl activate_turret_fireball
 046461 82 64 04    0229*       dl activate_null_tile  ;  activate_laser_turret
 046464 82 64 04    0230*       dl activate_null_tile  ;  activate_twin_laser_turret
 046467 82 64 04    0231*       dl activate_null_tile  ;  activate_gatling_turret
@@ -11463,7 +11463,7 @@ PC     Output      Line
 046483             0265*   ;     ld a,0 ; binary
 046483             0266*   ;     ld (sprite_shield_damage),a
 046483             0267*   
-046483             0268*   ;     ld hl,tile_fireball_turret ; dt_ld_act loads this to sprite_base_bufferId
+046483             0268*   ;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
 046483             0269*   ;     jp dt_ld_act
 046483             0270*   
 046483             0271*   
@@ -11657,53 +11657,52 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF    
-046600             0002*   
-046600             0003*   turret_fireball_defaults:
-046600 02          0004*       db enemy_ground         ; type
-046601 2F 01 00    0005*       dl BUF_TURRET_000       ; base_bufferId
-046604 22 66 04    0006*       dl move_turret_fireball ; move_program
-046607 02          0007*       db collides_with_laser  ; collisions
-046608 10          0008*       db 16                   ; dim_x
-046609 10          0009*       db 16                   ; dim_y
-04660A 01          0010*       db 1                    ; num_orientations
-04660B 01          0011*       db 1                    ; num_animations
-04660C 00          0012*       db 0                    ; animation
-04660D 00          0013*       db 0                    ; animation_timer
-04660E 18          0014*       db 24                   ; move_timer
-04660F 00          0015*       db 0                    ; move_step
-046610 05          0016*       db 5                    ; points
-046611 00          0017*       db 0                    ; shield_damage
-046612 00          0018*       db 0                    ; animation_frame
-046613             0019*   
-046613             0020*   activate_turret_fireball:
-046613 21 00 66 04 0021*       ld hl,turret_fireball_defaults
-046617             0022*   ; get next available sprite id
-046617 CD 07 64 04 0023*       call spawn_sprite_from_tile
-04661B D0          0024*       ret nc ; no carry means no free sprite slots, so we go home
-04661C             0025*   ; TODO: other specific initialization
-04661C 3E 40       0026*       ld a,64
-04661E FD 77 24    0027*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
-046621 C9          0028*       ret
-046622             0029*   ; end activate_turret_fireball
-046622             0030*   
-046622             0031*   move_turret_fireball:
-046622 CD 2D 64 04 0032*       call move_active_tile
-046626 B7          0033*       or a ; a will be non-zero if have scrolled off screen
-046627 C2 EC 5B 04 0034*       jp nz,table_deactivate_sprite
-04662B             0035*   ; check collisions
-04662B CD DF 20 04 0036*       call check_enemy_collisions
-04662F B7          0037*       or a ; a will be negative if have collided with player or laser
-046630 F8          0038*       ret m ; we're dead so nothing more to do
-046631             0039*   ; check whether it is time to spawn a seeker
-046631 FD 35 24    0040*       dec (iy+sprite_move_timer)
-046634 C0          0041*       ret nz
-046635             0042*   turret_fireball_reset_move_timer:
-046635 CD BB 08 04 0043*       call rand_8     ; snag a random number
-046639 E6 1F       0044*       and %00011111   ; keep only 5 lowest bits (max 31)
-04663B C6 40       0045*       add a,64 ; range is now 64-127
-04663D FD 77 24    0046*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
-046640 CD 13 23 04 0047*       call enemy_spawn_seeker
-046644 C9          0048*       ret
+046600             0002*   turret_fireball_defaults:
+046600 02          0003*       db enemy_ground         ; type
+046601 2F 01 00    0004*       dl BUF_TURRET_000       ; base_bufferId
+046604 22 66 04    0005*       dl move_turret_fireball ; move_program
+046607 02          0006*       db collides_with_laser  ; collisions
+046608 10          0007*       db 16                   ; dim_x
+046609 10          0008*       db 16                   ; dim_y
+04660A 01          0009*       db 1                    ; num_orientations
+04660B 01          0010*       db 1                    ; num_animations
+04660C 00          0011*       db 0                    ; animation
+04660D 00          0012*       db 0                    ; animation_timer
+04660E 18          0013*       db 24                   ; move_timer
+04660F 00          0014*       db 0                    ; move_step
+046610 05          0015*       db 5                    ; points
+046611 00          0016*       db 0                    ; shield_damage
+046612 00          0017*       db 0                    ; animation_frame
+046613             0018*   
+046613             0019*   activate_turret_fireball:
+046613 21 00 66 04 0020*       ld hl,turret_fireball_defaults
+046617             0021*   ; get next available sprite id
+046617 CD 07 64 04 0022*       call spawn_sprite_from_tile
+04661B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
+04661C             0024*   ; TODO: other specific initialization
+04661C 3E 40       0025*       ld a,64
+04661E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+046621 C9          0027*       ret
+046622             0028*   ; end activate_turret_fireball
+046622             0029*   
+046622             0030*   move_turret_fireball:
+046622 CD 2D 64 04 0031*       call move_active_tile
+046626 B7          0032*       or a ; a will be non-zero if have scrolled off screen
+046627 C2 EC 5B 04 0033*       jp nz,table_deactivate_sprite
+04662B             0034*   ; check collisions
+04662B CD DF 20 04 0035*       call check_enemy_collisions
+04662F B7          0036*       or a ; a will be negative if have collided with player or laser
+046630 F8          0037*       ret m ; we're dead so nothing more to do
+046631             0038*   ; check whether it is time to spawn a seeker
+046631 FD 35 24    0039*       dec (iy+sprite_move_timer)
+046634 C0          0040*       ret nz
+046635             0041*   turret_fireball_reset_move_timer:
+046635 CD BB 08 04 0042*       call rand_8     ; snag a random number
+046639 E6 1F       0043*       and %00011111   ; keep only 5 lowest bits (max 31)
+04663B C6 40       0044*       add a,64 ; range is now 64-127
+04663D FD 77 24    0045*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+046640 CD 13 23 04 0046*       call enemy_spawn_seeker
+046644 C9          0047*       ret
 046645             0063    
 046645 FF FF FF FF 0064        align 256
        FF FF FF FF 

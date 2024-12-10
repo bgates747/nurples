@@ -205,7 +205,7 @@ tile_pad_small: equ 1
 tile_pad_med: equ 2
 tile_pad_large: equ 3
 tile_pad_huge: equ 4
-tile_fireball_turret: equ 5
+tile_turret_fireball: equ 5
 tile_laser_turret: equ 6
 tile_twin_laser_turret: equ 7
 tile_gatling_turret: equ 8
@@ -225,7 +225,7 @@ tile_activation_routines:
     dl activate_null_tile  ;  activate_pad_med
     dl activate_null_tile  ;  activate_pad_large
     dl activate_null_tile  ;  activate_pad_huge
-    dl activate_null_tile  ;  activate_fireball_turret
+    dl activate_turret_fireball  
     dl activate_null_tile  ;  activate_laser_turret
     dl activate_null_tile  ;  activate_twin_laser_turret
     dl activate_null_tile  ;  activate_gatling_turret
@@ -265,7 +265,7 @@ activate_null_tile:
 ;     ld a,0 ; binary
 ;     ld (sprite_shield_damage),a
 
-;     ld hl,tile_fireball_turret ; dt_ld_act loads this to sprite_base_bufferId
+;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
 ;     jp dt_ld_act
 
 
