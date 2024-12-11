@@ -26,7 +26,7 @@ sprite_move_timer:         equ  36; 1 bytes ;when zero, go to next move program,
 sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, varies
 sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
 sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
-sprite_animation_frame:    equ  40; 1 bytes ;current animation frame
+sprite_frame:              equ  40; 1 bytes ;current animation frame
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites
@@ -311,6 +311,36 @@ spawn_sprite_from_sprite:
     scf ; set carry flag to indicate success
     ret
 
+; compute animation frame based on sprite_animation and sprite_heading
+; inputs: table_pointer set to sprite record
+; outputs: a, sprite_frame set to animation frame
+; destroys: a,hl
+sprite_frame_heading_animation:
+    ld a,(iy+sprite_heading+1) ; we want the integer portion
+    srl a ; divide integer portion by 8
+    srl a
+    srl a
+    ld h,(iy+sprite_animation)
+    ld l,32 ; 32 orientation frames per animation
+    mlt hl ; hl = offset from base animation
+    add a,l ; modulo256 since animation_frame is only 1 byte
+    ld (iy+sprite_frame),a
+    ret
+; end sprite_frame_heading_animation
+
+; compute animation frame based on sprite_heading
+; inputs: table_pointer set to sprite record
+; outputs: a, sprite_frame set to animation frame
+; destroys: a,hl
+sprite_frame_heading:
+    ld a,(iy+sprite_heading+1) ; we want the integer portion
+    srl a ; divide integer portion by 8
+    srl a
+    srl a
+    ld (iy+sprite_frame),a
+    ret
+; end sprite_frame_heading
+
 ; load a sprite with animation bitmaps
 ; inputs: a = sprite id, hl = base bufferId, bc = number of frames, sprite_select
 sprite_load_frames:
@@ -448,6 +478,11 @@ dump_sprite_record:
     call printInline
     asciz "\r\ndmg: "
     ld a,(ix+sprite_shield_damage)
+    call printHexA
+
+    call printInline
+    asciz "\r\nfrm: "
+    ld a,(ix+sprite_frame)
     call printHexA
 
     ; call waitKeypress

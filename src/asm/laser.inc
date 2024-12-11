@@ -27,6 +27,7 @@ laser_move_timer:        db                   0 ; 1 bytes when zero, go to next 
 laser_move_step:         db                   0 ; 1 bytes stage in a move program sequence, varies
 laser_points:            db                   0 ; 1 bytes points awarded for killing this sprite type
 laser_shield_damage:     db                   0 ; 1 bytes shield points deducted for collision
+laser_frame:             db                   0 ; 1 bytes current animation frame
 laser_end_variables: ; for when we want to traverse this table in reverse
 laser_speed: equ -6*256 ; 6 pixels per frame 16.8 fixed
 laser_animation_timer_reset: equ 2 ; animate every two frames
@@ -87,7 +88,7 @@ fire_laser:
     ld (iy+sprite_yvel),hl
 ; set laser animation frame and timer
     xor a ; first frame
-    ld (iy+sprite_animation),a
+    ld (iy+sprite_frame),a
     ld a,laser_animation_timer_reset
     ld (iy+sprite_animation_timer),a
 ; plot the sprite and make it visible

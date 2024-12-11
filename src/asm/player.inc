@@ -43,6 +43,7 @@ player_move_timer:        db                 0 ; 1 bytes when zero, go to next m
 player_move_step:         db                 0 ; 1 bytes stage in a move program sequence, varies
 player_points:            db                 0 ; 1 bytes points awarded for killing this sprite type
 player_shield_damage:     db                 0 ; 1 bytes shield points deducted for collision
+player_frame:             db                 0 ; 1 bytes current animation frame
 player_end_variables: ; for when we want to traverse this table in reverse
 
 ; set initial player position
@@ -241,7 +242,7 @@ kill_player:
 ;     ld hl,0 ; north
 ;     ld (sprite_heading),hl
 ;     xor a
-;     ld (sprite_animation),a
+;     ld (sprite_frame),a
 ;     ld a,#56 ; top of visible screen
 ;     ld (sprite_y+1),a
 ;     call vdu_buff_select ; TODO: convert to vdu_buff_select

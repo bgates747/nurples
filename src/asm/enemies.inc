@@ -43,7 +43,7 @@ move_enemies:
 @draw_sprite:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
-    ld a,(iy+sprite_animation)
+    ld a,(iy+sprite_frame)
     call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
@@ -70,7 +70,7 @@ move_enemies:
     ld c,(iy+sprite_num_orientations)
     mlt bc ; bc total frames
     call sprite_load_frames
-    ld a,(iy+sprite_animation)
+    ld a,(iy+sprite_frame)
     call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)

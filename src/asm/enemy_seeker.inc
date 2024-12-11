@@ -56,11 +56,7 @@ en_nav_seek_zag:
 @compute_velocities:
     call sprite_compute_velocities
 ; change the animation frame to match heading
-    ld a,(iy+sprite_heading+1) ; we want the integer portion
-    srl a ; divide integer portion by 8
-    srl a
-    srl a
-    ld (iy+sprite_animation),a
+    call sprite_frame_heading ; a, sprite_frame set to heading-based frame
     jp move_sprite ; will return to caller from there
 @zig_zag_start:
     ld iy,(table_pointer) 
