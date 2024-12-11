@@ -12,11 +12,12 @@ orientation_to_player:
     ld ix,(player_x)
     ld iy,(player_y)
     call dxy168
-    push bc
-    push de
-    call atan2_168fast
-    pop de
-    pop bc
+    push bc ; dx
+    push de ; dy
+    call atan2_168fast ; uh.l = angle to player
+    ld (Bearing_t),hl
+    pop de ; dy
+    pop bc ; dx
     ld iy,(table_pointer) 
     ret
 ; end orientation_to_player
@@ -31,6 +32,8 @@ Vt: dl 0x000000 ; velocity of target
 Vt_x: dl 0x000000 ; x component of target velocity
 Vt_y: dl 0x000000 ; y component of target velocity
 
+Heading_p: dl 0x000000 ; angle of projectile motion
+
 ; Inputs:   Bearing_t, Vp
 ; Note:     a call to orientation_to_player provides Bearing_t
 ; Outputs:  uh.l is the 16.8 fixed firing angle256
@@ -39,10 +42,10 @@ Vt_y: dl 0x000000 ; y component of target velocity
 targeting_computer:
 ; compute target velocity from x,y component velocities
     ld bc,(player_xvel) 
-    ld hl,(player_yvel)
-    ld de,-1*256 ; account for vertical ground movement
-    add hl,de
-    ex de,hl ; ud.e = player_yvel-1
+    ld de,(player_yvel)
+    ; ld hl,-1*256 ; account for vertical ground movement
+    ; add hl,de
+    ; ex de,hl ; ud.e = player_yvel-1
     call cartesian_to_polar ; uh.l = Heading_t, ud.e = Vt
     ld (Heading_t),hl
     ld (Vt),de
@@ -78,4 +81,55 @@ targeting_computer:
     ld (Vp_x),bc
     ld (Vp_y),de
     pop hl ; uh.l = lead angle+target bearing
+
+    ld (Heading_p),hl
+
+    PUSH_ALL
+    call vdu_home_cursor
+    call printInline
+    asciz "Bt "
+    ld hl,(Bearing_t)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nHt "
+    ld hl,(Heading_t)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nVt "
+    ld hl,(Vt)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nVtx"
+    ld hl,(player_xvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nVty"
+    ld hl,(player_yvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nHp "
+    ld hl,(Heading_p)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nVp "
+    ld hl,(Vp)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nVpx"
+    ld hl,(Vp_x)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nVpy"
+    ld hl,(Vp_y)
+    call print_s168_hl
+
+    POP_ALL
     ret

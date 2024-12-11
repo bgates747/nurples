@@ -25,20 +25,17 @@ enemy_spawn_fireball:
 ; other specific initialization
 ; ------------------------------------------------
 ; center the fireball on the turret
-    ld de,3/2*256 ; half the fireball size
+    ld de,3*128 ; half the fireball size
     ld hl,(iy+sprite_x)
     add hl,de
     ld (ix+sprite_x),hl
     ld hl,(iy+sprite_y)
     add hl,de
     ld (ix+sprite_y),hl
-; compute component velocities based on turret heading and projectile speed
-    ld hl,(iy+sprite_heading)
-    ld de,speed_fireball
-    call polar_to_cartesian ; ub.c, ud.e = dx, dy
-    ld (ix+sprite_xvel),bc
-    ld hl,1*256 ; account for ground movement
-    add hl,de 
+; copy component velocities from targeting_computer
+    ld hl,(Vp_x)
+    ld (ix+sprite_xvel),hl
+    ld hl,(Vp_y)
     ld (ix+sprite_yvel),hl
 ; move projectile one frame's distance so it isn't drawn right over turret
     ld hl,(ix+sprite_x)
@@ -55,5 +52,5 @@ enemy_spawn_fireball:
 move_enemy_fireball:
 ; run the movement program for the fireball enemy
     call move_sprite
-    jp check_enemy_collisions
+    ret
 ; end move_enemy_fireball

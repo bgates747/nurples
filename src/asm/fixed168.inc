@@ -394,10 +394,10 @@ cartesian_to_polar:
     push de ; preserve dy
 ; compute radius
     call distance168 ; uh.l = radius, dx168, dy168 populated
-    push hl ; save radius
 ; compute angle
     pop de ; restore dy
     pop bc ; restore dx
+    push hl ; save radius
     call atan2_168fast ; uh.l = angle
 ; return result
     pop de ; de = radius (was hl)

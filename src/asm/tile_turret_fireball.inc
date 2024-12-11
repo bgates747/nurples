@@ -31,12 +31,9 @@ move_turret_fireball:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
-; check collisions
-    call check_enemy_collisions
-    or a ; a will be negative if have collided with player or laser
-    ret m ; we're dead so nothing more to do
 ; target player
     call orientation_to_player
+    call targeting_computer
     ld (iy+sprite_heading),hl ; save sprite heading
     call sprite_frame_heading
 ; check whether it is time to spawn a fireball

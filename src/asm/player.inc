@@ -163,6 +163,8 @@ score_x: equ 48
 score_y: equ 1
 ; prints the player's score
 print_score:
+    ret ;DEBUG
+    
     ld c,score_x
     ld b,score_y
     call vdu_move_cursor

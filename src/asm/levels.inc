@@ -98,7 +98,9 @@ init_level:
     lea ix,ix+7 ; ix points to definition of first tile of first row
     ld (tiles_row_defs),ix
 
-; print level
+    ret ; DEBUG
+
+print_level:
 level_x: equ 48
 level_y: equ 0
     ld c,level_x

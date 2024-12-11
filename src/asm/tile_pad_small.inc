@@ -31,10 +31,6 @@ move_pad_small:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
-; check collisions
-    call check_enemy_collisions
-    or a ; a will be negative if have collided with player or laser
-    ret m ; we're dead so nothing more to do
 ; check whether it is time to spawn a seeker
     dec (iy+sprite_move_timer)
     ret nz
