@@ -1,5 +1,4 @@
     align 256
-
 ; multiply a signed 24-bit number by an unsigned 8-bit number giving a signed 24-bit result
 ; uses EZ80 MLT instruction for speed
 ; operation: UHL * A --> UHL
@@ -219,67 +218,6 @@ sdiv168:
     ex de,hl ; de = negated quotient, hl = remainder
     ret
 
-;------------------------------------------------------------------------
-;  arith24.asm
-;  24-bit ez80 arithmetic routines
-;  Copyright (c) Shawn Sijnstra 2024
-;  MIT license
-;
-;  This library was created as a tool to help make ez80
-;  24-bit native assembly routines for simple mathematical problems
-;  more widely available.
-;
-;------------------------------------------------------------------------
-;
-;------------------------------------------------------------------------
-; udiv24
-; Unsigned 24-bit division
-; Divides HLU by DEU. Gives result in DEU (and BC), remainder in HLU.
-;
-; Uses AF BC DE HL
-; Uses Restoring Division algorithm
-;------------------------------------------------------------------------
-
-udiv24:
-    push hl
-    pop bc ;move dividend to BCU
-    ld hl,0 ;result
-    and a
-    sbc hl,de ;test for div by 0
-    ret z ;it's zero, carry flag is clear
-    add hl,de ;HL is 0 again
-    ld a,24 ;number of loops through.
-udiv1:
-    push bc ;complicated way of doing this because of lack of access to top bits
-    ex (sp),hl
-    scf
-    adc hl,hl
-    ex (sp),hl
-    pop bc ;we now have bc = (bc * 2) + 1
-
-    adc hl,hl
-    and a ;is this the bug
-    sbc hl,de
-    jr nc,udiv2
-    add hl,de
-;	dec	c
-    dec bc
-udiv2:
-    dec a
-    jr nz,udiv1
-    scf ;flag used for div0 error
-    push bc
-    pop de ;remainder
-    ret
-
-;------------------------------------------------------------------------
-;  END 24-bit ez80 arithmetic routines by Shawn Sijnstra
-;------------------------------------------------------------------------
-
-
-    ; include "trig24fast.inc"
-
-
 ; convert signed angles from a 360 to 256 degree circle
 ; inputs: uh.l is the angle360 in 16.8 fixed format
 ; outputs: uh.l is the angle256 in 16.8 fixed format
@@ -390,14 +328,14 @@ polar_to_cartesian:
 ;        ud.e as radius
 ; destroys: everything except indexes
 cartesian_to_polar:
-    push bc ; preserve dx
-    push de ; preserve dy
+    ld (dx168),bc ; dx argument for distance168
+    ld (dy168),de ; dy argument for distance168
 ; compute radius
-    call distance168 ; uh.l = radius, dx168, dy168 populated
-; compute angle
-    pop de ; restore dy
-    pop bc ; restore dx
+    call distance168 ; uh.l = radius
     push hl ; save radius
+; compute angle
+    ld bc,(dx168) ; dx argument for atan2_168fast
+    ld de,(dy168) ; dy argument for atan2_168fast
     call atan2_168fast ; uh.l = angle
 ; return result
     pop de ; de = radius (was hl)
@@ -624,7 +562,7 @@ atan_168fast:
     ld hl,(hl) ; don't try this on a z80!
     ret ; and out
 @is_45:
-    ld hl,64*256
+    ld hl,32*256
     ret
 ; for the case tan(0)
 @is_zero:

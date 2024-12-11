@@ -28,6 +28,7 @@ exit:
 ; API INCLUDES
     include "mos_api.inc"
     include "functions.inc"
+    include "arith24.inc"
     include "maths.inc"
     include "files.inc"
     include "fixed168.inc"
@@ -71,15 +72,37 @@ init:
     ret
 
 main:
-    call printNewLine
-    ld bc,3*256 ; 1.000 player_xvel
-    ld de,3*256 ; 2.000 player_yvel-1
-    ; call cartesian_to_polar
-    call distance168
+    ld hl,1
+    sign_hlu
+    call DEBUG_PRINT
+    ret
+
+
+
+    ld b,32 ; loop counter
+@loop:
+    push bc
+    ld h,b
+    ld l,8
+    mlt hl
+    ld h,l
+    ld l,0
     call print_s168_hl
-    call printNewLine
+    ld de,3*256
+    call polar_to_cartesian
+    push bc
+    push de
+    call print_s168_bc
+    call print_s168_de
+    pop de
+    pop bc
+
+    call cartesian_to_polar
+    call print_s168_hl
     call print_s168_de
     call printNewLine
+    pop bc
+    djnz @loop
     ret
 
 DEBUG_PRINT:

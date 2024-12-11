@@ -32,7 +32,9 @@ move_turret_fireball:
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
 ; target player
-    call orientation_to_player
+    ld hl,speed_fireball
+    ld (Vp),hl ; param for targeting_computer
+    call orientation_to_player ; sets params for targeting_computer
     call targeting_computer
     ld (iy+sprite_heading),hl ; save sprite heading
     call sprite_frame_heading

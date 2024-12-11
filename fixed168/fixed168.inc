@@ -687,7 +687,7 @@ atan_168fast:
     ld hl,(hl) ; don't try this on a z80!
     ret ; and out
 @is_45:
-    ld hl,64*256
+    ld hl,32*256
     ret
 ; for the case tan(0)
 @is_zero:

@@ -52,5 +52,7 @@ enemy_spawn_fireball:
 move_enemy_fireball:
 ; run the movement program for the fireball enemy
     call move_sprite
+    or a ; a will be non-zero if have scrolled off screen
+    jp nz,table_deactivate_sprite
     ret
 ; end move_enemy_fireball

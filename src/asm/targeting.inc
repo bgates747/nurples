@@ -43,9 +43,9 @@ targeting_computer:
 ; compute target velocity from x,y component velocities
     ld bc,(player_xvel) 
     ld de,(player_yvel)
-    ; ld hl,-1*256 ; account for vertical ground movement
-    ; add hl,de
-    ; ex de,hl ; ud.e = player_yvel-1
+    ld hl,-1*256 ; account for vertical ground movement
+    add hl,de
+    ex de,hl ; ud.e = player_yvel-1
     call cartesian_to_polar ; uh.l = Heading_t, ud.e = Vt
     ld (Heading_t),hl
     ld (Vt),de

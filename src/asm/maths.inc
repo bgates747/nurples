@@ -1,12 +1,11 @@
     align 256
-
 ; test the sign of HL
 ; inputs: HL obviously
 ; outputs: sign flag set if HL is negative, zero flag set if HL is zero
 ; destroys: flags    
     MACRO sign_hlu
     add hl,de
-    or a
+    or a ; clear flags
     sbc hl,de
     ENDMACRO
 
@@ -121,20 +120,6 @@ hlu_udiv256:
     add hl,hl ; * 128
     add hl,hl ; * 256
     ENDMACRO
-
-; compute the modulo of hlu by deu
-; outputs: hlu = hlu % deu
-; destroys: f, hl
-hlu_mod:
-    or a ; clear carry
-@loop:
-    sbc hl,de
-    jp c, @end 
-    jp @loop
-@end:
-    add hl,de 
-    ret
-
 
 add_bcd_arg1: db #00,#00,#00,#00
 add_bcd_arg2: db #00,#00,#00,#00
