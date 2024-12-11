@@ -72,13 +72,6 @@ init:
     ret
 
 main:
-    ld hl,1
-    sign_hlu
-    call DEBUG_PRINT
-    ret
-
-
-
     ld b,32 ; loop counter
 @loop:
     push bc
@@ -97,7 +90,7 @@ main:
     pop de
     pop bc
 
-    call cartesian_to_polar
+    call cartesian_to_polar_sm
     call print_s168_hl
     call print_s168_de
     call printNewLine

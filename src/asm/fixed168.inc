@@ -342,6 +342,28 @@ cartesian_to_polar:
     ret
 ; end cartesian_to_polar
 
+; 16.8 fixed inputs / outputs
+; inputs: ub.c as dx, ud.e as dy
+;        displacements from origin (0,0)
+; returns: uh.l as angle in degrees 256
+;        ud.e as radius
+; destroys: everything except indexes
+; note: uses distance168sm which is more accurate for small deltas
+cartesian_to_polar_sm:
+    ld (dx168),bc ; dx argument for distance168
+    ld (dy168),de ; dy argument for distance168
+; compute radius
+    call distance168sm ; uh.l = radius
+    push hl ; save radius
+; compute angle
+    ld bc,(dx168) ; dx argument for atan2_168fast
+    ld de,(dy168) ; dy argument for atan2_168fast
+    call atan2_168fast ; uh.l = angle
+; return result
+    pop de ; de = radius (was hl)
+    ret
+; end cartesian_to_polar
+
 ; inputs: ub.c and ud.e are x0 and y0 in 16.8 fixed format
 ;         ui.x and ui.y are x1 and y1 in 16.8 fixed format
 ; output: ub.c and ud.e are dx and dy in 16.8 fixed format
@@ -398,6 +420,37 @@ distance168:
     call sqrt24 ; de = sqrt(dx^2 + dy^2)
     ex de,hl ; hl = distance
     hlu_mul256 ; convert back to 16.8 fixed
+    ret
+
+; compute the euclidian distance between two cartesian coordinates
+; using the formula d = sqrt(dx^2+dy^2)
+; inputs: dx168 and dy168 are dx and dy in 16.8 fixed format
+; output; uh.l is the 16.8 fixed format distance
+;         also populates scratch locations dx168 and dy168
+; destroys: a,hl,bc,de
+; NOTE: sm means 'small' because it doesn't round down the deltas
+;       making it more accurate for small deltas, 
+;       but will overflow if used for screen-sized deltas
+distance168sm:
+; compute dy^2
+    ld hl,(dy168)
+    call hlu_abs
+    push hl
+    pop de
+    call umul24 ; hl = dy^2
+    push hl ; save dy^2
+; compute dx^2
+    ld hl,(dx168)
+    call hlu_abs
+    push hl
+    pop de
+    call umul24 ; hl = dx^2
+; add dx^2 and dy^2
+    pop de ; de = dy^2 (was hl)
+    add hl,de ; hl = dx^2 + dy^2
+; compute the square root
+    call sqrt24 ; de = sqrt(dx^2 + dy^2)
+    ex de,hl ; hl = distance
     ret
 
 ; atan2_(ub.c,ud.e) --> uh.l

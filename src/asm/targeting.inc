@@ -40,13 +40,17 @@ Heading_p: dl 0x000000 ; angle of projectile motion
 ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
 ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
 targeting_computer:
+    call vdu_home_cursor ; DEBUG
+
 ; compute target velocity from x,y component velocities
     ld bc,(player_xvel) 
     ld de,(player_yvel)
-    ld hl,-1*256 ; account for vertical ground movement
-    add hl,de
-    ex de,hl ; ud.e = player_yvel-1
-    call cartesian_to_polar ; uh.l = Heading_t, ud.e = Vt
+    
+    ; ld hl,-1*256 ; account for vertical ground movement
+    ; add hl,de
+    ; ex de,hl ; ud.e = player_yvel-1
+    
+    call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
     ld (Heading_t),hl
     ld (Vt),de
 
@@ -55,20 +59,37 @@ targeting_computer:
     ld de,(Bearing_t)
     and a ; clear carry
     sbc hl,de ; Uh.l = Heading_t-Bearing_t
+    
+    ; CALL print_s168_hl ; DEBUG
+    ; call printNewLine ; DEBUG
 
 ; compute sin(Heading_t-Bearing_t)
     call sin168 ; uh.l = sin(Heading_t-Bearing_t)
+
+    ; CALL print_s168_hl ; DEBUG
+    ; call printNewLine ; DEBUG
 
 ; compute (Vt*sin(Heading_t-Bearing_t))
     ld de,(Vt)
     call smul168 ; uh.l = (Vt*sin(Heading_t-Bearing_t))
 
+    ; CALL print_s168_hl ; DEBUG
+    ; call printNewLine ; DEBUG
+
 ; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
     ld de,(Vp)
-    call sdiv168 ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
+    call sdiv168 ; ud.e = (Vt*sin(Heading_t-Bearing_t)) / Vp
+    ex de,hl ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
+
+    ; CALL print_s168_hl ; DEBUG
+    ; call printNewLine ; DEBUG
+
 ; answer is in radians, convert to degrees256
     ld de,0x0028BE ; 40.74 = 57.29578*256/360
     call smul168 ; uh.l = angle in degrees256 
+
+    CALL print_s168_hl ; DEBUG
+    call printNewLine ; DEBUG
 
 ; add lead angle to target bearing
     ld de,(Bearing_t)
@@ -84,52 +105,55 @@ targeting_computer:
 
     ld (Heading_p),hl
 
-    PUSH_ALL
-    call vdu_home_cursor
-    call printInline
-    asciz "Bt "
-    ld hl,(Bearing_t)
-    call print_s168_hl
+    ; PUSH_ALL
+    ; call vdu_home_cursor
 
-    call printInline
-    asciz "\r\nHt "
-    ld hl,(Heading_t)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "Bt "
+    ; ld hl,(Bearing_t)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nVt "
-    ld hl,(Vt)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nHt "
+    ; ld hl,(Heading_t)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nVtx"
-    ld hl,(player_xvel)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nVt "
+    ; ld hl,(Vt)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nVty"
-    ld hl,(player_yvel)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nVtx"
+    ; ld hl,(player_xvel)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nHp "
-    ld hl,(Heading_p)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nVty"
+    ; ld hl,(player_yvel)
+    ; ld de,-1*256 ; account for vertical ground movement
+    ; add hl,de
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nVp "
-    ld hl,(Vp)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nHp "
+    ; ld hl,(Heading_p)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nVpx"
-    ld hl,(Vp_x)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nVp "
+    ; ld hl,(Vp)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nVpy"
-    ld hl,(Vp_y)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nVpx"
+    ; ld hl,(Vp_x)
+    ; call print_s168_hl
 
-    POP_ALL
+    ; call printInline
+    ; asciz "\r\nVpy"
+    ; ld hl,(Vp_y)
+    ; call print_s168_hl
+
+    ; POP_ALL
     ret
