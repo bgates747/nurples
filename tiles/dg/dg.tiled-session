@@ -50,9 +50,9 @@
     "project": "dg.tiled-project",
     "recentFiles": [
         "dg0_bg_green_plates.tmx",
-        "dg0_00.tmx",
+        "dg0_01.tmx",
         "dg0.tsx",
-        "dg0_01.tmx"
+        "dg0_00.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

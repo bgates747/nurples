@@ -5626,16 +5626,16 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF       
-042200             0002*   speed_fireball: equ 0x000280 ; 2.5 pixels per frame
+042200             0002*   speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
 042200             0003*   
 042200             0004*   fireball_defaults:
 042200 03          0005*       db enemy_projectile        ; type
 042201 06 01 00    0006*       dl BUF_FIREBALL_A	    ; base_bufferId
-042204 24 22 04    0007*       dl move_enemy_fireball	; move_program
+042204 59 22 04    0007*       dl move_enemy_fireball	; move_program
 042207 03          0008*       db collides_with_laser | collides_with_player ; collisions
-042208 10          0009*       db 16	                ; dim_x
-042209 10          0010*       db 16                   ; dim_y
-04220A 20          0011*       db 32                   ; num_orientations
+042208 07          0009*       db 7	                ; dim_x
+042209 07          0010*       db 7                    ; dim_y
+04220A 01          0011*       db 1                    ; num_orientations
 04220B 01          0012*       db 1                    ; num_animations
 04220C 00          0013*       db 0	                ; animation
 04220D 00          0014*       db 0	                ; animation_timer
@@ -5650,18 +5650,42 @@ PC     Output      Line
 042217 CD 31 5D 04 0023*       call spawn_sprite_from_sprite
 04221B D0          0024*       ret nc ; no carry means no free sprite slots, so we go home
 04221C             0025*   ; other specific initialization
-04221C 21 80 02 00 0026*       ld hl,speed_fireball
-042220 DD 2F 0D    0027*       ld (ix+sprite_vel),hl
-042223 C9          0028*       ret
-042224             0029*   ; end enemy_spawn_fireball
-042224             0030*   
-042224             0031*   move_enemy_fireball:
-042224             0032*   ; run the movement program for the fireball enemy
-042224 CD 5B 5C 04 0033*       call move_sprite
-042228 C3 DF 20 04 0034*       jp check_enemy_collisions
-04222C             0035*   ; end move_enemy_fireball
-04222C             0046        include "enemy_seeker.inc"
-04222C FF FF FF FF 0001*       align 256
+04221C             0026*   ; ------------------------------------------------
+04221C             0027*   ; center the fireball on the turret
+04221C 11 00 01 00 0028*       ld de,3/2*256 ; half the fireball size
+042220 FD 27 01    0029*       ld hl,(iy+sprite_x)
+042223 19          0030*       add hl,de
+042224 DD 2F 01    0031*       ld (ix+sprite_x),hl
+042227 FD 27 04    0032*       ld hl,(iy+sprite_y)
+04222A 19          0033*       add hl,de
+04222B DD 2F 04    0034*       ld (ix+sprite_y),hl
+04222E             0035*   ; compute component velocities based on turret heading and projectile speed
+04222E FD 27 10    0036*       ld hl,(iy+sprite_heading)
+042231 11 00 04 00 0037*       ld de,speed_fireball
+042235 CD CD 0A 04 0038*       call polar_to_cartesian ; ub.c, ud.e = dx, dy
+042239 DD 0F 07    0039*       ld (ix+sprite_xvel),bc
+04223C 21 00 01 00 0040*       ld hl,1*256 ; account for ground movement
+042240 19          0041*       add hl,de
+042241 DD 2F 0A    0042*       ld (ix+sprite_yvel),hl
+042244             0043*   ; move projectile one frame's distance so it isn't drawn right over turret
+042244 DD 27 01    0044*       ld hl,(ix+sprite_x)
+042247 DD 17 07    0045*       ld de,(ix+sprite_xvel)
+04224A 19          0046*       add hl,de
+04224B DD 2F 01    0047*       ld (ix+sprite_x),hl
+04224E DD 27 04    0048*       ld hl,(ix+sprite_y)
+042251 DD 17 0A    0049*       ld de,(ix+sprite_yvel)
+042254 19          0050*       add hl,de
+042255 DD 2F 04    0051*       ld (ix+sprite_y),hl
+042258 C9          0052*       ret
+042259             0053*   ; end enemy_spawn_fireball
+042259             0054*   
+042259             0055*   move_enemy_fireball:
+042259             0056*   ; run the movement program for the fireball enemy
+042259 CD 5B 5C 04 0057*       call move_sprite
+04225D C3 DF 20 04 0058*       jp check_enemy_collisions
+042261             0059*   ; end move_enemy_fireball
+042261             0046        include "enemy_seeker.inc"
+042261 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -5700,20 +5724,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
+       FF FF FF    
 042300             0002*   speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 042300             0003*   
 042300             0004*   seeker_defaults:
@@ -9638,10 +9649,10 @@ PC     Output      Line
        97 A7 D8 D8 
        B6 71 41 42 
        F8 43 44 74 
-045538 71 72 62 9A 0019*   	db 113,114,098,154,155,097,098,097,165,168,055,248,001,248,056,114
+045538 71 72 62 9A 0019*   	db 113,114,098,154,155,097,098,097,165,168,055,248,000,248,056,114
        9B 61 62 61 
        A5 A8 37 F8 
-       01 F8 38 72 
+       00 F8 38 72 
 045548 71 72 64 72 0020*   	db 113,114,100,114,113,100,113,114,113,114,049,050,248,051,052,098
        71 64 71 72 
        71 72 31 32 
@@ -9702,13 +9713,13 @@ PC     Output      Line
        F8 43 44 71 
        59 5A 5A 5A 
        5A 5B 72 71 
-045638 71 64 37 F8 0035*   	db 113,100,055,248,001,248,056,114,073,148,148,040,105,075,098,100
-       01 F8 38 72 
+045638 71 64 37 F8 0035*   	db 113,100,055,248,000,248,056,114,073,148,148,040,105,075,098,100
+       00 F8 38 72 
        49 94 94 28 
        69 4B 62 64 
-045648 61 62 31 32 0036*   	db 097,098,049,050,248,051,052,114,073,132,056,005,055,075,113,114
+045648 61 62 31 32 0036*   	db 097,098,049,050,248,051,052,114,073,132,056,000,055,075,113,114
        F8 33 34 72 
-       49 84 38 05 
+       49 84 38 00 
        37 4B 71 72 
 045658 71 64 21 22 0037*   	db 113,100,033,034,074,035,036,114,073,247,116,040,123,075,098,098
        4A 23 24 72 
@@ -11686,7 +11697,7 @@ PC     Output      Line
 046607 02          0006*       db collides_with_laser  ; collisions
 046608 10          0007*       db 16                   ; dim_x
 046609 10          0008*       db 16                   ; dim_y
-04660A 01          0009*       db 1                    ; num_orientations
+04660A 20          0009*       db 32                   ; num_orientations
 04660B 01          0010*       db 1                    ; num_animations
 04660C 00          0011*       db 0                    ; animation
 04660D 00          0012*       db 0                    ; animation_timer
@@ -11703,7 +11714,7 @@ PC     Output      Line
 04661B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
 04661C             0024*   ; TODO: other specific initialization
 04661C 3E 40       0025*       ld a,64
-04661E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+04661E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
 046621 C9          0027*       ret
 046622             0028*   ; end activate_turret_fireball
 046622             0029*   
@@ -11715,18 +11726,24 @@ PC     Output      Line
 04662B CD DF 20 04 0035*       call check_enemy_collisions
 04662F B7          0036*       or a ; a will be negative if have collided with player or laser
 046630 F8          0037*       ret m ; we're dead so nothing more to do
-046631             0038*   ; check whether it is time to spawn a seeker
-046631 FD 35 24    0039*       dec (iy+sprite_move_timer)
-046634 C0          0040*       ret nz
-046635             0041*   turret_fireball_reset_move_timer:
-046635 CD BB 08 04 0042*       call rand_8     ; snag a random number
-046639 E6 1F       0043*       and %00011111   ; keep only 5 lowest bits (max 31)
-04663B C6 40       0044*       add a,64 ; range is now 64-127
-04663D FD 77 24    0045*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
-046640 CD 13 23 04 0046*       call enemy_spawn_seeker
-046644 C9          0047*       ret
-046645             0063    
-046645 FF FF FF FF 0064        align 256
+046631             0038*   ; target player
+046631 CD 00 62 04 0039*       call orientation_to_player
+046635 FD 2F 10    0040*       ld (iy+sprite_heading),hl ; save sprite heading
+046638 CD 62 5D 04 0041*       call sprite_frame_heading
+04663C             0042*   ; check whether it is time to spawn a fireball
+04663C FD 35 24    0043*       dec (iy+sprite_move_timer)
+04663F C0          0044*       ret nz
+046640             0045*   ; spwan a fireball
+046640 CD 13 22 04 0046*       call enemy_spawn_fireball
+046644             0047*       ; fall through to reset move timer
+046644             0048*   turret_fireball_reset_move_timer:
+046644 CD BB 08 04 0049*       call rand_8     ; snag a random number
+046648 E6 1F       0050*       and %00011111   ; keep only 5 lowest bits (max 31)
+04664A C6 40       0051*       add a,64 ; range is now 64-127
+04664C FD 77 24    0052*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
+04664F C9          0053*       ret
+046650             0063    
+046650 FF FF FF FF 0064        align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11770,9 +11787,6 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF    
 046700             0065    
 046700             0066    ; --- MAIN PROGRAM FILE ---
 046700 57 65 6C 63 0067    hello_world: asciz "Welcome to Purple Nurples!"

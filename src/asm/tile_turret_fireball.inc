@@ -6,7 +6,7 @@ turret_fireball_defaults:
     db collides_with_laser  ; collisions
     db 16                   ; dim_x
     db 16                   ; dim_y
-    db 1                    ; num_orientations
+    db 32                   ; num_orientations
     db 1                    ; num_animations
     db 0                    ; animation
     db 0                    ; animation_timer
@@ -23,7 +23,7 @@ activate_turret_fireball:
     ret nc ; no carry means no free sprite slots, so we go home
 ; TODO: other specific initialization
     ld a,64
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
     ret
 ; end activate_turret_fireball
 
@@ -35,13 +35,19 @@ move_turret_fireball:
     call check_enemy_collisions
     or a ; a will be negative if have collided with player or laser
     ret m ; we're dead so nothing more to do
-; check whether it is time to spawn a seeker
+; target player
+    call orientation_to_player
+    ld (iy+sprite_heading),hl ; save sprite heading
+    call sprite_frame_heading
+; check whether it is time to spawn a fireball
     dec (iy+sprite_move_timer)
     ret nz
+; spwan a fireball    
+    call enemy_spawn_fireball
+    ; fall through to reset move timer
 turret_fireball_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,64 ; range is now 64-127
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
-    call enemy_spawn_seeker
+    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
     ret
