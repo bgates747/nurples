@@ -9746,7 +9746,7 @@ PC     Output      Line
 045600 00 00 00    0006*   tileset_ptr_idx: dl 0
 045603             0007*   tileset_ptrs:
 045603             0008*       ; dl tiles_xevious_levels
-045603 CC 56 04    0009*       dl tileset_00_levels
+045603 CB 56 04    0009*       dl tileset_00_levels
 045606 00 00 00    0010*   tileset_ptrs_end: dl 0 ; list terminator
 045609             0011*   
 045609             0012*   ; get a pointer to the current tileset
@@ -9845,184 +9845,181 @@ PC     Output      Line
 0456A5 ED 32 07    0098*       lea ix,ix+7 ; ix points to definition of first tile of first row
 0456A8 DD 22 00 65 0099*       ld (tiles_row_defs),ix
        04          
-0456AD             0100*   
-0456AD C9          0101*       ret ; DEBUG
-0456AE             0102*   
-0456AE             0103*   print_level:
-0456AE             0104*   level_x: equ 48
-0456AE             0105*   level_y: equ 0
-0456AE 0E 30       0106*       ld c,level_x
-0456B0 06 00       0107*       ld b,level_y
-0456B2 CD 37 19 04 0108*       call vdu_move_cursor
-0456B6 CD 10 01 04 0109*       call printInline
-0456BA 4C 65 76 65 0110*       asciz "Level: "
+0456AD             0100*   ; print_level:
+0456AD             0101*   level_x: equ 48
+0456AD             0102*   level_y: equ 0
+0456AD 0E 30       0103*       ld c,level_x
+0456AF 06 00       0104*       ld b,level_y
+0456B1 CD 37 19 04 0105*       call vdu_move_cursor
+0456B5 CD 10 01 04 0106*       call printInline
+0456B9 4C 65 76 65 0107*       asciz "Level: "
        6C 3A 20 00 
-0456C2 3A 57 56 04 0111*       ld a,(cur_level)
-0456C6 CD 5A 01 04 0112*       call printHexA
-0456CA             0113*       ; call printNewLine
-0456CA             0114*       ; ld hl,(cur_baseBufferId)
-0456CA             0115*       ; call printDec
-0456CA             0116*   
-0456CA             0117*   ; ; draw initial background tiles
-0456CA             0118*   ; ; TODO: make this a stars background
-0456CA             0119*   ;     ld hl,BUF_STATION_BG_00
-0456CA             0120*   ;     call vdu_buff_select
-0456CA             0121*   ;     ld bc,0
-0456CA             0122*   ;     ld de,field_top
-0456CA             0123*   ;     call vdu_plot_bmp
-0456CA             0124*   
-0456CA             0125*   ;     ld hl,BUF_STATION_BG_01
-0456CA             0126*   ;     call vdu_buff_select
-0456CA             0127*   ;     ld bc,0
-0456CA             0128*   ;     ld de,field_top+256
-0456CA             0129*   ;     call vdu_plot_bmp
-0456CA             0130*   
-0456CA C9          0131*       ret
-0456CB             0132*   ; end init_level
-0456CB             0056        include "levels_tileset_0.inc"
-0456CB             0001*   ; Generated from tiles/dg/dg0_00.tmx
-0456CB             0002*   
-0456CB 01          0003*   tileset_00_num_levels: db 1
-0456CC             0004*   
-0456CC             0005*   tileset_00_levels:
-0456CC D2 56 04    0006*   	dl tileset_00_level_00
-0456CF 00 00 00    0007*   	dl 0 ; list terminator
-0456D2             0008*   
-0456D2             0009*   tileset_00_level_00: ; Level 0
-0456D2 10          0010*   	db 16          ; num cols
-0456D3 20 00 00    0011*   	dl 32          ; num rows
-0456D6 00 02 00    0012*   	dl 512 ; base bufferId
-0456D9 00 00 00 00 0013*   	db 000,000,000,000,000,101,116,098,114,115,104,000,000,000,000,000
+0456C1 3A 57 56 04 0108*       ld a,(cur_level)
+0456C5 CD 5A 01 04 0109*       call printHexA
+0456C9             0110*       ; call printNewLine
+0456C9             0111*       ; ld hl,(cur_baseBufferId)
+0456C9             0112*       ; call printDec
+0456C9             0113*   
+0456C9             0114*   ; ; draw initial background tiles
+0456C9             0115*   ; ; TODO: make this a stars background
+0456C9             0116*   ;     ld hl,BUF_STATION_BG_00
+0456C9             0117*   ;     call vdu_buff_select
+0456C9             0118*   ;     ld bc,0
+0456C9             0119*   ;     ld de,field_top
+0456C9             0120*   ;     call vdu_plot_bmp
+0456C9             0121*   
+0456C9             0122*   ;     ld hl,BUF_STATION_BG_01
+0456C9             0123*   ;     call vdu_buff_select
+0456C9             0124*   ;     ld bc,0
+0456C9             0125*   ;     ld de,field_top+256
+0456C9             0126*   ;     call vdu_plot_bmp
+0456C9             0127*   
+0456C9 C9          0128*       ret
+0456CA             0129*   ; end init_level
+0456CA             0056        include "levels_tileset_0.inc"
+0456CA             0001*   ; Generated from tiles/dg/dg0_00.tmx
+0456CA             0002*   
+0456CA 01          0003*   tileset_00_num_levels: db 1
+0456CB             0004*   
+0456CB             0005*   tileset_00_levels:
+0456CB D1 56 04    0006*   	dl tileset_00_level_00
+0456CE 00 00 00    0007*   	dl 0 ; list terminator
+0456D1             0008*   
+0456D1             0009*   tileset_00_level_00: ; Level 0
+0456D1 10          0010*   	db 16          ; num cols
+0456D2 20 00 00    0011*   	dl 32          ; num rows
+0456D5 00 02 00    0012*   	dl 512 ; base bufferId
+0456D8 00 00 00 00 0013*   	db 000,000,000,000,000,101,116,098,114,115,104,000,000,000,000,000
        00 65 74 62 
        72 73 68 00 
        00 00 00 00 
-0456E9 00 00 00 65 0014*   	db 000,000,000,101,098,116,113,114,114,115,116,097,104,000,000,000
+0456E8 00 00 00 65 0014*   	db 000,000,000,101,098,116,113,114,114,115,116,097,104,000,000,000
        62 74 71 72 
        72 73 74 61 
        68 00 00 00 
-0456F9 00 65 61 F5 0015*   	db 000,101,097,245,246,098,097,098,098,099,113,113,114,098,104,000
+0456F8 00 65 61 F5 0015*   	db 000,101,097,245,246,098,097,098,098,099,113,113,114,098,104,000
        F6 62 61 62 
        62 63 71 71 
        72 62 68 00 
-045709 00 74 71 88 0016*   	db 000,116,113,136,137,115,113,114,113,114,098,099,113,114,100,000
+045708 00 74 71 88 0016*   	db 000,116,113,136,137,115,113,114,113,114,098,099,113,114,100,000
        89 73 71 72 
        71 72 62 63 
        71 72 64 00 
-045719 65 72 61 96 0017*   	db 101,114,097,150,151,099,097,105,098,098,081,082,074,083,084,104
+045718 65 72 61 96 0017*   	db 101,114,097,150,151,099,097,105,098,098,081,082,074,083,084,104
        97 63 61 69 
        62 62 51 52 
        4A 53 54 68 
-045729 63 71 72 96 0018*   	db 099,113,114,150,151,167,216,216,182,113,065,066,248,067,068,116
+045728 63 71 72 96 0018*   	db 099,113,114,150,151,167,216,216,182,113,065,066,248,067,068,116
        97 A7 D8 D8 
        B6 71 41 42 
        F8 43 44 74 
-045739 71 69 62 9A 0019*   	db 113,105,098,154,155,097,098,097,165,168,055,248,001,248,056,114
+045738 71 69 62 9A 0019*   	db 113,105,098,154,155,097,098,097,165,168,055,248,001,248,056,114
        9B 61 62 61 
        A5 A8 37 F8 
        01 F8 38 72 
-045749 71 72 64 72 0020*   	db 113,114,100,114,113,100,113,114,113,114,049,050,248,051,052,098
+045748 71 72 64 72 0020*   	db 113,114,100,114,113,100,113,114,113,114,049,050,248,051,052,098
        71 64 71 72 
        71 72 31 32 
        F8 33 34 62 
-045759 61 62 61 64 0021*   	db 097,098,097,100,097,098,100,098,098,098,033,034,074,035,036,099
+045758 61 62 61 64 0021*   	db 097,098,097,100,097,098,100,098,098,098,033,034,074,035,036,099
        61 62 64 62 
        62 62 21 22 
        4A 23 24 63 
-045769 71 64 71 72 0022*   	db 113,100,113,114,113,114,121,114,115,113,087,088,188,113,100,113
+045768 71 64 71 72 0022*   	db 113,100,113,114,113,114,121,114,115,113,087,088,188,113,100,113
        71 72 79 72 
        73 71 57 58 
        BC 71 64 71 
-045779 61 62 59 5A 0023*   	db 097,098,089,090,091,098,114,098,136,137,071,072,219,097,098,097
+045778 61 62 59 5A 0023*   	db 097,098,089,090,091,098,114,098,136,137,071,072,219,097,098,097
        5B 62 72 62 
        88 89 47 48 
        DB 61 62 61 
-045789 64 71 49 05 0024*   	db 100,113,073,005,075,171,220,172,134,135,171,220,236,220,220,172
+045788 64 71 49 05 0024*   	db 100,113,073,005,075,171,220,172,134,135,171,220,236,220,220,172
        4B AB DC AC 
        86 87 AB DC 
        EC DC DC AC 
-045799 62 64 39 3A 0025*   	db 098,100,057,058,059,097,098,100,134,135,099,100,097,098,100,098
+045798 62 64 39 3A 0025*   	db 098,100,057,058,059,097,098,100,134,135,099,100,097,098,100,098
        3B 61 62 64 
        86 87 63 64 
        61 62 64 62 
-0457A9 72 62 72 73 0026*   	db 114,098,114,115,113,116,099,113,154,155,115,113,100,113,114,113
+0457A8 72 62 72 73 0026*   	db 114,098,114,115,113,116,099,113,154,155,115,113,100,113,114,113
        71 74 63 71 
        9A 9B 73 71 
        64 71 72 71 
-0457B9 62 72 62 63 0027*   	db 098,114,098,099,113,114,105,114,241,242,099,097,098,097,098,100
+0457B8 62 72 62 63 0027*   	db 098,114,098,099,113,114,105,114,241,242,099,097,098,097,098,100
        71 72 69 72 
        F1 F2 63 61 
        62 61 62 64 
-0457C9 73 79 71 72 0028*   	db 115,121,113,114,097,098,113,114,180,114,113,100,113,121,113,114
+0457C8 73 79 71 72 0028*   	db 115,121,113,114,097,098,113,114,180,114,113,100,113,121,113,114
        61 62 71 72 
        B4 72 71 64 
        71 79 71 72 
-0457D9 61 62 98 99 0029*   	db 097,098,152,153,098,152,153,098,211,100,097,098,100,243,098,098
+0457D8 61 62 98 99 0029*   	db 097,098,152,153,098,152,153,098,211,100,097,098,100,243,098,098
        62 98 99 62 
        D3 64 61 62 
        64 F3 62 62 
-0457E9 64 71 86 87 0030*   	db 100,113,134,135,114,134,135,115,195,212,212,212,212,243,114,113
+0457E8 64 71 86 87 0030*   	db 100,113,134,135,114,134,135,115,195,212,212,212,212,243,114,113
        72 86 87 73 
        C3 D4 D4 D4 
        D4 F3 72 71 
-0457F9 62 61 F5 F6 0031*   	db 098,097,245,246,098,245,246,099,211,114,099,097,098,243,098,100
+0457F8 62 61 F5 F6 0031*   	db 098,097,245,246,098,245,246,099,211,114,099,097,098,243,098,100
        62 F5 F6 63 
        D3 72 63 61 
        62 F3 62 64 
-045809 71 72 F1 F2 0032*   	db 113,114,241,242,115,241,242,163,162,098,105,100,087,088,113,114
+045808 71 72 F1 F2 0032*   	db 113,114,241,242,115,241,242,163,162,098,105,100,087,088,113,114
        73 F1 F2 A3 
        A2 62 69 64 
        57 58 71 72 
-045819 73 71 51 52 0033*   	db 115,113,081,082,074,083,084,098,114,115,113,116,071,072,098,098
+045818 73 71 51 52 0033*   	db 115,113,081,082,074,083,084,098,114,115,113,116,071,072,098,098
        4A 53 54 62 
        72 73 71 74 
        47 48 62 62 
-045829 63 61 41 42 0034*   	db 099,097,065,066,248,067,068,113,089,090,090,090,090,091,114,113
+045828 63 61 41 42 0034*   	db 099,097,065,066,248,067,068,113,089,090,090,090,090,091,114,113
        F8 43 44 71 
        59 5A 5A 5A 
        5A 5B 72 71 
-045839 71 64 37 F8 0035*   	db 113,100,055,248,001,248,056,114,073,148,098,040,105,075,098,100
+045838 71 64 37 F8 0035*   	db 113,100,055,248,001,248,056,114,073,148,098,040,105,075,098,100
        01 F8 38 72 
        49 94 62 28 
        69 4B 62 64 
-045849 61 62 31 32 0036*   	db 097,098,049,050,248,051,052,114,073,132,056,005,055,075,113,114
+045848 61 62 31 32 0036*   	db 097,098,049,050,248,051,052,114,073,132,056,005,055,075,113,114
        F8 33 34 72 
        49 84 38 05 
        37 4B 71 72 
-045859 71 64 21 22 0037*   	db 113,100,033,034,074,035,036,114,073,247,116,040,123,075,098,121
+045858 71 64 21 22 0037*   	db 113,100,033,034,074,035,036,114,073,247,116,040,123,075,098,121
        4A 23 24 72 
        49 F7 74 28 
        7B 4B 62 79 
-045869 61 62 F1 F2 0038*   	db 097,098,241,242,100,241,242,098,073,113,243,121,107,075,099,113
+045868 61 62 F1 F2 0038*   	db 097,098,241,242,100,241,242,098,073,113,243,121,107,075,099,113
        64 F1 F2 62 
        49 71 F3 79 
        6B 4B 63 71 
-045879 67 71 86 87 0039*   	db 103,113,134,135,114,134,135,113,057,058,058,058,058,059,114,102
+045878 67 71 86 87 0039*   	db 103,113,134,135,114,134,135,113,057,058,058,058,058,059,114,102
        72 86 87 71 
        39 3A 3A 3A 
        3A 3B 72 66 
-045889 00 64 9A 9B 0040*   	db 000,100,154,155,098,154,155,100,098,098,099,180,098,100,098,000
+045888 00 64 9A 9B 0040*   	db 000,100,154,155,098,154,155,100,098,098,099,180,098,100,098,000
        62 9A 9B 64 
        62 62 63 B4 
        62 64 62 00 
-045899 00 67 72 63 0041*   	db 000,103,114,099,113,114,114,115,163,212,212,196,113,114,098,000
+045898 00 67 72 63 0041*   	db 000,103,114,099,113,114,114,115,163,212,212,196,113,114,098,000
        71 72 72 73 
        A3 D4 D4 C4 
        71 72 62 00 
-0458A9 00 00 62 71 0042*   	db 000,000,098,113,121,098,098,099,105,098,097,211,100,098,102,000
+0458A8 00 00 62 71 0042*   	db 000,000,098,113,121,098,098,099,105,098,097,211,100,098,102,000
        79 62 62 63 
        69 62 61 D3 
        64 62 66 00 
-0458B9 00 00 67 71 0043*   	db 000,000,103,113,114,100,114,113,100,113,114,179,114,102,000,000
+0458B8 00 00 67 71 0043*   	db 000,000,103,113,114,100,114,113,100,113,114,179,114,102,000,000
        72 64 72 71 
        64 71 72 B3 
        72 66 00 00 
-0458C9 00 00 00 00 0044*   	db 000,000,000,000,000,103,100,097,098,100,102,000,000,000,000,000
+0458C8 00 00 00 00 0044*   	db 000,000,000,000,000,103,100,097,098,100,102,000,000,000,000,000
        00 67 64 61 
        62 64 66 00 
        00 00 00 00 
-0458D9             0057        ; include "levels_xevious.inc"
-0458D9             0058        include "player.inc"
-0458D9 FF FF FF FF 0001*       align 256
+0458D8             0057        ; include "levels_xevious.inc"
+0458D8             0058        include "player.inc"
+0458D8 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -10031,7 +10028,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF    
+       FF FF FF FF 
 045900             0002*   
 045900             0003*   ; ######## GAME STATE VARIABLES #######
 045900             0004*   ; THESE MUST BE IN THIS ORDER FOR game_initialize TO WORK PROPERLY
@@ -10204,145 +10201,144 @@ PC     Output      Line
 045A1B             0163*   score_y: equ 1
 045A1B             0164*   ; prints the player's score
 045A1B             0165*   print_score:
-045A1B C9          0166*       ret ;DEBUG
-045A1C             0167*   
-045A1C 0E 30       0168*       ld c,score_x
-045A1E 06 01       0169*       ld b,score_y
-045A20 CD 37 19 04 0170*       call vdu_move_cursor
-045A24             0171*   ; TODO: make this part of the UI setup and only print as needed
-045A24 CD 10 01 04 0172*       call printInline
-045A28 53 63 6F 72 0173*       asciz "Score:"
+045A1B 0E 30       0166*       ld c,score_x
+045A1D 06 01       0167*       ld b,score_y
+045A1F CD 37 19 04 0168*       call vdu_move_cursor
+045A23             0169*   ; TODO: make this part of the UI setup and only print as needed
+045A23 CD 10 01 04 0170*       call printInline
+045A27 53 63 6F 72 0171*       asciz "Score:"
        65 3A 00    
-045A2F             0174*   ; END TODO
-045A2F 2A 00 59 04 0175*       ld hl,(player_score)
-045A33 CD 16 02 04 0176*       call printDec
-045A37 C9          0177*       ret
-045A38             0178*   
-045A38             0179*   ; ###################################################################
-045A38             0180*   ; TODO: the below is all stuff from the original code we need to port
-045A38             0181*   ; ###################################################################
-045A38             0182*   
-045A38             0183*   kill_player:
-045A38             0184*   ; ; set player status to dead
-045A38             0185*   ;     xor a; sets all player flags to zero
-045A38             0186*   ;     ld (player_collisions),a
-045A38             0187*   ; ; deduct a ship from the inventory
-045A38             0188*   ;     ld a,(player_ships)
-045A38             0189*   ;     dec a
-045A38             0190*   ;     ld (player_ships),a
-045A38             0191*   ; ; are we out of ships?
-045A38             0192*   ;     jp z,game_over
-045A38             0193*   ; ; wait a few ticks
-045A38             0194*   ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
-045A38             0195*   ;     ld (player_move_timer),a
-045A38             0196*   ; kill_player_loop:
-045A38             0197*   ;     call vdu_vblank
-045A38             0198*   ;     ld a,(player_move_timer)
-045A38             0199*   ;     dec a
-045A38             0200*   ;     ld (player_move_timer),a
-045A38             0201*   ;     jr nz,kill_player_loop
-045A38             0202*   ;     call player_init ; player respawn if timer zero
-045A38 C9          0203*       ret ; and out
-045A39             0204*   
-045A39             0205*   ; draws the player's shields level
-045A39             0206*   ; draw_shields:
-045A39             0207*   ; TODO: Agonize this routine
-045A39             0208*   ; ; prep the loop to draw the bars
-045A39             0209*   ;     ld a,(player_shields) ; snag shields
-045A39             0210*   ;     and a
-045A39             0211*   ;     ret z ; don't draw if zero shields
-045A39             0212*   ; ; set loop counter and drawing position
-045A39             0213*   ;     ld b,a ; loop counter
-045A39             0214*   ;     ld hl,#5300+48+12
-045A39             0215*   ; ; set color based on bars remaining
-045A39             0216*   ;     ld c,103 ; bright green 28fe0a
-045A39             0217*   ;     cp 9
-045A39             0218*   ;     jp p,draw_shields_loop
-045A39             0219*   ;     ld c,74 ; bright yellow eafe5b
-045A39             0220*   ;     cp 3
-045A39             0221*   ;     jp p,draw_shields_loop
-045A39             0222*   ;     ld c,28 ; bright red fe0a0a
-045A39             0223*   ; draw_shields_loop:
-045A39             0224*   ;     push bc ; yup,outta
-045A39             0225*   ;     push hl ; registers again
-045A39             0226*   ;     ; ld a,#A8 ; ▀,168
-045A39             0227*   ;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
-045A39             0228*   ;     ; call draw_char
-045A39             0229*   ;     call draw_num ; we nuked draw_char for the time being
-045A39             0230*   ;     pop hl
-045A39             0231*   ;     ld a,8
-045A39             0232*   ;     add a,l
-045A39             0233*   ;     ld l,a
-045A39             0234*   ;     pop bc
-045A39             0235*   ;     djnz draw_shields_loop
-045A39             0236*       ; ret
-045A39             0237*   
-045A39             0238*   
-045A39             0239*   ; draw_lives:
-045A39             0240*   ;     ld hl,player_small ; make small yellow ship the active sprite
-045A39             0241*   ;     ld (sprite_base_bufferId),hl
-045A39             0242*   ;     ; ld a,#80 ; northern orientation
-045A39             0243*   ;     ; ld (sprite_orientation),a
-045A39             0244*   ;     ld hl,0 ; north
-045A39             0245*   ;     ld (sprite_heading),hl
-045A39             0246*   ;     xor a
-045A39             0247*   ;     ld (sprite_frame),a
-045A39             0248*   ;     ld a,#56 ; top of visible screen
-045A39             0249*   ;     ld (sprite_y+1),a
-045A39             0250*   ;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-045A39             0251*   ;     ld a,(player_ships)
-045A39             0252*   ;     dec a ; we draw one fewer ships than lives
-045A39             0253*   ;     ret z ; nothing to draw here, move along
-045A39             0254*   ;     ld b,a ; loop counter
-045A39             0255*   ;     ld a,256-16 ; initial x position
-045A39             0256*   ; draw_lives_loop:
-045A39             0257*   ;     ld (sprite_x+1),a
-045A39             0258*   ;     push af
-045A39             0259*   ;     push bc
-045A39             0260*   ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-045A39             0261*   ;     pop bc
-045A39             0262*   ;     pop af
-045A39             0263*   ;     sub 10
-045A39             0264*   ;     djnz draw_lives_loop
-045A39             0265*   ;     ret
-045A39             0059        include "sprites.inc"
-045A39             0001*   ; ###### SPRITE TABLE FIELD INDICES ######
-045A39             0002*   table_bytes_per_record:    equ  41; 40 bytes ;40 bytes per sprite record
-045A39             0003*   sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
-045A39             0004*   ; sprite state variables
-045A39             0005*   sprite_state_variables:    equ   1; beginning of sprite state variables
-045A39             0006*   sprite_x:                  equ   1; 3 bytes ;16.8 fractional x position in pixels
-045A39             0007*   sprite_y:                  equ   4; 3 bytes ;16.8 fractional y position in pixels
-045A39             0008*   sprite_xvel:               equ   7; 3 bytes ;x-component velocity, 16.8 fixed, pixels
-045A39             0009*   sprite_yvel:               equ  10; 3 bytes ;y-component velocity, 16.8 fixed, pixels
-045A39             0010*   sprite_vel:                equ  13; 3 bytes ;velocity px/frame (16.8 fixed)
-045A39             0011*   sprite_heading:            equ  16; 3 bytes ;sprite movement direction deg256 16.8 fixed
-045A39             0012*   sprite_orientation:        equ  19; 3 bytes ;orientation bits
-045A39             0013*   ; sprite definition variables
-045A39             0014*   sprite_definitions:        equ  22; beginnning of sprite definition variables
-045A39             0015*   sprite_type:               equ  22; 1 bytes ;type of sprite as defined in enemies.inc
-045A39             0016*   sprite_base_bufferId:      equ  23; 3 bytes ;bitmap bufferId
-045A39             0017*   sprite_move_program:       equ  26; 3 bytes ;address of sprite's behavior subroutine
-045A39             0018*   sprite_collisions:         equ  29; 1 bytes ;see collisions.inc constants for bit definitions
-045A39             0019*   sprite_dim_x:              equ  30; 1 bytes ;sprite width in pixels
-045A39             0020*   sprite_dim_y:              equ  31; 1 bytes ;sprite height in pixels
-045A39             0021*   sprite_num_orientations:   equ  32; 1 bytes ;number of orientations for this sprite
-045A39             0022*   sprite_num_animations:     equ  33; 1 bytes ;number of animations for this sprite
-045A39             0023*   sprite_animation:          equ  34; 1 bytes ;current animation index, zero-based
-045A39             0024*   sprite_animation_timer:    equ  35; 1 bytes ;when hits zero, draw next animation
-045A39             0025*   sprite_move_timer:         equ  36; 1 bytes ;when zero, go to next move program, or step
-045A39             0026*   sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, varies
-045A39             0027*   sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
-045A39             0028*   sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
-045A39             0029*   sprite_frame:              equ  40; 1 bytes ;current animation frame
-045A39             0030*   
-045A39             0031*   ; ###### SPRITE TABLE VARIABLES ######
-045A39             0032*   ; maximum number of sprites
-045A39             0033*   table_max_records: equ 16 ; it can handle more but this is pushing it
-045A39             0034*   table_total_bytes: equ table_max_records*table_bytes_per_record
-045A39             0035*   
-045A39             0036*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
-045A39 FF FF FF FF 0037*       align 256
+045A2E             0172*   ; END TODO
+045A2E 2A 00 59 04 0173*       ld hl,(player_score)
+045A32 CD 16 02 04 0174*       call printDec
+045A36 C9          0175*       ret
+045A37             0176*   ; end print_score
+045A37             0177*   
+045A37             0178*   ; ###################################################################
+045A37             0179*   ; TODO: the below is all stuff from the original code we need to port
+045A37             0180*   ; ###################################################################
+045A37             0181*   
+045A37             0182*   kill_player:
+045A37             0183*   ; ; set player status to dead
+045A37             0184*   ;     xor a; sets all player flags to zero
+045A37             0185*   ;     ld (player_collisions),a
+045A37             0186*   ; ; deduct a ship from the inventory
+045A37             0187*   ;     ld a,(player_ships)
+045A37             0188*   ;     dec a
+045A37             0189*   ;     ld (player_ships),a
+045A37             0190*   ; ; are we out of ships?
+045A37             0191*   ;     jp z,game_over
+045A37             0192*   ; ; wait a few ticks
+045A37             0193*   ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
+045A37             0194*   ;     ld (player_move_timer),a
+045A37             0195*   ; kill_player_loop:
+045A37             0196*   ;     call vdu_vblank
+045A37             0197*   ;     ld a,(player_move_timer)
+045A37             0198*   ;     dec a
+045A37             0199*   ;     ld (player_move_timer),a
+045A37             0200*   ;     jr nz,kill_player_loop
+045A37             0201*   ;     call player_init ; player respawn if timer zero
+045A37 C9          0202*       ret ; and out
+045A38             0203*   
+045A38             0204*   ; draws the player's shields level
+045A38             0205*   ; draw_shields:
+045A38             0206*   ; TODO: Agonize this routine
+045A38             0207*   ; ; prep the loop to draw the bars
+045A38             0208*   ;     ld a,(player_shields) ; snag shields
+045A38             0209*   ;     and a
+045A38             0210*   ;     ret z ; don't draw if zero shields
+045A38             0211*   ; ; set loop counter and drawing position
+045A38             0212*   ;     ld b,a ; loop counter
+045A38             0213*   ;     ld hl,#5300+48+12
+045A38             0214*   ; ; set color based on bars remaining
+045A38             0215*   ;     ld c,103 ; bright green 28fe0a
+045A38             0216*   ;     cp 9
+045A38             0217*   ;     jp p,draw_shields_loop
+045A38             0218*   ;     ld c,74 ; bright yellow eafe5b
+045A38             0219*   ;     cp 3
+045A38             0220*   ;     jp p,draw_shields_loop
+045A38             0221*   ;     ld c,28 ; bright red fe0a0a
+045A38             0222*   ; draw_shields_loop:
+045A38             0223*   ;     push bc ; yup,outta
+045A38             0224*   ;     push hl ; registers again
+045A38             0225*   ;     ; ld a,#A8 ; ▀,168
+045A38             0226*   ;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
+045A38             0227*   ;     ; call draw_char
+045A38             0228*   ;     call draw_num ; we nuked draw_char for the time being
+045A38             0229*   ;     pop hl
+045A38             0230*   ;     ld a,8
+045A38             0231*   ;     add a,l
+045A38             0232*   ;     ld l,a
+045A38             0233*   ;     pop bc
+045A38             0234*   ;     djnz draw_shields_loop
+045A38             0235*       ; ret
+045A38             0236*   
+045A38             0237*   
+045A38             0238*   ; draw_lives:
+045A38             0239*   ;     ld hl,player_small ; make small yellow ship the active sprite
+045A38             0240*   ;     ld (sprite_base_bufferId),hl
+045A38             0241*   ;     ; ld a,#80 ; northern orientation
+045A38             0242*   ;     ; ld (sprite_orientation),a
+045A38             0243*   ;     ld hl,0 ; north
+045A38             0244*   ;     ld (sprite_heading),hl
+045A38             0245*   ;     xor a
+045A38             0246*   ;     ld (sprite_frame),a
+045A38             0247*   ;     ld a,#56 ; top of visible screen
+045A38             0248*   ;     ld (sprite_y+1),a
+045A38             0249*   ;     call vdu_buff_select ; TODO: convert to vdu_buff_select
+045A38             0250*   ;     ld a,(player_ships)
+045A38             0251*   ;     dec a ; we draw one fewer ships than lives
+045A38             0252*   ;     ret z ; nothing to draw here, move along
+045A38             0253*   ;     ld b,a ; loop counter
+045A38             0254*   ;     ld a,256-16 ; initial x position
+045A38             0255*   ; draw_lives_loop:
+045A38             0256*   ;     ld (sprite_x+1),a
+045A38             0257*   ;     push af
+045A38             0258*   ;     push bc
+045A38             0259*   ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
+045A38             0260*   ;     pop bc
+045A38             0261*   ;     pop af
+045A38             0262*   ;     sub 10
+045A38             0263*   ;     djnz draw_lives_loop
+045A38             0264*   ;     ret
+045A38             0059        include "sprites.inc"
+045A38             0001*   ; ###### SPRITE TABLE FIELD INDICES ######
+045A38             0002*   table_bytes_per_record:    equ  41; 40 bytes ;40 bytes per sprite record
+045A38             0003*   sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
+045A38             0004*   ; sprite state variables
+045A38             0005*   sprite_state_variables:    equ   1; beginning of sprite state variables
+045A38             0006*   sprite_x:                  equ   1; 3 bytes ;16.8 fractional x position in pixels
+045A38             0007*   sprite_y:                  equ   4; 3 bytes ;16.8 fractional y position in pixels
+045A38             0008*   sprite_xvel:               equ   7; 3 bytes ;x-component velocity, 16.8 fixed, pixels
+045A38             0009*   sprite_yvel:               equ  10; 3 bytes ;y-component velocity, 16.8 fixed, pixels
+045A38             0010*   sprite_vel:                equ  13; 3 bytes ;velocity px/frame (16.8 fixed)
+045A38             0011*   sprite_heading:            equ  16; 3 bytes ;sprite movement direction deg256 16.8 fixed
+045A38             0012*   sprite_orientation:        equ  19; 3 bytes ;orientation bits
+045A38             0013*   ; sprite definition variables
+045A38             0014*   sprite_definitions:        equ  22; beginnning of sprite definition variables
+045A38             0015*   sprite_type:               equ  22; 1 bytes ;type of sprite as defined in enemies.inc
+045A38             0016*   sprite_base_bufferId:      equ  23; 3 bytes ;bitmap bufferId
+045A38             0017*   sprite_move_program:       equ  26; 3 bytes ;address of sprite's behavior subroutine
+045A38             0018*   sprite_collisions:         equ  29; 1 bytes ;see collisions.inc constants for bit definitions
+045A38             0019*   sprite_dim_x:              equ  30; 1 bytes ;sprite width in pixels
+045A38             0020*   sprite_dim_y:              equ  31; 1 bytes ;sprite height in pixels
+045A38             0021*   sprite_num_orientations:   equ  32; 1 bytes ;number of orientations for this sprite
+045A38             0022*   sprite_num_animations:     equ  33; 1 bytes ;number of animations for this sprite
+045A38             0023*   sprite_animation:          equ  34; 1 bytes ;current animation index, zero-based
+045A38             0024*   sprite_animation_timer:    equ  35; 1 bytes ;when hits zero, draw next animation
+045A38             0025*   sprite_move_timer:         equ  36; 1 bytes ;when zero, go to next move program, or step
+045A38             0026*   sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, varies
+045A38             0027*   sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
+045A38             0028*   sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
+045A38             0029*   sprite_frame:              equ  40; 1 bytes ;current animation frame
+045A38             0030*   
+045A38             0031*   ; ###### SPRITE TABLE VARIABLES ######
+045A38             0032*   ; maximum number of sprites
+045A38             0033*   table_max_records: equ 16 ; it can handle more but this is pushing it
+045A38             0034*   table_total_bytes: equ table_max_records*table_bytes_per_record
+045A38             0035*   
+045A38             0036*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
+045A38 FF FF FF FF 0037*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -10391,7 +10387,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF    
+       FF FF FF FF 
 045B00             0038*   table_base:
 045B00 00 00 00 00 0039*   sprite_start_variables:  blkb table_total_bytes, 0 ; fill with zeroes
        00 00 00 00 

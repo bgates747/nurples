@@ -163,8 +163,6 @@ score_x: equ 48
 score_y: equ 1
 ; prints the player's score
 print_score:
-    ret ;DEBUG
-    
     ld c,score_x
     ld b,score_y
     call vdu_move_cursor
@@ -175,6 +173,7 @@ print_score:
     ld hl,(player_score)
     call printDec
     ret
+; end print_score
 
 ; ###################################################################
 ; TODO: the below is all stuff from the original code we need to port
