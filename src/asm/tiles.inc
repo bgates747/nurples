@@ -24,12 +24,12 @@ tiles_plot:
     ld l,2 ; direction=down
     ld h,1 ; speed=1 px
     call vdu_scroll_down
-; ; set gfx viewport to one scanline to optimise plotting tiles
-;     ld bc,0 ; leftmost x-coord
-;     ld de,0 ; topmost y-coord
-;     ld ix,255 ; rightmost x-coord
-;     ld iy,0 ; bottommost y-coord
-;     call vdu_set_gfx_viewport
+; set gfx viewport to one scanline to optimise plotting tiles
+    ld bc,0 ; leftmost x-coord
+    ld de,0 ; topmost y-coord
+    ld ix,255 ; rightmost x-coord
+    ld iy,0 ; bottommost y-coord
+    call vdu_set_gfx_viewport
 ; ; plot the background
 ;     call bg_plot
 ; initialize tiles loop
