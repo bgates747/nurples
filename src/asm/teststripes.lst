@@ -11471,339 +11471,333 @@ PC     Output      Line
 046328 2E 02       0024*       ld l,2 ; direction=down
 04632A 26 01       0025*       ld h,1 ; speed=1 px
 04632C CD 63 19 04 0026*       call vdu_scroll_down
-046330             0027*   ; ; set gfx viewport to one scanline to optimise plotting tiles
-046330             0028*   ;     ld bc,0 ; leftmost x-coord
-046330             0029*   ;     ld de,0 ; topmost y-coord
-046330             0030*   ;     ld ix,255 ; rightmost x-coord
-046330             0031*   ;     ld iy,0 ; bottommost y-coord
-046330             0032*   ;     call vdu_set_gfx_viewport
-046330             0033*   ; ; plot the background
-046330             0034*   ;     call bg_plot
-046330             0035*   ; initialize tiles loop
-046330 21 00 00 00 0036*       ld hl,0 ; init plotting x-coordinate
-046334 22 0A 63 04 0037*       ld (tiles_x_plot),hl
-046338 2A 00 63 04 0038*       ld hl,(tiles_row_defs)
-04633C 3A 06 63 04 0039*       ld a,(tiles_cols)
-046340 47          0040*       ld b,a ; column loop counter
-046341             0041*   @loop:
-046341 C5          0042*       push bc ; save the loop counter
-046342             0043*   ; read the tile defintion for the current column
-046342 7E          0044*       ld a,(hl) ; a has tile definition
-046343 E5          0045*       push hl ; save pointer to tile definition
-046344 2A 07 63 04 0046*       ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
-046348 6F          0047*       ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
-046349 CD 38 1A 04 0048*       call vdu_buff_select ; tile bitmap buffer is now active
-04634D             0049*   ; plot the active bitmap
-04634D ED 4B 0A 63 0050*       ld bc,(tiles_x_plot)
+046330             0027*   ; set gfx viewport to one scanline to optimise plotting tiles
+046330 01 00 00 00 0028*       ld bc,0 ; leftmost x-coord
+046334 11 00 00 00 0029*       ld de,0 ; topmost y-coord
+046338 DD 21 FF 00 0030*       ld ix,255 ; rightmost x-coord
+       00          
+04633D FD 21 00 00 0031*       ld iy,0 ; bottommost y-coord
+       00          
+046342 CD EB 19 04 0032*       call vdu_set_gfx_viewport
+046346             0033*   ; plot the background
+046346 CD 4E 64 04 0034*       call bg_plot
+04634A             0035*   ; initialize tiles loop
+04634A 21 00 00 00 0036*       ld hl,0 ; init plotting x-coordinate
+04634E 22 0A 63 04 0037*       ld (tiles_x_plot),hl
+046352 2A 00 63 04 0038*       ld hl,(tiles_row_defs)
+046356 3A 06 63 04 0039*       ld a,(tiles_cols)
+04635A 47          0040*       ld b,a ; column loop counter
+04635B             0041*   @loop:
+04635B C5          0042*       push bc ; save the loop counter
+04635C             0043*   ; read the tile defintion for the current column
+04635C 7E          0044*       ld a,(hl) ; a has tile definition
+04635D E5          0045*       push hl ; save pointer to tile definition
+04635E 2A 07 63 04 0046*       ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
+046362 6F          0047*       ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
+046363 CD 38 1A 04 0048*       call vdu_buff_select ; tile bitmap buffer is now active
+046367             0049*   ; plot the active bitmap
+046367 ED 4B 0A 63 0050*       ld bc,(tiles_x_plot)
        04          
-046352 ED 5B 0D 63 0051*       ld de,(tiles_y_plot)
+04636C ED 5B 0D 63 0051*       ld de,(tiles_y_plot)
        04          
-046357 CD 20 1E 04 0052*       call vdu_plot_bmp
-04635B             0053*   ; bump x-coords the width of one tile and save it
-04635B 2A 0A 63 04 0054*       ld hl,(tiles_x_plot)
-04635F 01 10 00 00 0055*       ld bc,16
-046363 09          0056*       add hl,bc
-046364 22 0A 63 04 0057*       ld (tiles_x_plot),hl
-046368             0058*   ; prepare to loop to next column
-046368 E1          0059*       pop hl ; get back pointer to tile def
-046369 23          0060*       inc hl ; bump it to the next column
-04636A C1          0061*       pop bc ; snag our loop counter
-04636B 10 D4       0062*       djnz @loop
-04636D             0063*   ; increment tiles plotting y-coordinate
-04636D             0064*   ; when it hits zero, we go to next row of tiles in the map
-04636D             0065*   ; (we use ix b/c we want to preserve hl for the next step)
-04636D DD 2A 0D 63 0066*       ld ix,(tiles_y_plot)
+046371 CD 20 1E 04 0052*       call vdu_plot_bmp
+046375             0053*   ; bump x-coords the width of one tile and save it
+046375 2A 0A 63 04 0054*       ld hl,(tiles_x_plot)
+046379 01 10 00 00 0055*       ld bc,16
+04637D 09          0056*       add hl,bc
+04637E 22 0A 63 04 0057*       ld (tiles_x_plot),hl
+046382             0058*   ; prepare to loop to next column
+046382 E1          0059*       pop hl ; get back pointer to tile def
+046383 23          0060*       inc hl ; bump it to the next column
+046384 C1          0061*       pop bc ; snag our loop counter
+046385 10 D4       0062*       djnz @loop
+046387             0063*   ; increment tiles plotting y-coordinate
+046387             0064*   ; when it hits zero, we go to next row of tiles in the map
+046387             0065*   ; (we use ix b/c we want to preserve hl for the next step)
+046387 DD 21 0D 63 0066*       ld ix,tiles_y_plot
        04          
-046372 11 01 00 00 0067*       ld de,1
-046376 DD 19       0068*       add ix,de
-046378 DD 22 0D 63 0069*       ld (tiles_y_plot),ix
-       04          
-04637D             0070*       ; ret nz
-04637D             0071*   ; DEBUG
-04637D DD 7D       0072*       ld a,ixl
-04637F FE 01       0073*       cp 1
-046381 C0          0074*       ret nz
-046382             0075*   ; END DEBUG
-046382             0076*   ; do active tiles
-046382 E5          0077*       push hl ; save pointer to next row tile def
-046383 CD B5 63 04 0078*       call do_active_tiles
-046387 E1          0079*       pop hl ; get back pointer to next row tile def
-046388             0080*   ; time to bump tiles_row_defs to next row
-046388             0081*   ; (hl was already there at the end of the loop)
-046388 22 00 63 04 0082*       ld (tiles_row_defs),hl
-04638C             0083*   ; reset coords to plot next row of tiles
-04638C 21 00 00 00 0084*       ld hl,0
-046390 22 0A 63 04 0085*       ld (tiles_x_plot),hl
-046394 21 F1 FF FF 0086*       ld hl,-15
-046398 22 0D 63 04 0087*       ld (tiles_y_plot),hl
-04639C             0088*   ; decrement tiles row counter
-04639C 21 03 63 04 0089*       ld hl,tiles_row
-0463A0 35          0090*       dec (hl)
-0463A1 C0          0091*       ret nz
-0463A2             0092*   @inc_level:
-0463A2             0093*   ; increase the number of enemy sprites
-0463A2 3A 32 21 04 0094*       ld a,(max_enemy_sprites)
-0463A6 3C          0095*       inc a
-0463A7 FE 10       0096*       cp table_max_records ; if we're at the global limit,skip ahead at max level
-0463A9 CA 6C 54 04 0097*       jp z,next_level
-0463AD 32 32 21 04 0098*       ld (max_enemy_sprites),a ; otherwise save the updated number
-0463B1 C3 6C 54 04 0099*       jp next_level
-0463B5             0100*   ; end tiles_plot
-0463B5             0101*   
-0463B5             0102*   do_active_tiles:
-0463B5             0103*   ; initialize tiles loop
-0463B5 21 00 00 00 0104*       ld hl,0 ; init plotting x-coordinate
-0463B9 22 0A 63 04 0105*       ld (tiles_x_plot),hl
-0463BD 2A 00 63 04 0106*       ld hl,(tiles_row_defs)
-0463C1 3A 06 63 04 0107*       ld a,(tiles_cols)
-0463C5 47          0108*       ld b,a ; column loop counter
-0463C6             0109*   @loop:
-0463C6 C5          0110*       push bc ; save the loop counter
-0463C7             0111*   ; read the tile defintion for the current column
-0463C7 7E          0112*       ld a,(hl) ; a has tile definition
-0463C8 E5          0113*       push hl ; save pointer to tile definition
-0463C9 B7          0114*       or a ; check for null tile
-0463CA CA E6 63 04 0115*       jp z,@next_tile ; skip to next tile if null
-0463CE FE 11       0116*       cp 17 ; carry reset if active tile
-0463D0 D2 E6 63 04 0117*       jp nc,@next_tile ; skip to next tile if not active
-0463D4             0118*   ; call the tile activation routine
-0463D4 21 41 64 04 0119*       ld hl,tile_activation_routines
-0463D8 16 03       0120*       ld d,3 ; three bytes per table entry
-0463DA 5F          0121*       ld e,a ; a is the tile type
-0463DB ED 5C       0122*       mlt de ; de is now the offset to the table entry
-0463DD 19          0123*       add hl,de ; hl is now the address of the table entry
-0463DE ED 27       0124*       ld hl,(hl) ; hl is now the activation routine address
-0463E0             0125*       callHL ; call the activation routine
-0463E0 01 E6 63 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-0463E4 C5          0002*M1     push bc ; which constitutes the return address
-0463E5 E9          0003*M1     jp (hl) ; Jump to the address in HL
-0463E6             0004*M1 @@:
-0463E6             0126*   @next_tile:
-0463E6             0127*   ; bump x-coords the width of one tile and save it
-0463E6 2A 0A 63 04 0128*       ld hl,(tiles_x_plot)
-0463EA 01 10 00 00 0129*       ld bc,16
-0463EE 09          0130*       add hl,bc
-0463EF 22 0A 63 04 0131*       ld (tiles_x_plot),hl
-0463F3             0132*   ; prepare to loop to next column
-0463F3 E1          0133*       pop hl ; get back pointer to tile def
-0463F4 23          0134*       inc hl ; bump it to the next column
-0463F5 C1          0135*       pop bc ; snag our loop counter
-0463F6 10 CE       0136*       djnz @loop
-0463F8 C9          0137*       ret ; done
-0463F9             0138*   ; end do_active_tiles
-0463F9             0139*   
-0463F9             0140*   ; create a new sprite at the same location as an active tile
-0463F9             0141*   ; inputs: hl = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
-0463F9             0142*   spawn_sprite_from_tile:
-0463F9 CD 2B 5D 04 0143*       call spawn_sprite
-0463FD D0          0144*       ret nc ; no carry means no free sprite slots, so we go home
-0463FE             0145*   ; update the new sprite's position and make it visible
-0463FE 2A 0A 63 04 0146*       ld hl,(tiles_x_plot)
-046402             0147*       hlu_mul256
-046402 29          0001*M1     add hl,hl ; * 2
-046403 29          0002*M1     add hl,hl ; * 4
-046404 29          0003*M1     add hl,hl ; * 8
-046405 29          0004*M1     add hl,hl ; * 16
-046406 29          0005*M1     add hl,hl ; * 32
-046407 29          0006*M1     add hl,hl ; * 64
-046408 29          0007*M1     add hl,hl ; * 128
-046409 29          0008*M1     add hl,hl ; * 256
-04640A E5          0148*       push hl
-04640B C1          0149*       pop bc
-04640C DD 0F 01    0150*       ld (ix+sprite_x),bc
-04640F 11 00 FF FF 0151*       ld de,-1*256 ; TODO: implement y-coord for reals
-046413 DD 1F 04    0152*       ld (ix+sprite_y),de
-046416 21 00 01 00 0153*       ld hl,1*256
-04641A DD 2F 0A    0154*       ld (ix+sprite_yvel),hl
-04641D             0155*   ; return to caller
-04641D 37          0156*       scf ; set carry flag to indicate success
-04641E C9          0157*       ret
-04641F             0158*   ; end spawn_sprite_from_tile
-04641F             0159*   
-04641F             0160*   move_active_tile:
-04641F             0161*   ; y-axis movement
-04641F FD 27 04    0162*       ld hl,(iy+sprite_y)
-046422 FD 17 0A    0163*       ld de,(iy+sprite_yvel)
-046425 19          0164*       add hl,de
-046426 FD 2F 04    0165*       ld (iy+sprite_y),hl
-046429             0166*   ; detect screen edge collisions
-046429 AF          0167*       xor a ; reset screen edge collision flag and clear carry
-04642A 32 94 5B 04 0168*       ld (sprite_screen_edge),a
-04642E             0169*   ; y-axis bottom is all we need to test
-04642E 11 00 91 FE 0170*       ld de,-sprite_bottom*256
-046432 ED 5A       0171*       adc hl,de
-046434 F2 39 64 04 0172*       jp p,@bottom ; scrolled off screen so deactivate
-046438 C9          0173*       ret ; still on screen so do nothing further
-046439             0174*   @bottom:
-046439 3E 04       0175*       ld a,collide_bottom
-04643B 32 94 5B 04 0176*       ld (sprite_screen_edge),a
-04643F C9          0177*       ret
-046440             0178*   
-046440             0179*   
-046440             0180*   ; bg_y_plot: dl -1
-046440             0181*   ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
-046440             0182*   
-046440             0183*   bg_plot: ; TODO: implement this
-046440             0184*   ; ; load current bg tile bufferId as default
-046440             0185*   ;     ld hl,(bg_bufferId)
-046440             0186*   ; ; check whether it is time for a new background tile
-046440             0187*   ;     ld a,(bg_y_plot)
-046440             0188*   ;     inc a
-046440             0189*   ;     ld (bg_y_plot),a
-046440             0190*   ;     jp nz,@F ; not time for a new tile so draw current one
-046440             0191*   ; ; load the next background tile
-046440             0192*   ;     ld hl,BUF_STATION_BG_00
-046440             0193*   ;     call rand_8
-046440             0194*   ;     and %0000011
-046440             0195*   ;     add a,l
-046440             0196*   ;     ld l,a
-046440             0197*   ;     ld a,0
-046440             0198*   ;     adc a,h
-046440             0199*   ;     ld h,a
-046440             0200*   ;     ld (bg_bufferId),hl
-046440             0201*   ; @@:
-046440             0202*   ;     call vdu_buff_select
-046440             0203*   ;     ld bc,0
-046440             0204*   ;     ld de,(bg_y_plot)
-046440             0205*   ;     inc de
-046440             0206*   ;     call vdu_plot_bmp
-046440             0207*   ; all done
-046440 C9          0208*       ret
-046441             0209*   
-046441             0210*   ; ###### TODO: NEW CODE TO IMPLEMENT ######
-046441             0211*   tile_pad_small: equ 1
-046441             0212*   tile_pad_med: equ 2
-046441             0213*   tile_pad_large: equ 3
-046441             0214*   tile_pad_huge: equ 4
-046441             0215*   tile_turret_fireball: equ 5
-046441             0216*   tile_laser_turret: equ 6
-046441             0217*   tile_twin_laser_turret: equ 7
-046441             0218*   tile_gatling_turret: equ 8
-046441             0219*   tile_electrode_r: equ 9
-046441             0220*   tile_electrode_u: equ 10
-046441             0221*   tile_piston_r: equ 11
-046441             0222*   tile_piston_u: equ 12
-046441             0223*   tile_spark_r: equ 13
-046441             0224*   tile_spark_u: equ 14
-046441             0225*   tile_flame_r: equ 15
-046441             0226*   tile_flame_u: equ 16
-046441             0227*   
-046441             0228*   active_tile_timer: equ 24 ; 2/10ths of a second
-046441             0229*   tile_activation_routines:
-046441 74 64 04    0230*       dl activate_null_tile ; dummy spacer since tiled is 1-based
-046444 13 65 04    0231*       dl activate_pad_small
-046447 74 64 04    0232*       dl activate_null_tile  ;  activate_pad_med
-04644A 74 64 04    0233*       dl activate_null_tile  ;  activate_pad_large
-04644D 74 64 04    0234*       dl activate_null_tile  ;  activate_pad_huge
-046450 13 66 04    0235*       dl activate_turret_fireball
-046453 74 64 04    0236*       dl activate_null_tile  ;  activate_laser_turret
-046456 74 64 04    0237*       dl activate_null_tile  ;  activate_twin_laser_turret
-046459 74 64 04    0238*       dl activate_null_tile  ;  activate_gatling_turret
-04645C 74 64 04    0239*       dl activate_null_tile  ;  activate_electrode_r
-04645F 74 64 04    0240*       dl activate_null_tile  ;  activate_electrode_u
-046462 74 64 04    0241*       dl activate_null_tile  ;  activate_piston_r
-046465 74 64 04    0242*       dl activate_null_tile  ;  activate_piston_u
-046468 74 64 04    0243*       dl activate_null_tile  ;  activate_spark_r
-04646B 74 64 04    0244*       dl activate_null_tile  ;  activate_spark_u
-04646E 74 64 04    0245*       dl activate_null_tile  ;  activate_flame_r
-046471 74 64 04    0246*       dl activate_null_tile  ;  activate_flame_u
-046474             0247*   ; end tile_activation_routines
-046474             0248*   
-046474             0249*   activate_null_tile:
-046474 C9          0250*       ret ; dummy routine, do nothing
-046475             0251*   
-046475             0252*   ; ld_act_laser_turret:
-046475             0253*   ;     ; call sprite_variables_to_stack
-046475             0254*   
-046475             0255*   ;     ld hl,move_laser_turret
-046475             0256*   ;     ld (sprite_move_program),hl
-046475             0257*   
-046475             0258*   ;     xor a
-046475             0259*   ;     ld (sprite_animation),a
-046475             0260*   ;     ld (sprite_move_step),a
-046475             0261*   
-046475             0262*   ;     call rand_8     ; snag a random number
-046475             0263*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
-046475             0264*   ;     add a,64 ; range is now 64-127
-046475             0265*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
-046475             0266*   
-046475             0267*   ;     ld a,%10 ; collides with laser but not player
-046475             0268*   ;     ld (iy+sprite_collisions),a
-046475             0269*   
-046475             0270*   ;     ld a,#10 ; BCD
-046475             0271*   ;     ld (sprite_points),a
-046475             0272*   ;     ld a,0 ; binary
-046475             0273*   ;     ld (sprite_shield_damage),a
-046475             0274*   
-046475             0275*   ;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
-046475             0276*   ;     jp dt_ld_act
-046475             0277*   
-046475             0278*   
-046475             0279*   ; move_laser_turret:
-046475             0280*   ; ; compute orientation to player
-046475             0281*   ;     call orientation_to_player
-046475             0282*   ; ; h.l 8.8 fixed angle256 to player
-046475             0283*   ; ; bc and de as signed 16-bit integers
-046475             0284*   ; ; representing delta-x/y *to* target respectively
-046475             0285*   ;     ld (Bearing_t),hl
-046475             0286*   ;     ld hl,0x0400
-046475             0287*   ;     ld (Vp),hl
-046475             0288*   ;     call targeting_computer
-046475             0289*   ;     ld (sprite_heading),hl ; store bearing to player
-046475             0290*   ; ; is it time to launch a fireball?
-046475             0291*   ;     ld hl,sprite_move_timer
-046475             0292*   ;     dec (hl)
-046475             0293*   ;     jp nz,move_laser_turret_boilerplate
-046475             0294*   ;     call fireballs_init
-046475             0295*   ;     ; reset move timer so can fire again if player doesn't take us out
-046475             0296*   ;     call rand_8     ; snag a random number
-046475             0297*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
-046475             0298*   ;     add a,64 ; range is now 64-127
-046475             0299*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
-046475             0300*   ; move_laser_turret_boilerplate:
-046475             0301*   ;     call move_active_tiles
-046475             0302*   ;     call check_collisions
-046475             0303*   ;     ret
-046475             0304*   
-046475             0305*   
-046475             0306*   ; fireballs_init:
-046475             0307*   ;     ; call sprite_variables_to_stack
-046475             0308*   
-046475             0309*   ;     ld hl,enemy_fireball
-046475             0310*   ;     ld (sprite_base_bufferId),hl
-046475             0311*   
-046475             0312*   ;     ld hl,move_fireballs
-046475             0313*   ;     ld (sprite_move_program),hl
-046475             0314*   
-046475             0315*   ;     ld a,%11 ; collides with laser and player
-046475             0316*   ;     ld (iy+sprite_collisions),a
-046475             0317*   
-046475             0318*   ;     ld hl,(Vp)
-046475             0319*   ;     ld (sprite_vel),hl
-046475             0320*   ;     ld hl,(Vp_x)
-046475             0321*   ;     ld (sprite_xvel),hl
-046475             0322*   ;     ld hl,(Vp_y)
-046475             0323*   ;     inc h ; account for ground movement
-046475             0324*   ;     ld (sprite_yvel),hl
-046475             0325*   
-046475             0326*   ;     xor a ; zero a
-046475             0327*   ;     ld (sprite_animation),a
-046475             0328*   ;     ld (sprite_move_step),a
-046475             0329*   ;     ld (sprite_move_timer),a
-046475             0330*   
-046475             0331*   ;     ld a,6 ; 1/10th of a second timer
-046475             0332*   ;     ld (sprite_animation_timer),a
-046475             0333*   
-046475             0334*   ;     ld a,0x00 ; BCD
-046475             0335*   ;     ld (sprite_points),a
-046475             0336*   ;     ld a,1 ; binary
-046475             0337*   ;     ld (sprite_shield_damage),a
-046475             0338*   
-046475             0339*   ;     call table_add_record ; plops that on the sprite stack for later
-046475             0340*   ;     ; call sprite_variables_from_stack ; come back to where we started
-046475             0341*   ;     ret
-046475             0063        include "tile_pad_small.inc"
-046475 FF FF FF FF 0001*       align 256
+04638C DD 34 00    0067*       inc (ix)
+04638F C0          0068*       ret nz
+046390             0069*   ; do active tiles
+046390 E5          0070*       push hl ; save pointer to next row tile def
+046391 CD C3 63 04 0071*       call do_active_tiles
+046395 E1          0072*       pop hl ; get back pointer to next row tile def
+046396             0073*   ; time to bump tiles_row_defs to next row
+046396             0074*   ; (hl was already there at the end of the loop)
+046396 22 00 63 04 0075*       ld (tiles_row_defs),hl
+04639A             0076*   ; reset coords to plot next row of tiles
+04639A 21 00 00 00 0077*       ld hl,0
+04639E 22 0A 63 04 0078*       ld (tiles_x_plot),hl
+0463A2 21 F1 FF FF 0079*       ld hl,-15
+0463A6 22 0D 63 04 0080*       ld (tiles_y_plot),hl
+0463AA             0081*   ; decrement tiles row counter
+0463AA 21 03 63 04 0082*       ld hl,tiles_row
+0463AE 35          0083*       dec (hl)
+0463AF C0          0084*       ret nz
+0463B0             0085*   @inc_level:
+0463B0             0086*   ; increase the number of enemy sprites
+0463B0 3A 32 21 04 0087*       ld a,(max_enemy_sprites)
+0463B4 3C          0088*       inc a
+0463B5 FE 10       0089*       cp table_max_records ; if we're at the global limit,skip ahead at max level
+0463B7 CA 6C 54 04 0090*       jp z,next_level
+0463BB 32 32 21 04 0091*       ld (max_enemy_sprites),a ; otherwise save the updated number
+0463BF C3 6C 54 04 0092*       jp next_level
+0463C3             0093*   ; end tiles_plot
+0463C3             0094*   
+0463C3             0095*   do_active_tiles:
+0463C3             0096*   ; initialize tiles loop
+0463C3 21 00 00 00 0097*       ld hl,0 ; init plotting x-coordinate
+0463C7 22 0A 63 04 0098*       ld (tiles_x_plot),hl
+0463CB 2A 00 63 04 0099*       ld hl,(tiles_row_defs)
+0463CF 3A 06 63 04 0100*       ld a,(tiles_cols)
+0463D3 47          0101*       ld b,a ; column loop counter
+0463D4             0102*   @loop:
+0463D4 C5          0103*       push bc ; save the loop counter
+0463D5             0104*   ; read the tile defintion for the current column
+0463D5 7E          0105*       ld a,(hl) ; a has tile definition
+0463D6 E5          0106*       push hl ; save pointer to tile definition
+0463D7 B7          0107*       or a ; check for null tile
+0463D8 CA F4 63 04 0108*       jp z,@next_tile ; skip to next tile if null
+0463DC FE 11       0109*       cp 17 ; carry reset if active tile
+0463DE D2 F4 63 04 0110*       jp nc,@next_tile ; skip to next tile if not active
+0463E2             0111*   ; call the tile activation routine
+0463E2 21 4F 64 04 0112*       ld hl,tile_activation_routines
+0463E6 16 03       0113*       ld d,3 ; three bytes per table entry
+0463E8 5F          0114*       ld e,a ; a is the tile type
+0463E9 ED 5C       0115*       mlt de ; de is now the offset to the table entry
+0463EB 19          0116*       add hl,de ; hl is now the address of the table entry
+0463EC ED 27       0117*       ld hl,(hl) ; hl is now the activation routine address
+0463EE             0118*       callHL ; call the activation routine
+0463EE 01 F4 63 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+0463F2 C5          0002*M1     push bc ; which constitutes the return address
+0463F3 E9          0003*M1     jp (hl) ; Jump to the address in HL
+0463F4             0004*M1 @@:
+0463F4             0119*   @next_tile:
+0463F4             0120*   ; bump x-coords the width of one tile and save it
+0463F4 2A 0A 63 04 0121*       ld hl,(tiles_x_plot)
+0463F8 01 10 00 00 0122*       ld bc,16
+0463FC 09          0123*       add hl,bc
+0463FD 22 0A 63 04 0124*       ld (tiles_x_plot),hl
+046401             0125*   ; prepare to loop to next column
+046401 E1          0126*       pop hl ; get back pointer to tile def
+046402 23          0127*       inc hl ; bump it to the next column
+046403 C1          0128*       pop bc ; snag our loop counter
+046404 10 CE       0129*       djnz @loop
+046406 C9          0130*       ret ; done
+046407             0131*   ; end do_active_tiles
+046407             0132*   
+046407             0133*   ; create a new sprite at the same location as an active tile
+046407             0134*   ; inputs: hl = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
+046407             0135*   spawn_sprite_from_tile:
+046407 CD 2B 5D 04 0136*       call spawn_sprite
+04640B D0          0137*       ret nc ; no carry means no free sprite slots, so we go home
+04640C             0138*   ; update the new sprite's position and make it visible
+04640C 2A 0A 63 04 0139*       ld hl,(tiles_x_plot)
+046410             0140*       hlu_mul256
+046410 29          0001*M1     add hl,hl ; * 2
+046411 29          0002*M1     add hl,hl ; * 4
+046412 29          0003*M1     add hl,hl ; * 8
+046413 29          0004*M1     add hl,hl ; * 16
+046414 29          0005*M1     add hl,hl ; * 32
+046415 29          0006*M1     add hl,hl ; * 64
+046416 29          0007*M1     add hl,hl ; * 128
+046417 29          0008*M1     add hl,hl ; * 256
+046418 E5          0141*       push hl
+046419 C1          0142*       pop bc
+04641A DD 0F 01    0143*       ld (ix+sprite_x),bc
+04641D 11 00 FF FF 0144*       ld de,-1*256 ; TODO: implement y-coord for reals
+046421 DD 1F 04    0145*       ld (ix+sprite_y),de
+046424 21 00 01 00 0146*       ld hl,1*256
+046428 DD 2F 0A    0147*       ld (ix+sprite_yvel),hl
+04642B             0148*   ; return to caller
+04642B 37          0149*       scf ; set carry flag to indicate success
+04642C C9          0150*       ret
+04642D             0151*   ; end spawn_sprite_from_tile
+04642D             0152*   
+04642D             0153*   move_active_tile:
+04642D             0154*   ; y-axis movement
+04642D FD 27 04    0155*       ld hl,(iy+sprite_y)
+046430 FD 17 0A    0156*       ld de,(iy+sprite_yvel)
+046433 19          0157*       add hl,de
+046434 FD 2F 04    0158*       ld (iy+sprite_y),hl
+046437             0159*   ; detect screen edge collisions
+046437 AF          0160*       xor a ; reset screen edge collision flag and clear carry
+046438 32 94 5B 04 0161*       ld (sprite_screen_edge),a
+04643C             0162*   ; y-axis bottom is all we need to test
+04643C 11 00 91 FE 0163*       ld de,-sprite_bottom*256
+046440 ED 5A       0164*       adc hl,de
+046442 F2 47 64 04 0165*       jp p,@bottom ; scrolled off screen so deactivate
+046446 C9          0166*       ret ; still on screen so do nothing further
+046447             0167*   @bottom:
+046447 3E 04       0168*       ld a,collide_bottom
+046449 32 94 5B 04 0169*       ld (sprite_screen_edge),a
+04644D C9          0170*       ret
+04644E             0171*   
+04644E             0172*   
+04644E             0173*   ; bg_y_plot: dl -1
+04644E             0174*   ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
+04644E             0175*   
+04644E             0176*   bg_plot: ; TODO: implement this
+04644E             0177*   ; ; load current bg tile bufferId as default
+04644E             0178*   ;     ld hl,(bg_bufferId)
+04644E             0179*   ; ; check whether it is time for a new background tile
+04644E             0180*   ;     ld a,(bg_y_plot)
+04644E             0181*   ;     inc a
+04644E             0182*   ;     ld (bg_y_plot),a
+04644E             0183*   ;     jp nz,@F ; not time for a new tile so draw current one
+04644E             0184*   ; ; load the next background tile
+04644E             0185*   ;     ld hl,BUF_STATION_BG_00
+04644E             0186*   ;     call rand_8
+04644E             0187*   ;     and %0000011
+04644E             0188*   ;     add a,l
+04644E             0189*   ;     ld l,a
+04644E             0190*   ;     ld a,0
+04644E             0191*   ;     adc a,h
+04644E             0192*   ;     ld h,a
+04644E             0193*   ;     ld (bg_bufferId),hl
+04644E             0194*   ; @@:
+04644E             0195*   ;     call vdu_buff_select
+04644E             0196*   ;     ld bc,0
+04644E             0197*   ;     ld de,(bg_y_plot)
+04644E             0198*   ;     inc de
+04644E             0199*   ;     call vdu_plot_bmp
+04644E             0200*   ; all done
+04644E C9          0201*       ret
+04644F             0202*   
+04644F             0203*   ; ###### TODO: NEW CODE TO IMPLEMENT ######
+04644F             0204*   tile_pad_small: equ 1
+04644F             0205*   tile_pad_med: equ 2
+04644F             0206*   tile_pad_large: equ 3
+04644F             0207*   tile_pad_huge: equ 4
+04644F             0208*   tile_turret_fireball: equ 5
+04644F             0209*   tile_laser_turret: equ 6
+04644F             0210*   tile_twin_laser_turret: equ 7
+04644F             0211*   tile_gatling_turret: equ 8
+04644F             0212*   tile_electrode_r: equ 9
+04644F             0213*   tile_electrode_u: equ 10
+04644F             0214*   tile_piston_r: equ 11
+04644F             0215*   tile_piston_u: equ 12
+04644F             0216*   tile_spark_r: equ 13
+04644F             0217*   tile_spark_u: equ 14
+04644F             0218*   tile_flame_r: equ 15
+04644F             0219*   tile_flame_u: equ 16
+04644F             0220*   
+04644F             0221*   active_tile_timer: equ 24 ; 2/10ths of a second
+04644F             0222*   tile_activation_routines:
+04644F 82 64 04    0223*       dl activate_null_tile ; dummy spacer since tiled is 1-based
+046452 13 65 04    0224*       dl activate_pad_small
+046455 82 64 04    0225*       dl activate_null_tile  ;  activate_pad_med
+046458 82 64 04    0226*       dl activate_null_tile  ;  activate_pad_large
+04645B 82 64 04    0227*       dl activate_null_tile  ;  activate_pad_huge
+04645E 13 66 04    0228*       dl activate_turret_fireball
+046461 82 64 04    0229*       dl activate_null_tile  ;  activate_laser_turret
+046464 82 64 04    0230*       dl activate_null_tile  ;  activate_twin_laser_turret
+046467 82 64 04    0231*       dl activate_null_tile  ;  activate_gatling_turret
+04646A 82 64 04    0232*       dl activate_null_tile  ;  activate_electrode_r
+04646D 82 64 04    0233*       dl activate_null_tile  ;  activate_electrode_u
+046470 82 64 04    0234*       dl activate_null_tile  ;  activate_piston_r
+046473 82 64 04    0235*       dl activate_null_tile  ;  activate_piston_u
+046476 82 64 04    0236*       dl activate_null_tile  ;  activate_spark_r
+046479 82 64 04    0237*       dl activate_null_tile  ;  activate_spark_u
+04647C 82 64 04    0238*       dl activate_null_tile  ;  activate_flame_r
+04647F 82 64 04    0239*       dl activate_null_tile  ;  activate_flame_u
+046482             0240*   ; end tile_activation_routines
+046482             0241*   
+046482             0242*   activate_null_tile:
+046482 C9          0243*       ret ; dummy routine, do nothing
+046483             0244*   
+046483             0245*   ; ld_act_laser_turret:
+046483             0246*   ;     ; call sprite_variables_to_stack
+046483             0247*   
+046483             0248*   ;     ld hl,move_laser_turret
+046483             0249*   ;     ld (sprite_move_program),hl
+046483             0250*   
+046483             0251*   ;     xor a
+046483             0252*   ;     ld (sprite_animation),a
+046483             0253*   ;     ld (sprite_move_step),a
+046483             0254*   
+046483             0255*   ;     call rand_8     ; snag a random number
+046483             0256*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
+046483             0257*   ;     add a,64 ; range is now 64-127
+046483             0258*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+046483             0259*   
+046483             0260*   ;     ld a,%10 ; collides with laser but not player
+046483             0261*   ;     ld (iy+sprite_collisions),a
+046483             0262*   
+046483             0263*   ;     ld a,#10 ; BCD
+046483             0264*   ;     ld (sprite_points),a
+046483             0265*   ;     ld a,0 ; binary
+046483             0266*   ;     ld (sprite_shield_damage),a
+046483             0267*   
+046483             0268*   ;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
+046483             0269*   ;     jp dt_ld_act
+046483             0270*   
+046483             0271*   
+046483             0272*   ; move_laser_turret:
+046483             0273*   ; ; compute orientation to player
+046483             0274*   ;     call orientation_to_player
+046483             0275*   ; ; h.l 8.8 fixed angle256 to player
+046483             0276*   ; ; bc and de as signed 16-bit integers
+046483             0277*   ; ; representing delta-x/y *to* target respectively
+046483             0278*   ;     ld (Bearing_t),hl
+046483             0279*   ;     ld hl,0x0400
+046483             0280*   ;     ld (Vp),hl
+046483             0281*   ;     call targeting_computer
+046483             0282*   ;     ld (sprite_heading),hl ; store bearing to player
+046483             0283*   ; ; is it time to launch a fireball?
+046483             0284*   ;     ld hl,sprite_move_timer
+046483             0285*   ;     dec (hl)
+046483             0286*   ;     jp nz,move_laser_turret_boilerplate
+046483             0287*   ;     call fireballs_init
+046483             0288*   ;     ; reset move timer so can fire again if player doesn't take us out
+046483             0289*   ;     call rand_8     ; snag a random number
+046483             0290*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
+046483             0291*   ;     add a,64 ; range is now 64-127
+046483             0292*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+046483             0293*   ; move_laser_turret_boilerplate:
+046483             0294*   ;     call move_active_tiles
+046483             0295*   ;     call check_collisions
+046483             0296*   ;     ret
+046483             0297*   
+046483             0298*   
+046483             0299*   ; fireballs_init:
+046483             0300*   ;     ; call sprite_variables_to_stack
+046483             0301*   
+046483             0302*   ;     ld hl,enemy_fireball
+046483             0303*   ;     ld (sprite_base_bufferId),hl
+046483             0304*   
+046483             0305*   ;     ld hl,move_fireballs
+046483             0306*   ;     ld (sprite_move_program),hl
+046483             0307*   
+046483             0308*   ;     ld a,%11 ; collides with laser and player
+046483             0309*   ;     ld (iy+sprite_collisions),a
+046483             0310*   
+046483             0311*   ;     ld hl,(Vp)
+046483             0312*   ;     ld (sprite_vel),hl
+046483             0313*   ;     ld hl,(Vp_x)
+046483             0314*   ;     ld (sprite_xvel),hl
+046483             0315*   ;     ld hl,(Vp_y)
+046483             0316*   ;     inc h ; account for ground movement
+046483             0317*   ;     ld (sprite_yvel),hl
+046483             0318*   
+046483             0319*   ;     xor a ; zero a
+046483             0320*   ;     ld (sprite_animation),a
+046483             0321*   ;     ld (sprite_move_step),a
+046483             0322*   ;     ld (sprite_move_timer),a
+046483             0323*   
+046483             0324*   ;     ld a,6 ; 1/10th of a second timer
+046483             0325*   ;     ld (sprite_animation_timer),a
+046483             0326*   
+046483             0327*   ;     ld a,0x00 ; BCD
+046483             0328*   ;     ld (sprite_points),a
+046483             0329*   ;     ld a,1 ; binary
+046483             0330*   ;     ld (sprite_shield_damage),a
+046483             0331*   
+046483             0332*   ;     call table_add_record ; plops that on the sprite stack for later
+046483             0333*   ;     ; call sprite_variables_from_stack ; come back to where we started
+046483             0334*   ;     ret
+046483             0063        include "tile_pad_small.inc"
+046483 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11834,10 +11828,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF    
+       FF          
 046500             0002*   pad_small_defaults:
 046500 01          0003*       db tile_pad_small       ; type
 046501 0A 01 00    0004*       dl BUF_PAD              ; base_bufferId
@@ -11858,7 +11849,7 @@ PC     Output      Line
 046513             0019*   activate_pad_small:
 046513 21 00 65 04 0020*       ld hl,pad_small_defaults
 046517             0021*   ; get next available sprite id
-046517 CD F9 63 04 0022*       call spawn_sprite_from_tile
+046517 CD 07 64 04 0022*       call spawn_sprite_from_tile
 04651B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
 04651C             0024*   ; other specific initialization
 04651C 3E 40       0025*       ld a,64
@@ -11867,7 +11858,7 @@ PC     Output      Line
 046522             0028*   ; end activate_pad_small
 046522             0029*   
 046522             0030*   move_pad_small:
-046522 CD 1F 64 04 0031*       call move_active_tile
+046522 CD 2D 64 04 0031*       call move_active_tile
 046526 B7          0032*       or a ; a will be non-zero if have scrolled off screen
 046527 C2 EC 5B 04 0033*       jp nz,table_deactivate_sprite
 04652B CD DF 21 04 0034*       call check_enemy_collisions
@@ -11950,7 +11941,7 @@ PC     Output      Line
 046613             0019*   activate_turret_fireball:
 046613 21 00 66 04 0020*       ld hl,turret_fireball_defaults
 046617             0021*   ; get next available sprite id
-046617 CD F9 63 04 0022*       call spawn_sprite_from_tile
+046617 CD 07 64 04 0022*       call spawn_sprite_from_tile
 04661B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
 04661C             0024*   ; other specific initialization
 04661C 3E 40       0025*       ld a,64
@@ -11959,7 +11950,7 @@ PC     Output      Line
 046622             0028*   ; end activate_turret_fireball
 046622             0029*   
 046622             0030*   move_turret_fireball:
-046622 CD 1F 64 04 0031*       call move_active_tile
+046622 CD 2D 64 04 0031*       call move_active_tile
 046626 B7          0032*       or a ; a will be non-zero if have scrolled off screen
 046627 C2 EC 5B 04 0033*       jp nz,table_deactivate_sprite
 04662B CD DF 21 04 0034*       call check_enemy_collisions
@@ -12173,224 +12164,238 @@ PC     Output      Line
 046836 C9          0192        ret
 046837             0193    
 046837             0194    main:
-046837             0195    ; start a new game
-046837 CD 17 60 04 0196        call game_initialize
-04683B             0197    
-04683B             0198    main_loop:
-04683B             0199    ; update the global timestamp
-04683B CD F9 17 04 0200        call timestamp_tick
-04683F             0201    
-04683F             0202    ; do gamestate logic
-04683F CD 03 60 04 0203        call do_game
-046843             0204    
-046843             0205        ; CALL DEBUG_PRINT_TABLE
-046843             0206    
-046843             0207    ; wait for the next vblank mitigate flicker and for loop timing
-046843 CD BF 19 04 0208        call vdu_vblank
-046847             0209        ; call vdu_vblank ; DEBUG
-046847             0210        ; call vdu_vblank ; DEBUG
-046847             0211    
-046847             0212    ; poll keyboard for escape keypress
-046847 3E 08       0213        ld a, $08 ; code to send to MOS
-046849 5B CF       0214        rst.lil $08 ; get IX pointer to System Variables
-04684B             0215    
-04684B DD 7E 05    0216        ld a, (ix + $05) ; get ASCII code of key pressed
-04684E FE 1B       0217        cp 27 ; check if 27 (ascii code for ESC)
-046850 CA 58 68 04 0218        jp z, main_end ; if pressed, jump to exit
-046854             0219    
-046854 C3 3B 68 04 0220        jp main_loop
-046858             0221    
-046858             0222    main_end:
-046858 CD 05 19 04 0223        call vdu_cursor_on
-04685C C9          0224        ret
-04685D             0225    
-04685D             0226    DEBUG_PRINT:
-04685D             0227        PUSH_ALL
-04685D 08          0001M1      ex af,af'
-04685E D9          0002M1      exx
-04685F F5          0003M1      push af
-046860 E5          0004M1      push hl
-046861 C5          0005M1      push bc
-046862 D5          0006M1      push de
-046863             0007M1  
-046863 08          0008M1      ex af,af'
-046864 D9          0009M1      exx
-046865 F5          0010M1      push af
-046866 E5          0011M1      push hl
-046867 C5          0012M1      push bc
-046868 D5          0013M1      push de
-046869 DD E5       0014M1      push ix
-04686B FD E5       0015M1      push iy
-04686D 0E 00       0228        ld c,0
-04686F 06 00       0229        ld b,0
-046871 CD 37 19 04 0230        call vdu_move_cursor
-046875             0231        POP_ALL
-046875 FD E1       0001M1      pop iy
-046877 DD E1       0002M1      pop ix
-046879 D1          0003M1      pop de
-04687A C1          0004M1      pop bc
-04687B E1          0005M1      pop hl
-04687C F1          0006M1      pop af
-04687D 08          0007M1      ex af,af'
-04687E D9          0008M1      exx
-04687F             0009M1  
-04687F D1          0010M1      pop de
-046880 C1          0011M1      pop bc
-046881 E1          0012M1      pop hl
-046882 F1          0013M1      pop af
-046883 08          0014M1      ex af,af'
-046884 D9          0015M1      exx
-046885             0232        PUSH_ALL
-046885 08          0001M1      ex af,af'
-046886 D9          0002M1      exx
-046887 F5          0003M1      push af
-046888 E5          0004M1      push hl
-046889 C5          0005M1      push bc
-04688A D5          0006M1      push de
-04688B             0007M1  
-04688B 08          0008M1      ex af,af'
-04688C D9          0009M1      exx
-04688D F5          0010M1      push af
-04688E E5          0011M1      push hl
-04688F C5          0012M1      push bc
-046890 D5          0013M1      push de
-046891 DD E5       0014M1      push ix
-046893 FD E5       0015M1      push iy
-046895 CD 64 06 04 0233        call dumpFlags
-046899             0234        POP_ALL
-046899 FD E1       0001M1      pop iy
-04689B DD E1       0002M1      pop ix
-04689D D1          0003M1      pop de
-04689E C1          0004M1      pop bc
-04689F E1          0005M1      pop hl
-0468A0 F1          0006M1      pop af
-0468A1 08          0007M1      ex af,af'
-0468A2 D9          0008M1      exx
-0468A3             0009M1  
-0468A3 D1          0010M1      pop de
-0468A4 C1          0011M1      pop bc
-0468A5 E1          0012M1      pop hl
-0468A6 F1          0013M1      pop af
-0468A7 08          0014M1      ex af,af'
-0468A8 D9          0015M1      exx
-0468A9             0235        PUSH_ALL
-0468A9 08          0001M1      ex af,af'
-0468AA D9          0002M1      exx
-0468AB F5          0003M1      push af
-0468AC E5          0004M1      push hl
-0468AD C5          0005M1      push bc
-0468AE D5          0006M1      push de
-0468AF             0007M1  
-0468AF 08          0008M1      ex af,af'
-0468B0 D9          0009M1      exx
-0468B1 F5          0010M1      push af
-0468B2 E5          0011M1      push hl
-0468B3 C5          0012M1      push bc
-0468B4 D5          0013M1      push de
-0468B5 DD E5       0014M1      push ix
-0468B7 FD E5       0015M1      push iy
-0468B9 CD C6 04 04 0236        call dumpRegistersHex
-0468BD             0237        ; call waitKeypress
-0468BD             0238        POP_ALL
-0468BD FD E1       0001M1      pop iy
-0468BF DD E1       0002M1      pop ix
-0468C1 D1          0003M1      pop de
-0468C2 C1          0004M1      pop bc
-0468C3 E1          0005M1      pop hl
-0468C4 F1          0006M1      pop af
-0468C5 08          0007M1      ex af,af'
-0468C6 D9          0008M1      exx
-0468C7             0009M1  
-0468C7 D1          0010M1      pop de
-0468C8 C1          0011M1      pop bc
-0468C9 E1          0012M1      pop hl
-0468CA F1          0013M1      pop af
-0468CB 08          0014M1      ex af,af'
-0468CC D9          0015M1      exx
-0468CD C9          0239        ret
-0468CE             0240    
-0468CE             0241    DEBUG_PRINT_TABLE:
-0468CE             0242        PUSH_ALL
-0468CE 08          0001M1      ex af,af'
-0468CF D9          0002M1      exx
-0468D0 F5          0003M1      push af
-0468D1 E5          0004M1      push hl
-0468D2 C5          0005M1      push bc
-0468D3 D5          0006M1      push de
-0468D4             0007M1  
-0468D4 08          0008M1      ex af,af'
-0468D5 D9          0009M1      exx
-0468D6 F5          0010M1      push af
-0468D7 E5          0011M1      push hl
-0468D8 C5          0012M1      push bc
-0468D9 D5          0013M1      push de
-0468DA DD E5       0014M1      push ix
-0468DC FD E5       0015M1      push iy
-0468DE CD 00 19 04 0243        call vdu_home_cursor
-0468E2             0244        ; LIST_FIELD sprite_move_program,3 ; DEBUG
-0468E2             0245        ; LIST_FIELD sprite_type,1 ; DEBUG
-0468E2             0246    
-0468E2 DD 21 00 59 0247        ld ix,table_base
+046837             0195    ; set gfx viewport to playing field window
+046837 01 00 00 00 0196        ld bc,field_left
+04683B 11 00 00 00 0197        ld de,field_top
+04683F DD 21 FF 00 0198        ld ix,field_right
+       00          
+046844 FD 21 7F 01 0199        ld iy,field_bottom
+       00          
+046849 CD EB 19 04 0200        call vdu_set_gfx_viewport
+04684D             0201    ; move the background down one pixel
+04684D 3E 02       0202        ld a,2 ; current gfx viewport
+04684F 2E 02       0203        ld l,2 ; direction=down
+046851 26 01       0204        ld h,1 ; speed=1 px
+046853 CD 63 19 04 0205        call vdu_scroll_down
+046857             0206    ; set gfx viewport to one scanline to optimise plotting tiles
+046857 01 00 00 00 0207        ld bc,0 ; leftmost x-coord
+04685B 11 00 00 00 0208        ld de,0 ; topmost y-coord
+04685F DD 21 FF 00 0209        ld ix,255 ; rightmost x-coord
+       00          
+046864 FD 21 00 00 0210        ld iy,0 ; bottommost y-coord
+       00          
+046869 CD EB 19 04 0211        call vdu_set_gfx_viewport
+04686D             0212    ; test plot the stripes
+04686D 21 F1 FF FF 0213        ld hl,-15
+046871 22 0D 63 04 0214        ld (tiles_y_plot),hl
+046875 06 10       0215        ld b,16 ; loop counter
+046877             0216    @loop:
+046877 C5          0217        push bc ; preserve loop counter
+046878 21 2F 01 00 0218        ld hl,BUF_TEST_STRIPES
+04687C CD 38 1A 04 0219        call vdu_buff_select
+046880 01 80 00 00 0220        ld bc,128
+046884 ED 5B 0D 63 0221        ld de,(tiles_y_plot)
        04          
-0468E7 CD A5 5D 04 0248        call dump_sprite_record
-0468EB CD 2C 01 04 0249        call printNewLine
-0468EF CD 2C 01 04 0250        call printNewLine
-0468F3             0251    
-0468F3 ED 32 29    0252        lea ix,ix+table_bytes_per_record
-0468F6 CD A5 5D 04 0253        call dump_sprite_record
-0468FA CD 2C 01 04 0254        call printNewLine
-0468FE             0255    
-0468FE             0256        ; call waitKeypress
-0468FE             0257        POP_ALL
-0468FE FD E1       0001M1      pop iy
-046900 DD E1       0002M1      pop ix
-046902 D1          0003M1      pop de
-046903 C1          0004M1      pop bc
-046904 E1          0005M1      pop hl
-046905 F1          0006M1      pop af
-046906 08          0007M1      ex af,af'
-046907 D9          0008M1      exx
-046908             0009M1  
-046908 D1          0010M1      pop de
-046909 C1          0011M1      pop bc
-04690A E1          0012M1      pop hl
-04690B F1          0013M1      pop af
-04690C 08          0014M1      ex af,af'
-04690D D9          0015M1      exx
-04690E C9          0258        RET
-04690F             0259    
-04690F             0260    DEBUG_WAITKEYPRESS:
-04690F             0261        PUSH_ALL
-04690F 08          0001M1      ex af,af'
-046910 D9          0002M1      exx
-046911 F5          0003M1      push af
-046912 E5          0004M1      push hl
-046913 C5          0005M1      push bc
-046914 D5          0006M1      push de
-046915             0007M1  
-046915 08          0008M1      ex af,af'
-046916 D9          0009M1      exx
-046917 F5          0010M1      push af
-046918 E5          0011M1      push hl
-046919 C5          0012M1      push bc
-04691A D5          0013M1      push de
-04691B DD E5       0014M1      push ix
-04691D FD E5       0015M1      push iy
-04691F CD C5 06 04 0262        call waitKeypress
-046923             0263        POP_ALL
-046923 FD E1       0001M1      pop iy
-046925 DD E1       0002M1      pop ix
-046927 D1          0003M1      pop de
-046928 C1          0004M1      pop bc
-046929 E1          0005M1      pop hl
-04692A F1          0006M1      pop af
-04692B 08          0007M1      ex af,af'
-04692C D9          0008M1      exx
-04692D             0009M1  
-04692D D1          0010M1      pop de
-04692E C1          0011M1      pop bc
-04692F E1          0012M1      pop hl
-046930 F1          0013M1      pop af
-046931 08          0014M1      ex af,af'
-046932 D9          0015M1      exx
-046933 C9          0264        RET
+046889 CD 20 1E 04 0222        call vdu_plot_bmp
+04688D 21 0D 63 04 0223        ld hl,tiles_y_plot
+046891 34          0224        inc (hl)
+046892 C1          0225        pop bc
+046893 10 E2       0226        djnz @loop
+046895             0227    
+046895             0228    main_loop:
+046895             0229    
+046895             0230    
+046895             0231    main_end:
+046895 CD 05 19 04 0232        call vdu_cursor_on
+046899 C9          0233        ret
+04689A             0234    
+04689A             0235    DEBUG_PRINT:
+04689A             0236        PUSH_ALL
+04689A 08          0001M1      ex af,af'
+04689B D9          0002M1      exx
+04689C F5          0003M1      push af
+04689D E5          0004M1      push hl
+04689E C5          0005M1      push bc
+04689F D5          0006M1      push de
+0468A0             0007M1  
+0468A0 08          0008M1      ex af,af'
+0468A1 D9          0009M1      exx
+0468A2 F5          0010M1      push af
+0468A3 E5          0011M1      push hl
+0468A4 C5          0012M1      push bc
+0468A5 D5          0013M1      push de
+0468A6 DD E5       0014M1      push ix
+0468A8 FD E5       0015M1      push iy
+0468AA 0E 00       0237        ld c,0
+0468AC 06 00       0238        ld b,0
+0468AE CD 37 19 04 0239        call vdu_move_cursor
+0468B2             0240        POP_ALL
+0468B2 FD E1       0001M1      pop iy
+0468B4 DD E1       0002M1      pop ix
+0468B6 D1          0003M1      pop de
+0468B7 C1          0004M1      pop bc
+0468B8 E1          0005M1      pop hl
+0468B9 F1          0006M1      pop af
+0468BA 08          0007M1      ex af,af'
+0468BB D9          0008M1      exx
+0468BC             0009M1  
+0468BC D1          0010M1      pop de
+0468BD C1          0011M1      pop bc
+0468BE E1          0012M1      pop hl
+0468BF F1          0013M1      pop af
+0468C0 08          0014M1      ex af,af'
+0468C1 D9          0015M1      exx
+0468C2             0241        PUSH_ALL
+0468C2 08          0001M1      ex af,af'
+0468C3 D9          0002M1      exx
+0468C4 F5          0003M1      push af
+0468C5 E5          0004M1      push hl
+0468C6 C5          0005M1      push bc
+0468C7 D5          0006M1      push de
+0468C8             0007M1  
+0468C8 08          0008M1      ex af,af'
+0468C9 D9          0009M1      exx
+0468CA F5          0010M1      push af
+0468CB E5          0011M1      push hl
+0468CC C5          0012M1      push bc
+0468CD D5          0013M1      push de
+0468CE DD E5       0014M1      push ix
+0468D0 FD E5       0015M1      push iy
+0468D2 CD 64 06 04 0242        call dumpFlags
+0468D6             0243        POP_ALL
+0468D6 FD E1       0001M1      pop iy
+0468D8 DD E1       0002M1      pop ix
+0468DA D1          0003M1      pop de
+0468DB C1          0004M1      pop bc
+0468DC E1          0005M1      pop hl
+0468DD F1          0006M1      pop af
+0468DE 08          0007M1      ex af,af'
+0468DF D9          0008M1      exx
+0468E0             0009M1  
+0468E0 D1          0010M1      pop de
+0468E1 C1          0011M1      pop bc
+0468E2 E1          0012M1      pop hl
+0468E3 F1          0013M1      pop af
+0468E4 08          0014M1      ex af,af'
+0468E5 D9          0015M1      exx
+0468E6             0244        PUSH_ALL
+0468E6 08          0001M1      ex af,af'
+0468E7 D9          0002M1      exx
+0468E8 F5          0003M1      push af
+0468E9 E5          0004M1      push hl
+0468EA C5          0005M1      push bc
+0468EB D5          0006M1      push de
+0468EC             0007M1  
+0468EC 08          0008M1      ex af,af'
+0468ED D9          0009M1      exx
+0468EE F5          0010M1      push af
+0468EF E5          0011M1      push hl
+0468F0 C5          0012M1      push bc
+0468F1 D5          0013M1      push de
+0468F2 DD E5       0014M1      push ix
+0468F4 FD E5       0015M1      push iy
+0468F6 CD C6 04 04 0245        call dumpRegistersHex
+0468FA             0246        ; call waitKeypress
+0468FA             0247        POP_ALL
+0468FA FD E1       0001M1      pop iy
+0468FC DD E1       0002M1      pop ix
+0468FE D1          0003M1      pop de
+0468FF C1          0004M1      pop bc
+046900 E1          0005M1      pop hl
+046901 F1          0006M1      pop af
+046902 08          0007M1      ex af,af'
+046903 D9          0008M1      exx
+046904             0009M1  
+046904 D1          0010M1      pop de
+046905 C1          0011M1      pop bc
+046906 E1          0012M1      pop hl
+046907 F1          0013M1      pop af
+046908 08          0014M1      ex af,af'
+046909 D9          0015M1      exx
+04690A C9          0248        ret
+04690B             0249    
+04690B             0250    DEBUG_PRINT_TABLE:
+04690B             0251        PUSH_ALL
+04690B 08          0001M1      ex af,af'
+04690C D9          0002M1      exx
+04690D F5          0003M1      push af
+04690E E5          0004M1      push hl
+04690F C5          0005M1      push bc
+046910 D5          0006M1      push de
+046911             0007M1  
+046911 08          0008M1      ex af,af'
+046912 D9          0009M1      exx
+046913 F5          0010M1      push af
+046914 E5          0011M1      push hl
+046915 C5          0012M1      push bc
+046916 D5          0013M1      push de
+046917 DD E5       0014M1      push ix
+046919 FD E5       0015M1      push iy
+04691B CD 00 19 04 0252        call vdu_home_cursor
+04691F             0253        ; LIST_FIELD sprite_move_program,3 ; DEBUG
+04691F             0254        ; LIST_FIELD sprite_type,1 ; DEBUG
+04691F             0255    
+04691F DD 21 00 59 0256        ld ix,table_base
+       04          
+046924 CD A5 5D 04 0257        call dump_sprite_record
+046928 CD 2C 01 04 0258        call printNewLine
+04692C CD 2C 01 04 0259        call printNewLine
+046930             0260    
+046930 ED 32 29    0261        lea ix,ix+table_bytes_per_record
+046933 CD A5 5D 04 0262        call dump_sprite_record
+046937 CD 2C 01 04 0263        call printNewLine
+04693B             0264    
+04693B             0265        ; call waitKeypress
+04693B             0266        POP_ALL
+04693B FD E1       0001M1      pop iy
+04693D DD E1       0002M1      pop ix
+04693F D1          0003M1      pop de
+046940 C1          0004M1      pop bc
+046941 E1          0005M1      pop hl
+046942 F1          0006M1      pop af
+046943 08          0007M1      ex af,af'
+046944 D9          0008M1      exx
+046945             0009M1  
+046945 D1          0010M1      pop de
+046946 C1          0011M1      pop bc
+046947 E1          0012M1      pop hl
+046948 F1          0013M1      pop af
+046949 08          0014M1      ex af,af'
+04694A D9          0015M1      exx
+04694B C9          0267        RET
+04694C             0268    
+04694C             0269    DEBUG_WAITKEYPRESS:
+04694C             0270        PUSH_ALL
+04694C 08          0001M1      ex af,af'
+04694D D9          0002M1      exx
+04694E F5          0003M1      push af
+04694F E5          0004M1      push hl
+046950 C5          0005M1      push bc
+046951 D5          0006M1      push de
+046952             0007M1  
+046952 08          0008M1      ex af,af'
+046953 D9          0009M1      exx
+046954 F5          0010M1      push af
+046955 E5          0011M1      push hl
+046956 C5          0012M1      push bc
+046957 D5          0013M1      push de
+046958 DD E5       0014M1      push ix
+04695A FD E5       0015M1      push iy
+04695C CD C5 06 04 0271        call waitKeypress
+046960             0272        POP_ALL
+046960 FD E1       0001M1      pop iy
+046962 DD E1       0002M1      pop ix
+046964 D1          0003M1      pop de
+046965 C1          0004M1      pop bc
+046966 E1          0005M1      pop hl
+046967 F1          0006M1      pop af
+046968 08          0007M1      ex af,af'
+046969 D9          0008M1      exx
+04696A             0009M1  
+04696A D1          0010M1      pop de
+04696B C1          0011M1      pop bc
+04696C E1          0012M1      pop hl
+04696D F1          0013M1      pop af
+04696E 08          0014M1      ex af,af'
+04696F D9          0015M1      exx
+046970 C9          0273        RET

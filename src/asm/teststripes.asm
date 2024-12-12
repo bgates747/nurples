@@ -192,32 +192,41 @@ init:
     ret
 
 main:
-; start a new game
-    call game_initialize
+; set gfx viewport to playing field window
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
+; move the background down one pixel
+    ld a,2 ; current gfx viewport
+    ld l,2 ; direction=down
+    ld h,1 ; speed=1 px
+    call vdu_scroll_down
+; set gfx viewport to one scanline to optimise plotting tiles
+    ld bc,0 ; leftmost x-coord
+    ld de,0 ; topmost y-coord
+    ld ix,255 ; rightmost x-coord
+    ld iy,0 ; bottommost y-coord
+    call vdu_set_gfx_viewport
+; test plot the stripes
+    ld hl,-15
+    ld (tiles_y_plot),hl
+    ld b,16 ; loop counter
+@loop:
+    push bc ; preserve loop counter
+    ld hl,BUF_TEST_STRIPES
+    call vdu_buff_select
+    ld bc,128
+    ld de,(tiles_y_plot)
+    call vdu_plot_bmp
+    ld hl,tiles_y_plot
+    inc (hl)
+    pop bc
+    djnz @loop
 
 main_loop:
-; update the global timestamp
-    call timestamp_tick
 
-; do gamestate logic
-    call do_game
-
-    ; CALL DEBUG_PRINT_TABLE
-
-; wait for the next vblank mitigate flicker and for loop timing
-    call vdu_vblank
-    ; call vdu_vblank ; DEBUG
-    ; call vdu_vblank ; DEBUG
-
-; poll keyboard for escape keypress
-    ld a, $08 ; code to send to MOS
-    rst.lil $08 ; get IX pointer to System Variables
-    
-    ld a, (ix + $05) ; get ASCII code of key pressed
-    cp 27 ; check if 27 (ascii code for ESC)   
-    jp z, main_end ; if pressed, jump to exit
-
-    jp main_loop
 
 main_end:
     call vdu_cursor_on

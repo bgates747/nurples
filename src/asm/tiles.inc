@@ -24,14 +24,14 @@ tiles_plot:
     ld l,2 ; direction=down
     ld h,1 ; speed=1 px
     call vdu_scroll_down
-; set gfx viewport to one scanline to optimise plotting tiles
-    ld bc,0 ; leftmost x-coord
-    ld de,0 ; topmost y-coord
-    ld ix,255 ; rightmost x-coord
-    ld iy,0 ; bottommost y-coord
-    call vdu_set_gfx_viewport
-; plot the background
-    call bg_plot
+; ; set gfx viewport to one scanline to optimise plotting tiles
+;     ld bc,0 ; leftmost x-coord
+;     ld de,0 ; topmost y-coord
+;     ld ix,255 ; rightmost x-coord
+;     ld iy,0 ; bottommost y-coord
+;     call vdu_set_gfx_viewport
+; ; plot the background
+;     call bg_plot
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -61,10 +61,13 @@ tiles_plot:
     pop bc ; snag our loop counter
     djnz @loop
 ; increment tiles plotting y-coordinate
-; when it hits zero, we go to next row of tiles in the map
 ; (we use ix b/c we want to preserve hl for the next step)
-    ld ix,tiles_y_plot
-    inc (ix)
+    ld ix,(tiles_y_plot)
+    ld de,1
+    add ix,de
+    ld (tiles_y_plot),ix
+    ld a,ixl
+    cp 1
     ret nz
 ; do active tiles
     push hl ; save pointer to next row tile def
