@@ -41,37 +41,38 @@ lead_angle: dl 0x000000 ; lead angle
 ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
 ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
 targeting_computer:
-; compute target velocity from x,y component velocities
-    ld bc,(player_xvel) 
-    ld de,(player_yvel)
-    ld hl,-1*256 ; account for vertical ground movement
-    add hl,de
-    ex de,hl ; ud.e = player_yvel-1
-    call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
-    ld (Heading_t),hl ; PASSES
-    ld (Vt),de ; PASSES
-; Bearing_t should have been set by prerequisite call to orientation_to_player
-; compute Heading_t-Bearing_t PASSES
-    ld de,(Bearing_t)
-    and a ; clear carry
-    sbc hl,de ; Uh.l = Heading_t-Bearing_t
-; compute sin(Heading_t-Bearing_t)
-    call sin168 ; uh.l = sin(Heading_t-Bearing_t)
-; compute (Vt*sin(Heading_t-Bearing_t))
-    ld de,(Vt)
-    call smul168 ; uh.l = (Vt*sin(Heading_t-Bearing_t))
-; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
-    ld de,(Vp)
-    call sdiv168 ; ud.e = (Vt*sin(Heading_t-Bearing_t)) / Vp
-    ex de,hl ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
-; answer is in radians, convert to degrees256
-    ld de,0x0028BE ; 40.74 = 57.29578*256/360
-    call smul168 ; uh.l = angle in degrees256 
-    ld (lead_angle),hl ; DEBUG
-; add lead angle to target bearing
-    ld de,(Bearing_t)
-    add hl,de ; h.l = lead angle+target bearing
+; ; compute target velocity from x,y component velocities
+;     ld bc,(player_xvel) 
+;     ld de,(player_yvel)
+;     ld hl,-1*256 ; account for vertical ground movement
+;     add hl,de
+;     ex de,hl ; ud.e = player_yvel-1
+;     call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
+;     ld (Heading_t),hl ; PASSES
+;     ld (Vt),de ; PASSES
+; ; Bearing_t should have been set by prerequisite call to orientation_to_player
+; ; compute Heading_t-Bearing_t PASSES
+;     ld de,(Bearing_t)
+;     and a ; clear carry
+;     sbc hl,de ; Uh.l = Heading_t-Bearing_t
+; ; compute sin(Heading_t-Bearing_t)
+;     call sin168 ; uh.l = sin(Heading_t-Bearing_t)
+; ; compute (Vt*sin(Heading_t-Bearing_t))
+;     ld de,(Vt)
+;     call smul168 ; uh.l = (Vt*sin(Heading_t-Bearing_t))
+; ; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
+;     ld de,(Vp)
+;     call sdiv168 ; ud.e = (Vt*sin(Heading_t-Bearing_t)) / Vp
+;     ex de,hl ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
+; ; answer is in radians, convert to degrees256
+;     ld de,0x0028BE ; 40.74 = 57.29578*256/360
+;     call smul168 ; uh.l = angle in degrees256 
+;     ld (lead_angle),hl ; DEBUG
+; ; add lead angle to target bearing
+;     ld de,(Bearing_t)
+;     add hl,de ; h.l = lead angle+target bearing
     push hl
+
 ; compute component projectile velocities
     ld de,(Vp) ; Vp should have been set by caller
     call polar_to_cartesian ; ub.c = Vp_x, ud.e = Vp_y
