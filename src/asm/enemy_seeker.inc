@@ -58,7 +58,10 @@ en_nav_seek_zag:
     call sprite_compute_velocities
 ; change the animation frame to match heading
     call sprite_frame_heading ; a, sprite_frame set to heading-based frame
-    jp move_sprite ; will return to caller from there
+    call move_sprite ; move the sprite
+    or a ; a will be non-zero if have collided with screen edge
+    jp nz,@zag_switch ; switch direction
+    ret ; didn't hit edge, nothing else to do
 @zig_zag_start:
     ld iy,(table_pointer) 
     call rand_8
@@ -71,6 +74,7 @@ en_nav_seek_zag:
     dec a
     ld (iy+sprite_move_timer),a
     jp nz,@zig_zag_no_switch
+@zag_switch:
     ; otherwise flip direction and restart timer
     ld a,(iy+sprite_move_step)
     xor %1 ; flips bit zero

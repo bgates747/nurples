@@ -5949,7 +5949,7 @@ PC     Output      Line
        04          
 042436 3A 57 06 04 0051*       ld a,(ude+2) ; deu
 04243A 17          0052*       rla ; shift sign bit into carry
-04243B D2 5E 24 04 0053*       jp nc,@zig_zag ; player is below,evade
+04243B D2 64 24 04 0053*       jp nc,@zig_zag ; player is below,evade
 04243F             0054*   ; player is even or above,so home in on current heading
 04243F FD 2F 10    0055*       ld (iy+sprite_heading),hl ; save sprite heading
 042442             0056*   ; fall through to @compute_velocities
@@ -5957,40 +5957,44 @@ PC     Output      Line
 042442 CD FC 5E 04 0058*       call sprite_compute_velocities
 042446             0059*   ; change the animation frame to match heading
 042446 CD 79 5F 04 0060*       call sprite_frame_heading ; a, sprite_frame set to heading-based frame
-04244A C3 5B 5E 04 0061*       jp move_sprite ; will return to caller from there
-04244E             0062*   @zig_zag_start:
-04244E FD 2A 90 5D 0063*       ld iy,(table_pointer)
+04244A CD 5B 5E 04 0061*       call move_sprite ; move the sprite
+04244E B7          0062*       or a ; a will be non-zero if have collided with screen edge
+04244F C2 6F 24 04 0063*       jp nz,@zag_switch ; switch direction
+042453 C9          0064*       ret ; didn't hit edge, nothing else to do
+042454             0065*   @zig_zag_start:
+042454 FD 2A 90 5D 0066*       ld iy,(table_pointer)
        04          
-042453 CD AE 09 04 0064*       call rand_8
-042457 E6 3F       0065*       and %00111111 ; limit it to 64
-042459 CB DF       0066*       set 3,a ; make sure it's at least 8
-04245B FD 77 24    0067*       ld (iy+sprite_move_timer),a ; store it
-04245E             0068*       ; fall through to @zig_zag
-04245E             0069*   @zig_zag:
-04245E FD 7E 24    0070*       ld a,(iy+sprite_move_timer)
-042461 3D          0071*       dec a
-042462 FD 77 24    0072*       ld (iy+sprite_move_timer),a
-042465 C2 8B 24 04 0073*       jp nz,@zig_zag_no_switch
-042469             0074*       ; otherwise flip direction and restart timer
-042469 FD 7E 25    0075*       ld a,(iy+sprite_move_step)
-04246C EE 01       0076*       xor %1 ; flips bit zero
-04246E FD 77 25    0077*       ld (iy+sprite_move_step),a ; store it
-042471 C2 80 24 04 0078*       jp nz,@F ; zag right
-042475             0079*   ;otherwise zag left
-042475 21 00 A0 00 0080*       ld hl,160*256; southwest heading
-042479 FD 2F 10    0081*       ld (iy+sprite_heading),hl ; save sprite heading
-04247C C3 4E 24 04 0082*       jp @zig_zag_start
-042480             0083*   @@: ; zag right
-042480 21 00 60 00 0084*       ld hl,96*256; southeast heading
-042484 FD 2F 10    0085*       ld (iy+sprite_heading),hl ; save sprite heading
-042487 C3 4E 24 04 0086*       jp @zig_zag_start
-04248B             0087*   @zig_zag_no_switch:
-04248B             0088*       ; ld a,(sprite_orientation)
-04248B FD 27 10    0089*       ld hl,(iy+sprite_heading)
-04248E C3 42 24 04 0090*       jp @compute_velocities
-042492             0091*   ; end en_nav_seek_zag
-042492             0048        include "explosion.inc"
-042492 FF FF FF FF 0001*       align 256
+042459 CD AE 09 04 0067*       call rand_8
+04245D E6 3F       0068*       and %00111111 ; limit it to 64
+04245F CB DF       0069*       set 3,a ; make sure it's at least 8
+042461 FD 77 24    0070*       ld (iy+sprite_move_timer),a ; store it
+042464             0071*       ; fall through to @zig_zag
+042464             0072*   @zig_zag:
+042464 FD 7E 24    0073*       ld a,(iy+sprite_move_timer)
+042467 3D          0074*       dec a
+042468 FD 77 24    0075*       ld (iy+sprite_move_timer),a
+04246B C2 91 24 04 0076*       jp nz,@zig_zag_no_switch
+04246F             0077*   @zag_switch:
+04246F             0078*       ; otherwise flip direction and restart timer
+04246F FD 7E 25    0079*       ld a,(iy+sprite_move_step)
+042472 EE 01       0080*       xor %1 ; flips bit zero
+042474 FD 77 25    0081*       ld (iy+sprite_move_step),a ; store it
+042477 C2 86 24 04 0082*       jp nz,@F ; zag right
+04247B             0083*   ;otherwise zag left
+04247B 21 00 A0 00 0084*       ld hl,160*256; southwest heading
+04247F FD 2F 10    0085*       ld (iy+sprite_heading),hl ; save sprite heading
+042482 C3 54 24 04 0086*       jp @zig_zag_start
+042486             0087*   @@: ; zag right
+042486 21 00 60 00 0088*       ld hl,96*256; southeast heading
+04248A FD 2F 10    0089*       ld (iy+sprite_heading),hl ; save sprite heading
+04248D C3 54 24 04 0090*       jp @zig_zag_start
+042491             0091*   @zig_zag_no_switch:
+042491             0092*       ; ld a,(sprite_orientation)
+042491 FD 27 10    0093*       ld hl,(iy+sprite_heading)
+042494 C3 42 24 04 0094*       jp @compute_velocities
+042498             0095*   ; end en_nav_seek_zag
+042498             0048        include "explosion.inc"
+042498 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -6016,8 +6020,6 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF       
 042500             0002*   explosion_defaults:
 042500 04          0003*       db explosion            ; type
 042501 01 01 00    0004*       dl BUF_EXPLOSION_A	    ; base_bufferId
