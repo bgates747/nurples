@@ -76,7 +76,7 @@ init:
     call vdu_clear_all_buffers
 
 ; set up the display
-    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
+    ld a,8+128 ; 136   320   240   64    60hz double-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
@@ -105,9 +105,9 @@ init:
 ; MIND THE LITTLE-ENDIANESS
 ; inputs: c=left,b=bottom,e=right,d=top
     ld c,0 ; left
-    ld d,29 ; top
+    ld d,0 ; top
     ld e,39 ; right
-    ld b,29; bottom
+    ld b,0; bottom
     call vdu_set_txt_viewport
 
 ; print loading ui message
@@ -134,9 +134,9 @@ init:
 ; 	call sfx_load_main
 
 ; print loading complete message and wait for user keypress
-    ; call vdu_cls
-    ; ld hl,loading_complete
-    ; call printString
+    call vdu_cls
+    ld hl,loading_complete
+    call printString
     call vdu_flip 
     call waitKeypress
 

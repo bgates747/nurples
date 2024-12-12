@@ -18,12 +18,11 @@ img_load_init:
     ld (logo_xvel),hl
     ld (logo_xpos),hl
 ; begin 16.8 maths to determine logo's y position and velocity
-    ld hl,240-16*256 ; allow space for text at bottom of screen
+    ld hl,224*256 
     ld (logo_ypos),hl
     ex de,hl
-    ld hl,-8*256 ; 8 pixels from top of screen
-    add hl,de ; distance for logo to travel
-    ld de,-sprites_num_images*256
+    ld hl,240*256
+    ld de,-256*[sprites_num_images+tiles_dg_num_images+ui_num_images]
     call sdiv168 ; ud.e = distance / num images = y velocity
     ld (logo_yvel),de
 ; all done
@@ -60,7 +59,7 @@ img_load_main:
     call printString
 
 ; flip the framebuffer
-    ; call vdu_flip
+    call vdu_flip
 
 ; decrement loop counter
     pop bc
