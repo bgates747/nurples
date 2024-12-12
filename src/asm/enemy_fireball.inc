@@ -25,7 +25,7 @@ enemy_spawn_fireball:
 ; other specific initialization
 ; ------------------------------------------------
 ; center the fireball on the turret
-    ld de,3*128 ; half the fireball size
+    ld de,3*256+128 ; half the fireball size
     ld hl,(iy+sprite_x)
     add hl,de
     ld (ix+sprite_x),hl
