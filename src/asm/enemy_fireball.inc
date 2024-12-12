@@ -55,5 +55,5 @@ move_enemy_fireball:
     ld a,(sprite_screen_edge)
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
-    ret
+    jp check_enemy_collisions
 ; end move_enemy_fireball

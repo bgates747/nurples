@@ -83,21 +83,6 @@ move_enemies:
 ; and done
     ret
 
-; ; ######### SPRITE BEHAVIOR ROUTINES #########
-; ; each sprite in the table must have one of these defined
-; ; but they need not be unique to a particular sprite
-; ; these are jumped to from move_enemies_do_program,but could come from other places
-; ; and have the option but not obligation to go back to move_enemies_loop_return
-; ; but they can call anything they want between those two endpoints
-; move_programs: ; bookmark in case we want to know the first address of the first subroutine
-
-; move_nop: ; does nothing but burn a few cycles changing the PC
-;     ret
-
-; move_explosion:
-;     call animate_explosion 
-;     ret
-
 check_enemy_collisions:
 ; check what we collide with
     ld a,(iy+sprite_collisions)
@@ -128,33 +113,6 @@ check_enemy_collision_player: ; check for collisions with player
     call enemy_kill
     ret
 ; end check_enemy_collisions
-
-; move_fireballs:
-;     call move_sprite ; move sprite 
-;     ld a,(sprite_screen_edge) ; check for collision with screen edge
-;     and a ; if zero we're still within screen bounds
-;     jp z,move_fireballs_alive
-; ; otherwise kill sprite
-;     ld a,%10000000 ; any bit set in high nibble means sprite will die
-;     ld (iy+sprite_collisions),a
-;     ret
-; move_fireballs_alive:
-;     ld a,(sprite_animation_timer)
-;     dec a
-;     ld (sprite_animation_timer),a
-;     jp nz,move_fireballs_draw
-;     ld a,(sprite_animation)
-;     xor %1
-;     ld (sprite_animation),a
-;     ld a,6 ; 1/10th of a second timer
-;     ld (sprite_animation_timer),a
-;     ; fall through
-
-; move_fireballs_draw:
-;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-;     call check_collisions
-;     ret
 
 ; this routine vanquishes the enemy sprite
 ; and replaces it with an animated explosion

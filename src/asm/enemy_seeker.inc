@@ -31,6 +31,7 @@ enemy_spawn_seeker:
 move_enemy_seeker:
 ; run the movement program for the seeker enemy
     call en_nav_seek_zag
+    jp check_enemy_collisions
     ret
 ; end move_enemy_seeker
 

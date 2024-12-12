@@ -21,7 +21,7 @@ activate_pad_small:
 ; get next available sprite id
     call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
-; TODO: other specific initialization
+; other specific initialization
     ld a,64
     ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
     ret
@@ -31,6 +31,8 @@ move_pad_small:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
+    call check_enemy_collisions
+    ret m ; was collision so nothing more to do
 ; check whether it is time to spawn a seeker
     dec (iy+sprite_move_timer)
     ret nz

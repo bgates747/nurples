@@ -10,7 +10,7 @@ turret_fireball_defaults:
     db 1                    ; num_animations
     db 0                    ; animation
     db 0                    ; animation_timer
-    db 8  ; DEBUG 24                 ; move_timer
+    db 24                   ; move_timer
     db 0                    ; move_step
     db 5                    ; points
     db 0                    ; shield_damage
@@ -21,9 +21,9 @@ activate_turret_fireball:
 ; get next available sprite id
     call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
-; TODO: other specific initialization
+; other specific initialization
     ld a,64
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
+    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 ; end activate_turret_fireball
 
@@ -31,6 +31,8 @@ move_turret_fireball:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
+    call check_enemy_collisions
+    ret m ; was collision so nothing more to do
 ; target player
     ld hl,speed_fireball
     ld (Vp),hl ; param for targeting_computer
@@ -45,9 +47,8 @@ move_turret_fireball:
     call enemy_spawn_fireball
     ; fall through to reset move timer
 turret_fireball_reset_move_timer:
-    ; call rand_8     ; snag a random number
-    ; and %00011111   ; keep only 5 lowest bits (max 31)
-    ; add a,64 ; range is now 64-127
-    ld a,8 ; DEBUG
+    call rand_8     ; snag a random number
+    and %00011111   ; keep only 5 lowest bits (max 31)
+    add a,24 ; range is now 24-55
     ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
     ret
