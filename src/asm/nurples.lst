@@ -27,8 +27,8 @@ PC     Output      Line
 040047 D5          0012        push de
 040048 DD E5       0013        push ix
 04004A FD E5       0014        push iy
-04004C CD 4F 68 04 0015        call init
-040050 CD 2B 69 04 0016        call main
+04004C CD 4F 69 04 0015        call init
+040050 CD 2B 6A 04 0016        call main
 040054             0017    
 040054             0018    exit:
 040054 FD E1       0019        pop iy
@@ -473,1065 +473,1066 @@ PC     Output      Line
 04012A C1          0135*       POP BC
 04012B C9          0136*       RET
 04012C             0137*   ; Print Newline sequence to VDP
-04012C             0138*   printNewLine:
-04012C F5          0139*       push af ; for some reason rst.lil 10h sets carry flag
-04012D 3E 0D       0140*       LD A, '\r'
-04012F 5B D7       0141*       RST.LIL 10h
-040131 3E 0A       0142*       LD A, '\n'
-040133 5B D7       0143*       RST.LIL 10h
-040135 F1          0144*       pop af
-040136 C9          0145*       RET
-040137             0146*   
-040137             0147*   ; Print a 24-bit HEX number
-040137             0148*   ; HLU: Number to print
-040137             0149*   printHex24:
-040137             0150*       HLU_TO_A
+04012C             0138*   ; destroys bc
+04012C             0139*   printNewLine:
+04012C F5          0140*       push af ; for some reason rst.lil 10h sets carry flag
+04012D 3E 0D       0141*       LD A, '\r'
+04012F 5B D7       0142*       RST.LIL 10h
+040131 3E 0A       0143*       LD A, '\n'
+040133 5B D7       0144*       RST.LIL 10h
+040135 F1          0145*       pop af
+040136 C9          0146*       RET
+040137             0147*   
+040137             0148*   ; Print a 24-bit HEX number
+040137             0149*   ; HLU: Number to print
+040137             0150*   printHex24:
+040137             0151*       HLU_TO_A
 040137 E5          0001*M1     push hl ; 4 cycles
 040138 33          0002*M1     inc sp ; 1 cycle
 040139 F1          0003*M1     pop af ; 4 cycles
 04013A 3B          0004*M1     dec sp ; 1 cycle
 04013B             0005*M1     ; 10 cycles total
-04013B CD 45 01 04 0151*       CALL printHex8
-04013F             0152*   ; Print a 16-bit HEX number
-04013F             0153*   ; HL: Number to print
-04013F             0154*   printHex16:
-04013F 7C          0155*       LD A,H
-040140 CD 45 01 04 0156*       CALL printHex8
-040144 7D          0157*       LD A,L
-040145             0158*   ; Print an 8-bit HEX number
-040145             0159*   ; A: Number to print
-040145             0160*   printHex8:
-040145 4F          0161*       LD C,A
-040146 1F          0162*       RRA
-040147 1F          0163*       RRA
-040148 1F          0164*       RRA
-040149 1F          0165*       RRA
-04014A CD 4F 01 04 0166*       CALL @F
-04014E 79          0167*       LD A,C
-04014F             0168*   @@:
-04014F E6 0F       0169*       AND 0Fh
-040151 C6 90       0170*       ADD A,90h
-040153 27          0171*       DAA
-040154 CE 40       0172*       ADC A,40h
-040156 27          0173*       DAA
-040157 5B D7       0174*       RST.LIL 10h
-040159 C9          0175*       RET
-04015A             0176*   
-04015A             0177*   printHexA:
-04015A F5          0178*       push af
-04015B C5          0179*       push bc
-04015C CD 45 01 04 0180*       call printHex8
-040160 3E 20       0181*       ld a,' '
-040162 5B D7       0182*       rst.lil 10h
-040164 C1          0183*       pop bc
-040165 F1          0184*       pop af
-040166 C9          0185*       ret
-040167             0186*   
-040167             0187*   printHexHL:
-040167 F5          0188*       push af
-040168 C5          0189*       push bc
-040169 CD 3F 01 04 0190*       call printHex16
-04016D 3E 20       0191*       ld a,' '
-04016F 5B D7       0192*       rst.lil 10h
-040171 C1          0193*       pop bc
-040172 F1          0194*       pop af
-040173 C9          0195*       ret
-040174             0196*   
-040174             0197*   printHexUHL:
-040174 F5          0198*       push af
-040175 C5          0199*       push bc
-040176 CD 37 01 04 0200*       call printHex24
-04017A 3E 20       0201*       ld a,' '
-04017C 5B D7       0202*       rst.lil 10h
-04017E C1          0203*       pop bc
-04017F F1          0204*       pop af
-040180 C9          0205*       ret
-040181             0206*   
-040181             0207*   printHexAUHL:
-040181 F5          0208*       push af
-040182 C5          0209*       push bc
-040183 CD 45 01 04 0210*       call printHex8
-040187 3E 2E       0211*       ld a,'.'
-040189 5B D7       0212*       rst.lil 10h
-04018B CD 37 01 04 0213*       call printHex24
-04018F 3E 20       0214*       ld a,' '
-040191 5B D7       0215*       rst.lil 10h
-040193 C1          0216*       pop bc
-040194 F1          0217*       pop af
-040195 C9          0218*       ret
-040196             0219*   
-040196             0220*   printHexABHL:
-040196             0221*   ; preserve registers
-040196 C5          0222*       push bc ; b will be ok c will not
-040197 F5          0223*       push af ; will get totally destroyed
-040198             0224*   ; print a
-040198 CD 45 01 04 0225*       call printHex8
-04019C             0226*   ; print b
-04019C 78          0227*       ld a,b
-04019D CD 45 01 04 0228*       call printHex8
-0401A1             0229*   ; print hl
-0401A1 CD 3F 01 04 0230*       call printHex16
-0401A5             0231*   ; restore registers
-0401A5 F1          0232*       pop af
-0401A6 C1          0233*       pop bc
-0401A7 C9          0234*       ret
-0401A8             0235*   
-0401A8             0236*   printHexBHL:
-0401A8             0237*   ; preserve registers
-0401A8 C5          0238*       push bc ; b will be ok c will not
-0401A9 F5          0239*       push af ; will get totally destroyed
-0401AA             0240*   ; print b
-0401AA 78          0241*       ld a,b
-0401AB CD 45 01 04 0242*       call printHex8
-0401AF             0243*   ; print hl
-0401AF CD 3F 01 04 0244*       call printHex16
-0401B3             0245*   ; restore registers
-0401B3 F1          0246*       pop af
-0401B4 C1          0247*       pop bc
-0401B5 C9          0248*       ret
-0401B6             0249*   
-0401B6             0250*   printHexCDE:
-0401B6             0251*   ; preserve registers
-0401B6 C5          0252*       push bc ; b will be ok c will not
-0401B7 F5          0253*       push af ; will get totally destroyed
-0401B8             0254*   ; print c
-0401B8 79          0255*       ld a,c
-0401B9 CD 45 01 04 0256*       call printHex8
-0401BD             0257*   ; print de
-0401BD EB          0258*       ex de,hl
-0401BE CD 3F 01 04 0259*       call printHex16
-0401C2 EB          0260*       ex de,hl
-0401C3             0261*   ; restore registers
-0401C3 F1          0262*       pop af
-0401C4 C1          0263*       pop bc
-0401C5 C9          0264*       ret
-0401C6             0265*   
-0401C6             0266*   printHexUIX:
-0401C6             0267*   ; store everything in scratch
-0401C6 22 4F 06 04 0268*       ld (uhl),hl
-0401CA ED 43 52 06 0269*       ld (ubc),bc
+04013B CD 45 01 04 0152*       CALL printHex8
+04013F             0153*   ; Print a 16-bit HEX number
+04013F             0154*   ; HL: Number to print
+04013F             0155*   printHex16:
+04013F 7C          0156*       LD A,H
+040140 CD 45 01 04 0157*       CALL printHex8
+040144 7D          0158*       LD A,L
+040145             0159*   ; Print an 8-bit HEX number
+040145             0160*   ; A: Number to print
+040145             0161*   printHex8:
+040145 4F          0162*       LD C,A
+040146 1F          0163*       RRA
+040147 1F          0164*       RRA
+040148 1F          0165*       RRA
+040149 1F          0166*       RRA
+04014A CD 4F 01 04 0167*       CALL @F
+04014E 79          0168*       LD A,C
+04014F             0169*   @@:
+04014F E6 0F       0170*       AND 0Fh
+040151 C6 90       0171*       ADD A,90h
+040153 27          0172*       DAA
+040154 CE 40       0173*       ADC A,40h
+040156 27          0174*       DAA
+040157 5B D7       0175*       RST.LIL 10h
+040159 C9          0176*       RET
+04015A             0177*   
+04015A             0178*   printHexA:
+04015A F5          0179*       push af
+04015B C5          0180*       push bc
+04015C CD 45 01 04 0181*       call printHex8
+040160 3E 20       0182*       ld a,' '
+040162 5B D7       0183*       rst.lil 10h
+040164 C1          0184*       pop bc
+040165 F1          0185*       pop af
+040166 C9          0186*       ret
+040167             0187*   
+040167             0188*   printHexHL:
+040167 F5          0189*       push af
+040168 C5          0190*       push bc
+040169 CD 3F 01 04 0191*       call printHex16
+04016D 3E 20       0192*       ld a,' '
+04016F 5B D7       0193*       rst.lil 10h
+040171 C1          0194*       pop bc
+040172 F1          0195*       pop af
+040173 C9          0196*       ret
+040174             0197*   
+040174             0198*   printHexUHL:
+040174 F5          0199*       push af
+040175 C5          0200*       push bc
+040176 CD 37 01 04 0201*       call printHex24
+04017A 3E 20       0202*       ld a,' '
+04017C 5B D7       0203*       rst.lil 10h
+04017E C1          0204*       pop bc
+04017F F1          0205*       pop af
+040180 C9          0206*       ret
+040181             0207*   
+040181             0208*   printHexAUHL:
+040181 F5          0209*       push af
+040182 C5          0210*       push bc
+040183 CD 45 01 04 0211*       call printHex8
+040187 3E 2E       0212*       ld a,'.'
+040189 5B D7       0213*       rst.lil 10h
+04018B CD 37 01 04 0214*       call printHex24
+04018F 3E 20       0215*       ld a,' '
+040191 5B D7       0216*       rst.lil 10h
+040193 C1          0217*       pop bc
+040194 F1          0218*       pop af
+040195 C9          0219*       ret
+040196             0220*   
+040196             0221*   printHexABHL:
+040196             0222*   ; preserve registers
+040196 C5          0223*       push bc ; b will be ok c will not
+040197 F5          0224*       push af ; will get totally destroyed
+040198             0225*   ; print a
+040198 CD 45 01 04 0226*       call printHex8
+04019C             0227*   ; print b
+04019C 78          0228*       ld a,b
+04019D CD 45 01 04 0229*       call printHex8
+0401A1             0230*   ; print hl
+0401A1 CD 3F 01 04 0231*       call printHex16
+0401A5             0232*   ; restore registers
+0401A5 F1          0233*       pop af
+0401A6 C1          0234*       pop bc
+0401A7 C9          0235*       ret
+0401A8             0236*   
+0401A8             0237*   printHexBHL:
+0401A8             0238*   ; preserve registers
+0401A8 C5          0239*       push bc ; b will be ok c will not
+0401A9 F5          0240*       push af ; will get totally destroyed
+0401AA             0241*   ; print b
+0401AA 78          0242*       ld a,b
+0401AB CD 45 01 04 0243*       call printHex8
+0401AF             0244*   ; print hl
+0401AF CD 3F 01 04 0245*       call printHex16
+0401B3             0246*   ; restore registers
+0401B3 F1          0247*       pop af
+0401B4 C1          0248*       pop bc
+0401B5 C9          0249*       ret
+0401B6             0250*   
+0401B6             0251*   printHexCDE:
+0401B6             0252*   ; preserve registers
+0401B6 C5          0253*       push bc ; b will be ok c will not
+0401B7 F5          0254*       push af ; will get totally destroyed
+0401B8             0255*   ; print c
+0401B8 79          0256*       ld a,c
+0401B9 CD 45 01 04 0257*       call printHex8
+0401BD             0258*   ; print de
+0401BD EB          0259*       ex de,hl
+0401BE CD 3F 01 04 0260*       call printHex16
+0401C2 EB          0261*       ex de,hl
+0401C3             0262*   ; restore registers
+0401C3 F1          0263*       pop af
+0401C4 C1          0264*       pop bc
+0401C5 C9          0265*       ret
+0401C6             0266*   
+0401C6             0267*   printHexUIX:
+0401C6             0268*   ; store everything in scratch
+0401C6 22 4F 06 04 0269*       ld (uhl),hl
+0401CA ED 43 52 06 0270*       ld (ubc),bc
        04          
-0401CF ED 53 55 06 0270*       ld (ude),de
+0401CF ED 53 55 06 0271*       ld (ude),de
        04          
-0401D4 DD 22 58 06 0271*       ld (uix),ix
+0401D4 DD 22 58 06 0272*       ld (uix),ix
        04          
-0401D9 FD 22 5B 06 0272*       ld (uiy),iy
+0401D9 FD 22 5B 06 0273*       ld (uiy),iy
        04          
-0401DE F5          0273*       push af ; fml
-0401DF             0274*   
-0401DF 21 E6 05 04 0275*       ld hl,str_ixu
-0401E3 CD 17 01 04 0276*       call printString
-0401E7 2A 58 06 04 0277*       ld hl,(uix)
-0401EB CD 37 01 04 0278*       call printHex24
-0401EF CD 2C 01 04 0279*       call printNewLine
-0401F3             0280*   
-0401F3             0281*   ; restore everything
-0401F3 2A 4F 06 04 0282*       ld hl, (uhl)
-0401F7 ED 4B 52 06 0283*       ld bc, (ubc)
+0401DE F5          0274*       push af ; fml
+0401DF             0275*   
+0401DF 21 E6 05 04 0276*       ld hl,str_ixu
+0401E3 CD 17 01 04 0277*       call printString
+0401E7 2A 58 06 04 0278*       ld hl,(uix)
+0401EB CD 37 01 04 0279*       call printHex24
+0401EF CD 2C 01 04 0280*       call printNewLine
+0401F3             0281*   
+0401F3             0282*   ; restore everything
+0401F3 2A 4F 06 04 0283*       ld hl, (uhl)
+0401F7 ED 4B 52 06 0284*       ld bc, (ubc)
        04          
-0401FC ED 5B 55 06 0284*       ld de, (ude)
+0401FC ED 5B 55 06 0285*       ld de, (ude)
        04          
-040201 DD 2A 58 06 0285*       ld ix, (uix)
+040201 DD 2A 58 06 0286*       ld ix, (uix)
        04          
-040206 FD 2A 5B 06 0286*       ld iy, (uiy)
+040206 FD 2A 5B 06 0287*       ld iy, (uiy)
        04          
-04020B F1          0287*       pop af
-04020C             0288*   ; all done
-04020C C9          0289*       ret
-04020D             0290*   
-04020D             0291*   ; Print a 0x HEX prefix
-04020D             0292*   DisplayHexPrefix:
-04020D 3E 30       0293*       LD A, '0'
-04020F 5B D7       0294*       RST.LIL 10h
-040211 3E 78       0295*       LD A, 'x'
-040213 5B D7       0296*       RST.LIL 10h
-040215 C9          0297*       RET
-040216             0298*   
-040216             0299*       MACRO printDecBC
-040216             0300*       push hl
-040216             0301*       push bc
-040216             0302*       pop hl
-040216             0303*       call printDec
-040216             0304*       pop hl
-040216             0305*       ENDMACRO
-040216             0306*   
-040216             0307*       MACRO printDecDE
-040216             0308*       push hl
-040216             0309*       push de
-040216             0310*       pop hl
-040216             0311*       call printDec
-040216             0312*       pop hl
-040216             0313*       ENDMACRO
-040216             0314*   
-040216             0315*       MACRO printDecHL
-040216             0316*       call printDec
-040216             0317*       ENDMACRO
-040216             0318*   
-040216             0319*       MACRO printDecIX
-040216             0320*       push hl
-040216             0321*       push ix
-040216             0322*       pop hl
-040216             0323*       call printDec
-040216             0324*       pop hl
-040216             0325*       ENDMACRO
-040216             0326*   
-040216             0327*       MACRO printDecIY
-040216             0328*       push hl
-040216             0329*       push iy
-040216             0330*       pop hl
-040216             0331*       call printDec
-040216             0332*       pop hl
-040216             0333*       ENDMACRO
-040216             0334*   
+04020B F1          0288*       pop af
+04020C             0289*   ; all done
+04020C C9          0290*       ret
+04020D             0291*   
+04020D             0292*   ; Print a 0x HEX prefix
+04020D             0293*   DisplayHexPrefix:
+04020D 3E 30       0294*       LD A, '0'
+04020F 5B D7       0295*       RST.LIL 10h
+040211 3E 78       0296*       LD A, 'x'
+040213 5B D7       0297*       RST.LIL 10h
+040215 C9          0298*       RET
+040216             0299*   
+040216             0300*       MACRO printDecBC
+040216             0301*       push hl
+040216             0302*       push bc
+040216             0303*       pop hl
+040216             0304*       call printDec
+040216             0305*       pop hl
+040216             0306*       ENDMACRO
+040216             0307*   
+040216             0308*       MACRO printDecDE
+040216             0309*       push hl
+040216             0310*       push de
+040216             0311*       pop hl
+040216             0312*       call printDec
+040216             0313*       pop hl
+040216             0314*       ENDMACRO
+040216             0315*   
+040216             0316*       MACRO printDecHL
+040216             0317*       call printDec
+040216             0318*       ENDMACRO
+040216             0319*   
+040216             0320*       MACRO printDecIX
+040216             0321*       push hl
+040216             0322*       push ix
+040216             0323*       pop hl
+040216             0324*       call printDec
+040216             0325*       pop hl
+040216             0326*       ENDMACRO
+040216             0327*   
+040216             0328*       MACRO printDecIY
+040216             0329*       push hl
+040216             0330*       push iy
+040216             0331*       pop hl
+040216             0332*       call printDec
+040216             0333*       pop hl
+040216             0334*       ENDMACRO
 040216             0335*   
-040216             0336*   ; Prints the right justified decimal value in HL without leading zeroes
-040216             0337*   ; HL : Value to print
-040216             0338*   ; preserves all registers and flags
-040216             0339*   printDec:
-040216             0340*   ; BEGIN MY CODE
-040216             0341*   ; back up all the things
-040216 F5          0342*       push af
-040217 C5          0343*       push bc
-040218 D5          0344*       push de
-040219 E5          0345*       push hl
-04021A             0346*   ; END MY CODE
-04021A 11 42 02 04 0347*       LD DE, _printDecBuffer
-04021E CD 52 02 04 0348*       CALL u24_to_ascii
-040222             0349*   ; BEGIN MY CODE
-040222             0350*   ; replace leading zeroes with spaces
-040222 21 42 02 04 0351*       LD HL, _printDecBuffer
-040226 06 07       0352*       ld B, 7 ; if HL was 0, we want to keep the final zero
-040228             0353*   @loop:
-040228 7E          0354*       LD A, (HL)
-040229 FE 30       0355*       CP '0'
-04022B C2 35 02 04 0356*       JP NZ, @done
-04022F 3E 20       0357*       LD A, ' '
-040231 77          0358*       LD (HL), A
-040232 23          0359*       INC HL
-040233             0360*       ; CALL vdu_cursor_forward
-040233 10 F3       0361*       DJNZ @loop
-040235             0362*   @done:
-040235             0363*   ; END MY CODE
-040235 21 42 02 04 0364*       LD HL, _printDecBuffer
-040239 CD 17 01 04 0365*       CALL printString
-04023D             0366*   ; BEGIN MY CODE
-04023D             0367*   ; restore all the things
-04023D E1          0368*       pop hl
-04023E D1          0369*       pop de
-04023F C1          0370*       pop bc
-040240 F1          0371*       pop af
-040241             0372*   ; END MY CODE
-040241 C9          0373*       RET
-040242 00 00 00 00 0374*   _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
+040216             0336*   
+040216             0337*   ; Prints the right justified decimal value in HL without leading zeroes
+040216             0338*   ; HL : Value to print
+040216             0339*   ; preserves all registers and flags
+040216             0340*   printDec:
+040216             0341*   ; BEGIN MY CODE
+040216             0342*   ; back up all the things
+040216 F5          0343*       push af
+040217 C5          0344*       push bc
+040218 D5          0345*       push de
+040219 E5          0346*       push hl
+04021A             0347*   ; END MY CODE
+04021A 11 42 02 04 0348*       LD DE, _printDecBuffer
+04021E CD 52 02 04 0349*       CALL u24_to_ascii
+040222             0350*   ; BEGIN MY CODE
+040222             0351*   ; replace leading zeroes with spaces
+040222 21 42 02 04 0352*       LD HL, _printDecBuffer
+040226 06 07       0353*       ld B, 7 ; if HL was 0, we want to keep the final zero
+040228             0354*   @loop:
+040228 7E          0355*       LD A, (HL)
+040229 FE 30       0356*       CP '0'
+04022B C2 35 02 04 0357*       JP NZ, @done
+04022F 3E 20       0358*       LD A, ' '
+040231 77          0359*       LD (HL), A
+040232 23          0360*       INC HL
+040233             0361*       ; CALL vdu_cursor_forward
+040233 10 F3       0362*       DJNZ @loop
+040235             0363*   @done:
+040235             0364*   ; END MY CODE
+040235 21 42 02 04 0365*       LD HL, _printDecBuffer
+040239 CD 17 01 04 0366*       CALL printString
+04023D             0367*   ; BEGIN MY CODE
+04023D             0368*   ; restore all the things
+04023D E1          0369*       pop hl
+04023E D1          0370*       pop de
+04023F C1          0371*       pop bc
+040240 F1          0372*       pop af
+040241             0373*   ; END MY CODE
+040241 C9          0374*       RET
+040242 00 00 00 00 0375*   _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
        00 00 00 00 
        00 00 00 00 
        00 00 00 00 
-040252             0375*   
-040252             0376*   ; This routine converts the unsigned 24-bit value in HLU into it's ASCII representation,
-040252             0377*   ; starting to memory location pointing by DE, in decimal form and with leading zeroes
-040252             0378*   ; so it will allways be 8 characters length
-040252             0379*   ; HL : Value to convert to string
-040252             0380*   ; DE : pointer to buffer, at least 8 byte + 0
-040252             0381*   u24_to_ascii:
-040252 01 80 69 67 0382*       LD BC,-10000000
-040256 CD 89 02 04 0383*       CALL @one_digit
-04025A 01 C0 BD F0 0384*       LD BC,-1000000
-04025E CD 89 02 04 0385*       CALL @one_digit
-040262 01 60 79 FE 0386*       LD BC,-100000
-040266 CD 89 02 04 0387*       CALL @one_digit
-04026A 01 F0 D8 FF 0388*       LD BC,-10000
-04026E CD 89 02 04 0389*       CALL @one_digit
-040272 01 18 FC FF 0390*       LD BC,-1000
-040276 CD 89 02 04 0391*       CALL @one_digit
-04027A 01 9C FF FF 0392*       LD BC,-100
-04027E CD 89 02 04 0393*       CALL @one_digit
-040282 0E F6       0394*       LD C,-10
-040284 CD 89 02 04 0395*       CALL @one_digit
-040288 48          0396*       LD C,B
-040289             0397*   @one_digit:
-040289 3E 2F       0398*       LD A,'0'-1
-04028B             0399*   @divide_me:
-04028B 3C          0400*       INC A
-04028C 09          0401*       ADD HL,BC
-04028D 38 FC       0402*       JR C,@divide_me
-04028F ED 42       0403*       SBC HL,BC
-040291 12          0404*       LD (DE),A
-040292 13          0405*       INC DE
-040293 C9          0406*       RET
-040294             0407*   
-040294             0408*   print_u24:
-040294 D5          0409*       push de
-040295 E5          0410*       push hl
-040296 11 42 02 04 0411*       ld de,_printDecBuffer
-04029A CD 52 02 04 0412*       call u24_to_ascii
-04029E 21 42 02 04 0413*       ld hl,_printDecBuffer
-0402A2 CD 17 01 04 0414*       call printString
-0402A6 3E 20       0415*       ld a,' '
-0402A8 5B D7       0416*       rst.lil 10h
-0402AA E1          0417*       pop hl
-0402AB D1          0418*       pop de
-0402AC C9          0419*       ret
-0402AD             0420*   
-0402AD             0421*   ; u168_to_ascii: Converts an unsigned 16.8 fixed-point value in HL to an ASCII string.
-0402AD             0422*   ; HL : Value to convert to string (integer part in H, fractional part in L)
-0402AD             0423*   ; DE : Pointer to buffer, requires at least 11 bytes (8 digits, sign, decimal point, and null terminator)
-0402AD             0424*   u168_to_ascii:
-0402AD             0425*   ; add a leading space to make room for sign flag if needed
-0402AD 3E 20       0426*       ld a,' '
-0402AF 12          0427*       ld (de),a
-0402B0 13          0428*       inc de
-0402B1             0429*   ; Convert integer part
-0402B1 E5          0430*       push hl ; Save HL (we’ll need the fractional part later)
-0402B2 CD 6D 09 04 0431*       call hlu_udiv256 ; Shift to get integer portion in HL
-0402B6 01 F0 D8 FF 0432*       ld bc, -10000
-0402BA CD DD 02 04 0433*       call @one_int
-0402BE 01 18 FC FF 0434*       ld bc, -1000
-0402C2 CD DD 02 04 0435*       call @one_int
-0402C6 01 9C FF FF 0436*       ld bc, -100
-0402CA CD DD 02 04 0437*       call @one_int
-0402CE 0E F6       0438*       ld c, -10
-0402D0 CD DD 02 04 0439*       call @one_int
-0402D4 48          0440*       ld c, b
-0402D5 CD DD 02 04 0441*       call @one_int
-0402D9 C3 E8 02 04 0442*       jp @frac ; Jump to fractional part conversion
-0402DD             0443*   @one_int:
-0402DD 3E 2F       0444*       ld a, '0' - 1 ; Start ASCII character at '0'
-0402DF             0445*   @divide_me:
-0402DF 3C          0446*       inc a
-0402E0 09          0447*       add hl, bc ; Accumulate until overflow
-0402E1 38 FC       0448*       jr c, @divide_me
-0402E3 ED 42       0449*       sbc hl, bc ; Remove excess after overflow
-0402E5 12          0450*       ld (de), a ; Store ASCII digit
-0402E6 13          0451*       inc de
-0402E7 C9          0452*       ret
-0402E8             0453*   ; Convert fractional part
-0402E8             0454*   @frac:
-0402E8 3E 2E       0455*       ld a, '.' ; Decimal point
-0402EA 12          0456*       ld (de), a
-0402EB 13          0457*       inc de
-0402EC E1          0458*       pop hl ; Restore HL with original fraction
-0402ED 06 03       0459*       ld b, 3 ; Loop counter for 3 fractional digits
-0402EF             0460*   @frac_loop:
-0402EF 26 0A       0461*       ld h, 10 ; Load multiplier for fractional part
-0402F1 ED 6C       0462*       mlt hl ; Multiply by 10, result in HL (H holds the integer part)
-0402F3 3E 30       0463*       ld a, '0'
-0402F5 84          0464*       add a, h ; Convert integer part to ASCII
-0402F6 12          0465*       ld (de), a
-0402F7 13          0466*       inc de
-0402F8 10 F5       0467*       djnz @frac_loop ; Repeat for each fractional digit
-0402FA             0468*   ; Add null terminator
-0402FA AF          0469*       xor a ; Null terminator
-0402FB 12          0470*       ld (de), a
-0402FC C9          0471*       ret
-0402FD             0472*   
-0402FD             0473*   print_u168:
-0402FD D5          0474*       push de
-0402FE E5          0475*       push hl
-0402FF 11 42 02 04 0476*       ld de,_printDecBuffer
-040303 CD AD 02 04 0477*       call u168_to_ascii
-040307 21 42 02 04 0478*       ld hl,_printDecBuffer
-04030B CD 17 01 04 0479*       call printString
-04030F E1          0480*       pop hl
-040310 D1          0481*       pop de
-040311 C9          0482*       ret
-040312             0483*   
-040312             0484*   ; signed version of u168_to_ascii
-040312             0485*   s168_to_ascii:
-040312 D5          0486*       push de ; save starting address of buffer
-040313 CD 06 09 04 0487*       call hlu_abs
-040317 F5          0488*       push af ; save sign flag
-040318 CD AD 02 04 0489*       call u168_to_ascii
-04031C F1          0490*       pop af ; restore sign flag
-04031D D1          0491*       pop de ; restore starting address of buffer
-04031E F0          0492*       ret p ; hlu was positive so nothing to do
-04031F 3E 2D       0493*       ld a,'-'
-040321 12          0494*       ld (de),a
-040322 C9          0495*       ret
-040323             0496*   
-040323             0497*   print_s168:
-040323 D5          0498*       push de
-040324 E5          0499*       push hl
-040325 11 42 02 04 0500*       ld de,_printDecBuffer
-040329 CD 12 03 04 0501*       call s168_to_ascii
-04032D 21 42 02 04 0502*       ld hl,_printDecBuffer
-040331 CD 17 01 04 0503*       call printString
-040335 E1          0504*       pop hl
-040336 D1          0505*       pop de
-040337 C9          0506*       ret
-040338             0507*   
-040338             0508*   print_s168_hl:
-040338 F5          0509*       push af
-040339 E5          0510*       push hl
-04033A CD 23 03 04 0511*       call print_s168
-04033E 3E 20       0512*       ld a,' '
-040340 5B D7       0513*       rst.lil 10h
-040342 E1          0514*       pop hl
-040343 F1          0515*       pop af
-040344 C9          0516*       ret
-040345             0517*   
-040345             0518*   print_s168_bc:
-040345 F5          0519*       push af
-040346 C5          0520*       push bc
-040347 E5          0521*       push hl
-040348 C5          0522*       push bc
-040349 E1          0523*       pop hl
-04034A CD 23 03 04 0524*       call print_s168
-04034E 3E 20       0525*       ld a,' '
-040350 5B D7       0526*       rst.lil 10h
-040352 E1          0527*       pop hl
-040353 C1          0528*       pop bc
-040354 F1          0529*       pop af
-040355 C9          0530*       ret
-040356             0531*   
-040356             0532*   print_s168_de:
-040356 F5          0533*       push af
-040357 D5          0534*       push de
-040358 E5          0535*       push hl
-040359 EB          0536*       ex de,hl
-04035A CD 23 03 04 0537*       call print_s168
-04035E 3E 20       0538*       ld a,' '
-040360 5B D7       0539*       rst.lil 10h
-040362 E1          0540*       pop hl
-040363 D1          0541*       pop de
-040364 F1          0542*       pop af
-040365 C9          0543*       ret
-040366             0544*   
-040366             0545*   print_s168_hl_bc_de:
-040366 F5          0546*       push af
-040367 C5          0547*       push bc
-040368 D5          0548*       push de
-040369 E5          0549*       push hl
-04036A CD 23 03 04 0550*       call print_s168
-04036E 3E 20       0551*       ld a,' '
-040370 5B D7       0552*       rst.lil 10h
-040372 C5          0553*       push bc
-040373 E1          0554*       pop hl
-040374 CD 23 03 04 0555*       call print_s168
-040378 3E 20       0556*       ld a,' '
-04037A 5B D7       0557*       rst.lil 10h
-04037C EB          0558*       ex de,hl
-04037D CD 23 03 04 0559*       call print_s168
-040381 3E 20       0560*       ld a,' '
-040383 5B D7       0561*       rst.lil 10h
-040385 E1          0562*       pop hl
-040386 D1          0563*       pop de
-040387 C1          0564*       pop bc
-040388 F1          0565*       pop af
-040389 C9          0566*       ret
-04038A             0567*   
-04038A             0568*   print_s168_bc_de:
-04038A F5          0569*       push af
-04038B C5          0570*       push bc
-04038C D5          0571*       push de
-04038D C5          0572*       push bc
-04038E E1          0573*       pop hl
-04038F CD 23 03 04 0574*       call print_s168
-040393 3E 20       0575*       ld a,' '
-040395 5B D7       0576*       rst.lil 10h
-040397 EB          0577*       ex de,hl
-040398 CD 23 03 04 0578*       call print_s168
-04039C 3E 20       0579*       ld a,' '
-04039E 5B D7       0580*       rst.lil 10h
-0403A0 E1          0581*       pop hl
-0403A1 D1          0582*       pop de
-0403A2 C1          0583*       pop bc
-0403A3 F1          0584*       pop af
-0403A4 C9          0585*       ret
-0403A5             0586*   
-0403A5             0587*   print_s168_a:
-0403A5 F5          0588*       push af
-0403A6 C5          0589*       push bc
-0403A7 E5          0590*       push hl
-0403A8 21 00 00 00 0591*       ld hl,0
-0403AC 6F          0592*       ld l,a
-0403AD CD 38 03 04 0593*       call print_s168_hl
-0403B1 E1          0594*       pop hl
-0403B2 C1          0595*       pop bc
-0403B3 F1          0596*       pop af
-0403B4 C9          0597*       ret
-0403B5             0598*   
-0403B5             0599*   ; #### new functions added by Brandon R. Gates ####
-0403B5             0600*   
-0403B5             0601*   ; print the binary representation of the 8-bit value in a
-0403B5             0602*   ; destroys a, hl, bc
-0403B5             0603*   printBin8:
-0403B5 06 08       0604*       ld b,8 ; loop counter for 8 bits
-0403B7 21 D2 03 04 0605*       ld hl,@cmd ; set hl to the low byte of the output string
-0403BB             0606*       ; (which will be the high bit of the value in a)
-0403BB             0607*   @loop:
-0403BB 07          0608*       rlca ; put the next highest bit into carry
-0403BC 38 04       0609*       jr c,@one
-0403BE 36 30       0610*       ld (hl),'0'
-0403C0 18 02       0611*       jr @next_bit
-0403C2             0612*   @one:
-0403C2 36 31       0613*       ld (hl),'1'
-0403C4             0614*   @next_bit:
-0403C4 23          0615*       inc hl
-0403C5 10 F4       0616*       djnz @loop
-0403C7             0617*   ; print it
-0403C7 21 D2 03 04 0618*       ld hl,@cmd
-0403CB 01 08 00 00 0619*       ld bc,@end-@cmd
-0403CF 5B DF       0620*       rst.lil $18
-0403D1 C9          0621*       ret
-0403D2             0622*   @cmd: ds 8 ; eight bytes for eight bits
-0403DA             0623*   @end:
-0403DA             0624*   
-0403DA             0625*   ; print the binary representation of the 8-bit value in a
-0403DA             0626*   ; in reverse order (lsb first)
-0403DA             0627*   ; destroys a, hl, bc
-0403DA             0628*   printBin8Rev:
+040252             0376*   
+040252             0377*   ; This routine converts the unsigned 24-bit value in HLU into it's ASCII representation,
+040252             0378*   ; starting to memory location pointing by DE, in decimal form and with leading zeroes
+040252             0379*   ; so it will allways be 8 characters length
+040252             0380*   ; HL : Value to convert to string
+040252             0381*   ; DE : pointer to buffer, at least 8 byte + 0
+040252             0382*   u24_to_ascii:
+040252 01 80 69 67 0383*       LD BC,-10000000
+040256 CD 89 02 04 0384*       CALL @one_digit
+04025A 01 C0 BD F0 0385*       LD BC,-1000000
+04025E CD 89 02 04 0386*       CALL @one_digit
+040262 01 60 79 FE 0387*       LD BC,-100000
+040266 CD 89 02 04 0388*       CALL @one_digit
+04026A 01 F0 D8 FF 0389*       LD BC,-10000
+04026E CD 89 02 04 0390*       CALL @one_digit
+040272 01 18 FC FF 0391*       LD BC,-1000
+040276 CD 89 02 04 0392*       CALL @one_digit
+04027A 01 9C FF FF 0393*       LD BC,-100
+04027E CD 89 02 04 0394*       CALL @one_digit
+040282 0E F6       0395*       LD C,-10
+040284 CD 89 02 04 0396*       CALL @one_digit
+040288 48          0397*       LD C,B
+040289             0398*   @one_digit:
+040289 3E 2F       0399*       LD A,'0'-1
+04028B             0400*   @divide_me:
+04028B 3C          0401*       INC A
+04028C 09          0402*       ADD HL,BC
+04028D 38 FC       0403*       JR C,@divide_me
+04028F ED 42       0404*       SBC HL,BC
+040291 12          0405*       LD (DE),A
+040292 13          0406*       INC DE
+040293 C9          0407*       RET
+040294             0408*   
+040294             0409*   print_u24:
+040294 D5          0410*       push de
+040295 E5          0411*       push hl
+040296 11 42 02 04 0412*       ld de,_printDecBuffer
+04029A CD 52 02 04 0413*       call u24_to_ascii
+04029E 21 42 02 04 0414*       ld hl,_printDecBuffer
+0402A2 CD 17 01 04 0415*       call printString
+0402A6 3E 20       0416*       ld a,' '
+0402A8 5B D7       0417*       rst.lil 10h
+0402AA E1          0418*       pop hl
+0402AB D1          0419*       pop de
+0402AC C9          0420*       ret
+0402AD             0421*   
+0402AD             0422*   ; u168_to_ascii: Converts an unsigned 16.8 fixed-point value in HL to an ASCII string.
+0402AD             0423*   ; HL : Value to convert to string (integer part in H, fractional part in L)
+0402AD             0424*   ; DE : Pointer to buffer, requires at least 11 bytes (8 digits, sign, decimal point, and null terminator)
+0402AD             0425*   u168_to_ascii:
+0402AD             0426*   ; add a leading space to make room for sign flag if needed
+0402AD 3E 20       0427*       ld a,' '
+0402AF 12          0428*       ld (de),a
+0402B0 13          0429*       inc de
+0402B1             0430*   ; Convert integer part
+0402B1 E5          0431*       push hl ; Save HL (we’ll need the fractional part later)
+0402B2 CD 6D 09 04 0432*       call hlu_udiv256 ; Shift to get integer portion in HL
+0402B6 01 F0 D8 FF 0433*       ld bc, -10000
+0402BA CD DD 02 04 0434*       call @one_int
+0402BE 01 18 FC FF 0435*       ld bc, -1000
+0402C2 CD DD 02 04 0436*       call @one_int
+0402C6 01 9C FF FF 0437*       ld bc, -100
+0402CA CD DD 02 04 0438*       call @one_int
+0402CE 0E F6       0439*       ld c, -10
+0402D0 CD DD 02 04 0440*       call @one_int
+0402D4 48          0441*       ld c, b
+0402D5 CD DD 02 04 0442*       call @one_int
+0402D9 C3 E8 02 04 0443*       jp @frac ; Jump to fractional part conversion
+0402DD             0444*   @one_int:
+0402DD 3E 2F       0445*       ld a, '0' - 1 ; Start ASCII character at '0'
+0402DF             0446*   @divide_me:
+0402DF 3C          0447*       inc a
+0402E0 09          0448*       add hl, bc ; Accumulate until overflow
+0402E1 38 FC       0449*       jr c, @divide_me
+0402E3 ED 42       0450*       sbc hl, bc ; Remove excess after overflow
+0402E5 12          0451*       ld (de), a ; Store ASCII digit
+0402E6 13          0452*       inc de
+0402E7 C9          0453*       ret
+0402E8             0454*   ; Convert fractional part
+0402E8             0455*   @frac:
+0402E8 3E 2E       0456*       ld a, '.' ; Decimal point
+0402EA 12          0457*       ld (de), a
+0402EB 13          0458*       inc de
+0402EC E1          0459*       pop hl ; Restore HL with original fraction
+0402ED 06 03       0460*       ld b, 3 ; Loop counter for 3 fractional digits
+0402EF             0461*   @frac_loop:
+0402EF 26 0A       0462*       ld h, 10 ; Load multiplier for fractional part
+0402F1 ED 6C       0463*       mlt hl ; Multiply by 10, result in HL (H holds the integer part)
+0402F3 3E 30       0464*       ld a, '0'
+0402F5 84          0465*       add a, h ; Convert integer part to ASCII
+0402F6 12          0466*       ld (de), a
+0402F7 13          0467*       inc de
+0402F8 10 F5       0468*       djnz @frac_loop ; Repeat for each fractional digit
+0402FA             0469*   ; Add null terminator
+0402FA AF          0470*       xor a ; Null terminator
+0402FB 12          0471*       ld (de), a
+0402FC C9          0472*       ret
+0402FD             0473*   
+0402FD             0474*   print_u168:
+0402FD D5          0475*       push de
+0402FE E5          0476*       push hl
+0402FF 11 42 02 04 0477*       ld de,_printDecBuffer
+040303 CD AD 02 04 0478*       call u168_to_ascii
+040307 21 42 02 04 0479*       ld hl,_printDecBuffer
+04030B CD 17 01 04 0480*       call printString
+04030F E1          0481*       pop hl
+040310 D1          0482*       pop de
+040311 C9          0483*       ret
+040312             0484*   
+040312             0485*   ; signed version of u168_to_ascii
+040312             0486*   s168_to_ascii:
+040312 D5          0487*       push de ; save starting address of buffer
+040313 CD 06 09 04 0488*       call hlu_abs
+040317 F5          0489*       push af ; save sign flag
+040318 CD AD 02 04 0490*       call u168_to_ascii
+04031C F1          0491*       pop af ; restore sign flag
+04031D D1          0492*       pop de ; restore starting address of buffer
+04031E F0          0493*       ret p ; hlu was positive so nothing to do
+04031F 3E 2D       0494*       ld a,'-'
+040321 12          0495*       ld (de),a
+040322 C9          0496*       ret
+040323             0497*   
+040323             0498*   print_s168:
+040323 D5          0499*       push de
+040324 E5          0500*       push hl
+040325 11 42 02 04 0501*       ld de,_printDecBuffer
+040329 CD 12 03 04 0502*       call s168_to_ascii
+04032D 21 42 02 04 0503*       ld hl,_printDecBuffer
+040331 CD 17 01 04 0504*       call printString
+040335 E1          0505*       pop hl
+040336 D1          0506*       pop de
+040337 C9          0507*       ret
+040338             0508*   
+040338             0509*   print_s168_hl:
+040338 F5          0510*       push af
+040339 E5          0511*       push hl
+04033A CD 23 03 04 0512*       call print_s168
+04033E 3E 20       0513*       ld a,' '
+040340 5B D7       0514*       rst.lil 10h
+040342 E1          0515*       pop hl
+040343 F1          0516*       pop af
+040344 C9          0517*       ret
+040345             0518*   
+040345             0519*   print_s168_bc:
+040345 F5          0520*       push af
+040346 C5          0521*       push bc
+040347 E5          0522*       push hl
+040348 C5          0523*       push bc
+040349 E1          0524*       pop hl
+04034A CD 23 03 04 0525*       call print_s168
+04034E 3E 20       0526*       ld a,' '
+040350 5B D7       0527*       rst.lil 10h
+040352 E1          0528*       pop hl
+040353 C1          0529*       pop bc
+040354 F1          0530*       pop af
+040355 C9          0531*       ret
+040356             0532*   
+040356             0533*   print_s168_de:
+040356 F5          0534*       push af
+040357 D5          0535*       push de
+040358 E5          0536*       push hl
+040359 EB          0537*       ex de,hl
+04035A CD 23 03 04 0538*       call print_s168
+04035E 3E 20       0539*       ld a,' '
+040360 5B D7       0540*       rst.lil 10h
+040362 E1          0541*       pop hl
+040363 D1          0542*       pop de
+040364 F1          0543*       pop af
+040365 C9          0544*       ret
+040366             0545*   
+040366             0546*   print_s168_hl_bc_de:
+040366 F5          0547*       push af
+040367 C5          0548*       push bc
+040368 D5          0549*       push de
+040369 E5          0550*       push hl
+04036A CD 23 03 04 0551*       call print_s168
+04036E 3E 20       0552*       ld a,' '
+040370 5B D7       0553*       rst.lil 10h
+040372 C5          0554*       push bc
+040373 E1          0555*       pop hl
+040374 CD 23 03 04 0556*       call print_s168
+040378 3E 20       0557*       ld a,' '
+04037A 5B D7       0558*       rst.lil 10h
+04037C EB          0559*       ex de,hl
+04037D CD 23 03 04 0560*       call print_s168
+040381 3E 20       0561*       ld a,' '
+040383 5B D7       0562*       rst.lil 10h
+040385 E1          0563*       pop hl
+040386 D1          0564*       pop de
+040387 C1          0565*       pop bc
+040388 F1          0566*       pop af
+040389 C9          0567*       ret
+04038A             0568*   
+04038A             0569*   print_s168_bc_de:
+04038A F5          0570*       push af
+04038B C5          0571*       push bc
+04038C D5          0572*       push de
+04038D C5          0573*       push bc
+04038E E1          0574*       pop hl
+04038F CD 23 03 04 0575*       call print_s168
+040393 3E 20       0576*       ld a,' '
+040395 5B D7       0577*       rst.lil 10h
+040397 EB          0578*       ex de,hl
+040398 CD 23 03 04 0579*       call print_s168
+04039C 3E 20       0580*       ld a,' '
+04039E 5B D7       0581*       rst.lil 10h
+0403A0 E1          0582*       pop hl
+0403A1 D1          0583*       pop de
+0403A2 C1          0584*       pop bc
+0403A3 F1          0585*       pop af
+0403A4 C9          0586*       ret
+0403A5             0587*   
+0403A5             0588*   print_s168_a:
+0403A5 F5          0589*       push af
+0403A6 C5          0590*       push bc
+0403A7 E5          0591*       push hl
+0403A8 21 00 00 00 0592*       ld hl,0
+0403AC 6F          0593*       ld l,a
+0403AD CD 38 03 04 0594*       call print_s168_hl
+0403B1 E1          0595*       pop hl
+0403B2 C1          0596*       pop bc
+0403B3 F1          0597*       pop af
+0403B4 C9          0598*       ret
+0403B5             0599*   
+0403B5             0600*   ; #### new functions added by Brandon R. Gates ####
+0403B5             0601*   
+0403B5             0602*   ; print the binary representation of the 8-bit value in a
+0403B5             0603*   ; destroys a, hl, bc
+0403B5             0604*   printBin8:
+0403B5 06 08       0605*       ld b,8 ; loop counter for 8 bits
+0403B7 21 D2 03 04 0606*       ld hl,@cmd ; set hl to the low byte of the output string
+0403BB             0607*       ; (which will be the high bit of the value in a)
+0403BB             0608*   @loop:
+0403BB 07          0609*       rlca ; put the next highest bit into carry
+0403BC 38 04       0610*       jr c,@one
+0403BE 36 30       0611*       ld (hl),'0'
+0403C0 18 02       0612*       jr @next_bit
+0403C2             0613*   @one:
+0403C2 36 31       0614*       ld (hl),'1'
+0403C4             0615*   @next_bit:
+0403C4 23          0616*       inc hl
+0403C5 10 F4       0617*       djnz @loop
+0403C7             0618*   ; print it
+0403C7 21 D2 03 04 0619*       ld hl,@cmd
+0403CB 01 08 00 00 0620*       ld bc,@end-@cmd
+0403CF 5B DF       0621*       rst.lil $18
+0403D1 C9          0622*       ret
+0403D2             0623*   @cmd: ds 8 ; eight bytes for eight bits
+0403DA             0624*   @end:
+0403DA             0625*   
+0403DA             0626*   ; print the binary representation of the 8-bit value in a
+0403DA             0627*   ; in reverse order (lsb first)
+0403DA             0628*   ; destroys a, hl, bc
+0403DA             0629*   printBin8Rev:
        FF FF FF FF 
        FF FF FF FF 
-0403DA 06 08       0629*       ld b,8 ; loop counter for 8 bits
-0403DC 21 F7 03 04 0630*       ld hl,@cmd ; set hl to the low byte of the output string
-0403E0             0631*       ; (which will be the high bit of the value in a)
-0403E0             0632*   @loop:
-0403E0 0F          0633*       rrca ; put the next lowest bit into carry
-0403E1 38 04       0634*       jr c,@one
-0403E3 36 30       0635*       ld (hl),'0'
-0403E5 18 02       0636*       jr @next_bit
-0403E7             0637*   @one:
-0403E7 36 31       0638*       ld (hl),'1'
-0403E9             0639*   @next_bit:
-0403E9 23          0640*       inc hl
-0403EA 10 F4       0641*       djnz @loop
-0403EC             0642*   ; print it
-0403EC 21 F7 03 04 0643*       ld hl,@cmd
-0403F0 01 08 00 00 0644*       ld bc,@end-@cmd
-0403F4 5B DF       0645*       rst.lil $18
-0403F6 C9          0646*       ret
-0403F7             0647*   @cmd: ds 8 ; eight bytes for eight bits
-0403FF             0648*   @end:
-0403FF             0649*   
-0403FF             0650*   ; print registers to screen in hexidecimal format
-0403FF             0651*   ; inputs: none
-0403FF             0652*   ; outputs: values of every register printed to screen
-0403FF             0653*   ;    values of each register in global scratch memory
-0403FF             0654*   ; destroys: nothing
-0403FF             0655*   stepRegistersHex:
-0403FF             0656*   ; store everything in scratch
+0403DA 06 08       0630*       ld b,8 ; loop counter for 8 bits
+0403DC 21 F7 03 04 0631*       ld hl,@cmd ; set hl to the low byte of the output string
+0403E0             0632*       ; (which will be the high bit of the value in a)
+0403E0             0633*   @loop:
+0403E0 0F          0634*       rrca ; put the next lowest bit into carry
+0403E1 38 04       0635*       jr c,@one
+0403E3 36 30       0636*       ld (hl),'0'
+0403E5 18 02       0637*       jr @next_bit
+0403E7             0638*   @one:
+0403E7 36 31       0639*       ld (hl),'1'
+0403E9             0640*   @next_bit:
+0403E9 23          0641*       inc hl
+0403EA 10 F4       0642*       djnz @loop
+0403EC             0643*   ; print it
+0403EC 21 F7 03 04 0644*       ld hl,@cmd
+0403F0 01 08 00 00 0645*       ld bc,@end-@cmd
+0403F4 5B DF       0646*       rst.lil $18
+0403F6 C9          0647*       ret
+0403F7             0648*   @cmd: ds 8 ; eight bytes for eight bits
+0403FF             0649*   @end:
+0403FF             0650*   
+0403FF             0651*   ; print registers to screen in hexidecimal format
+0403FF             0652*   ; inputs: none
+0403FF             0653*   ; outputs: values of every register printed to screen
+0403FF             0654*   ;    values of each register in global scratch memory
+0403FF             0655*   ; destroys: nothing
+0403FF             0656*   stepRegistersHex:
+0403FF             0657*   ; store everything in scratch
        FF FF FF FF 
        FF FF FF FF 
-0403FF 22 4F 06 04 0657*       ld (uhl),hl
-040403 ED 43 52 06 0658*       ld (ubc),bc
+0403FF 22 4F 06 04 0658*       ld (uhl),hl
+040403 ED 43 52 06 0659*       ld (ubc),bc
        04          
-040408 ED 53 55 06 0659*       ld (ude),de
+040408 ED 53 55 06 0660*       ld (ude),de
        04          
-04040D DD 22 58 06 0660*       ld (uix),ix
+04040D DD 22 58 06 0661*       ld (uix),ix
        04          
-040412 FD 22 5B 06 0661*       ld (uiy),iy
+040412 FD 22 5B 06 0662*       ld (uiy),iy
        04          
-040417 F5          0662*       push af ; fml
-040418 E1          0663*       pop hl ; thanks, zilog
-040419 22 4C 06 04 0664*       ld (uaf),hl
-04041D F5          0665*       push af ; dammit
-04041E             0666*   
-04041E             0667*   ; home the cursor
-04041E             0668*       ; call vdu_home_cursor
-04041E             0669*   
-04041E             0670*   ; print each register
-04041E 21 D2 05 04 0671*       ld hl,str_afu
-040422 CD 17 01 04 0672*       call printString
-040426 2A 4C 06 04 0673*       ld hl,(uaf)
-04042A CD 37 01 04 0674*       call printHex24
-04042E CD 2C 01 04 0675*       call printNewLine
-040432             0676*   
-040432 21 D7 05 04 0677*       ld hl,str_hlu
-040436 CD 17 01 04 0678*       call printString
-04043A 2A 4F 06 04 0679*       ld hl,(uhl)
-04043E CD 37 01 04 0680*       call printHex24
-040442 CD 2C 01 04 0681*       call printNewLine
-040446             0682*   
-040446 21 DC 05 04 0683*       ld hl,str_bcu
-04044A CD 17 01 04 0684*       call printString
-04044E 2A 52 06 04 0685*       ld hl,(ubc)
-040452 CD 37 01 04 0686*       call printHex24
-040456 CD 2C 01 04 0687*       call printNewLine
-04045A             0688*   
-04045A 21 E1 05 04 0689*       ld hl,str_deu
-04045E CD 17 01 04 0690*       call printString
-040462 2A 55 06 04 0691*       ld hl,(ude)
-040466 CD 37 01 04 0692*       call printHex24
-04046A CD 2C 01 04 0693*       call printNewLine
-04046E             0694*   
-04046E 21 E6 05 04 0695*       ld hl,str_ixu
-040472 CD 17 01 04 0696*       call printString
-040476 2A 58 06 04 0697*       ld hl,(uix)
-04047A CD 37 01 04 0698*       call printHex24
-04047E CD 2C 01 04 0699*       call printNewLine
-040482             0700*   
-040482 21 EB 05 04 0701*       ld hl,str_iyu
-040486 CD 17 01 04 0702*       call printString
-04048A 2A 5B 06 04 0703*       ld hl,(uiy)
-04048E CD 37 01 04 0704*       call printHex24
-040492 CD 2C 01 04 0705*       call printNewLine
-040496             0706*   
-040496             0707*       ; call vsync
-040496             0708*   
-040496 CD 2C 01 04 0709*       call printNewLine
-04049A             0710*   
-04049A             0711*   ; check for right shift key and quit if pressed
-04049A             0712*       MOSCALL mos_getkbmap
+040417 F5          0663*       push af ; fml
+040418 E1          0664*       pop hl ; thanks, zilog
+040419 22 4C 06 04 0665*       ld (uaf),hl
+04041D F5          0666*       push af ; dammit
+04041E             0667*   
+04041E             0668*   ; home the cursor
+04041E             0669*       ; call vdu_home_cursor
+04041E             0670*   
+04041E             0671*   ; print each register
+04041E 21 D2 05 04 0672*       ld hl,str_afu
+040422 CD 17 01 04 0673*       call printString
+040426 2A 4C 06 04 0674*       ld hl,(uaf)
+04042A CD 37 01 04 0675*       call printHex24
+04042E CD 2C 01 04 0676*       call printNewLine
+040432             0677*   
+040432 21 D7 05 04 0678*       ld hl,str_hlu
+040436 CD 17 01 04 0679*       call printString
+04043A 2A 4F 06 04 0680*       ld hl,(uhl)
+04043E CD 37 01 04 0681*       call printHex24
+040442 CD 2C 01 04 0682*       call printNewLine
+040446             0683*   
+040446 21 DC 05 04 0684*       ld hl,str_bcu
+04044A CD 17 01 04 0685*       call printString
+04044E 2A 52 06 04 0686*       ld hl,(ubc)
+040452 CD 37 01 04 0687*       call printHex24
+040456 CD 2C 01 04 0688*       call printNewLine
+04045A             0689*   
+04045A 21 E1 05 04 0690*       ld hl,str_deu
+04045E CD 17 01 04 0691*       call printString
+040462 2A 55 06 04 0692*       ld hl,(ude)
+040466 CD 37 01 04 0693*       call printHex24
+04046A CD 2C 01 04 0694*       call printNewLine
+04046E             0695*   
+04046E 21 E6 05 04 0696*       ld hl,str_ixu
+040472 CD 17 01 04 0697*       call printString
+040476 2A 58 06 04 0698*       ld hl,(uix)
+04047A CD 37 01 04 0699*       call printHex24
+04047E CD 2C 01 04 0700*       call printNewLine
+040482             0701*   
+040482 21 EB 05 04 0702*       ld hl,str_iyu
+040486 CD 17 01 04 0703*       call printString
+04048A 2A 5B 06 04 0704*       ld hl,(uiy)
+04048E CD 37 01 04 0705*       call printHex24
+040492 CD 2C 01 04 0706*       call printNewLine
+040496             0707*   
+040496             0708*       ; call vsync
+040496             0709*   
+040496 CD 2C 01 04 0710*       call printNewLine
+04049A             0711*   
+04049A             0712*   ; check for right shift key and quit if pressed
+04049A             0713*       MOSCALL mos_getkbmap
 04049A 3E 1E       0001*M1 			LD	A, function
 04049C 5B CF       0002*M1 			RST.LIL	08h
-04049E             0713*   @stayhere:
-04049E             0714*   ; 7 RightShift
-04049E DD CB 00 76 0715*       bit 6,(ix+0)
-0404A2 20 02       0716*       jr nz,@RightShift
-0404A4 18 F8       0717*       jr @stayhere
-0404A6             0718*   @RightShift:
-0404A6 DD CB 0E 86 0719*       res 0,(ix+14) ; debounce the key (hopefully)
-0404AA 3E 80       0720*       ld a,%10000000
-0404AC             0721*       ; call multiPurposeDelay
-0404AC             0722*   
-0404AC             0723*   ; restore everything
-0404AC 2A 4F 06 04 0724*       ld hl, (uhl)
-0404B0 ED 4B 52 06 0725*       ld bc, (ubc)
+04049E             0714*   @stayhere:
+04049E             0715*   ; 7 RightShift
+04049E DD CB 00 76 0716*       bit 6,(ix+0)
+0404A2 20 02       0717*       jr nz,@RightShift
+0404A4 18 F8       0718*       jr @stayhere
+0404A6             0719*   @RightShift:
+0404A6 DD CB 0E 86 0720*       res 0,(ix+14) ; debounce the key (hopefully)
+0404AA 3E 80       0721*       ld a,%10000000
+0404AC             0722*       ; call multiPurposeDelay
+0404AC             0723*   
+0404AC             0724*   ; restore everything
+0404AC 2A 4F 06 04 0725*       ld hl, (uhl)
+0404B0 ED 4B 52 06 0726*       ld bc, (ubc)
        04          
-0404B5 ED 5B 55 06 0726*       ld de, (ude)
+0404B5 ED 5B 55 06 0727*       ld de, (ude)
        04          
-0404BA DD 2A 58 06 0727*       ld ix, (uix)
+0404BA DD 2A 58 06 0728*       ld ix, (uix)
        04          
-0404BF FD 2A 5B 06 0728*       ld iy, (uiy)
+0404BF FD 2A 5B 06 0729*       ld iy, (uiy)
        04          
-0404C4 F1          0729*       pop af
-0404C5             0730*   ; all done
-0404C5 C9          0731*       ret
-0404C6             0732*   
-0404C6             0733*   ; print registers to screen in hexidecimal format
-0404C6             0734*   ; inputs: none
-0404C6             0735*   ; outputs: values of every register printed to screen
-0404C6             0736*   ;    values of each register in global scratch memory
-0404C6             0737*   ; destroys: nothing
-0404C6             0738*   dumpRegistersHex:
-0404C6             0739*   ; store everything in scratch
-0404C6 22 4F 06 04 0740*       ld (uhl),hl
-0404CA ED 43 52 06 0741*       ld (ubc),bc
+0404C4 F1          0730*       pop af
+0404C5             0731*   ; all done
+0404C5 C9          0732*       ret
+0404C6             0733*   
+0404C6             0734*   ; print registers to screen in hexidecimal format
+0404C6             0735*   ; inputs: none
+0404C6             0736*   ; outputs: values of every register printed to screen
+0404C6             0737*   ;    values of each register in global scratch memory
+0404C6             0738*   ; destroys: nothing
+0404C6             0739*   dumpRegistersHex:
+0404C6             0740*   ; store everything in scratch
+0404C6 22 4F 06 04 0741*       ld (uhl),hl
+0404CA ED 43 52 06 0742*       ld (ubc),bc
        04          
-0404CF ED 53 55 06 0742*       ld (ude),de
+0404CF ED 53 55 06 0743*       ld (ude),de
        04          
-0404D4 DD 22 58 06 0743*       ld (uix),ix
+0404D4 DD 22 58 06 0744*       ld (uix),ix
        04          
-0404D9 FD 22 5B 06 0744*       ld (uiy),iy
+0404D9 FD 22 5B 06 0745*       ld (uiy),iy
        04          
-0404DE F5          0745*       push af ; fml
-0404DF E1          0746*       pop hl ; thanks, zilog
-0404E0 22 4C 06 04 0747*       ld (uaf),hl
-0404E4 F5          0748*       push af ; dammit
-0404E5             0749*   
-0404E5             0750*   ; home the cursor
-0404E5             0751*       ; call vdu_home_cursor
-0404E5             0752*       ; call printNewLine
-0404E5             0753*   
-0404E5             0754*   ; print each register
-0404E5 21 D2 05 04 0755*       ld hl,str_afu
-0404E9 CD 17 01 04 0756*       call printString
-0404ED 2A 4C 06 04 0757*       ld hl,(uaf)
-0404F1 CD 37 01 04 0758*       call printHex24
-0404F5 CD 2C 01 04 0759*       call printNewLine
-0404F9             0760*   
-0404F9 21 D7 05 04 0761*       ld hl,str_hlu
-0404FD CD 17 01 04 0762*       call printString
-040501 2A 4F 06 04 0763*       ld hl,(uhl)
-040505 CD 37 01 04 0764*       call printHex24
-040509 CD 2C 01 04 0765*       call printNewLine
-04050D             0766*   
-04050D 21 DC 05 04 0767*       ld hl,str_bcu
-040511 CD 17 01 04 0768*       call printString
-040515 2A 52 06 04 0769*       ld hl,(ubc)
-040519 CD 37 01 04 0770*       call printHex24
-04051D CD 2C 01 04 0771*       call printNewLine
-040521             0772*   
-040521 21 E1 05 04 0773*       ld hl,str_deu
-040525 CD 17 01 04 0774*       call printString
-040529 2A 55 06 04 0775*       ld hl,(ude)
-04052D CD 37 01 04 0776*       call printHex24
-040531 CD 2C 01 04 0777*       call printNewLine
-040535             0778*   
-040535 21 E6 05 04 0779*       ld hl,str_ixu
-040539 CD 17 01 04 0780*       call printString
-04053D 2A 58 06 04 0781*       ld hl,(uix)
-040541 CD 37 01 04 0782*       call printHex24
-040545 CD 2C 01 04 0783*       call printNewLine
-040549             0784*   
-040549 21 EB 05 04 0785*       ld hl,str_iyu
-04054D CD 17 01 04 0786*       call printString
-040551 2A 5B 06 04 0787*       ld hl,(uiy)
-040555 CD 37 01 04 0788*       call printHex24
-040559             0789*       ; call printNewLine
-040559             0790*   
-040559             0791*       ; call vdu_vblank
-040559             0792*   
-040559             0793*       ; call printNewLine
-040559             0794*   ; restore everything
-040559 2A 4F 06 04 0795*       ld hl, (uhl)
-04055D ED 4B 52 06 0796*       ld bc, (ubc)
+0404DE F5          0746*       push af ; fml
+0404DF E1          0747*       pop hl ; thanks, zilog
+0404E0 22 4C 06 04 0748*       ld (uaf),hl
+0404E4 F5          0749*       push af ; dammit
+0404E5             0750*   
+0404E5             0751*   ; home the cursor
+0404E5             0752*       ; call vdu_home_cursor
+0404E5             0753*       ; call printNewLine
+0404E5             0754*   
+0404E5             0755*   ; print each register
+0404E5 21 D2 05 04 0756*       ld hl,str_afu
+0404E9 CD 17 01 04 0757*       call printString
+0404ED 2A 4C 06 04 0758*       ld hl,(uaf)
+0404F1 CD 37 01 04 0759*       call printHex24
+0404F5 CD 2C 01 04 0760*       call printNewLine
+0404F9             0761*   
+0404F9 21 D7 05 04 0762*       ld hl,str_hlu
+0404FD CD 17 01 04 0763*       call printString
+040501 2A 4F 06 04 0764*       ld hl,(uhl)
+040505 CD 37 01 04 0765*       call printHex24
+040509 CD 2C 01 04 0766*       call printNewLine
+04050D             0767*   
+04050D 21 DC 05 04 0768*       ld hl,str_bcu
+040511 CD 17 01 04 0769*       call printString
+040515 2A 52 06 04 0770*       ld hl,(ubc)
+040519 CD 37 01 04 0771*       call printHex24
+04051D CD 2C 01 04 0772*       call printNewLine
+040521             0773*   
+040521 21 E1 05 04 0774*       ld hl,str_deu
+040525 CD 17 01 04 0775*       call printString
+040529 2A 55 06 04 0776*       ld hl,(ude)
+04052D CD 37 01 04 0777*       call printHex24
+040531 CD 2C 01 04 0778*       call printNewLine
+040535             0779*   
+040535 21 E6 05 04 0780*       ld hl,str_ixu
+040539 CD 17 01 04 0781*       call printString
+04053D 2A 58 06 04 0782*       ld hl,(uix)
+040541 CD 37 01 04 0783*       call printHex24
+040545 CD 2C 01 04 0784*       call printNewLine
+040549             0785*   
+040549 21 EB 05 04 0786*       ld hl,str_iyu
+04054D CD 17 01 04 0787*       call printString
+040551 2A 5B 06 04 0788*       ld hl,(uiy)
+040555 CD 37 01 04 0789*       call printHex24
+040559             0790*       ; call printNewLine
+040559             0791*   
+040559             0792*       ; call vdu_vblank
+040559             0793*   
+040559             0794*       ; call printNewLine
+040559             0795*   ; restore everything
+040559 2A 4F 06 04 0796*       ld hl, (uhl)
+04055D ED 4B 52 06 0797*       ld bc, (ubc)
        04          
-040562 ED 5B 55 06 0797*       ld de, (ude)
+040562 ED 5B 55 06 0798*       ld de, (ude)
        04          
-040567 DD 2A 58 06 0798*       ld ix, (uix)
+040567 DD 2A 58 06 0799*       ld ix, (uix)
        04          
-04056C FD 2A 5B 06 0799*       ld iy, (uiy)
+04056C FD 2A 5B 06 0800*       ld iy, (uiy)
        04          
-040571 F1          0800*       pop af
-040572             0801*   ; all done
-040572 C9          0802*       ret
-040573             0803*   
-040573             0804*   dumpRegistersHexPrime:
-040573 D9          0805*       exx
-040574 08          0806*       ex af,af'
-040575 CD C6 04 04 0807*       call dumpRegistersHex
-040579 08          0808*       ex af,af'
-04057A D9          0809*       exx
-04057B C9          0810*       ret
-04057C             0811*   
-04057C             0812*   ; additionally dump prime registers
-04057C             0813*   ; inputs: none
-04057C             0814*   ; outputs: values of every register printed to screen
-04057C             0815*   ; destroys: nothing
-04057C             0816*   dumpRegistersHexAll:
-04057C CD C6 04 04 0817*       call dumpRegistersHex
-040580 08          0818*       ex af,af'
-040581 D9          0819*       exx
-040582 CD C6 04 04 0820*       call dumpRegistersHex
-040586 08          0821*       ex af,af'
-040587 D9          0822*       exx
-040588 C9          0823*       ret
-040589             0824*   
-040589             0825*   ; print hlu to screen in hexidecimal format
-040589             0826*   ; inputs: none
-040589             0827*   ; destroys: nothing
-040589             0828*   print_hex_hl:
-040589 F5          0829*       push af
-04058A E5          0830*       push hl
-04058B 21 D7 05 04 0831*       ld hl,str_hlu
-04058F CD 17 01 04 0832*       call printString
-040593 E1          0833*       pop hl
-040594 E5          0834*       push hl
-040595 CD 37 01 04 0835*       call printHex24
-040599 3E 20       0836*       ld a,' '
-04059B 5B D7       0837*       rst.lil 10h
-04059D E1          0838*       pop hl
-04059E F1          0839*       pop af
-04059F C9          0840*       ret
-0405A0             0841*   
-0405A0             0842*   ; print bcu to screen in hexidecimal format
-0405A0             0843*   ; inputs: none
-0405A0             0844*   ; destroys: nothing
-0405A0             0845*   print_hex_bc:
-0405A0 F5          0846*       push af
-0405A1 E5          0847*       push hl
-0405A2 C5          0848*       push bc
-0405A3 21 DC 05 04 0849*       ld hl,str_bcu
-0405A7 CD 17 01 04 0850*       call printString
-0405AB E1          0851*       pop hl
-0405AC E5          0852*       push hl
-0405AD CD 37 01 04 0853*       call printHex24
-0405B1 3E 20       0854*       ld a,' '
-0405B3 5B D7       0855*       rst.lil 10h
-0405B5 C1          0856*       pop bc
-0405B6 E1          0857*       pop hl
-0405B7 F1          0858*       pop af
-0405B8 C9          0859*       ret
-0405B9             0860*   
-0405B9             0861*   ; print deu to screen in hexidecimal format
-0405B9             0862*   ; inputs: none
-0405B9             0863*   ; destroys: nothing
-0405B9             0864*   print_hex_de:
-0405B9 F5          0865*       push af
-0405BA E5          0866*       push hl
-0405BB D5          0867*       push de
-0405BC 21 E1 05 04 0868*       ld hl,str_deu
-0405C0 CD 17 01 04 0869*       call printString
-0405C4 E1          0870*       pop hl
-0405C5 E5          0871*       push hl
-0405C6 CD 37 01 04 0872*       call printHex24
-0405CA 3E 20       0873*       ld a,' '
-0405CC 5B D7       0874*       rst.lil 10h
-0405CE D1          0875*       pop de
-0405CF E1          0876*       pop hl
-0405D0 F1          0877*       pop af
-0405D1 C9          0878*       ret
-0405D2             0879*   
-0405D2 20 61 66 3D 0880*   str_afu: db " af=",0
+040571 F1          0801*       pop af
+040572             0802*   ; all done
+040572 C9          0803*       ret
+040573             0804*   
+040573             0805*   dumpRegistersHexPrime:
+040573 D9          0806*       exx
+040574 08          0807*       ex af,af'
+040575 CD C6 04 04 0808*       call dumpRegistersHex
+040579 08          0809*       ex af,af'
+04057A D9          0810*       exx
+04057B C9          0811*       ret
+04057C             0812*   
+04057C             0813*   ; additionally dump prime registers
+04057C             0814*   ; inputs: none
+04057C             0815*   ; outputs: values of every register printed to screen
+04057C             0816*   ; destroys: nothing
+04057C             0817*   dumpRegistersHexAll:
+04057C CD C6 04 04 0818*       call dumpRegistersHex
+040580 08          0819*       ex af,af'
+040581 D9          0820*       exx
+040582 CD C6 04 04 0821*       call dumpRegistersHex
+040586 08          0822*       ex af,af'
+040587 D9          0823*       exx
+040588 C9          0824*       ret
+040589             0825*   
+040589             0826*   ; print hlu to screen in hexidecimal format
+040589             0827*   ; inputs: none
+040589             0828*   ; destroys: nothing
+040589             0829*   print_hex_hl:
+040589 F5          0830*       push af
+04058A E5          0831*       push hl
+04058B 21 D7 05 04 0832*       ld hl,str_hlu
+04058F CD 17 01 04 0833*       call printString
+040593 E1          0834*       pop hl
+040594 E5          0835*       push hl
+040595 CD 37 01 04 0836*       call printHex24
+040599 3E 20       0837*       ld a,' '
+04059B 5B D7       0838*       rst.lil 10h
+04059D E1          0839*       pop hl
+04059E F1          0840*       pop af
+04059F C9          0841*       ret
+0405A0             0842*   
+0405A0             0843*   ; print bcu to screen in hexidecimal format
+0405A0             0844*   ; inputs: none
+0405A0             0845*   ; destroys: nothing
+0405A0             0846*   print_hex_bc:
+0405A0 F5          0847*       push af
+0405A1 E5          0848*       push hl
+0405A2 C5          0849*       push bc
+0405A3 21 DC 05 04 0850*       ld hl,str_bcu
+0405A7 CD 17 01 04 0851*       call printString
+0405AB E1          0852*       pop hl
+0405AC E5          0853*       push hl
+0405AD CD 37 01 04 0854*       call printHex24
+0405B1 3E 20       0855*       ld a,' '
+0405B3 5B D7       0856*       rst.lil 10h
+0405B5 C1          0857*       pop bc
+0405B6 E1          0858*       pop hl
+0405B7 F1          0859*       pop af
+0405B8 C9          0860*       ret
+0405B9             0861*   
+0405B9             0862*   ; print deu to screen in hexidecimal format
+0405B9             0863*   ; inputs: none
+0405B9             0864*   ; destroys: nothing
+0405B9             0865*   print_hex_de:
+0405B9 F5          0866*       push af
+0405BA E5          0867*       push hl
+0405BB D5          0868*       push de
+0405BC 21 E1 05 04 0869*       ld hl,str_deu
+0405C0 CD 17 01 04 0870*       call printString
+0405C4 E1          0871*       pop hl
+0405C5 E5          0872*       push hl
+0405C6 CD 37 01 04 0873*       call printHex24
+0405CA 3E 20       0874*       ld a,' '
+0405CC 5B D7       0875*       rst.lil 10h
+0405CE D1          0876*       pop de
+0405CF E1          0877*       pop hl
+0405D0 F1          0878*       pop af
+0405D1 C9          0879*       ret
+0405D2             0880*   
+0405D2 20 61 66 3D 0881*   str_afu: db " af=",0
        00          
-0405D7 20 68 6C 3D 0881*   str_hlu: db " hl=",0
+0405D7 20 68 6C 3D 0882*   str_hlu: db " hl=",0
        00          
-0405DC 20 62 63 3D 0882*   str_bcu: db " bc=",0
+0405DC 20 62 63 3D 0883*   str_bcu: db " bc=",0
        00          
-0405E1 20 64 65 3D 0883*   str_deu: db " de=",0
+0405E1 20 64 65 3D 0884*   str_deu: db " de=",0
        00          
-0405E6 20 69 78 3D 0884*   str_ixu: db " ix=",0
+0405E6 20 69 78 3D 0885*   str_ixu: db " ix=",0
        00          
-0405EB 20 69 79 3D 0885*   str_iyu: db " iy=",0
+0405EB 20 69 79 3D 0886*   str_iyu: db " iy=",0
        00          
-0405F0             0886*   
-0405F0             0887*   ; print udeuhl to screen in hexidecimal format
-0405F0             0888*   ; inputs: none
-0405F0             0889*   ; outputs: concatenated hexidecimal udeuhl
-0405F0             0890*   ; destroys: nothing
-0405F0             0891*   dumpUDEUHLHex:
-0405F0             0892*   ; store everything in scratch
-0405F0 22 4F 06 04 0893*       ld (uhl),hl
-0405F4 ED 43 52 06 0894*       ld (ubc),bc
+0405F0             0887*   
+0405F0             0888*   ; print udeuhl to screen in hexidecimal format
+0405F0             0889*   ; inputs: none
+0405F0             0890*   ; outputs: concatenated hexidecimal udeuhl
+0405F0             0891*   ; destroys: nothing
+0405F0             0892*   dumpUDEUHLHex:
+0405F0             0893*   ; store everything in scratch
+0405F0 22 4F 06 04 0894*       ld (uhl),hl
+0405F4 ED 43 52 06 0895*       ld (ubc),bc
        04          
-0405F9 ED 53 55 06 0895*       ld (ude),de
+0405F9 ED 53 55 06 0896*       ld (ude),de
        04          
-0405FE DD 22 58 06 0896*       ld (uix),ix
+0405FE DD 22 58 06 0897*       ld (uix),ix
        04          
-040603 FD 22 5B 06 0897*       ld (uiy),iy
+040603 FD 22 5B 06 0898*       ld (uiy),iy
        04          
-040608 F5          0898*       push af
-040609             0899*   
-040609             0900*   ; print each register
-040609             0901*   
-040609 21 43 06 04 0902*       ld hl,str_udeuhl
-04060D CD 17 01 04 0903*       call printString
-040611 2A 55 06 04 0904*       ld hl,(ude)
-040615 CD 37 01 04 0905*       call printHex24
-040619 3E 2E       0906*       ld a,'.' ; print a dot to separate the values
-04061B 5B D7       0907*       rst.lil 10h
-04061D 2A 4F 06 04 0908*       ld hl,(uhl)
-040621 CD 37 01 04 0909*       call printHex24
-040625 CD 2C 01 04 0910*       call printNewLine
-040629             0911*   
-040629             0912*   ; restore everything
-040629 2A 4F 06 04 0913*       ld hl, (uhl)
-04062D ED 4B 52 06 0914*       ld bc, (ubc)
+040608 F5          0899*       push af
+040609             0900*   
+040609             0901*   ; print each register
+040609             0902*   
+040609 21 43 06 04 0903*       ld hl,str_udeuhl
+04060D CD 17 01 04 0904*       call printString
+040611 2A 55 06 04 0905*       ld hl,(ude)
+040615 CD 37 01 04 0906*       call printHex24
+040619 3E 2E       0907*       ld a,'.' ; print a dot to separate the values
+04061B 5B D7       0908*       rst.lil 10h
+04061D 2A 4F 06 04 0909*       ld hl,(uhl)
+040621 CD 37 01 04 0910*       call printHex24
+040625 CD 2C 01 04 0911*       call printNewLine
+040629             0912*   
+040629             0913*   ; restore everything
+040629 2A 4F 06 04 0914*       ld hl, (uhl)
+04062D ED 4B 52 06 0915*       ld bc, (ubc)
        04          
-040632 ED 5B 55 06 0915*       ld de, (ude)
+040632 ED 5B 55 06 0916*       ld de, (ude)
        04          
-040637 DD 2A 58 06 0916*       ld ix, (uix)
+040637 DD 2A 58 06 0917*       ld ix, (uix)
        04          
-04063C FD 2A 5B 06 0917*       ld iy, (uiy)
+04063C FD 2A 5B 06 0918*       ld iy, (uiy)
        04          
-040641 F1          0918*       pop af
-040642             0919*   ; all done
-040642 C9          0920*       ret
-040643             0921*   
-040643 75 64 65 2E 0922*   str_udeuhl: db "ude.uhl=",0
+040641 F1          0919*       pop af
+040642             0920*   ; all done
+040642 C9          0921*       ret
+040643             0922*   
+040643 75 64 65 2E 0923*   str_udeuhl: db "ude.uhl=",0
        75 68 6C 3D 
        00          
-04064C             0923*   
-04064C             0924*   ; global scratch memory for registers
-04064C 00 00 00    0925*   uaf: dl 0
-04064F 00 00 00    0926*   uhl: dl 0
-040652 00 00 00    0927*   ubc: dl 0
-040655 00 00 00    0928*   ude: dl 0
-040658 00 00 00    0929*   uix: dl 0
-04065B 00 00 00    0930*   uiy: dl 0
-04065E 00 00 00    0931*   usp: dl 0
-040661 00 00 00    0932*   upc: dl 0
-040664             0933*   
-040664             0934*   ; inputs: whatever is in the flags register
-040664             0935*   ; outputs: binary representation of flags
-040664             0936*   ;          with a header so we know which is what
-040664             0937*   ; destroys: nothing
-040664             0938*   ; preserves: everything
-040664             0939*   dumpFlags:
-040664             0940*   ; first we curse zilog for not giving direct access to flags
-040664 F5          0941*       push af ; this is so we can send it back unharmed
-040665 F5          0942*       push af ; this is so we can pop it to hl
-040666             0943*   ; store everything in scratch
-040666 22 4F 06 04 0944*       ld (uhl),hl
-04066A ED 43 52 06 0945*       ld (ubc),bc
+04064C             0924*   
+04064C             0925*   ; global scratch memory for registers
+04064C 00 00 00    0926*   uaf: dl 0
+04064F 00 00 00    0927*   uhl: dl 0
+040652 00 00 00    0928*   ubc: dl 0
+040655 00 00 00    0929*   ude: dl 0
+040658 00 00 00    0930*   uix: dl 0
+04065B 00 00 00    0931*   uiy: dl 0
+04065E 00 00 00    0932*   usp: dl 0
+040661 00 00 00    0933*   upc: dl 0
+040664             0934*   
+040664             0935*   ; inputs: whatever is in the flags register
+040664             0936*   ; outputs: binary representation of flags
+040664             0937*   ;          with a header so we know which is what
+040664             0938*   ; destroys: nothing
+040664             0939*   ; preserves: everything
+040664             0940*   dumpFlags:
+040664             0941*   ; first we curse zilog for not giving direct access to flags
+040664 F5          0942*       push af ; this is so we can send it back unharmed
+040665 F5          0943*       push af ; this is so we can pop it to hl
+040666             0944*   ; store everything in scratch
+040666 22 4F 06 04 0945*       ld (uhl),hl
+04066A ED 43 52 06 0946*       ld (ubc),bc
        04          
-04066F ED 53 55 06 0946*       ld (ude),de
+04066F ED 53 55 06 0947*       ld (ude),de
        04          
-040674 DD 22 58 06 0947*       ld (uix),ix
+040674 DD 22 58 06 0948*       ld (uix),ix
        04          
-040679 FD 22 5B 06 0948*       ld (uiy),iy
+040679 FD 22 5B 06 0949*       ld (uiy),iy
        04          
-04067E             0949*   ; next we print the header
-04067E 21 AA 06 04 0950*       ld hl,@header
-040682 CD 17 01 04 0951*       call printString
-040686 E1          0952*       pop hl ; flags are now in l
-040687 7D          0953*       ld a,l ; flags are now in a
-040688 CD B5 03 04 0954*       call printBin8
-04068C CD 2C 01 04 0955*       call printNewLine
-040690             0956*   ; restore everything
-040690 2A 4F 06 04 0957*       ld hl, (uhl)
-040694 ED 4B 52 06 0958*       ld bc, (ubc)
+04067E             0950*   ; next we print the header
+04067E 21 AA 06 04 0951*       ld hl,@header
+040682 CD 17 01 04 0952*       call printString
+040686 E1          0953*       pop hl ; flags are now in l
+040687 7D          0954*       ld a,l ; flags are now in a
+040688 CD B5 03 04 0955*       call printBin8
+04068C CD 2C 01 04 0956*       call printNewLine
+040690             0957*   ; restore everything
+040690 2A 4F 06 04 0958*       ld hl, (uhl)
+040694 ED 4B 52 06 0959*       ld bc, (ubc)
        04          
-040699 ED 5B 55 06 0959*       ld de, (ude)
+040699 ED 5B 55 06 0960*       ld de, (ude)
        04          
-04069E DD 2A 58 06 0960*       ld ix, (uix)
+04069E DD 2A 58 06 0961*       ld ix, (uix)
        04          
-0406A3 FD 2A 5B 06 0961*       ld iy, (uiy)
+0406A3 FD 2A 5B 06 0962*       ld iy, (uiy)
        04          
-0406A8 F1          0962*       pop af ; send her home the way she came
-0406A9 C9          0963*       ret
-0406AA             0964*   ; Bit 7 (S): Sign flag
-0406AA             0965*   ; Bit 6 (Z): Zero flag
-0406AA             0966*   ; Bit 5 (5): Reserved (copy of bit 5 of the result)
-0406AA             0967*   ; Bit 4 (H): Half Carry flag
-0406AA             0968*   ; Bit 3 (3): Reserved (copy of bit 3 of the result)
-0406AA             0969*   ; Bit 2 (PV): Parity/Overflow flag
-0406AA             0970*   ; Bit 1 (N): Subtract flag
-0406AA             0971*   ; Bit 0 (C): Carry flag
-0406AA 53 5A 78 48 0972*   @header: db "SZxHxPNC\r\n",0 ; cr/lf and 0 terminator
+0406A8 F1          0963*       pop af ; send her home the way she came
+0406A9 C9          0964*       ret
+0406AA             0965*   ; Bit 7 (S): Sign flag
+0406AA             0966*   ; Bit 6 (Z): Zero flag
+0406AA             0967*   ; Bit 5 (5): Reserved (copy of bit 5 of the result)
+0406AA             0968*   ; Bit 4 (H): Half Carry flag
+0406AA             0969*   ; Bit 3 (3): Reserved (copy of bit 3 of the result)
+0406AA             0970*   ; Bit 2 (PV): Parity/Overflow flag
+0406AA             0971*   ; Bit 1 (N): Subtract flag
+0406AA             0972*   ; Bit 0 (C): Carry flag
+0406AA 53 5A 78 48 0973*   @header: db "SZxHxPNC\r\n",0 ; cr/lf and 0 terminator
        78 50 4E 43 
        0D 0A 00    
-0406B5             0973*   
-0406B5             0974*   ; set all the bits in the flag register
-0406B5             0975*   ; more of an academic exercise than anything useful
-0406B5             0976*   ; inputs; none
-0406B5             0977*   ; outputs; a=0,f=255
-0406B5             0978*   ; destroys: flags, hl
-0406B5             0979*   ; preserves: a, because why not
-0406B5             0980*   setAllFlags:
-0406B5 21 FF 00 00 0981*       ld hl,255
-0406B9 67          0982*       ld h,a ; four cycles to preserve a is cheap
-0406BA E5          0983*       push hl
-0406BB F1          0984*       pop af
-0406BC C9          0985*       ret
-0406BD             0986*   
-0406BD             0987*   ; reset all the bits in the flag register
-0406BD             0988*   ; unlike its inverse counterpart, this may actually be useful
-0406BD             0989*   ; inputs; none
-0406BD             0990*   ; outputs; a=0,f=0
-0406BD             0991*   ; destroys: flags, hl
-0406BD             0992*   ; preserves: a, because why not
-0406BD             0993*   resetAllFlags:
-0406BD 21 00 00 00 0994*       ld hl,0
-0406C1 67          0995*       ld h,a ; four cycles to preserve a is cheap
-0406C2 E5          0996*       push hl
-0406C3 F1          0997*       pop af
-0406C4 C9          0998*       ret
-0406C5             0999*   
-0406C5             1000*   ; wait until user presses a key
-0406C5             1001*   ; inputs: none
-0406C5             1002*   ; outputs: ascii code of key pressed in a
-0406C5             1003*   ; destroys: af,ix
-0406C5             1004*   waitKeypress:
-0406C5             1005*       MOSCALL mos_getkey
+0406B5             0974*   
+0406B5             0975*   ; set all the bits in the flag register
+0406B5             0976*   ; more of an academic exercise than anything useful
+0406B5             0977*   ; inputs; none
+0406B5             0978*   ; outputs; a=0,f=255
+0406B5             0979*   ; destroys: flags, hl
+0406B5             0980*   ; preserves: a, because why not
+0406B5             0981*   setAllFlags:
+0406B5 21 FF 00 00 0982*       ld hl,255
+0406B9 67          0983*       ld h,a ; four cycles to preserve a is cheap
+0406BA E5          0984*       push hl
+0406BB F1          0985*       pop af
+0406BC C9          0986*       ret
+0406BD             0987*   
+0406BD             0988*   ; reset all the bits in the flag register
+0406BD             0989*   ; unlike its inverse counterpart, this may actually be useful
+0406BD             0990*   ; inputs; none
+0406BD             0991*   ; outputs; a=0,f=0
+0406BD             0992*   ; destroys: flags, hl
+0406BD             0993*   ; preserves: a, because why not
+0406BD             0994*   resetAllFlags:
+0406BD 21 00 00 00 0995*       ld hl,0
+0406C1 67          0996*       ld h,a ; four cycles to preserve a is cheap
+0406C2 E5          0997*       push hl
+0406C3 F1          0998*       pop af
+0406C4 C9          0999*       ret
+0406C5             1000*   
+0406C5             1001*   ; wait until user presses a key
+0406C5             1002*   ; inputs: none
+0406C5             1003*   ; outputs: ascii code of key pressed in a
+0406C5             1004*   ; destroys: af,ix
+0406C5             1005*   waitKeypress:
+0406C5             1006*       MOSCALL mos_getkey
 0406C5 3E 00       0001*M1 			LD	A, function
 0406C7 5B CF       0002*M1 			RST.LIL	08h
-0406C9 C9          1006*       ret
-0406CA             1007*   
-0406CA             1008*   ; print bytes from an address to the screen in hexidecimal format
-0406CA             1009*   ; inputs: hl = address of first byte to print, a = number of bytes to print
-0406CA             1010*   ; outputs: values of each byte printed to screen separated by spaces
-0406CA             1011*   ; destroys: nothing
-0406CA             1012*   dumpMemoryHex:
-0406CA             1013*   ; save registers to the stack
-0406CA C5          1014*       push bc
-0406CB E5          1015*       push hl
-0406CC F5          1016*       push af
-0406CD             1017*   
-0406CD             1018*   ; print the address and separator
-0406CD CD 37 01 04 1019*       call printHex24
-0406D1 3E 3A       1020*       ld a,':'
-0406D3 5B D7       1021*       rst.lil 10h
-0406D5 3E 20       1022*       ld a,' '
-0406D7 5B D7       1023*       rst.lil 10h
-0406D9             1024*   
-0406D9             1025*   ; set b to be our loop counter
-0406D9 F1          1026*       pop af
-0406DA 47          1027*       ld b,a
-0406DB E1          1028*       pop hl
-0406DC E5          1029*       push hl
-0406DD F5          1030*       push af
-0406DE             1031*   @loop:
-0406DE             1032*   ; print the byte
-0406DE 7E          1033*       ld a,(hl)
-0406DF CD 45 01 04 1034*       call printHex8
-0406E3             1035*   ; print a space
-0406E3 3E 20       1036*       ld a,' '
-0406E5 5B D7       1037*       rst.lil 10h
-0406E7 23          1038*       inc hl
-0406E8 10 F4       1039*       djnz @loop
-0406EA CD 2C 01 04 1040*       call printNewLine
-0406EE             1041*   
-0406EE             1042*   ; restore everything
-0406EE F1          1043*       pop af
-0406EF E1          1044*       pop hl
-0406F0 C1          1045*       pop bc
-0406F1             1046*   
-0406F1             1047*   ; all done
-0406F1 C9          1048*       ret
-0406F2             1049*   
+0406C9 C9          1007*       ret
+0406CA             1008*   
+0406CA             1009*   ; print bytes from an address to the screen in hexidecimal format
+0406CA             1010*   ; inputs: hl = address of first byte to print, a = number of bytes to print
+0406CA             1011*   ; outputs: values of each byte printed to screen separated by spaces
+0406CA             1012*   ; destroys: nothing
+0406CA             1013*   dumpMemoryHex:
+0406CA             1014*   ; save registers to the stack
+0406CA C5          1015*       push bc
+0406CB E5          1016*       push hl
+0406CC F5          1017*       push af
+0406CD             1018*   
+0406CD             1019*   ; print the address and separator
+0406CD CD 37 01 04 1020*       call printHex24
+0406D1 3E 3A       1021*       ld a,':'
+0406D3 5B D7       1022*       rst.lil 10h
+0406D5 3E 20       1023*       ld a,' '
+0406D7 5B D7       1024*       rst.lil 10h
+0406D9             1025*   
+0406D9             1026*   ; set b to be our loop counter
+0406D9 F1          1027*       pop af
+0406DA 47          1028*       ld b,a
+0406DB E1          1029*       pop hl
+0406DC E5          1030*       push hl
+0406DD F5          1031*       push af
+0406DE             1032*   @loop:
+0406DE             1033*   ; print the byte
+0406DE 7E          1034*       ld a,(hl)
+0406DF CD 45 01 04 1035*       call printHex8
+0406E3             1036*   ; print a space
+0406E3 3E 20       1037*       ld a,' '
+0406E5 5B D7       1038*       rst.lil 10h
+0406E7 23          1039*       inc hl
+0406E8 10 F4       1040*       djnz @loop
+0406EA CD 2C 01 04 1041*       call printNewLine
+0406EE             1042*   
+0406EE             1043*   ; restore everything
+0406EE F1          1044*       pop af
+0406EF E1          1045*       pop hl
+0406F0 C1          1046*       pop bc
+0406F1             1047*   
+0406F1             1048*   ; all done
+0406F1 C9          1049*       ret
 0406F2             1050*   
-0406F2             1051*   ; print bytes from an address to the screen in binary format
-0406F2             1052*   ; inputs: hl = address of first byte to print, a = number of bytes to print
-0406F2             1053*   ; outputs: values of each byte printed to screen separated by spaces
-0406F2             1054*   ; destroys: nothing
-0406F2             1055*   dumpMemoryBin:
-0406F2             1056*   ; save all registers to the stack
-0406F2 F5          1057*       push af
-0406F3 C5          1058*       push bc
-0406F4 D5          1059*       push de
-0406F5 E5          1060*       push hl
-0406F6 DD E5       1061*       push ix
-0406F8 FD E5       1062*       push iy
-0406FA             1063*   
-0406FA             1064*   ; set b to be our loop counter
-0406FA 47          1065*       ld b,a
-0406FB             1066*   @loop:
-0406FB             1067*   ; print the byte
-0406FB 7E          1068*       ld a,(hl)
-0406FC E5          1069*       push hl
-0406FD C5          1070*       push bc
-0406FE CD B5 03 04 1071*       call printBin8
-040702 C1          1072*       pop bc
-040703             1073*   ; print a space
-040703 3E 20       1074*       ld a,' '
-040705 5B D7       1075*       rst.lil 10h
-040707 E1          1076*       pop hl
-040708 23          1077*       inc hl
-040709 10 F0       1078*       djnz @loop
-04070B CD 2C 01 04 1079*       call printNewLine
-04070F             1080*   
-04070F             1081*   ; restore everything
-04070F FD E1       1082*       pop iy
-040711 DD E1       1083*       pop ix
-040713 E1          1084*       pop hl
-040714 D1          1085*       pop de
-040715 C1          1086*       pop bc
-040716 F1          1087*       pop af
-040717             1088*   ; all done
-040717 C9          1089*       ret
-040718             1090*   
-040718             1091*   ; print bytes from an address to the screen in binary format
-040718             1092*   ; with the bits of each byte in reverse order (lsb first)
-040718             1093*   ; inputs: hl = address of first byte to print, a = number of bytes to print
-040718             1094*   ; outputs: values of each byte printed to screen separated by spaces
-040718             1095*   ; destroys: nothing
-040718             1096*   dumpMemoryBinRev:
-040718             1097*   ; save all registers to the stack
-040718 F5          1098*       push af
-040719 C5          1099*       push bc
-04071A D5          1100*       push de
-04071B E5          1101*       push hl
-04071C DD E5       1102*       push ix
-04071E FD E5       1103*       push iy
-040720             1104*   
-040720             1105*   ; set b to be our loop counter
-040720 47          1106*       ld b,a
-040721             1107*   @loop:
-040721             1108*   ; print the byte
-040721 7E          1109*       ld a,(hl)
-040722 E5          1110*       push hl
-040723 C5          1111*       push bc
-040724 CD DA 03 04 1112*       call printBin8Rev
-040728 C1          1113*       pop bc
-040729             1114*   ; print a space
-040729 3E 20       1115*       ld a,' '
-04072B 5B D7       1116*       rst.lil 10h
-04072D E1          1117*       pop hl
-04072E 23          1118*       inc hl
-04072F 10 F0       1119*       djnz @loop
-040731 CD 2C 01 04 1120*       call printNewLine
-040735             1121*   
-040735             1122*   ; restore everything
-040735 FD E1       1123*       pop iy
-040737 DD E1       1124*       pop ix
-040739 E1          1125*       pop hl
-04073A D1          1126*       pop de
-04073B C1          1127*       pop bc
-04073C F1          1128*       pop af
-04073D             1129*   ; all done
-04073D C9          1130*       ret
+0406F2             1051*   
+0406F2             1052*   ; print bytes from an address to the screen in binary format
+0406F2             1053*   ; inputs: hl = address of first byte to print, a = number of bytes to print
+0406F2             1054*   ; outputs: values of each byte printed to screen separated by spaces
+0406F2             1055*   ; destroys: nothing
+0406F2             1056*   dumpMemoryBin:
+0406F2             1057*   ; save all registers to the stack
+0406F2 F5          1058*       push af
+0406F3 C5          1059*       push bc
+0406F4 D5          1060*       push de
+0406F5 E5          1061*       push hl
+0406F6 DD E5       1062*       push ix
+0406F8 FD E5       1063*       push iy
+0406FA             1064*   
+0406FA             1065*   ; set b to be our loop counter
+0406FA 47          1066*       ld b,a
+0406FB             1067*   @loop:
+0406FB             1068*   ; print the byte
+0406FB 7E          1069*       ld a,(hl)
+0406FC E5          1070*       push hl
+0406FD C5          1071*       push bc
+0406FE CD B5 03 04 1072*       call printBin8
+040702 C1          1073*       pop bc
+040703             1074*   ; print a space
+040703 3E 20       1075*       ld a,' '
+040705 5B D7       1076*       rst.lil 10h
+040707 E1          1077*       pop hl
+040708 23          1078*       inc hl
+040709 10 F0       1079*       djnz @loop
+04070B CD 2C 01 04 1080*       call printNewLine
+04070F             1081*   
+04070F             1082*   ; restore everything
+04070F FD E1       1083*       pop iy
+040711 DD E1       1084*       pop ix
+040713 E1          1085*       pop hl
+040714 D1          1086*       pop de
+040715 C1          1087*       pop bc
+040716 F1          1088*       pop af
+040717             1089*   ; all done
+040717 C9          1090*       ret
+040718             1091*   
+040718             1092*   ; print bytes from an address to the screen in binary format
+040718             1093*   ; with the bits of each byte in reverse order (lsb first)
+040718             1094*   ; inputs: hl = address of first byte to print, a = number of bytes to print
+040718             1095*   ; outputs: values of each byte printed to screen separated by spaces
+040718             1096*   ; destroys: nothing
+040718             1097*   dumpMemoryBinRev:
+040718             1098*   ; save all registers to the stack
+040718 F5          1099*       push af
+040719 C5          1100*       push bc
+04071A D5          1101*       push de
+04071B E5          1102*       push hl
+04071C DD E5       1103*       push ix
+04071E FD E5       1104*       push iy
+040720             1105*   
+040720             1106*   ; set b to be our loop counter
+040720 47          1107*       ld b,a
+040721             1108*   @loop:
+040721             1109*   ; print the byte
+040721 7E          1110*       ld a,(hl)
+040722 E5          1111*       push hl
+040723 C5          1112*       push bc
+040724 CD DA 03 04 1113*       call printBin8Rev
+040728 C1          1114*       pop bc
+040729             1115*   ; print a space
+040729 3E 20       1116*       ld a,' '
+04072B 5B D7       1117*       rst.lil 10h
+04072D E1          1118*       pop hl
+04072E 23          1119*       inc hl
+04072F 10 F0       1120*       djnz @loop
+040731 CD 2C 01 04 1121*       call printNewLine
+040735             1122*   
+040735             1123*   ; restore everything
+040735 FD E1       1124*       pop iy
+040737 DD E1       1125*       pop ix
+040739 E1          1126*       pop hl
+04073A D1          1127*       pop de
+04073B C1          1128*       pop bc
+04073C F1          1129*       pop af
+04073D             1130*   ; all done
+04073D C9          1131*       ret
 04073E             0031        include "arith24.inc"
 04073E             0001*   ;------------------------------------------------------------------------
 04073E             0002*   ;  arith24.asm
@@ -5895,7 +5896,7 @@ PC     Output      Line
 04230B 01          0012*       db 1                    ; num_animations
 04230C 00          0013*       db 0	                ; animation
 04230D 00          0014*       db 0	                ; animation_timer
-04230E 01          0015*       db 1	                ; move_timer
+04230E 00          0015*       db 0	                ; move_timer
 04230F 00          0016*       db 0	                ; move_step
 042310 14          0017*       db 20	                ; points
 042311 05          0018*       db 5	                ; shield_damage
@@ -9827,16 +9828,16 @@ PC     Output      Line
 04558D DD 37 00    0087*       ld ix,(ix) ; ix points to level definition
 045590             0088*   ; set tiles_cols
 045590 DD 7E 00    0089*       ld a,(ix+0)
-045593 32 06 64 04 0090*       ld (tiles_cols),a
+045593 32 06 65 04 0090*       ld (tiles_cols),a
 045597             0091*   ; set tiles_row counter
 045597 DD 7E 01    0092*       ld a,(ix+1)
-04559A 32 03 64 04 0093*       ld (tiles_row),a
+04559A 32 03 65 04 0093*       ld (tiles_row),a
 04559E             0094*   ; set cur_baseBufferId
 04559E DD 27 04    0095*       ld hl,(ix+4)
-0455A1 22 07 64 04 0096*       ld (cur_baseBufferId),hl
+0455A1 22 07 65 04 0096*       ld (cur_baseBufferId),hl
 0455A5             0097*   ; set tiles_row_defs
 0455A5 ED 32 07    0098*       lea ix,ix+7 ; ix points to definition of first tile of first row
-0455A8 DD 22 00 64 0099*       ld (tiles_row_defs),ix
+0455A8 DD 22 00 65 0099*       ld (tiles_row_defs),ix
        04          
 0455AD             0100*   
 0455AD C9          0101*       ret ; DEBUG
@@ -9909,10 +9910,10 @@ PC     Output      Line
        97 A7 D8 D8 
        B6 71 41 42 
        F8 43 44 74 
-045639 71 72 62 9A 0019*   	db 113,114,098,154,155,097,098,097,165,168,055,248,000,248,056,114
+045639 71 72 62 9A 0019*   	db 113,114,098,154,155,097,098,097,165,168,055,248,001,248,056,114
        9B 61 62 61 
        A5 A8 37 F8 
-       00 F8 38 72 
+       01 F8 38 72 
 045649 71 72 64 72 0020*   	db 113,114,100,114,113,100,113,114,113,114,049,050,248,051,052,098
        71 64 71 72 
        71 72 31 32 
@@ -11135,7 +11136,7 @@ PC     Output      Line
 046156             0052*   
 046156             0053*   game_playing:
 046156             0054*   ; Main gameplay loop
-046156 CD 10 64 04 0055*       call tiles_plot
+046156 CD 10 65 04 0055*       call tiles_plot
 04615A CD C7 61 04 0056*       call do_player
 04615E CD E0 61 04 0057*       call do_enemies
 046162             0058*   ; update UI: TODO make this a standalone function
@@ -11390,144 +11391,159 @@ PC     Output      Line
 04633A 00 00 00    0031*   Vt: dl 0x000000 ; velocity of target
 04633D 00 00 00    0032*   Vt_x: dl 0x000000 ; x component of target velocity
 046340 00 00 00    0033*   Vt_y: dl 0x000000 ; y component of target velocity
-046343             0034*   
-046343 00 00 00    0035*   Heading_p: dl 0x000000 ; angle of projectile motion
-046346             0036*   
-046346             0037*   ; Inputs:   Bearing_t, Vp
-046346             0038*   ; Note:     a call to orientation_to_player provides Bearing_t
-046346             0039*   ; Outputs:  uh.l is the 16.8 fixed firing angle256
-046346             0040*   ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
-046346             0041*   ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
-046346             0042*   targeting_computer:
-046346 CD 00 19 04 0043*       call vdu_home_cursor ; DEBUG
-04634A             0044*   
-04634A             0045*   ; compute target velocity from x,y component velocities
-04634A ED 4B 11 58 0046*       ld bc,(player_xvel)
+046343 00 00 00    0034*   Heading_p: dl 0x000000 ; angle of projectile motion
+046346 00 00 00    0035*   lead_angle: dl 0x000000 ; lead angle
+046349             0036*   
+046349             0037*   ; Inputs:   Vp velocity of projectile set,
+046349             0038*   ;           IY pointed to sprite record,
+046349             0039*   ;           player position and velocities correctly set
+046349             0040*   ; Outputs:  uh.l is the 16.8 fixed firing angle256
+046349             0041*   ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
+046349             0042*   ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
+046349             0043*   targeting_computer:
+046349             0044*   ; compute target velocity from x,y component velocities
+046349 ED 4B 11 58 0045*       ld bc,(player_xvel)
        04          
-04634F ED 5B 14 58 0047*       ld de,(player_yvel)
+04634E ED 5B 14 58 0046*       ld de,(player_yvel)
        04          
-046354             0048*   
-046354             0049*       ; ld hl,-1*256 ; account for vertical ground movement
-046354             0050*       ; add hl,de
-046354             0051*       ; ex de,hl ; ud.e = player_yvel-1
-046354             0052*   
-046354 CD FD 0B 04 0053*       call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
-046358 22 2E 63 04 0054*       ld (Heading_t),hl
-04635C ED 53 3A 63 0055*       ld (Vt),de
+046353 21 00 FF FF 0047*       ld hl,-1*256 ; account for vertical ground movement
+046357 19          0048*       add hl,de
+046358 EB          0049*       ex de,hl ; ud.e = player_yvel-1
+046359 CD FD 0B 04 0050*       call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
+04635D 22 2E 63 04 0051*       ld (Heading_t),hl ; PASSES
+046361 ED 53 3A 63 0052*       ld (Vt),de ; PASSES
        04          
-046361             0056*   
-046361             0057*   ; Bearing_t is already set by orientation_to_player
-046361             0058*   ; compute Heading_t-Bearing_t
-046361 ED 5B 2B 63 0059*       ld de,(Bearing_t)
+046366             0053*   ; Bearing_t should have been set by prerequisite call to orientation_to_player
+046366             0054*   ; compute Heading_t-Bearing_t PASSES
+046366 ED 5B 2B 63 0055*       ld de,(Bearing_t)
        04          
-046366 A7          0060*       and a ; clear carry
-046367 ED 52       0061*       sbc hl,de ; Uh.l = Heading_t-Bearing_t
-046369             0062*   
-046369             0063*       ; CALL print_s168_hl ; DEBUG
-046369             0064*       ; call printNewLine ; DEBUG
-046369             0065*   
-046369             0066*   ; compute sin(Heading_t-Bearing_t)
-046369 CD 8E 0B 04 0067*       call sin168 ; uh.l = sin(Heading_t-Bearing_t)
-04636D             0068*   
-04636D             0069*       ; CALL print_s168_hl ; DEBUG
-04636D             0070*       ; call printNewLine ; DEBUG
-04636D             0071*   
-04636D             0072*   ; compute (Vt*sin(Heading_t-Bearing_t))
-04636D ED 5B 3A 63 0073*       ld de,(Vt)
+04636B A7          0056*       and a ; clear carry
+04636C ED 52       0057*       sbc hl,de ; Uh.l = Heading_t-Bearing_t
+04636E             0058*   ; compute sin(Heading_t-Bearing_t)
+04636E CD 8E 0B 04 0059*       call sin168 ; uh.l = sin(Heading_t-Bearing_t)
+046372             0060*   ; compute (Vt*sin(Heading_t-Bearing_t))
+046372 ED 5B 3A 63 0061*       ld de,(Vt)
        04          
-046372 CD CA 0A 04 0074*       call smul168 ; uh.l = (Vt*sin(Heading_t-Bearing_t))
-046376             0075*   
-046376             0076*       ; CALL print_s168_hl ; DEBUG
-046376             0077*       ; call printNewLine ; DEBUG
-046376             0078*   
-046376             0079*   ; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
-046376 ED 5B 31 63 0080*       ld de,(Vp)
+046377 CD CA 0A 04 0062*       call smul168 ; uh.l = (Vt*sin(Heading_t-Bearing_t))
+04637B             0063*   ; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
+04637B ED 5B 31 63 0064*       ld de,(Vp)
        04          
-04637B CD 2E 0B 04 0081*       call sdiv168 ; ud.e = (Vt*sin(Heading_t-Bearing_t)) / Vp
-04637F EB          0082*       ex de,hl ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
-046380             0083*   
-046380             0084*       ; CALL print_s168_hl ; DEBUG
-046380             0085*       ; call printNewLine ; DEBUG
-046380             0086*   
-046380             0087*   ; answer is in radians, convert to degrees256
-046380 11 BE 28 00 0088*       ld de,0x0028BE ; 40.74 = 57.29578*256/360
-046384 CD CA 0A 04 0089*       call smul168 ; uh.l = angle in degrees256
-046388             0090*   
-046388 CD 38 03 04 0091*       CALL print_s168_hl ; DEBUG
-04638C CD 2C 01 04 0092*       call printNewLine ; DEBUG
-046390             0093*   
-046390             0094*   ; add lead angle to target bearing
-046390 ED 5B 2B 63 0095*       ld de,(Bearing_t)
+046380 CD 2E 0B 04 0065*       call sdiv168 ; ud.e = (Vt*sin(Heading_t-Bearing_t)) / Vp
+046384 EB          0066*       ex de,hl ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
+046385             0067*   ; answer is in radians, convert to degrees256
+046385 11 BE 28 00 0068*       ld de,0x0028BE ; 40.74 = 57.29578*256/360
+046389 CD CA 0A 04 0069*       call smul168 ; uh.l = angle in degrees256
+04638D 22 46 63 04 0070*       ld (lead_angle),hl ; DEBUG
+046391             0071*   ; add lead angle to target bearing
+046391 ED 5B 2B 63 0072*       ld de,(Bearing_t)
        04          
-046395 19          0096*       add hl,de ; h.l = lead angle+target bearing
-046396 E5          0097*       push hl
-046397             0098*   
-046397             0099*   ; compute component projectile velocities
-046397 ED 5B 31 63 0100*       ld de,(Vp)
+046396 19          0073*       add hl,de ; h.l = lead angle+target bearing
+046397 E5          0074*       push hl
+046398             0075*   ; compute component projectile velocities
+046398 ED 5B 31 63 0076*       ld de,(Vp) ; Vp should have been set by caller
        04          
-04639C CD A9 0B 04 0101*       call polar_to_cartesian ; ub.c = Vp_x, ud.e = Vp_y
-0463A0 ED 43 34 63 0102*       ld (Vp_x),bc
+04639D CD A9 0B 04 0077*       call polar_to_cartesian ; ub.c = Vp_x, ud.e = Vp_y
+0463A1 ED 43 34 63 0078*       ld (Vp_x),bc
        04          
-0463A5 ED 53 37 63 0103*       ld (Vp_y),de
+0463A6 ED 53 37 63 0079*       ld (Vp_y),de
        04          
-0463AA E1          0104*       pop hl ; uh.l = lead angle+target bearing
-0463AB             0105*   
-0463AB 22 43 63 04 0106*       ld (Heading_p),hl
-0463AF             0107*   
-0463AF             0108*       ; PUSH_ALL
-0463AF             0109*       ; call vdu_home_cursor
-0463AF             0110*   
-0463AF             0111*       ; call printInline
-0463AF             0112*       ; asciz "Bt "
-0463AF             0113*       ; ld hl,(Bearing_t)
-0463AF             0114*       ; call print_s168_hl
-0463AF             0115*   
-0463AF             0116*       ; call printInline
-0463AF             0117*       ; asciz "\r\nHt "
-0463AF             0118*       ; ld hl,(Heading_t)
-0463AF             0119*       ; call print_s168_hl
-0463AF             0120*   
-0463AF             0121*       ; call printInline
-0463AF             0122*       ; asciz "\r\nVt "
-0463AF             0123*       ; ld hl,(Vt)
-0463AF             0124*       ; call print_s168_hl
-0463AF             0125*   
-0463AF             0126*       ; call printInline
-0463AF             0127*       ; asciz "\r\nVtx"
-0463AF             0128*       ; ld hl,(player_xvel)
-0463AF             0129*       ; call print_s168_hl
-0463AF             0130*   
-0463AF             0131*       ; call printInline
-0463AF             0132*       ; asciz "\r\nVty"
-0463AF             0133*       ; ld hl,(player_yvel)
-0463AF             0134*       ; ld de,-1*256 ; account for vertical ground movement
-0463AF             0135*       ; add hl,de
-0463AF             0136*       ; call print_s168_hl
-0463AF             0137*   
-0463AF             0138*       ; call printInline
-0463AF             0139*       ; asciz "\r\nHp "
-0463AF             0140*       ; ld hl,(Heading_p)
-0463AF             0141*       ; call print_s168_hl
-0463AF             0142*   
-0463AF             0143*       ; call printInline
-0463AF             0144*       ; asciz "\r\nVp "
-0463AF             0145*       ; ld hl,(Vp)
-0463AF             0146*       ; call print_s168_hl
-0463AF             0147*   
-0463AF             0148*       ; call printInline
-0463AF             0149*       ; asciz "\r\nVpx"
-0463AF             0150*       ; ld hl,(Vp_x)
-0463AF             0151*       ; call print_s168_hl
-0463AF             0152*   
-0463AF             0153*       ; call printInline
-0463AF             0154*       ; asciz "\r\nVpy"
-0463AF             0155*       ; ld hl,(Vp_y)
-0463AF             0156*       ; call print_s168_hl
-0463AF             0157*   
-0463AF             0158*       ; POP_ALL
-0463AF C9          0159*       ret
-0463B0             0061        include "tiles.inc"
-0463B0 FF FF FF FF 0001*       align 256
+0463AB E1          0080*       pop hl ; uh.l = lead angle+target bearing
+0463AC 22 43 63 04 0081*       ld (Heading_p),hl
+0463B0             0082*   
+0463B0 C9          0083*       ret
+0463B1             0084*   
+0463B1             0085*   ; debug print the results
+0463B1             0086*       PUSH_ALL
+0463B1 08          0001*M1     ex af,af'
+0463B2 D9          0002*M1     exx
+0463B3 F5          0003*M1     push af
+0463B4 E5          0004*M1     push hl
+0463B5 C5          0005*M1     push bc
+0463B6 D5          0006*M1     push de
+0463B7             0007*M1 
+0463B7 08          0008*M1     ex af,af'
+0463B8 D9          0009*M1     exx
+0463B9 F5          0010*M1     push af
+0463BA E5          0011*M1     push hl
+0463BB C5          0012*M1     push bc
+0463BC D5          0013*M1     push de
+0463BD DD E5       0014*M1     push ix
+0463BF FD E5       0015*M1     push iy
+0463C1 CD 00 19 04 0087*       call vdu_home_cursor
+0463C5 CD 2C 01 04 0088*       call printNewLine
+0463C9 CD 10 01 04 0089*       call printInline
+0463CD 42 74 20 00 0090*       asciz "Bt "
+0463D1 2A 2B 63 04 0091*       ld hl,(Bearing_t)
+0463D5 CD 38 03 04 0092*       call print_s168_hl
+0463D9             0093*   
+0463D9             0094*       ; call printInline
+0463D9             0095*       ; asciz "\r\nHt "
+0463D9             0096*       ; ld hl,(Heading_t)
+0463D9             0097*       ; call print_s168_hl
+0463D9             0098*   
+0463D9             0099*       ; call printInline
+0463D9             0100*       ; asciz "\r\nVt "
+0463D9             0101*       ; ld hl,(Vt)
+0463D9             0102*       ; call print_s168_hl
+0463D9             0103*   
+0463D9             0104*       ; call printInline
+0463D9             0105*       ; asciz "\r\nVtx"
+0463D9             0106*       ; ld hl,(player_xvel)
+0463D9             0107*       ; call print_s168_hl
+0463D9             0108*   
+0463D9             0109*       ; call printInline
+0463D9             0110*       ; asciz "\r\nVty"
+0463D9             0111*       ; ld hl,(player_yvel)
+0463D9             0112*       ; ld de,-1*256 ; account for vertical ground movement
+0463D9             0113*       ; add hl,de
+0463D9             0114*       ; call print_s168_hl
+0463D9             0115*   
+0463D9 CD 10 01 04 0116*       call printInline
+0463DD 0D 0A 4C 64 0117*       asciz "\r\nLda"
+       61 00       
+0463E3 2A 46 63 04 0118*       ld hl,(lead_angle)
+0463E7 CD 38 03 04 0119*       call print_s168_hl
+0463EB             0120*   
+0463EB CD 10 01 04 0121*       call printInline
+0463EF 0D 0A 48 70 0122*       asciz "\r\nHp "
+       20 00       
+0463F5 2A 43 63 04 0123*       ld hl,(Heading_p)
+0463F9 CD 38 03 04 0124*       call print_s168_hl
+0463FD             0125*   
+0463FD             0126*       ; call printInline
+0463FD             0127*       ; asciz "\r\nVp "
+0463FD             0128*       ; ld hl,(Vp)
+0463FD             0129*       ; call print_s168_hl
+0463FD             0130*   
+0463FD             0131*       ; call printInline
+0463FD             0132*       ; asciz "\r\nVpx"
+0463FD             0133*       ; ld hl,(Vp_x)
+0463FD             0134*       ; call print_s168_hl
+0463FD             0135*   
+0463FD             0136*       ; call printInline
+0463FD             0137*       ; asciz "\r\nVpy"
+0463FD             0138*       ; ld hl,(Vp_y)
+0463FD             0139*       ; call print_s168_hl
+0463FD             0140*   
+0463FD             0141*       POP_ALL
+0463FD FD E1       0001*M1     pop iy
+0463FF DD E1       0002*M1     pop ix
+046401 D1          0003*M1     pop de
+046402 C1          0004*M1     pop bc
+046403 E1          0005*M1     pop hl
+046404 F1          0006*M1     pop af
+046405 08          0007*M1     ex af,af'
+046406 D9          0008*M1     exx
+046407             0009*M1 
+046407 D1          0010*M1     pop de
+046408 C1          0011*M1     pop bc
+046409 E1          0012*M1     pop hl
+04640A F1          0013*M1     pop af
+04640B 08          0014*M1     ex af,af'
+04640C D9          0015*M1     exx
+04640D C9          0142*       ret
+04640E             0061        include "tiles.inc"
+04640E FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11546,537 +11562,6 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-046400             0002*   
-046400             0003*   ; ######### TILES #########
-046400             0004*   ; TODO: implement buffering of tiles here when there isn't other stuff to do
-046400             0005*   ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
-046400 00 00 00    0006*   tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
-046403 00 00 00    0007*   tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
-046406             0008*       ; initialize to zero for a maximum of 256 rows in a level
-046406 00          0009*   tiles_cols: db 0 ; number of tile columns in the current level
-046407             0010*   
-046407 00 00 00    0011*   cur_baseBufferId: dl 0
-04640A 00 00 00    0012*   tiles_x_plot: dl 0
-04640D F1 FF FF    0013*   tiles_y_plot: dl -15
-046410             0014*   
-046410             0015*   tiles_plot:
-046410             0016*   ; set gfx viewport to playing field window
-046410 01 00 00 00 0017*       ld bc,field_left
-046414 11 00 00 00 0018*       ld de,field_top
-046418 DD 21 FF 00 0019*       ld ix,field_right
-       00          
-04641D FD 21 7F 01 0020*       ld iy,field_bottom
-       00          
-046422 CD EB 19 04 0021*       call vdu_set_gfx_viewport
-046426             0022*   ; move the background down one pixel
-046426 3E 02       0023*       ld a,2 ; current gfx viewport
-046428 2E 02       0024*       ld l,2 ; direction=down
-04642A 26 01       0025*       ld h,1 ; speed=1 px
-04642C CD 63 19 04 0026*       call vdu_scroll_down
-046430             0027*   ; set gfx viewport to one scanline to optimise plotting tiles
-046430 01 00 00 00 0028*       ld bc,0 ; leftmost x-coord
-046434 11 00 00 00 0029*       ld de,0 ; topmost y-coord
-046438 DD 21 FF 00 0030*       ld ix,255 ; rightmost x-coord
-       00          
-04643D FD 21 00 00 0031*       ld iy,0 ; bottommost y-coord
-       00          
-046442 CD EB 19 04 0032*       call vdu_set_gfx_viewport
-046446             0033*   ; plot the background
-046446 CD 4E 65 04 0034*       call bg_plot
-04644A             0035*   ; initialize tiles loop
-04644A 21 00 00 00 0036*       ld hl,0 ; init plotting x-coordinate
-04644E 22 0A 64 04 0037*       ld (tiles_x_plot),hl
-046452 2A 00 64 04 0038*       ld hl,(tiles_row_defs)
-046456 3A 06 64 04 0039*       ld a,(tiles_cols)
-04645A 47          0040*       ld b,a ; column loop counter
-04645B             0041*   @loop:
-04645B C5          0042*       push bc ; save the loop counter
-04645C             0043*   ; read the tile defintion for the current column
-04645C 7E          0044*       ld a,(hl) ; a has tile definition
-04645D E5          0045*       push hl ; save pointer to tile definition
-04645E 2A 07 64 04 0046*       ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
-046462 6F          0047*       ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
-046463 CD 38 1A 04 0048*       call vdu_buff_select ; tile bitmap buffer is now active
-046467             0049*   ; plot the active bitmap
-046467 ED 4B 0A 64 0050*       ld bc,(tiles_x_plot)
-       04          
-04646C ED 5B 0D 64 0051*       ld de,(tiles_y_plot)
-       04          
-046471 CD 20 1E 04 0052*       call vdu_plot_bmp
-046475             0053*   ; bump x-coords the width of one tile and save it
-046475 2A 0A 64 04 0054*       ld hl,(tiles_x_plot)
-046479 01 10 00 00 0055*       ld bc,16
-04647D 09          0056*       add hl,bc
-04647E 22 0A 64 04 0057*       ld (tiles_x_plot),hl
-046482             0058*   ; prepare to loop to next column
-046482 E1          0059*       pop hl ; get back pointer to tile def
-046483 23          0060*       inc hl ; bump it to the next column
-046484 C1          0061*       pop bc ; snag our loop counter
-046485 10 D4       0062*       djnz @loop
-046487             0063*   ; increment tiles plotting y-coordinate
-046487             0064*   ; when it hits zero, we go to next row of tiles in the map
-046487             0065*   ; (we use ix b/c we want to preserve hl for the next step)
-046487 DD 21 0D 64 0066*       ld ix,tiles_y_plot
-       04          
-04648C DD 34 00    0067*       inc (ix)
-04648F C0          0068*       ret nz
-046490             0069*   ; do active tiles
-046490 E5          0070*       push hl ; save pointer to next row tile def
-046491 CD C3 64 04 0071*       call do_active_tiles
-046495 E1          0072*       pop hl ; get back pointer to next row tile def
-046496             0073*   ; time to bump tiles_row_defs to next row
-046496             0074*   ; (hl was already there at the end of the loop)
-046496 22 00 64 04 0075*       ld (tiles_row_defs),hl
-04649A             0076*   ; reset coords to plot next row of tiles
-04649A 21 00 00 00 0077*       ld hl,0
-04649E 22 0A 64 04 0078*       ld (tiles_x_plot),hl
-0464A2 21 F1 FF FF 0079*       ld hl,-15
-0464A6 22 0D 64 04 0080*       ld (tiles_y_plot),hl
-0464AA             0081*   ; decrement tiles row counter
-0464AA 21 03 64 04 0082*       ld hl,tiles_row
-0464AE 35          0083*       dec (hl)
-0464AF C0          0084*       ret nz
-0464B0             0085*   @inc_level:
-0464B0             0086*   ; increase the number of enemy sprites
-0464B0 3A 32 21 04 0087*       ld a,(max_enemy_sprites)
-0464B4 3C          0088*       inc a
-0464B5 FE 10       0089*       cp table_max_records ; if we're at the global limit,skip ahead at max level
-0464B7 CA 6C 55 04 0090*       jp z,next_level
-0464BB 32 32 21 04 0091*       ld (max_enemy_sprites),a ; otherwise save the updated number
-0464BF C3 6C 55 04 0092*       jp next_level
-0464C3             0093*   ; end tiles_plot
-0464C3             0094*   
-0464C3             0095*   do_active_tiles:
-0464C3             0096*   ; initialize tiles loop
-0464C3 21 00 00 00 0097*       ld hl,0 ; init plotting x-coordinate
-0464C7 22 0A 64 04 0098*       ld (tiles_x_plot),hl
-0464CB 2A 00 64 04 0099*       ld hl,(tiles_row_defs)
-0464CF 3A 06 64 04 0100*       ld a,(tiles_cols)
-0464D3 47          0101*       ld b,a ; column loop counter
-0464D4             0102*   @loop:
-0464D4 C5          0103*       push bc ; save the loop counter
-0464D5             0104*   ; read the tile defintion for the current column
-0464D5 7E          0105*       ld a,(hl) ; a has tile definition
-0464D6 E5          0106*       push hl ; save pointer to tile definition
-0464D7 B7          0107*       or a ; check for null tile
-0464D8 CA F4 64 04 0108*       jp z,@next_tile ; skip to next tile if null
-0464DC FE 11       0109*       cp 17 ; carry reset if active tile
-0464DE D2 F4 64 04 0110*       jp nc,@next_tile ; skip to next tile if not active
-0464E2             0111*   ; call the tile activation routine
-0464E2 21 4F 65 04 0112*       ld hl,tile_activation_routines
-0464E6 16 03       0113*       ld d,3 ; three bytes per table entry
-0464E8 5F          0114*       ld e,a ; a is the tile type
-0464E9 ED 5C       0115*       mlt de ; de is now the offset to the table entry
-0464EB 19          0116*       add hl,de ; hl is now the address of the table entry
-0464EC ED 27       0117*       ld hl,(hl) ; hl is now the activation routine address
-0464EE             0118*       callHL ; call the activation routine
-0464EE 01 F4 64 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-0464F2 C5          0002*M1     push bc ; which constitutes the return address
-0464F3 E9          0003*M1     jp (hl) ; Jump to the address in HL
-0464F4             0004*M1 @@:
-0464F4             0119*   @next_tile:
-0464F4             0120*   ; bump x-coords the width of one tile and save it
-0464F4 2A 0A 64 04 0121*       ld hl,(tiles_x_plot)
-0464F8 01 10 00 00 0122*       ld bc,16
-0464FC 09          0123*       add hl,bc
-0464FD 22 0A 64 04 0124*       ld (tiles_x_plot),hl
-046501             0125*   ; prepare to loop to next column
-046501 E1          0126*       pop hl ; get back pointer to tile def
-046502 23          0127*       inc hl ; bump it to the next column
-046503 C1          0128*       pop bc ; snag our loop counter
-046504 10 CE       0129*       djnz @loop
-046506 C9          0130*       ret ; done
-046507             0131*   ; end do_active_tiles
-046507             0132*   
-046507             0133*   ; create a new sprite at the same location as an active tile
-046507             0134*   ; inputs: hl = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
-046507             0135*   spawn_sprite_from_tile:
-046507 CD 14 5E 04 0136*       call spawn_sprite
-04650B D0          0137*       ret nc ; no carry means no free sprite slots, so we go home
-04650C             0138*   ; update the new sprite's position and make it visible
-04650C 2A 0A 64 04 0139*       ld hl,(tiles_x_plot)
-046510             0140*       hlu_mul256
-046510 29          0001*M1     add hl,hl ; * 2
-046511 29          0002*M1     add hl,hl ; * 4
-046512 29          0003*M1     add hl,hl ; * 8
-046513 29          0004*M1     add hl,hl ; * 16
-046514 29          0005*M1     add hl,hl ; * 32
-046515 29          0006*M1     add hl,hl ; * 64
-046516 29          0007*M1     add hl,hl ; * 128
-046517 29          0008*M1     add hl,hl ; * 256
-046518 E5          0141*       push hl
-046519 C1          0142*       pop bc
-04651A DD 0F 01    0143*       ld (ix+sprite_x),bc
-04651D 11 00 FF FF 0144*       ld de,-1*256 ; TODO: implement y-coord for reals
-046521 DD 1F 04    0145*       ld (ix+sprite_y),de
-046524 21 00 01 00 0146*       ld hl,1*256
-046528 DD 2F 0A    0147*       ld (ix+sprite_yvel),hl
-04652B             0148*   ; return to caller
-04652B 37          0149*       scf ; set carry flag to indicate success
-04652C C9          0150*       ret
-04652D             0151*   ; end spawn_sprite_from_tile
-04652D             0152*   
-04652D             0153*   move_active_tile:
-04652D             0154*   ; y-axis movement
-04652D FD 27 04    0155*       ld hl,(iy+sprite_y)
-046530 FD 17 0A    0156*       ld de,(iy+sprite_yvel)
-046533 19          0157*       add hl,de
-046534 FD 2F 04    0158*       ld (iy+sprite_y),hl
-046537             0159*   ; detect screen edge collisions
-046537 AF          0160*       xor a ; reset screen edge collision flag and clear carry
-046538 32 94 5C 04 0161*       ld (sprite_screen_edge),a
-04653C             0162*   ; y-axis bottom is all we need to test
-04653C 11 00 91 FE 0163*       ld de,-sprite_bottom*256
-046540 ED 5A       0164*       adc hl,de
-046542 F2 47 65 04 0165*       jp p,@bottom ; scrolled off screen so deactivate
-046546 C9          0166*       ret ; still on screen so do nothing further
-046547             0167*   @bottom:
-046547 3E 04       0168*       ld a,collide_bottom
-046549 32 94 5C 04 0169*       ld (sprite_screen_edge),a
-04654D C9          0170*       ret
-04654E             0171*   
-04654E             0172*   
-04654E             0173*   ; bg_y_plot: dl -1
-04654E             0174*   ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
-04654E             0175*   
-04654E             0176*   bg_plot: ; TODO: implement this
-04654E             0177*   ; ; load current bg tile bufferId as default
-04654E             0178*   ;     ld hl,(bg_bufferId)
-04654E             0179*   ; ; check whether it is time for a new background tile
-04654E             0180*   ;     ld a,(bg_y_plot)
-04654E             0181*   ;     inc a
-04654E             0182*   ;     ld (bg_y_plot),a
-04654E             0183*   ;     jp nz,@F ; not time for a new tile so draw current one
-04654E             0184*   ; ; load the next background tile
-04654E             0185*   ;     ld hl,BUF_STATION_BG_00
-04654E             0186*   ;     call rand_8
-04654E             0187*   ;     and %0000011
-04654E             0188*   ;     add a,l
-04654E             0189*   ;     ld l,a
-04654E             0190*   ;     ld a,0
-04654E             0191*   ;     adc a,h
-04654E             0192*   ;     ld h,a
-04654E             0193*   ;     ld (bg_bufferId),hl
-04654E             0194*   ; @@:
-04654E             0195*   ;     call vdu_buff_select
-04654E             0196*   ;     ld bc,0
-04654E             0197*   ;     ld de,(bg_y_plot)
-04654E             0198*   ;     inc de
-04654E             0199*   ;     call vdu_plot_bmp
-04654E             0200*   ; all done
-04654E C9          0201*       ret
-04654F             0202*   
-04654F             0203*   ; ###### TODO: NEW CODE TO IMPLEMENT ######
-04654F             0204*   tile_pad_small: equ 1
-04654F             0205*   tile_pad_med: equ 2
-04654F             0206*   tile_pad_large: equ 3
-04654F             0207*   tile_pad_huge: equ 4
-04654F             0208*   tile_turret_fireball: equ 5
-04654F             0209*   tile_laser_turret: equ 6
-04654F             0210*   tile_twin_laser_turret: equ 7
-04654F             0211*   tile_gatling_turret: equ 8
-04654F             0212*   tile_electrode_r: equ 9
-04654F             0213*   tile_electrode_u: equ 10
-04654F             0214*   tile_piston_r: equ 11
-04654F             0215*   tile_piston_u: equ 12
-04654F             0216*   tile_spark_r: equ 13
-04654F             0217*   tile_spark_u: equ 14
-04654F             0218*   tile_flame_r: equ 15
-04654F             0219*   tile_flame_u: equ 16
-04654F             0220*   
-04654F             0221*   active_tile_timer: equ 24 ; 2/10ths of a second
-04654F             0222*   tile_activation_routines:
-04654F 82 65 04    0223*       dl activate_null_tile ; dummy spacer since tiled is 1-based
-046552 13 66 04    0224*       dl activate_pad_small
-046555 82 65 04    0225*       dl activate_null_tile  ;  activate_pad_med
-046558 82 65 04    0226*       dl activate_null_tile  ;  activate_pad_large
-04655B 82 65 04    0227*       dl activate_null_tile  ;  activate_pad_huge
-04655E 13 67 04    0228*       dl activate_turret_fireball
-046561 82 65 04    0229*       dl activate_null_tile  ;  activate_laser_turret
-046564 82 65 04    0230*       dl activate_null_tile  ;  activate_twin_laser_turret
-046567 82 65 04    0231*       dl activate_null_tile  ;  activate_gatling_turret
-04656A 82 65 04    0232*       dl activate_null_tile  ;  activate_electrode_r
-04656D 82 65 04    0233*       dl activate_null_tile  ;  activate_electrode_u
-046570 82 65 04    0234*       dl activate_null_tile  ;  activate_piston_r
-046573 82 65 04    0235*       dl activate_null_tile  ;  activate_piston_u
-046576 82 65 04    0236*       dl activate_null_tile  ;  activate_spark_r
-046579 82 65 04    0237*       dl activate_null_tile  ;  activate_spark_u
-04657C 82 65 04    0238*       dl activate_null_tile  ;  activate_flame_r
-04657F 82 65 04    0239*       dl activate_null_tile  ;  activate_flame_u
-046582             0240*   ; end tile_activation_routines
-046582             0241*   
-046582             0242*   activate_null_tile:
-046582 C9          0243*       ret ; dummy routine, do nothing
-046583             0244*   
-046583             0245*   ; ld_act_laser_turret:
-046583             0246*   ;     ; call sprite_variables_to_stack
-046583             0247*   
-046583             0248*   ;     ld hl,move_laser_turret
-046583             0249*   ;     ld (sprite_move_program),hl
-046583             0250*   
-046583             0251*   ;     xor a
-046583             0252*   ;     ld (sprite_animation),a
-046583             0253*   ;     ld (sprite_move_step),a
-046583             0254*   
-046583             0255*   ;     call rand_8     ; snag a random number
-046583             0256*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
-046583             0257*   ;     add a,64 ; range is now 64-127
-046583             0258*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
-046583             0259*   
-046583             0260*   ;     ld a,%10 ; collides with laser but not player
-046583             0261*   ;     ld (iy+sprite_collisions),a
-046583             0262*   
-046583             0263*   ;     ld a,#10 ; BCD
-046583             0264*   ;     ld (sprite_points),a
-046583             0265*   ;     ld a,0 ; binary
-046583             0266*   ;     ld (sprite_shield_damage),a
-046583             0267*   
-046583             0268*   ;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
-046583             0269*   ;     jp dt_ld_act
-046583             0270*   
-046583             0271*   
-046583             0272*   ; move_laser_turret:
-046583             0273*   ; ; compute orientation to player
-046583             0274*   ;     call orientation_to_player
-046583             0275*   ; ; h.l 8.8 fixed angle256 to player
-046583             0276*   ; ; bc and de as signed 16-bit integers
-046583             0277*   ; ; representing delta-x/y *to* target respectively
-046583             0278*   ;     ld (Bearing_t),hl
-046583             0279*   ;     ld hl,0x0400
-046583             0280*   ;     ld (Vp),hl
-046583             0281*   ;     call targeting_computer
-046583             0282*   ;     ld (sprite_heading),hl ; store bearing to player
-046583             0283*   ; ; is it time to launch a fireball?
-046583             0284*   ;     ld hl,sprite_move_timer
-046583             0285*   ;     dec (hl)
-046583             0286*   ;     jp nz,move_laser_turret_boilerplate
-046583             0287*   ;     call fireballs_init
-046583             0288*   ;     ; reset move timer so can fire again if player doesn't take us out
-046583             0289*   ;     call rand_8     ; snag a random number
-046583             0290*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
-046583             0291*   ;     add a,64 ; range is now 64-127
-046583             0292*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
-046583             0293*   ; move_laser_turret_boilerplate:
-046583             0294*   ;     call move_active_tiles
-046583             0295*   ;     call check_collisions
-046583             0296*   ;     ret
-046583             0297*   
-046583             0298*   
-046583             0299*   ; fireballs_init:
-046583             0300*   ;     ; call sprite_variables_to_stack
-046583             0301*   
-046583             0302*   ;     ld hl,enemy_fireball
-046583             0303*   ;     ld (sprite_base_bufferId),hl
-046583             0304*   
-046583             0305*   ;     ld hl,move_fireballs
-046583             0306*   ;     ld (sprite_move_program),hl
-046583             0307*   
-046583             0308*   ;     ld a,%11 ; collides with laser and player
-046583             0309*   ;     ld (iy+sprite_collisions),a
-046583             0310*   
-046583             0311*   ;     ld hl,(Vp)
-046583             0312*   ;     ld (sprite_vel),hl
-046583             0313*   ;     ld hl,(Vp_x)
-046583             0314*   ;     ld (sprite_xvel),hl
-046583             0315*   ;     ld hl,(Vp_y)
-046583             0316*   ;     inc h ; account for ground movement
-046583             0317*   ;     ld (sprite_yvel),hl
-046583             0318*   
-046583             0319*   ;     xor a ; zero a
-046583             0320*   ;     ld (sprite_animation),a
-046583             0321*   ;     ld (sprite_move_step),a
-046583             0322*   ;     ld (sprite_move_timer),a
-046583             0323*   
-046583             0324*   ;     ld a,6 ; 1/10th of a second timer
-046583             0325*   ;     ld (sprite_animation_timer),a
-046583             0326*   
-046583             0327*   ;     ld a,0x00 ; BCD
-046583             0328*   ;     ld (sprite_points),a
-046583             0329*   ;     ld a,1 ; binary
-046583             0330*   ;     ld (sprite_shield_damage),a
-046583             0331*   
-046583             0332*   ;     call table_add_record ; plops that on the sprite stack for later
-046583             0333*   ;     ; call sprite_variables_from_stack ; come back to where we started
-046583             0334*   ;     ret
-046583             0062        include "tile_pad_small.inc"
-046583 FF FF FF FF 0001*       align 256
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF          
-046600             0002*   pad_small_defaults:
-046600 01          0003*       db tile_pad_small       ; type
-046601 0A 01 00    0004*       dl BUF_PAD              ; base_bufferId
-046604 22 66 04    0005*       dl move_pad_small       ; move_program
-046607 02          0006*       db collides_with_laser  ; collisions
-046608 10          0007*       db 16                   ; dim_x
-046609 10          0008*       db 16                   ; dim_y
-04660A 01          0009*       db 1                    ; num_orientations
-04660B 01          0010*       db 1                    ; num_animations
-04660C 00          0011*       db 0                    ; animation
-04660D 00          0012*       db 0                    ; animation_timer
-04660E 18          0013*       db 24                   ; move_timer
-04660F 00          0014*       db 0                    ; move_step
-046610 05          0015*       db 5                    ; points
-046611 00          0016*       db 0                    ; shield_damage
-046612 00          0017*       db 0                    ; animation_frame
-046613             0018*   
-046613             0019*   activate_pad_small:
-046613 21 00 66 04 0020*       ld hl,pad_small_defaults
-046617             0021*   ; get next available sprite id
-046617 CD 07 65 04 0022*       call spawn_sprite_from_tile
-04661B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
-04661C             0024*   ; TODO: other specific initialization
-04661C 3E 40       0025*       ld a,64
-04661E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
-046621 C9          0027*       ret
-046622             0028*   ; end activate_pad_small
-046622             0029*   
-046622             0030*   move_pad_small:
-046622 CD 2D 65 04 0031*       call move_active_tile
-046626 B7          0032*       or a ; a will be non-zero if have scrolled off screen
-046627 C2 EC 5C 04 0033*       jp nz,table_deactivate_sprite
-04662B             0034*   ; check whether it is time to spawn a seeker
-04662B FD 35 24    0035*       dec (iy+sprite_move_timer)
-04662E C0          0036*       ret nz
-04662F             0037*   pad_small_reset_move_timer:
-04662F CD AE 09 04 0038*       call rand_8     ; snag a random number
-046633 E6 1F       0039*       and %00011111   ; keep only 5 lowest bits (max 31)
-046635 C6 40       0040*       add a,64 ; range is now 64-127
-046637 FD 77 24    0041*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
-04663A CD 13 24 04 0042*       call enemy_spawn_seeker
-04663E C9          0043*       ret
-04663F             0063        include "tile_turret_fireball.inc"
-04663F FF FF FF FF 0001*       align 256
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF          
-046700             0002*   turret_fireball_defaults:
-046700 02          0003*       db enemy_ground         ; type
-046701 2F 01 00    0004*       dl BUF_TURRET_000       ; base_bufferId
-046704 22 67 04    0005*       dl move_turret_fireball ; move_program
-046707 02          0006*       db collides_with_laser  ; collisions
-046708 10          0007*       db 16                   ; dim_x
-046709 10          0008*       db 16                   ; dim_y
-04670A 20          0009*       db 32                   ; num_orientations
-04670B 01          0010*       db 1                    ; num_animations
-04670C 00          0011*       db 0                    ; animation
-04670D 00          0012*       db 0                    ; animation_timer
-04670E 18          0013*       db 24                   ; move_timer
-04670F 00          0014*       db 0                    ; move_step
-046710 05          0015*       db 5                    ; points
-046711 00          0016*       db 0                    ; shield_damage
-046712 00          0017*       db 0                    ; animation_frame
-046713             0018*   
-046713             0019*   activate_turret_fireball:
-046713 21 00 67 04 0020*       ld hl,turret_fireball_defaults
-046717             0021*   ; get next available sprite id
-046717 CD 07 65 04 0022*       call spawn_sprite_from_tile
-04671B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
-04671C             0024*   ; TODO: other specific initialization
-04671C 3E 40       0025*       ld a,64
-04671E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
-046721 C9          0027*       ret
-046722             0028*   ; end activate_turret_fireball
-046722             0029*   
-046722             0030*   move_turret_fireball:
-046722 CD 2D 65 04 0031*       call move_active_tile
-046726 B7          0032*       or a ; a will be non-zero if have scrolled off screen
-046727 C2 EC 5C 04 0033*       jp nz,table_deactivate_sprite
-04672B             0034*   ; target player
-04672B 21 00 04 00 0035*       ld hl,speed_fireball
-04672F 22 31 63 04 0036*       ld (Vp),hl ; param for targeting_computer
-046733 CD 00 63 04 0037*       call orientation_to_player ; sets params for targeting_computer
-046737 CD 46 63 04 0038*       call targeting_computer
-04673B FD 2F 10    0039*       ld (iy+sprite_heading),hl ; save sprite heading
-04673E CD 62 5E 04 0040*       call sprite_frame_heading
-046742             0041*   ; check whether it is time to spawn a fireball
-046742 FD 35 24    0042*       dec (iy+sprite_move_timer)
-046745 C0          0043*       ret nz
-046746             0044*   ; spwan a fireball
-046746 CD 13 23 04 0045*       call enemy_spawn_fireball
-04674A             0046*       ; fall through to reset move timer
-04674A             0047*   turret_fireball_reset_move_timer:
-04674A CD AE 09 04 0048*       call rand_8     ; snag a random number
-04674E E6 1F       0049*       and %00011111   ; keep only 5 lowest bits (max 31)
-046750 C6 40       0050*       add a,64 ; range is now 64-127
-046752 FD 77 24    0051*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
-046755 C9          0052*       ret
-046756             0064    
-046756 FF FF FF FF 0065        align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -12119,371 +11604,945 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF       
-046800             0066    
-046800             0067    ; --- MAIN PROGRAM FILE ---
-046800 57 65 6C 63 0068    hello_world: asciz "Welcome to Purple Nurples!"
+046500             0002*   
+046500             0003*   ; ######### TILES #########
+046500             0004*   ; TODO: implement buffering of tiles here when there isn't other stuff to do
+046500             0005*   ; tiles_defs: ds 256*16 ; 256 rows of 16 tiles, each tile is a byte
+046500 00 00 00    0006*   tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
+046503 00 00 00    0007*   tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
+046506             0008*       ; initialize to zero for a maximum of 256 rows in a level
+046506 00          0009*   tiles_cols: db 0 ; number of tile columns in the current level
+046507             0010*   
+046507 00 00 00    0011*   cur_baseBufferId: dl 0
+04650A 00 00 00    0012*   tiles_x_plot: dl 0
+04650D F1 FF FF    0013*   tiles_y_plot: dl -15
+046510             0014*   
+046510             0015*   tiles_plot:
+046510             0016*   ; set gfx viewport to playing field window
+046510 01 00 00 00 0017*       ld bc,field_left
+046514 11 00 00 00 0018*       ld de,field_top
+046518 DD 21 FF 00 0019*       ld ix,field_right
+       00          
+04651D FD 21 7F 01 0020*       ld iy,field_bottom
+       00          
+046522 CD EB 19 04 0021*       call vdu_set_gfx_viewport
+046526             0022*   ; move the background down one pixel
+046526 3E 02       0023*       ld a,2 ; current gfx viewport
+046528 2E 02       0024*       ld l,2 ; direction=down
+04652A 26 01       0025*       ld h,1 ; speed=1 px
+04652C CD 63 19 04 0026*       call vdu_scroll_down
+046530             0027*   ; set gfx viewport to one scanline to optimise plotting tiles
+046530 01 00 00 00 0028*       ld bc,0 ; leftmost x-coord
+046534 11 00 00 00 0029*       ld de,0 ; topmost y-coord
+046538 DD 21 FF 00 0030*       ld ix,255 ; rightmost x-coord
+       00          
+04653D FD 21 00 00 0031*       ld iy,0 ; bottommost y-coord
+       00          
+046542 CD EB 19 04 0032*       call vdu_set_gfx_viewport
+046546             0033*   ; plot the background
+046546 CD 4E 66 04 0034*       call bg_plot
+04654A             0035*   ; initialize tiles loop
+04654A 21 00 00 00 0036*       ld hl,0 ; init plotting x-coordinate
+04654E 22 0A 65 04 0037*       ld (tiles_x_plot),hl
+046552 2A 00 65 04 0038*       ld hl,(tiles_row_defs)
+046556 3A 06 65 04 0039*       ld a,(tiles_cols)
+04655A 47          0040*       ld b,a ; column loop counter
+04655B             0041*   @loop:
+04655B C5          0042*       push bc ; save the loop counter
+04655C             0043*   ; read the tile defintion for the current column
+04655C 7E          0044*       ld a,(hl) ; a has tile definition
+04655D E5          0045*       push hl ; save pointer to tile definition
+04655E 2A 07 65 04 0046*       ld hl,(cur_baseBufferId) ; hl base buffer id of tileset
+046562 6F          0047*       ld l,a ; a is the offset from the base so hl is now the bufferId of the tile
+046563 CD 38 1A 04 0048*       call vdu_buff_select ; tile bitmap buffer is now active
+046567             0049*   ; plot the active bitmap
+046567 ED 4B 0A 65 0050*       ld bc,(tiles_x_plot)
+       04          
+04656C ED 5B 0D 65 0051*       ld de,(tiles_y_plot)
+       04          
+046571 CD 20 1E 04 0052*       call vdu_plot_bmp
+046575             0053*   ; bump x-coords the width of one tile and save it
+046575 2A 0A 65 04 0054*       ld hl,(tiles_x_plot)
+046579 01 10 00 00 0055*       ld bc,16
+04657D 09          0056*       add hl,bc
+04657E 22 0A 65 04 0057*       ld (tiles_x_plot),hl
+046582             0058*   ; prepare to loop to next column
+046582 E1          0059*       pop hl ; get back pointer to tile def
+046583 23          0060*       inc hl ; bump it to the next column
+046584 C1          0061*       pop bc ; snag our loop counter
+046585 10 D4       0062*       djnz @loop
+046587             0063*   ; increment tiles plotting y-coordinate
+046587             0064*   ; when it hits zero, we go to next row of tiles in the map
+046587             0065*   ; (we use ix b/c we want to preserve hl for the next step)
+046587 DD 21 0D 65 0066*       ld ix,tiles_y_plot
+       04          
+04658C DD 34 00    0067*       inc (ix)
+04658F C0          0068*       ret nz
+046590             0069*   ; do active tiles
+046590 E5          0070*       push hl ; save pointer to next row tile def
+046591 CD C3 65 04 0071*       call do_active_tiles
+046595 E1          0072*       pop hl ; get back pointer to next row tile def
+046596             0073*   ; time to bump tiles_row_defs to next row
+046596             0074*   ; (hl was already there at the end of the loop)
+046596 22 00 65 04 0075*       ld (tiles_row_defs),hl
+04659A             0076*   ; reset coords to plot next row of tiles
+04659A 21 00 00 00 0077*       ld hl,0
+04659E 22 0A 65 04 0078*       ld (tiles_x_plot),hl
+0465A2 21 F1 FF FF 0079*       ld hl,-15
+0465A6 22 0D 65 04 0080*       ld (tiles_y_plot),hl
+0465AA             0081*   ; decrement tiles row counter
+0465AA 21 03 65 04 0082*       ld hl,tiles_row
+0465AE 35          0083*       dec (hl)
+0465AF C0          0084*       ret nz
+0465B0             0085*   @inc_level:
+0465B0             0086*   ; increase the number of enemy sprites
+0465B0 3A 32 21 04 0087*       ld a,(max_enemy_sprites)
+0465B4 3C          0088*       inc a
+0465B5 FE 10       0089*       cp table_max_records ; if we're at the global limit,skip ahead at max level
+0465B7 CA 6C 55 04 0090*       jp z,next_level
+0465BB 32 32 21 04 0091*       ld (max_enemy_sprites),a ; otherwise save the updated number
+0465BF C3 6C 55 04 0092*       jp next_level
+0465C3             0093*   ; end tiles_plot
+0465C3             0094*   
+0465C3             0095*   do_active_tiles:
+0465C3             0096*   ; initialize tiles loop
+0465C3 21 00 00 00 0097*       ld hl,0 ; init plotting x-coordinate
+0465C7 22 0A 65 04 0098*       ld (tiles_x_plot),hl
+0465CB 2A 00 65 04 0099*       ld hl,(tiles_row_defs)
+0465CF 3A 06 65 04 0100*       ld a,(tiles_cols)
+0465D3 47          0101*       ld b,a ; column loop counter
+0465D4             0102*   @loop:
+0465D4 C5          0103*       push bc ; save the loop counter
+0465D5             0104*   ; read the tile defintion for the current column
+0465D5 7E          0105*       ld a,(hl) ; a has tile definition
+0465D6 E5          0106*       push hl ; save pointer to tile definition
+0465D7 B7          0107*       or a ; check for null tile
+0465D8 CA F4 65 04 0108*       jp z,@next_tile ; skip to next tile if null
+0465DC FE 11       0109*       cp 17 ; carry reset if active tile
+0465DE D2 F4 65 04 0110*       jp nc,@next_tile ; skip to next tile if not active
+0465E2             0111*   ; call the tile activation routine
+0465E2 21 4F 66 04 0112*       ld hl,tile_activation_routines
+0465E6 16 03       0113*       ld d,3 ; three bytes per table entry
+0465E8 5F          0114*       ld e,a ; a is the tile type
+0465E9 ED 5C       0115*       mlt de ; de is now the offset to the table entry
+0465EB 19          0116*       add hl,de ; hl is now the address of the table entry
+0465EC ED 27       0117*       ld hl,(hl) ; hl is now the activation routine address
+0465EE             0118*       callHL ; call the activation routine
+0465EE 01 F4 65 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+0465F2 C5          0002*M1     push bc ; which constitutes the return address
+0465F3 E9          0003*M1     jp (hl) ; Jump to the address in HL
+0465F4             0004*M1 @@:
+0465F4             0119*   @next_tile:
+0465F4             0120*   ; bump x-coords the width of one tile and save it
+0465F4 2A 0A 65 04 0121*       ld hl,(tiles_x_plot)
+0465F8 01 10 00 00 0122*       ld bc,16
+0465FC 09          0123*       add hl,bc
+0465FD 22 0A 65 04 0124*       ld (tiles_x_plot),hl
+046601             0125*   ; prepare to loop to next column
+046601 E1          0126*       pop hl ; get back pointer to tile def
+046602 23          0127*       inc hl ; bump it to the next column
+046603 C1          0128*       pop bc ; snag our loop counter
+046604 10 CE       0129*       djnz @loop
+046606 C9          0130*       ret ; done
+046607             0131*   ; end do_active_tiles
+046607             0132*   
+046607             0133*   ; create a new sprite at the same location as an active tile
+046607             0134*   ; inputs: hl = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
+046607             0135*   spawn_sprite_from_tile:
+046607 CD 14 5E 04 0136*       call spawn_sprite
+04660B D0          0137*       ret nc ; no carry means no free sprite slots, so we go home
+04660C             0138*   ; update the new sprite's position and make it visible
+04660C 2A 0A 65 04 0139*       ld hl,(tiles_x_plot)
+046610             0140*       hlu_mul256
+046610 29          0001*M1     add hl,hl ; * 2
+046611 29          0002*M1     add hl,hl ; * 4
+046612 29          0003*M1     add hl,hl ; * 8
+046613 29          0004*M1     add hl,hl ; * 16
+046614 29          0005*M1     add hl,hl ; * 32
+046615 29          0006*M1     add hl,hl ; * 64
+046616 29          0007*M1     add hl,hl ; * 128
+046617 29          0008*M1     add hl,hl ; * 256
+046618 E5          0141*       push hl
+046619 C1          0142*       pop bc
+04661A DD 0F 01    0143*       ld (ix+sprite_x),bc
+04661D 11 00 FF FF 0144*       ld de,-1*256 ; TODO: implement y-coord for reals
+046621 DD 1F 04    0145*       ld (ix+sprite_y),de
+046624 21 00 01 00 0146*       ld hl,1*256
+046628 DD 2F 0A    0147*       ld (ix+sprite_yvel),hl
+04662B             0148*   ; return to caller
+04662B 37          0149*       scf ; set carry flag to indicate success
+04662C C9          0150*       ret
+04662D             0151*   ; end spawn_sprite_from_tile
+04662D             0152*   
+04662D             0153*   move_active_tile:
+04662D             0154*   ; y-axis movement
+04662D FD 27 04    0155*       ld hl,(iy+sprite_y)
+046630 FD 17 0A    0156*       ld de,(iy+sprite_yvel)
+046633 19          0157*       add hl,de
+046634 FD 2F 04    0158*       ld (iy+sprite_y),hl
+046637             0159*   ; detect screen edge collisions
+046637 AF          0160*       xor a ; reset screen edge collision flag and clear carry
+046638 32 94 5C 04 0161*       ld (sprite_screen_edge),a
+04663C             0162*   ; y-axis bottom is all we need to test
+04663C 11 00 91 FE 0163*       ld de,-sprite_bottom*256
+046640 ED 5A       0164*       adc hl,de
+046642 F2 47 66 04 0165*       jp p,@bottom ; scrolled off screen so deactivate
+046646 C9          0166*       ret ; still on screen so do nothing further
+046647             0167*   @bottom:
+046647 3E 04       0168*       ld a,collide_bottom
+046649 32 94 5C 04 0169*       ld (sprite_screen_edge),a
+04664D C9          0170*       ret
+04664E             0171*   
+04664E             0172*   
+04664E             0173*   ; bg_y_plot: dl -1
+04664E             0174*   ; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
+04664E             0175*   
+04664E             0176*   bg_plot: ; TODO: implement this
+04664E             0177*   ; ; load current bg tile bufferId as default
+04664E             0178*   ;     ld hl,(bg_bufferId)
+04664E             0179*   ; ; check whether it is time for a new background tile
+04664E             0180*   ;     ld a,(bg_y_plot)
+04664E             0181*   ;     inc a
+04664E             0182*   ;     ld (bg_y_plot),a
+04664E             0183*   ;     jp nz,@F ; not time for a new tile so draw current one
+04664E             0184*   ; ; load the next background tile
+04664E             0185*   ;     ld hl,BUF_STATION_BG_00
+04664E             0186*   ;     call rand_8
+04664E             0187*   ;     and %0000011
+04664E             0188*   ;     add a,l
+04664E             0189*   ;     ld l,a
+04664E             0190*   ;     ld a,0
+04664E             0191*   ;     adc a,h
+04664E             0192*   ;     ld h,a
+04664E             0193*   ;     ld (bg_bufferId),hl
+04664E             0194*   ; @@:
+04664E             0195*   ;     call vdu_buff_select
+04664E             0196*   ;     ld bc,0
+04664E             0197*   ;     ld de,(bg_y_plot)
+04664E             0198*   ;     inc de
+04664E             0199*   ;     call vdu_plot_bmp
+04664E             0200*   ; all done
+04664E C9          0201*       ret
+04664F             0202*   
+04664F             0203*   ; ###### TODO: NEW CODE TO IMPLEMENT ######
+04664F             0204*   tile_pad_small: equ 1
+04664F             0205*   tile_pad_med: equ 2
+04664F             0206*   tile_pad_large: equ 3
+04664F             0207*   tile_pad_huge: equ 4
+04664F             0208*   tile_turret_fireball: equ 5
+04664F             0209*   tile_laser_turret: equ 6
+04664F             0210*   tile_twin_laser_turret: equ 7
+04664F             0211*   tile_gatling_turret: equ 8
+04664F             0212*   tile_electrode_r: equ 9
+04664F             0213*   tile_electrode_u: equ 10
+04664F             0214*   tile_piston_r: equ 11
+04664F             0215*   tile_piston_u: equ 12
+04664F             0216*   tile_spark_r: equ 13
+04664F             0217*   tile_spark_u: equ 14
+04664F             0218*   tile_flame_r: equ 15
+04664F             0219*   tile_flame_u: equ 16
+04664F             0220*   
+04664F             0221*   active_tile_timer: equ 24 ; 2/10ths of a second
+04664F             0222*   tile_activation_routines:
+04664F 82 66 04    0223*       dl activate_null_tile ; dummy spacer since tiled is 1-based
+046652 13 67 04    0224*       dl activate_pad_small
+046655 82 66 04    0225*       dl activate_null_tile  ;  activate_pad_med
+046658 82 66 04    0226*       dl activate_null_tile  ;  activate_pad_large
+04665B 82 66 04    0227*       dl activate_null_tile  ;  activate_pad_huge
+04665E 13 68 04    0228*       dl activate_turret_fireball
+046661 82 66 04    0229*       dl activate_null_tile  ;  activate_laser_turret
+046664 82 66 04    0230*       dl activate_null_tile  ;  activate_twin_laser_turret
+046667 82 66 04    0231*       dl activate_null_tile  ;  activate_gatling_turret
+04666A 82 66 04    0232*       dl activate_null_tile  ;  activate_electrode_r
+04666D 82 66 04    0233*       dl activate_null_tile  ;  activate_electrode_u
+046670 82 66 04    0234*       dl activate_null_tile  ;  activate_piston_r
+046673 82 66 04    0235*       dl activate_null_tile  ;  activate_piston_u
+046676 82 66 04    0236*       dl activate_null_tile  ;  activate_spark_r
+046679 82 66 04    0237*       dl activate_null_tile  ;  activate_spark_u
+04667C 82 66 04    0238*       dl activate_null_tile  ;  activate_flame_r
+04667F 82 66 04    0239*       dl activate_null_tile  ;  activate_flame_u
+046682             0240*   ; end tile_activation_routines
+046682             0241*   
+046682             0242*   activate_null_tile:
+046682 C9          0243*       ret ; dummy routine, do nothing
+046683             0244*   
+046683             0245*   ; ld_act_laser_turret:
+046683             0246*   ;     ; call sprite_variables_to_stack
+046683             0247*   
+046683             0248*   ;     ld hl,move_laser_turret
+046683             0249*   ;     ld (sprite_move_program),hl
+046683             0250*   
+046683             0251*   ;     xor a
+046683             0252*   ;     ld (sprite_animation),a
+046683             0253*   ;     ld (sprite_move_step),a
+046683             0254*   
+046683             0255*   ;     call rand_8     ; snag a random number
+046683             0256*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
+046683             0257*   ;     add a,64 ; range is now 64-127
+046683             0258*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+046683             0259*   
+046683             0260*   ;     ld a,%10 ; collides with laser but not player
+046683             0261*   ;     ld (iy+sprite_collisions),a
+046683             0262*   
+046683             0263*   ;     ld a,#10 ; BCD
+046683             0264*   ;     ld (sprite_points),a
+046683             0265*   ;     ld a,0 ; binary
+046683             0266*   ;     ld (sprite_shield_damage),a
+046683             0267*   
+046683             0268*   ;     ld hl,tile_turret_fireball ; dt_ld_act loads this to sprite_base_bufferId
+046683             0269*   ;     jp dt_ld_act
+046683             0270*   
+046683             0271*   
+046683             0272*   ; move_laser_turret:
+046683             0273*   ; ; compute orientation to player
+046683             0274*   ;     call orientation_to_player
+046683             0275*   ; ; h.l 8.8 fixed angle256 to player
+046683             0276*   ; ; bc and de as signed 16-bit integers
+046683             0277*   ; ; representing delta-x/y *to* target respectively
+046683             0278*   ;     ld (Bearing_t),hl
+046683             0279*   ;     ld hl,0x0400
+046683             0280*   ;     ld (Vp),hl
+046683             0281*   ;     call targeting_computer
+046683             0282*   ;     ld (sprite_heading),hl ; store bearing to player
+046683             0283*   ; ; is it time to launch a fireball?
+046683             0284*   ;     ld hl,sprite_move_timer
+046683             0285*   ;     dec (hl)
+046683             0286*   ;     jp nz,move_laser_turret_boilerplate
+046683             0287*   ;     call fireballs_init
+046683             0288*   ;     ; reset move timer so can fire again if player doesn't take us out
+046683             0289*   ;     call rand_8     ; snag a random number
+046683             0290*   ;     and %00011111   ; keep only 5 lowest bits (max 31)
+046683             0291*   ;     add a,64 ; range is now 64-127
+046683             0292*   ;     ld (sprite_move_timer),a ; when this hits zero,will spawn a fireball
+046683             0293*   ; move_laser_turret_boilerplate:
+046683             0294*   ;     call move_active_tiles
+046683             0295*   ;     call check_collisions
+046683             0296*   ;     ret
+046683             0297*   
+046683             0298*   
+046683             0299*   ; fireballs_init:
+046683             0300*   ;     ; call sprite_variables_to_stack
+046683             0301*   
+046683             0302*   ;     ld hl,enemy_fireball
+046683             0303*   ;     ld (sprite_base_bufferId),hl
+046683             0304*   
+046683             0305*   ;     ld hl,move_fireballs
+046683             0306*   ;     ld (sprite_move_program),hl
+046683             0307*   
+046683             0308*   ;     ld a,%11 ; collides with laser and player
+046683             0309*   ;     ld (iy+sprite_collisions),a
+046683             0310*   
+046683             0311*   ;     ld hl,(Vp)
+046683             0312*   ;     ld (sprite_vel),hl
+046683             0313*   ;     ld hl,(Vp_x)
+046683             0314*   ;     ld (sprite_xvel),hl
+046683             0315*   ;     ld hl,(Vp_y)
+046683             0316*   ;     inc h ; account for ground movement
+046683             0317*   ;     ld (sprite_yvel),hl
+046683             0318*   
+046683             0319*   ;     xor a ; zero a
+046683             0320*   ;     ld (sprite_animation),a
+046683             0321*   ;     ld (sprite_move_step),a
+046683             0322*   ;     ld (sprite_move_timer),a
+046683             0323*   
+046683             0324*   ;     ld a,6 ; 1/10th of a second timer
+046683             0325*   ;     ld (sprite_animation_timer),a
+046683             0326*   
+046683             0327*   ;     ld a,0x00 ; BCD
+046683             0328*   ;     ld (sprite_points),a
+046683             0329*   ;     ld a,1 ; binary
+046683             0330*   ;     ld (sprite_shield_damage),a
+046683             0331*   
+046683             0332*   ;     call table_add_record ; plops that on the sprite stack for later
+046683             0333*   ;     ; call sprite_variables_from_stack ; come back to where we started
+046683             0334*   ;     ret
+046683             0062        include "tile_pad_small.inc"
+046683 FF FF FF FF 0001*       align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF          
+046700             0002*   pad_small_defaults:
+046700 01          0003*       db tile_pad_small       ; type
+046701 0A 01 00    0004*       dl BUF_PAD              ; base_bufferId
+046704 22 67 04    0005*       dl move_pad_small       ; move_program
+046707 02          0006*       db collides_with_laser  ; collisions
+046708 10          0007*       db 16                   ; dim_x
+046709 10          0008*       db 16                   ; dim_y
+04670A 01          0009*       db 1                    ; num_orientations
+04670B 01          0010*       db 1                    ; num_animations
+04670C 00          0011*       db 0                    ; animation
+04670D 00          0012*       db 0                    ; animation_timer
+04670E 18          0013*       db 24                   ; move_timer
+04670F 00          0014*       db 0                    ; move_step
+046710 05          0015*       db 5                    ; points
+046711 00          0016*       db 0                    ; shield_damage
+046712 00          0017*       db 0                    ; animation_frame
+046713             0018*   
+046713             0019*   activate_pad_small:
+046713 21 00 67 04 0020*       ld hl,pad_small_defaults
+046717             0021*   ; get next available sprite id
+046717 CD 07 66 04 0022*       call spawn_sprite_from_tile
+04671B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
+04671C             0024*   ; TODO: other specific initialization
+04671C 3E 40       0025*       ld a,64
+04671E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+046721 C9          0027*       ret
+046722             0028*   ; end activate_pad_small
+046722             0029*   
+046722             0030*   move_pad_small:
+046722 CD 2D 66 04 0031*       call move_active_tile
+046726 B7          0032*       or a ; a will be non-zero if have scrolled off screen
+046727 C2 EC 5C 04 0033*       jp nz,table_deactivate_sprite
+04672B             0034*   ; check whether it is time to spawn a seeker
+04672B FD 35 24    0035*       dec (iy+sprite_move_timer)
+04672E C0          0036*       ret nz
+04672F             0037*   pad_small_reset_move_timer:
+04672F CD AE 09 04 0038*       call rand_8     ; snag a random number
+046733 E6 1F       0039*       and %00011111   ; keep only 5 lowest bits (max 31)
+046735 C6 40       0040*       add a,64 ; range is now 64-127
+046737 FD 77 24    0041*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+04673A CD 13 24 04 0042*       call enemy_spawn_seeker
+04673E C9          0043*       ret
+04673F             0063        include "tile_turret_fireball.inc"
+04673F FF FF FF FF 0001*       align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF          
+046800             0002*   turret_fireball_defaults:
+046800 02          0003*       db enemy_ground         ; type
+046801 2F 01 00    0004*       dl BUF_TURRET_000       ; base_bufferId
+046804 22 68 04    0005*       dl move_turret_fireball ; move_program
+046807 02          0006*       db collides_with_laser  ; collisions
+046808 10          0007*       db 16                   ; dim_x
+046809 10          0008*       db 16                   ; dim_y
+04680A 20          0009*       db 32                   ; num_orientations
+04680B 01          0010*       db 1                    ; num_animations
+04680C 00          0011*       db 0                    ; animation
+04680D 00          0012*       db 0                    ; animation_timer
+04680E 08          0013*       db 8  ; DEBUG 24                 ; move_timer
+04680F 00          0014*       db 0                    ; move_step
+046810 05          0015*       db 5                    ; points
+046811 00          0016*       db 0                    ; shield_damage
+046812 00          0017*       db 0                    ; animation_frame
+046813             0018*   
+046813             0019*   activate_turret_fireball:
+046813 21 00 68 04 0020*       ld hl,turret_fireball_defaults
+046817             0021*   ; get next available sprite id
+046817 CD 07 66 04 0022*       call spawn_sprite_from_tile
+04681B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
+04681C             0024*   ; TODO: other specific initialization
+04681C 3E 40       0025*       ld a,64
+04681E FD 77 24    0026*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
+046821 C9          0027*       ret
+046822             0028*   ; end activate_turret_fireball
+046822             0029*   
+046822             0030*   move_turret_fireball:
+046822 CD 2D 66 04 0031*       call move_active_tile
+046826 B7          0032*       or a ; a will be non-zero if have scrolled off screen
+046827 C2 EC 5C 04 0033*       jp nz,table_deactivate_sprite
+04682B             0034*   ; target player
+04682B 21 00 04 00 0035*       ld hl,speed_fireball
+04682F 22 31 63 04 0036*       ld (Vp),hl ; param for targeting_computer
+046833 CD 00 63 04 0037*       call orientation_to_player
+046837 CD 49 63 04 0038*       call targeting_computer
+04683B FD 2F 10    0039*       ld (iy+sprite_heading),hl ; save sprite heading
+04683E CD 62 5E 04 0040*       call sprite_frame_heading
+046842             0041*   ; check whether it is time to spawn a fireball
+046842 FD 35 24    0042*       dec (iy+sprite_move_timer)
+046845 C0          0043*       ret nz
+046846             0044*   ; spwan a fireball
+046846 CD 13 23 04 0045*       call enemy_spawn_fireball
+04684A             0046*       ; fall through to reset move timer
+04684A             0047*   turret_fireball_reset_move_timer:
+04684A             0048*       ; call rand_8     ; snag a random number
+04684A             0049*       ; and %00011111   ; keep only 5 lowest bits (max 31)
+04684A             0050*       ; add a,64 ; range is now 64-127
+04684A 3E 08       0051*       ld a,8 ; DEBUG
+04684C FD 77 24    0052*       ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
+04684F C9          0053*       ret
+046850             0064    
+046850 FF FF FF FF 0065        align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+046900             0066    
+046900             0067    ; --- MAIN PROGRAM FILE ---
+046900 57 65 6C 63 0068    hello_world: asciz "Welcome to Purple Nurples!"
        6F 6D 65 20 
        74 6F 20 50 
        75 72 70 6C 
        65 20 4E 75 
        72 70 6C 65 
        73 21 00    
-04681B 4C 6F 61 64 0069    loading_ui: asciz "Loading UI"
+04691B 4C 6F 61 64 0069    loading_ui: asciz "Loading UI"
        69 6E 67 20 
        55 49 00    
-046826 4C 6F 61 64 0070    loading_time: asciz "Loading time:"
+046926 4C 6F 61 64 0070    loading_time: asciz "Loading time:"
        69 6E 67 20 
        74 69 6D 65 
        3A 00       
-046834 50 72 65 73 0071    loading_complete: asciz "Press any key to continue."
+046934 50 72 65 73 0071    loading_complete: asciz "Press any key to continue."
        73 20 61 6E 
        79 20 6B 65 
        79 20 74 6F 
        20 63 6F 6E 
        74 69 6E 75 
        65 2E 00    
-04684F             0072    
-04684F             0073    init:
-04684F             0074    ; clear all buffers
-04684F CD 2A 1B 04 0075        call vdu_clear_all_buffers
-046853             0076    
-046853             0077    ; set up the display
-046853 3E 08       0078        ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-046855 CD 14 1A 04 0079        call vdu_set_screen_mode
-046859 AF          0080        xor a
-04685A CD 25 1A 04 0081        call vdu_set_scaling
-04685E             0082    
-04685E             0083    ; ; enable additional audio channels
-04685E             0084    ; 	call vdu_enable_channels
-04685E             0085    
-04685E             0086    ; set text background color
-04685E 3E 9A       0087        ld a,26+128 ; violet
-046860 CD 7C 19 04 0088        call vdu_colour_text
-046864             0089    
-046864             0090    ; set text foreground color
-046864 3E 2F       0091        ld a,47 ; aaaaff lavenderish
-046866 CD 7C 19 04 0092        call vdu_colour_text
-04686A             0093    
-04686A             0094    ; set gfx bg color
-04686A AF          0095        xor a ; plotting mode 0
-04686B 3E 9A       0096        ld a,26+128 ; violet
-04686D CD 8D 19 04 0097        call vdu_gcol
-046871 CD 4B 19 04 0098        call vdu_cls
-046875             0099    
-046875             0100    ; set the cursor off
-046875 CD 13 19 04 0101        call vdu_cursor_off
-046879             0102    
-046879             0103    ; VDU 28, left, bottom, right, top: Set text viewport **
-046879             0104    ; MIND THE LITTLE-ENDIANESS
-046879             0105    ; inputs: c=left,b=bottom,e=right,d=top
-046879 0E 00       0106        ld c,0 ; left
-04687B 16 1D       0107        ld d,29 ; top
-04687D 1E 27       0108        ld e,39 ; right
-04687F 06 1D       0109        ld b,29; bottom
-046881 CD A4 19 04 0110        call vdu_set_txt_viewport
-046885             0111    
-046885             0112    ; print loading ui message
-046885 21 1B 68 04 0113        ld hl,loading_ui
-046889 CD 17 01 04 0114        call printString
-04688D CD 50 19 04 0115        call vdu_flip
-046891             0116    
-046891             0117    ; load UI images
-046891 CD CB 16 04 0118        call load_ui_images
-046895             0119    
-046895             0120    ; load sprites
-046895 CD 09 16 04 0121        call img_load_init ; sets up the animated load screen
-046899 CD DE 16 04 0122        call load_sprite_images
-04689D             0123    
-04689D             0124    ; load tileset_ptrs
-04689D CD EF 16 04 0125        call load_tilesets
-0468A1             0126    
-0468A1             0127    ; ; load sound effects ; TODO
-0468A1             0128    ; 	ld bc,SFX_num_buffers
-0468A1             0129    ; 	ld hl,SFX_buffer_id_lut
-0468A1             0130    ; 	ld (cur_buffer_id_lut),hl
-0468A1             0131    ; 	ld hl,SFX_load_routines_table
-0468A1             0132    ; 	ld (cur_load_jump_table),hl
-0468A1             0133    ; 	call sfx_load_main
-0468A1             0134    
-0468A1             0135    ; print loading complete message and wait for user keypress
-0468A1             0136        ; call vdu_cls
-0468A1             0137        ; ld hl,loading_complete
-0468A1             0138        ; call printString
-0468A1 CD 50 19 04 0139        call vdu_flip
-0468A5 CD C5 06 04 0140        call waitKeypress
-0468A9             0141    
-0468A9             0142    ; set up display for gameplay
-0468A9             0143        ; ld a,8
-0468A9 3E 14       0144        ld a,20
-0468AB CD 14 1A 04 0145        call vdu_set_screen_mode
-0468AF AF          0146        xor a
-0468B0 CD 25 1A 04 0147        call vdu_set_scaling
-0468B4 CD 13 19 04 0148        call vdu_cursor_off
-0468B8             0149    ; load fonts
-0468B8 CD 00 15 04 0150    	call fonts_load
-0468BC             0151    ; select font
-0468BC             0152        ; ld hl,computer_pixel_7_8x16
-0468BC 21 02 FA 00 0153        ld hl,amiga_forever_8x8 ; DEBUG
-0468C0 3E 01       0154        ld a,1 ; flags
-0468C2 CD 00 1D 04 0155        call vdu_font_select
-0468C6             0156    ; plot bezel art
-0468C6 21 00 00 00 0157        ld hl,BUF_BEZEL_L
-0468CA CD 38 1A 04 0158        call vdu_buff_select
-0468CE 01 00 00 00 0159        ld bc,0
-0468D2 11 00 00 00 0160        ld de,0
-0468D6 CD 20 1E 04 0161        call vdu_plot_bmp
-0468DA 21 01 00 00 0162        ld hl,BUF_BEZEL_R
-0468DE CD 38 1A 04 0163        call vdu_buff_select
-0468E2 01 80 01 00 0164        ld bc,384
-0468E6 11 00 00 00 0165        ld de,0
-0468EA CD 20 1E 04 0166        call vdu_plot_bmp
-0468EE             0167    ; set gfx origin and viewport to playing field window
-0468EE 01 80 00 00 0168        ld bc,origin_left
-0468F2 11 00 00 00 0169        ld de,origin_top
-0468F6 CD D0 19 04 0170        call vdu_set_gfx_origin
-0468FA 01 00 00 00 0171        ld bc,field_left
-0468FE 11 00 00 00 0172        ld de,field_top
-046902 DD 21 FF 00 0173        ld ix,field_right
+04694F             0072    
+04694F             0073    init:
+04694F             0074    ; clear all buffers
+04694F CD 2A 1B 04 0075        call vdu_clear_all_buffers
+046953             0076    
+046953             0077    ; set up the display
+046953 3E 08       0078        ld a,8;+128 ; 136   320   240   64    60hz double-buffered
+046955 CD 14 1A 04 0079        call vdu_set_screen_mode
+046959 AF          0080        xor a
+04695A CD 25 1A 04 0081        call vdu_set_scaling
+04695E             0082    
+04695E             0083    ; ; enable additional audio channels
+04695E             0084    ; 	call vdu_enable_channels
+04695E             0085    
+04695E             0086    ; set text background color
+04695E 3E 9A       0087        ld a,26+128 ; violet
+046960 CD 7C 19 04 0088        call vdu_colour_text
+046964             0089    
+046964             0090    ; set text foreground color
+046964 3E 2F       0091        ld a,47 ; aaaaff lavenderish
+046966 CD 7C 19 04 0092        call vdu_colour_text
+04696A             0093    
+04696A             0094    ; set gfx bg color
+04696A AF          0095        xor a ; plotting mode 0
+04696B 3E 9A       0096        ld a,26+128 ; violet
+04696D CD 8D 19 04 0097        call vdu_gcol
+046971 CD 4B 19 04 0098        call vdu_cls
+046975             0099    
+046975             0100    ; set the cursor off
+046975 CD 13 19 04 0101        call vdu_cursor_off
+046979             0102    
+046979             0103    ; VDU 28, left, bottom, right, top: Set text viewport **
+046979             0104    ; MIND THE LITTLE-ENDIANESS
+046979             0105    ; inputs: c=left,b=bottom,e=right,d=top
+046979 0E 00       0106        ld c,0 ; left
+04697B 16 1D       0107        ld d,29 ; top
+04697D 1E 27       0108        ld e,39 ; right
+04697F 06 1D       0109        ld b,29; bottom
+046981 CD A4 19 04 0110        call vdu_set_txt_viewport
+046985             0111    
+046985             0112    ; print loading ui message
+046985 21 1B 69 04 0113        ld hl,loading_ui
+046989 CD 17 01 04 0114        call printString
+04698D CD 50 19 04 0115        call vdu_flip
+046991             0116    
+046991             0117    ; load UI images
+046991 CD CB 16 04 0118        call load_ui_images
+046995             0119    
+046995             0120    ; load sprites
+046995 CD 09 16 04 0121        call img_load_init ; sets up the animated load screen
+046999 CD DE 16 04 0122        call load_sprite_images
+04699D             0123    
+04699D             0124    ; load tileset_ptrs
+04699D CD EF 16 04 0125        call load_tilesets
+0469A1             0126    
+0469A1             0127    ; ; load sound effects ; TODO
+0469A1             0128    ; 	ld bc,SFX_num_buffers
+0469A1             0129    ; 	ld hl,SFX_buffer_id_lut
+0469A1             0130    ; 	ld (cur_buffer_id_lut),hl
+0469A1             0131    ; 	ld hl,SFX_load_routines_table
+0469A1             0132    ; 	ld (cur_load_jump_table),hl
+0469A1             0133    ; 	call sfx_load_main
+0469A1             0134    
+0469A1             0135    ; print loading complete message and wait for user keypress
+0469A1             0136        ; call vdu_cls
+0469A1             0137        ; ld hl,loading_complete
+0469A1             0138        ; call printString
+0469A1 CD 50 19 04 0139        call vdu_flip
+0469A5 CD C5 06 04 0140        call waitKeypress
+0469A9             0141    
+0469A9             0142    ; set up display for gameplay
+0469A9             0143        ; ld a,8
+0469A9 3E 14       0144        ld a,20
+0469AB CD 14 1A 04 0145        call vdu_set_screen_mode
+0469AF AF          0146        xor a
+0469B0 CD 25 1A 04 0147        call vdu_set_scaling
+0469B4 CD 13 19 04 0148        call vdu_cursor_off
+0469B8             0149    ; load fonts
+0469B8 CD 00 15 04 0150    	call fonts_load
+0469BC             0151    ; select font
+0469BC             0152        ; ld hl,computer_pixel_7_8x16
+0469BC 21 02 FA 00 0153        ld hl,amiga_forever_8x8 ; DEBUG
+0469C0 3E 01       0154        ld a,1 ; flags
+0469C2 CD 00 1D 04 0155        call vdu_font_select
+0469C6             0156    ; plot bezel art
+0469C6 21 00 00 00 0157        ld hl,BUF_BEZEL_L
+0469CA CD 38 1A 04 0158        call vdu_buff_select
+0469CE 01 00 00 00 0159        ld bc,0
+0469D2 11 00 00 00 0160        ld de,0
+0469D6 CD 20 1E 04 0161        call vdu_plot_bmp
+0469DA 21 01 00 00 0162        ld hl,BUF_BEZEL_R
+0469DE CD 38 1A 04 0163        call vdu_buff_select
+0469E2 01 80 01 00 0164        ld bc,384
+0469E6 11 00 00 00 0165        ld de,0
+0469EA CD 20 1E 04 0166        call vdu_plot_bmp
+0469EE             0167    ; set gfx origin and viewport to playing field window
+0469EE 01 80 00 00 0168        ld bc,origin_left
+0469F2 11 00 00 00 0169        ld de,origin_top
+0469F6 CD D0 19 04 0170        call vdu_set_gfx_origin
+0469FA 01 00 00 00 0171        ld bc,field_left
+0469FE 11 00 00 00 0172        ld de,field_top
+046A02 DD 21 FF 00 0173        ld ix,field_right
        00          
-046907 FD 21 7F 01 0174        ld iy,field_bottom
+046A07 FD 21 7F 01 0174        ld iy,field_bottom
        00          
-04690C CD EB 19 04 0175        call vdu_set_gfx_viewport
-046910             0176    ; set background color
-046910 3E 9A       0177        ld a,26+128 ; violet
-046912 CD 8D 19 04 0178        call vdu_gcol
-046916 CD 5E 19 04 0179        call vdu_clg
-04691A             0180    ; VDU 28, left, bottom, right, top: Set text viewport **
-04691A 0E 00       0181        ld c,0 ; left
-04691C 16 00       0182        ld d,0 ; top
-04691E 1E 3E       0183        ld e,62 ; right
-046920 06 30       0184        ld b,48; bottom
-046922 CD A4 19 04 0185        call vdu_set_txt_viewport
-046926             0186    
-046926             0187    ; initialize the global timestamp
-046926 CD F9 17 04 0188        call timestamp_tick
-04692A             0189    
-04692A             0190    ; done with init
-04692A C9          0191        ret
-04692B             0192    
-04692B             0193    main:
-04692B             0194    ; start a new game
-04692B CD 17 61 04 0195        call game_initialize
-04692F             0196    
-04692F             0197    main_loop:
-04692F             0198    ; update the global timestamp
-04692F CD F9 17 04 0199        call timestamp_tick
-046933             0200    
-046933             0201    ; do gamestate logic
-046933 CD 03 61 04 0202        call do_game
-046937             0203    
-046937             0204        ; CALL DEBUG_PRINT_TABLE
-046937             0205    
-046937             0206    ; wait for the next vblank mitigate flicker and for loop timing
-046937 CD BF 19 04 0207        call vdu_vblank
-04693B CD BF 19 04 0208        call vdu_vblank ; DEBUG
-04693F CD BF 19 04 0209        call vdu_vblank ; DEBUG
-046943             0210    
-046943             0211    ; poll keyboard for escape keypress
-046943 3E 08       0212        ld a, $08 ; code to send to MOS
-046945 5B CF       0213        rst.lil $08 ; get IX pointer to System Variables
-046947             0214    
-046947 DD 7E 05    0215        ld a, (ix + $05) ; get ASCII code of key pressed
-04694A FE 1B       0216        cp 27 ; check if 27 (ascii code for ESC)
-04694C CA 54 69 04 0217        jp z, main_end ; if pressed, jump to exit
-046950             0218    
-046950 C3 2F 69 04 0219        jp main_loop
-046954             0220    
-046954             0221    main_end:
-046954 CD 05 19 04 0222        call vdu_cursor_on
-046958 C9          0223        ret
-046959             0224    
-046959             0225    DEBUG_PRINT:
-046959             0226        PUSH_ALL
-046959 08          0001M1      ex af,af'
-04695A D9          0002M1      exx
-04695B F5          0003M1      push af
-04695C E5          0004M1      push hl
-04695D C5          0005M1      push bc
-04695E D5          0006M1      push de
-04695F             0007M1  
-04695F 08          0008M1      ex af,af'
-046960 D9          0009M1      exx
-046961 F5          0010M1      push af
-046962 E5          0011M1      push hl
-046963 C5          0012M1      push bc
-046964 D5          0013M1      push de
-046965 DD E5       0014M1      push ix
-046967 FD E5       0015M1      push iy
-046969 0E 00       0227        ld c,0
-04696B 06 00       0228        ld b,0
-04696D CD 37 19 04 0229        call vdu_move_cursor
-046971             0230        POP_ALL
-046971 FD E1       0001M1      pop iy
-046973 DD E1       0002M1      pop ix
-046975 D1          0003M1      pop de
-046976 C1          0004M1      pop bc
-046977 E1          0005M1      pop hl
-046978 F1          0006M1      pop af
-046979 08          0007M1      ex af,af'
-04697A D9          0008M1      exx
-04697B             0009M1  
-04697B D1          0010M1      pop de
-04697C C1          0011M1      pop bc
-04697D E1          0012M1      pop hl
-04697E F1          0013M1      pop af
-04697F 08          0014M1      ex af,af'
-046980 D9          0015M1      exx
-046981             0231        PUSH_ALL
-046981 08          0001M1      ex af,af'
-046982 D9          0002M1      exx
-046983 F5          0003M1      push af
-046984 E5          0004M1      push hl
-046985 C5          0005M1      push bc
-046986 D5          0006M1      push de
-046987             0007M1  
-046987 08          0008M1      ex af,af'
-046988 D9          0009M1      exx
-046989 F5          0010M1      push af
-04698A E5          0011M1      push hl
-04698B C5          0012M1      push bc
-04698C D5          0013M1      push de
-04698D DD E5       0014M1      push ix
-04698F FD E5       0015M1      push iy
-046991 CD 64 06 04 0232        call dumpFlags
-046995             0233        POP_ALL
-046995 FD E1       0001M1      pop iy
-046997 DD E1       0002M1      pop ix
-046999 D1          0003M1      pop de
-04699A C1          0004M1      pop bc
-04699B E1          0005M1      pop hl
-04699C F1          0006M1      pop af
-04699D 08          0007M1      ex af,af'
-04699E D9          0008M1      exx
-04699F             0009M1  
-04699F D1          0010M1      pop de
-0469A0 C1          0011M1      pop bc
-0469A1 E1          0012M1      pop hl
-0469A2 F1          0013M1      pop af
-0469A3 08          0014M1      ex af,af'
-0469A4 D9          0015M1      exx
-0469A5             0234        PUSH_ALL
-0469A5 08          0001M1      ex af,af'
-0469A6 D9          0002M1      exx
-0469A7 F5          0003M1      push af
-0469A8 E5          0004M1      push hl
-0469A9 C5          0005M1      push bc
-0469AA D5          0006M1      push de
-0469AB             0007M1  
-0469AB 08          0008M1      ex af,af'
-0469AC D9          0009M1      exx
-0469AD F5          0010M1      push af
-0469AE E5          0011M1      push hl
-0469AF C5          0012M1      push bc
-0469B0 D5          0013M1      push de
-0469B1 DD E5       0014M1      push ix
-0469B3 FD E5       0015M1      push iy
-0469B5 CD C6 04 04 0235        call dumpRegistersHex
-0469B9             0236        ; call waitKeypress
-0469B9             0237        POP_ALL
-0469B9 FD E1       0001M1      pop iy
-0469BB DD E1       0002M1      pop ix
-0469BD D1          0003M1      pop de
-0469BE C1          0004M1      pop bc
-0469BF E1          0005M1      pop hl
-0469C0 F1          0006M1      pop af
-0469C1 08          0007M1      ex af,af'
-0469C2 D9          0008M1      exx
-0469C3             0009M1  
-0469C3 D1          0010M1      pop de
-0469C4 C1          0011M1      pop bc
-0469C5 E1          0012M1      pop hl
-0469C6 F1          0013M1      pop af
-0469C7 08          0014M1      ex af,af'
-0469C8 D9          0015M1      exx
-0469C9 C9          0238        ret
-0469CA             0239    
-0469CA             0240    DEBUG_PRINT_TABLE:
-0469CA             0241        PUSH_ALL
-0469CA 08          0001M1      ex af,af'
-0469CB D9          0002M1      exx
-0469CC F5          0003M1      push af
-0469CD E5          0004M1      push hl
-0469CE C5          0005M1      push bc
-0469CF D5          0006M1      push de
-0469D0             0007M1  
-0469D0 08          0008M1      ex af,af'
-0469D1 D9          0009M1      exx
-0469D2 F5          0010M1      push af
-0469D3 E5          0011M1      push hl
-0469D4 C5          0012M1      push bc
-0469D5 D5          0013M1      push de
-0469D6 DD E5       0014M1      push ix
-0469D8 FD E5       0015M1      push iy
-0469DA CD 00 19 04 0242        call vdu_home_cursor
-0469DE             0243        ; LIST_FIELD sprite_move_program,3 ; DEBUG
-0469DE             0244        ; LIST_FIELD sprite_type,1 ; DEBUG
-0469DE             0245    
-0469DE DD 21 00 5A 0246        ld ix,table_base
+046A0C CD EB 19 04 0175        call vdu_set_gfx_viewport
+046A10             0176    ; set background color
+046A10 3E 9A       0177        ld a,26+128 ; violet
+046A12 CD 8D 19 04 0178        call vdu_gcol
+046A16 CD 5E 19 04 0179        call vdu_clg
+046A1A             0180    ; VDU 28, left, bottom, right, top: Set text viewport **
+046A1A 0E 00       0181        ld c,0 ; left
+046A1C 16 00       0182        ld d,0 ; top
+046A1E 1E 3E       0183        ld e,62 ; right
+046A20 06 30       0184        ld b,48; bottom
+046A22 CD A4 19 04 0185        call vdu_set_txt_viewport
+046A26             0186    
+046A26             0187    ; initialize the global timestamp
+046A26 CD F9 17 04 0188        call timestamp_tick
+046A2A             0189    
+046A2A             0190    ; done with init
+046A2A C9          0191        ret
+046A2B             0192    
+046A2B             0193    main:
+046A2B             0194    ; start a new game
+046A2B CD 17 61 04 0195        call game_initialize
+046A2F             0196    
+046A2F             0197    main_loop:
+046A2F             0198    ; update the global timestamp
+046A2F CD F9 17 04 0199        call timestamp_tick
+046A33             0200    
+046A33             0201    ; do gamestate logic
+046A33 CD 03 61 04 0202        call do_game
+046A37             0203    
+046A37             0204        ; CALL DEBUG_PRINT_TABLE
+046A37             0205    
+046A37             0206    ; wait for the next vblank mitigate flicker and for loop timing
+046A37 CD BF 19 04 0207        call vdu_vblank
+046A3B CD BF 19 04 0208        call vdu_vblank ; DEBUG
+046A3F CD BF 19 04 0209        call vdu_vblank ; DEBUG
+046A43             0210    
+046A43             0211    ; poll keyboard for escape keypress
+046A43 3E 08       0212        ld a, $08 ; code to send to MOS
+046A45 5B CF       0213        rst.lil $08 ; get IX pointer to System Variables
+046A47             0214    
+046A47 DD 7E 05    0215        ld a, (ix + $05) ; get ASCII code of key pressed
+046A4A FE 1B       0216        cp 27 ; check if 27 (ascii code for ESC)
+046A4C CA 54 6A 04 0217        jp z, main_end ; if pressed, jump to exit
+046A50             0218    
+046A50 C3 2F 6A 04 0219        jp main_loop
+046A54             0220    
+046A54             0221    main_end:
+046A54 CD 05 19 04 0222        call vdu_cursor_on
+046A58 C9          0223        ret
+046A59             0224    
+046A59             0225    DEBUG_PRINT:
+046A59             0226        PUSH_ALL
+046A59 08          0001M1      ex af,af'
+046A5A D9          0002M1      exx
+046A5B F5          0003M1      push af
+046A5C E5          0004M1      push hl
+046A5D C5          0005M1      push bc
+046A5E D5          0006M1      push de
+046A5F             0007M1  
+046A5F 08          0008M1      ex af,af'
+046A60 D9          0009M1      exx
+046A61 F5          0010M1      push af
+046A62 E5          0011M1      push hl
+046A63 C5          0012M1      push bc
+046A64 D5          0013M1      push de
+046A65 DD E5       0014M1      push ix
+046A67 FD E5       0015M1      push iy
+046A69 0E 00       0227        ld c,0
+046A6B 06 00       0228        ld b,0
+046A6D CD 37 19 04 0229        call vdu_move_cursor
+046A71             0230        POP_ALL
+046A71 FD E1       0001M1      pop iy
+046A73 DD E1       0002M1      pop ix
+046A75 D1          0003M1      pop de
+046A76 C1          0004M1      pop bc
+046A77 E1          0005M1      pop hl
+046A78 F1          0006M1      pop af
+046A79 08          0007M1      ex af,af'
+046A7A D9          0008M1      exx
+046A7B             0009M1  
+046A7B D1          0010M1      pop de
+046A7C C1          0011M1      pop bc
+046A7D E1          0012M1      pop hl
+046A7E F1          0013M1      pop af
+046A7F 08          0014M1      ex af,af'
+046A80 D9          0015M1      exx
+046A81             0231        PUSH_ALL
+046A81 08          0001M1      ex af,af'
+046A82 D9          0002M1      exx
+046A83 F5          0003M1      push af
+046A84 E5          0004M1      push hl
+046A85 C5          0005M1      push bc
+046A86 D5          0006M1      push de
+046A87             0007M1  
+046A87 08          0008M1      ex af,af'
+046A88 D9          0009M1      exx
+046A89 F5          0010M1      push af
+046A8A E5          0011M1      push hl
+046A8B C5          0012M1      push bc
+046A8C D5          0013M1      push de
+046A8D DD E5       0014M1      push ix
+046A8F FD E5       0015M1      push iy
+046A91 CD 64 06 04 0232        call dumpFlags
+046A95             0233        POP_ALL
+046A95 FD E1       0001M1      pop iy
+046A97 DD E1       0002M1      pop ix
+046A99 D1          0003M1      pop de
+046A9A C1          0004M1      pop bc
+046A9B E1          0005M1      pop hl
+046A9C F1          0006M1      pop af
+046A9D 08          0007M1      ex af,af'
+046A9E D9          0008M1      exx
+046A9F             0009M1  
+046A9F D1          0010M1      pop de
+046AA0 C1          0011M1      pop bc
+046AA1 E1          0012M1      pop hl
+046AA2 F1          0013M1      pop af
+046AA3 08          0014M1      ex af,af'
+046AA4 D9          0015M1      exx
+046AA5             0234        PUSH_ALL
+046AA5 08          0001M1      ex af,af'
+046AA6 D9          0002M1      exx
+046AA7 F5          0003M1      push af
+046AA8 E5          0004M1      push hl
+046AA9 C5          0005M1      push bc
+046AAA D5          0006M1      push de
+046AAB             0007M1  
+046AAB 08          0008M1      ex af,af'
+046AAC D9          0009M1      exx
+046AAD F5          0010M1      push af
+046AAE E5          0011M1      push hl
+046AAF C5          0012M1      push bc
+046AB0 D5          0013M1      push de
+046AB1 DD E5       0014M1      push ix
+046AB3 FD E5       0015M1      push iy
+046AB5 CD C6 04 04 0235        call dumpRegistersHex
+046AB9             0236        ; call waitKeypress
+046AB9             0237        POP_ALL
+046AB9 FD E1       0001M1      pop iy
+046ABB DD E1       0002M1      pop ix
+046ABD D1          0003M1      pop de
+046ABE C1          0004M1      pop bc
+046ABF E1          0005M1      pop hl
+046AC0 F1          0006M1      pop af
+046AC1 08          0007M1      ex af,af'
+046AC2 D9          0008M1      exx
+046AC3             0009M1  
+046AC3 D1          0010M1      pop de
+046AC4 C1          0011M1      pop bc
+046AC5 E1          0012M1      pop hl
+046AC6 F1          0013M1      pop af
+046AC7 08          0014M1      ex af,af'
+046AC8 D9          0015M1      exx
+046AC9 C9          0238        ret
+046ACA             0239    
+046ACA             0240    DEBUG_PRINT_TABLE:
+046ACA             0241        PUSH_ALL
+046ACA 08          0001M1      ex af,af'
+046ACB D9          0002M1      exx
+046ACC F5          0003M1      push af
+046ACD E5          0004M1      push hl
+046ACE C5          0005M1      push bc
+046ACF D5          0006M1      push de
+046AD0             0007M1  
+046AD0 08          0008M1      ex af,af'
+046AD1 D9          0009M1      exx
+046AD2 F5          0010M1      push af
+046AD3 E5          0011M1      push hl
+046AD4 C5          0012M1      push bc
+046AD5 D5          0013M1      push de
+046AD6 DD E5       0014M1      push ix
+046AD8 FD E5       0015M1      push iy
+046ADA CD 00 19 04 0242        call vdu_home_cursor
+046ADE             0243        ; LIST_FIELD sprite_move_program,3 ; DEBUG
+046ADE             0244        ; LIST_FIELD sprite_type,1 ; DEBUG
+046ADE             0245    
+046ADE DD 21 00 5A 0246        ld ix,table_base
        04          
-0469E3 CD 8E 5E 04 0247        call dump_sprite_record
-0469E7 CD 2C 01 04 0248        call printNewLine
-0469EB CD 2C 01 04 0249        call printNewLine
-0469EF             0250    
-0469EF ED 32 29    0251        lea ix,ix+table_bytes_per_record
-0469F2 CD 8E 5E 04 0252        call dump_sprite_record
-0469F6 CD 2C 01 04 0253        call printNewLine
-0469FA             0254    
-0469FA             0255        ; call waitKeypress
-0469FA             0256        POP_ALL
-0469FA FD E1       0001M1      pop iy
-0469FC DD E1       0002M1      pop ix
-0469FE D1          0003M1      pop de
-0469FF C1          0004M1      pop bc
-046A00 E1          0005M1      pop hl
-046A01 F1          0006M1      pop af
-046A02 08          0007M1      ex af,af'
-046A03 D9          0008M1      exx
-046A04             0009M1  
-046A04 D1          0010M1      pop de
-046A05 C1          0011M1      pop bc
-046A06 E1          0012M1      pop hl
-046A07 F1          0013M1      pop af
-046A08 08          0014M1      ex af,af'
-046A09 D9          0015M1      exx
-046A0A C9          0257        RET
-046A0B             0258    
-046A0B             0259    DEBUG_WAITKEYPRESS:
-046A0B             0260        PUSH_ALL
-046A0B 08          0001M1      ex af,af'
-046A0C D9          0002M1      exx
-046A0D F5          0003M1      push af
-046A0E E5          0004M1      push hl
-046A0F C5          0005M1      push bc
-046A10 D5          0006M1      push de
-046A11             0007M1  
-046A11 08          0008M1      ex af,af'
-046A12 D9          0009M1      exx
-046A13 F5          0010M1      push af
-046A14 E5          0011M1      push hl
-046A15 C5          0012M1      push bc
-046A16 D5          0013M1      push de
-046A17 DD E5       0014M1      push ix
-046A19 FD E5       0015M1      push iy
-046A1B CD C5 06 04 0261        call waitKeypress
-046A1F             0262        POP_ALL
-046A1F FD E1       0001M1      pop iy
-046A21 DD E1       0002M1      pop ix
-046A23 D1          0003M1      pop de
-046A24 C1          0004M1      pop bc
-046A25 E1          0005M1      pop hl
-046A26 F1          0006M1      pop af
-046A27 08          0007M1      ex af,af'
-046A28 D9          0008M1      exx
-046A29             0009M1  
-046A29 D1          0010M1      pop de
-046A2A C1          0011M1      pop bc
-046A2B E1          0012M1      pop hl
-046A2C F1          0013M1      pop af
-046A2D 08          0014M1      ex af,af'
-046A2E D9          0015M1      exx
-046A2F C9          0263        RET
+046AE3 CD 8E 5E 04 0247        call dump_sprite_record
+046AE7 CD 2C 01 04 0248        call printNewLine
+046AEB CD 2C 01 04 0249        call printNewLine
+046AEF             0250    
+046AEF ED 32 29    0251        lea ix,ix+table_bytes_per_record
+046AF2 CD 8E 5E 04 0252        call dump_sprite_record
+046AF6 CD 2C 01 04 0253        call printNewLine
+046AFA             0254    
+046AFA             0255        ; call waitKeypress
+046AFA             0256        POP_ALL
+046AFA FD E1       0001M1      pop iy
+046AFC DD E1       0002M1      pop ix
+046AFE D1          0003M1      pop de
+046AFF C1          0004M1      pop bc
+046B00 E1          0005M1      pop hl
+046B01 F1          0006M1      pop af
+046B02 08          0007M1      ex af,af'
+046B03 D9          0008M1      exx
+046B04             0009M1  
+046B04 D1          0010M1      pop de
+046B05 C1          0011M1      pop bc
+046B06 E1          0012M1      pop hl
+046B07 F1          0013M1      pop af
+046B08 08          0014M1      ex af,af'
+046B09 D9          0015M1      exx
+046B0A C9          0257        RET
+046B0B             0258    
+046B0B             0259    DEBUG_WAITKEYPRESS:
+046B0B             0260        PUSH_ALL
+046B0B 08          0001M1      ex af,af'
+046B0C D9          0002M1      exx
+046B0D F5          0003M1      push af
+046B0E E5          0004M1      push hl
+046B0F C5          0005M1      push bc
+046B10 D5          0006M1      push de
+046B11             0007M1  
+046B11 08          0008M1      ex af,af'
+046B12 D9          0009M1      exx
+046B13 F5          0010M1      push af
+046B14 E5          0011M1      push hl
+046B15 C5          0012M1      push bc
+046B16 D5          0013M1      push de
+046B17 DD E5       0014M1      push ix
+046B19 FD E5       0015M1      push iy
+046B1B CD C5 06 04 0261        call waitKeypress
+046B1F             0262        POP_ALL
+046B1F FD E1       0001M1      pop iy
+046B21 DD E1       0002M1      pop ix
+046B23 D1          0003M1      pop de
+046B24 C1          0004M1      pop bc
+046B25 E1          0005M1      pop hl
+046B26 F1          0006M1      pop af
+046B27 08          0007M1      ex af,af'
+046B28 D9          0008M1      exx
+046B29             0009M1  
+046B29 D1          0010M1      pop de
+046B2A C1          0011M1      pop bc
+046B2B E1          0012M1      pop hl
+046B2C F1          0013M1      pop af
+046B2D 08          0014M1      ex af,af'
+046B2E D9          0015M1      exx
+046B2F C9          0263        RET

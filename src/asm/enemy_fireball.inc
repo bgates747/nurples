@@ -12,7 +12,7 @@ fireball_defaults:
     db 1                    ; num_animations
     db 0	                ; animation
     db 0	                ; animation_timer
-    db 1	                ; move_timer
+    db 0	                ; move_timer
     db 0	                ; move_step
     db 20	                ; points
     db 5	                ; shield_damage

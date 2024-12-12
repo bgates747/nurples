@@ -135,6 +135,7 @@ sendVDUsequence:
     POP BC
     RET
 ; Print Newline sequence to VDP
+; destroys bc
 printNewLine:
     push af ; for some reason rst.lil 10h sets carry flag
     LD A, '\r'

@@ -17,8 +17,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 182,
-                "y": 265.66666666666663
+                "x": 217.33333333333331,
+                "y": 279.66666666666663
             }
         },
         "dg0_01.tmx": {
@@ -49,10 +49,10 @@
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
+        "dg0_00.tmx",
         "dg0_bg_green_plates.tmx",
         "dg0_01.tmx",
-        "dg0.tsx",
-        "dg0_00.tmx"
+        "dg0.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

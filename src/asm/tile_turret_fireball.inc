@@ -10,7 +10,7 @@ turret_fireball_defaults:
     db 1                    ; num_animations
     db 0                    ; animation
     db 0                    ; animation_timer
-    db 24                   ; move_timer
+    db 8  ; DEBUG 24                 ; move_timer
     db 0                    ; move_step
     db 5                    ; points
     db 0                    ; shield_damage
@@ -34,7 +34,7 @@ move_turret_fireball:
 ; target player
     ld hl,speed_fireball
     ld (Vp),hl ; param for targeting_computer
-    call orientation_to_player ; sets params for targeting_computer
+    call orientation_to_player
     call targeting_computer
     ld (iy+sprite_heading),hl ; save sprite heading
     call sprite_frame_heading
@@ -45,8 +45,9 @@ move_turret_fireball:
     call enemy_spawn_fireball
     ; fall through to reset move timer
 turret_fireball_reset_move_timer:
-    call rand_8     ; snag a random number
-    and %00011111   ; keep only 5 lowest bits (max 31)
-    add a,64 ; range is now 64-127
+    ; call rand_8     ; snag a random number
+    ; and %00011111   ; keep only 5 lowest bits (max 31)
+    ; add a,64 ; range is now 64-127
+    ld a,8 ; DEBUG
     ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
     ret
