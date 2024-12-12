@@ -53,6 +53,17 @@ game_initialize:
 game_playing:
 ; Main gameplay loop
     call tiles_plot
+
+; set gfx origin and viewport to playing field window
+    ld bc,origin_left
+    ld de,origin_top
+    call vdu_set_gfx_origin
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
+
     call do_player
     call do_enemies
 ; update UI: TODO make this a standalone function

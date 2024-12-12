@@ -5,7 +5,7 @@ enemy_dead: equ 0
 enemy_air: equ 1
 enemy_ground: equ 2
 enemy_projectile: equ 3
-explosion: equ 255
+explosion: equ 4
 move_enemies:
 ; are there any active enemies or explosions?
     ld a,(table_active_sprites)
@@ -116,58 +116,14 @@ check_enemy_collision_player: ; check for collisions with player
 
 ; this routine vanquishes the enemy sprite
 ; and replaces it with an animated explosion
-; we jump here instead of call because
-; we want to return to differing locations in the loop
-; depending on whether we're still sploding
 ; destroys: everything except index registers
 ; returns: a=-1 to indicate enemy died, and an incandescent ball of debris and gas
 enemy_kill:
     ld iy,(table_pointer)
-; tally up points
     ld hl,(player_score)
     ld bc,0 ; clear bcu
     ld c,(iy+sprite_points)
     add hl,bc
     ld (player_score),hl
-; ; initialize explosion
-; init_explosion:
-;     ld hl,explosion
-;     ld (sprite_base_bufferId),hl
-;     ld hl,move_explosion
-;     ld (sprite_move_program),hl
-;     ld a,%00000000 ; collides with nothing
-;     ld (iy+sprite_collisions),a
-;     ld hl,0 ; north
-;     ld (sprite_heading),hl
-;     ld a,0x04 ; will decrement to 03
-;     ld (sprite_animation),a
-;     ld a,0x07 ; 7/60th of a second timer
-;     ld (sprite_animation_timer),a
-;     xor a
-;     ld (sprite_move_timer),a
-;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-; ; fall through to next_explosion
-; next_explosion:
-;     ld a,(sprite_animation)
-;     dec a ; if rolled negative from zero,we're done sploding
-;     jp m,done_explosion
-;     ld (sprite_animation),a
-;     ld a,0x7 ; 7/60th of a second timer
-;     ld (sprite_animation_timer),a
-; ; fall through to animate_explosion
-; animate_explosion:
-;     ld hl,sprite_y+1
-;     inc (hl) ; move explosion down 1 pixel
-;     jp z, done_explosion ; if wraparound to top of screen, kill explosion
-;     ld hl,sprite_animation_timer
-;     dec (hl) ; if timer is zero,we do next animation
-;     jp z,next_explosion
-;     ;otherwise we fall through to draw the current one
-;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-;     ret ; now we go back to caller
-; done_explosion:
-    set sprite_just_died,(iy+sprite_collisions)
-    ld a,-1 ; return -1 to indicate enemy died
-    ret ; now we go back to caller
+    jp spawn_explosion
 ; end enemy_kill

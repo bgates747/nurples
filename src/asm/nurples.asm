@@ -45,6 +45,7 @@ exit:
     include "enemies.inc"
     include "enemy_fireball.inc"
     include "enemy_seeker.inc"
+    include "explosion.inc"
     include "fonts_list.inc"
     include "images_tiles_dg.inc"
     ; include "images_tiles_xevious.inc"

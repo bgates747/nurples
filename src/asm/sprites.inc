@@ -276,6 +276,22 @@ sprite_compute_velocities:
     ret
 ; end sprite_compute_velocities
 
+; change an existing sprite to a new type, keeping its position and velocity the same
+; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+alter_sprite:
+; copy default settings to new sprite
+    lea iy,iy+sprite_definitions ; bump pointer to copy to
+    push iy ; pointer to default sprite settings
+    pop de ; address to copy to
+    ld bc,table_bytes_per_record-sprite_definitions ; number of bytes to copy
+    ldir ; copies new defaults existing sprite record
+; return to caller
+    ld iy,(table_pointer) ; reset table_pointer
+    set 7,(iy+sprite_type) ; set just spawned flag
+    scf ; set carry flag to indicate success
+    ret
+; end alter_sprite
+
 ; create a new sprite at the same location as an existing sprite
 ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
 spawn_sprite:
@@ -323,7 +339,7 @@ sprite_frame_heading_animation:
     ld h,(iy+sprite_animation)
     ld l,32 ; 32 orientation frames per animation
     mlt hl ; hl = offset from base animation
-    add a,l ; modulo256 since animation_frame is only 1 byte
+    add a,l ; modulo256 since sprite_frame is only 1 byte
     ld (iy+sprite_frame),a
     ret
 ; end sprite_frame_heading_animation

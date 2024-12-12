@@ -5,7 +5,7 @@ fireball_defaults:
     db enemy_projectile        ; type
     dl BUF_FIREBALL_A	    ; base_bufferId
     dl move_enemy_fireball	; move_program
-    db collides_with_laser | collides_with_player ; collisions
+    db collides_with_player ; collisions
     db 7	                ; dim_x
     db 7                    ; dim_y
     db 1                    ; num_orientations
@@ -16,7 +16,7 @@ fireball_defaults:
     db 0	                ; move_step
     db 20	                ; points
     db 5	                ; shield_damage
-    db 0                    ; animation_frame
+    db 0                    ; frame
 
 enemy_spawn_fireball:
     ld hl,fireball_defaults

@@ -16,7 +16,7 @@ seeker_defaults:
     db 0	                ; move_step
     db 10	                ; points
     db 2	                ; shield_damage
-    db 0                    ; animation_frame
+    db 0                    ; frame
 
 enemy_spawn_seeker:
     ld hl,seeker_defaults

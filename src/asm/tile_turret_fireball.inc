@@ -14,7 +14,7 @@ turret_fireball_defaults:
     db 0                    ; move_step
     db 5                    ; points
     db 0                    ; shield_damage
-    db 0                    ; animation_frame
+    db 0                    ; frame
 
 activate_turret_fireball:
     ld hl,turret_fireball_defaults
