@@ -9,7 +9,7 @@ player_air: equ 6
 player_ground: equ 7
 
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_record_size:         equ  41; 40 bytes ;40 bytes per sprite record
+table_record_size:         equ  64; 40 bytes ;40 bytes per sprite record
 sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
 ; sprite state variables
 sprite_state_variables:    equ   1; beginning of sprite state variables
@@ -42,20 +42,6 @@ sprite_frame:              equ  40; 1 bytes ;current animation frame
 ; maximum number of sprites
 table_max_records: equ 16 ; it can handle more but this is pushing it
 ; table_total_bytes: equ table_end-table_start_variables
-
-; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
-    align 256
-table_base:
-player_weapons_begin: blkb table_record_size*player_weapons_max,0
-player_weapons_end:
-player_begin: blkb table_record_size,0
-player_end:
-enemy_sprites_begin:
-seekers_base: blkb table_record_size*seekers_max,0
-enemy_sprites_end:
-table_end:
-
-table_num_records: equ table_end-table_base/table_record_size
 
 ; pointer to top address of current record, initialized to table_base
 table_pointer: dl table_base
@@ -100,6 +86,12 @@ sin_sprite_heading: dl 0x000000 ; signed fixed 16.8
 cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 
 table_init:
+; clear the sprite table
+    xor a ; write zeroes to sprite table
+    ld hl,table_base ; address to copy from
+    ld bc,table_end-table_base ; number of bytes to clear
+    call clear_mem
+; write sprite ids
     ld ix,table_base
     xor a ; sprite id
     ld c,0 ; sprite type
@@ -110,6 +102,12 @@ table_init:
     lea ix,ix+table_record_size
     inc a
     djnz @loop
+
+; ; DEBUG
+;     ld a,sprite_type
+;     call DEBUG_PRINT_FIELDS
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
     ret
 
 ; gets the next available sprite id
@@ -418,20 +416,20 @@ dump_sprite_record:
     ld hl,(ix+sprite_yvel)
     call print_s168_hl
 
-    call printInline
-    asciz "\r\nv:   "
-    ld hl,(ix+sprite_vel)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nv:   "
+    ; ld hl,(ix+sprite_vel)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nhdg  "
-    ld hl,(ix+sprite_heading)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nhdg  "
+    ; ld hl,(ix+sprite_heading)
+    ; call print_s168_hl
 
-    call printInline
-    asciz "\r\nori: "
-    ld hl,(ix+sprite_orientation)
-    call print_s168_hl
+    ; call printInline
+    ; asciz "\r\nori: "
+    ; ld hl,(ix+sprite_orientation)
+    ; call print_s168_hl
     
     call printInline
     asciz "\r\ntyp: "
@@ -453,60 +451,62 @@ dump_sprite_record:
     ld a,(ix+sprite_collisions)
     call printBin8
 
-    call printInline
-    asciz "\r\nszx: "
-    ld a,(ix+sprite_dim_x)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nszx: "
+    ; ld a,(ix+sprite_dim_x)
+    ; call printHexA
     
-    call printInline
-    asciz "\r\nszy: "
-    ld a,(ix+sprite_dim_y)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nszy: "
+    ; ld a,(ix+sprite_dim_y)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\n#ori:"
-    ld a,(ix+sprite_num_orientations)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\n#ori:"
+    ; ld a,(ix+sprite_num_orientations)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\n#ani:"
-    ld a,(ix+sprite_num_animations)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\n#ani:"
+    ; ld a,(ix+sprite_num_animations)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nani: "
-    ld a,(ix+sprite_animation)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nani: "
+    ; ld a,(ix+sprite_animation)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nanit:"
-    ld a,(ix+sprite_animation_timer)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nanit:"
+    ; ld a,(ix+sprite_animation_timer)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nmvt: "
-    ld a,(ix+sprite_move_timer)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nmvt: "
+    ; ld a,(ix+sprite_move_timer)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nmvs: "
-    ld a,(ix+sprite_move_step)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nmvs: "
+    ; ld a,(ix+sprite_move_step)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\npts: "
-    ld a,(ix+sprite_points)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\npts: "
+    ; ld a,(ix+sprite_points)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\ndmg: "
-    ld a,(ix+sprite_shield_damage)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\ndmg: "
+    ; ld a,(ix+sprite_shield_damage)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nfrm: "
-    ld a,(ix+sprite_frame)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nfrm: "
+    ; ld a,(ix+sprite_frame)
+    ; call printHexA
+
+    ; call printNewLine
 
     ; call waitKeypress
     ret

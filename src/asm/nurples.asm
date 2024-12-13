@@ -57,6 +57,7 @@ exit:
     ; include "levels_xevious.inc"
     include "player.inc"
     include "player_laser.inc"
+    include "player_weapons.inc"
     include "state.inc"
     include "targeting.inc"
     include "tiles.inc"
@@ -204,7 +205,12 @@ main_loop:
     call timestamp_tick
 ; do gamestate logic
     call do_game
+
+; DEBUG
     ; CALL DEBUG_PRINT_TABLE
+    ; CALL DEBUG_WAITKEYPRESS
+; END DEBUG
+
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
     ; call vdu_vblank ; DEBUG
@@ -253,12 +259,28 @@ DEBUG_PRINT_TABLE:
     ; LIST_FIELD sprite_move_program,3 ; DEBUG
     ; LIST_FIELD sprite_type,1 ; DEBUG
 
-    ; ld ix,player_weapons_begin
-    ; call dump_sprite_record
-    ; call printNewLine
+    ld ix,player_weapons_begin
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
+
+    lea ix,ix+table_record_size
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
+
+    lea ix,ix+table_record_size
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
+
+    lea ix,ix+table_record_size
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
 
     ; ld ix,player_begin
-    call dump_sprite_record
+    ; call dump_sprite_record
 
     ; call waitKeypress
     POP_ALL
@@ -269,3 +291,24 @@ DEBUG_WAITKEYPRESS:
     call waitKeypress
     POP_ALL
     RET
+
+DEBUG_PRINT_FIELDS:
+    ; PUSH_ALL
+    ld bc,0
+    ld c,a
+    ld ix,table_base
+    add ix,bc
+    ld b,table_num_records
+@@:
+    push ix
+    pop hl
+    push bc ; save loop counter
+    ld a,1 ; print one byte
+    call dumpMemoryHex
+    lea ix,ix+table_record_size
+    pop bc ; restore loop counter
+    djnz @b
+    ; POP_ALL
+    ret
+
+    include "tables.inc"

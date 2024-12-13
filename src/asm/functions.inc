@@ -1129,3 +1129,16 @@ dumpMemoryBinRev:
     pop af
 ; all done
     ret
+
+; clear a block of memory by writing a prescribed value to each byte in the range
+; inputs: a = value to write, hl = address of first byte, bc = number of bytes
+; outputs: memory block is cleared
+; destroys: hl, de
+clear_mem:
+    dec bc ; we do this because we will increment de before writing the first byte
+    ld (hl),a
+    push hl
+    pop de
+    inc de ; target address
+    ldir
+    ret
