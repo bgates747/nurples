@@ -77,36 +77,38 @@ move_enemies:
 ; and done
     ret
 
+; TODO: much if this is deprecated by new sprite table system and needs to be rewritten
 check_enemy_collisions:
-; check what we collide with
-    ld a,(iy+sprite_collisions)
-    push af ; save collision flags
-    and collides_with_player ; check for collisions with player
-    call nz,check_enemy_collision_player
-    pop af ; restore collision flags
-    and collides_with_laser ; check for collisions with laser
-    call nz,check_enemy_collision_laser
+; ; check what we collide with
+;     ld a,(iy+sprite_collisions)
+;     push af ; save collision flags
+;     and collides_with_player ; check for collisions with player
+;     call nz,check_enemy_collision_player
+;     pop af ; restore collision flags
+;     and collides_with_laser ; check for collisions with laser
+;     call nz,check_enemy_collision_laser
     ret
 check_enemy_collision_laser: ; check for collisions with laser
-    ld ix,laser_start_variables
-    bit sprite_alive,(ix+sprite_collisions)
-    ret z ; laser dead, nothing to do
-    call check_collision
-    ret p ; no collision
-    ld ix,laser_start_variables
-    set sprite_just_died,(ix+sprite_collisions)
-    set sprite_alive,(ix+sprite_collisions)
-    call enemy_kill
+    ; ld ix,laser_start_variables
+    ; bit sprite_alive,(ix+sprite_collisions)
+    ; ret z ; laser dead, nothing to do
+    ; call check_collision
+    ; ret p ; no collision
+    ; ld ix,laser_start_variables
+    ; set sprite_just_died,(ix+sprite_collisions)
+    ; set sprite_alive,(ix+sprite_collisions)
+    ; call enemy_kill
     ret
 check_enemy_collision_player: ; check for collisions with player
-    ld ix,player_begin
-    bit sprite_alive,(ix+sprite_collisions)
-    ret z ; player dead, no collision
-    call check_collision
-    ret p ; no collision
-    call enemy_kill
+    ; ld ix,player_begin
+    ; bit sprite_alive,(ix+sprite_collisions)
+    ; ret z ; player dead, no collision
+    ; call check_collision
+    ; ret p ; no collision
+    ; call enemy_kill
     ret
 ; end check_enemy_collisions
+; END TODO
 
 ; this routine vanquishes the enemy sprite
 ; and replaces it with an animated explosion

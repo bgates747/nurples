@@ -9,7 +9,7 @@ player_air: equ 6
 player_ground: equ 7
 
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_record_size:    equ  41; 40 bytes ;40 bytes per sprite record
+table_record_size:    equ  64; 40 bytes ;40 bytes per sprite record
 sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
 ; sprite state variables
 sprite_state_variables:    equ   1; beginning of sprite state variables
@@ -46,12 +46,12 @@ table_max_records: equ 16 ; it can handle more but this is pushing it
 ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
     align 256
 table_base:
-player_weapons_begin: blkw table_record_size*player_weapons_max,0
+player_weapons_begin: blkb table_record_size*player_weapons_max,0
 player_weapons_end:
-player_begin: blkw table_record_size,0
+player_begin: blkb table_record_size,0
 player_end:
 enemy_sprites_begin:
-seekers_base: blkb table_record_size*seekers_max
+seekers_base: blkb table_record_size*seekers_max,0
 enemy_sprites_end:
 table_end:
 
@@ -144,7 +144,7 @@ table_get_next_id:
 
 ; deactivate the sprite with the given id
 ; inputs: iy set to sprite record
-; outputs: nothing
+; outputs: nothingblkw
 ; destroys: a,hl
 ; affects: decrements table_active_sprites by one
 table_deactivate_sprite:
@@ -188,21 +188,8 @@ sprites_init:
 	pop bc
 	djnz @sprite_player_loop
 
-; ; define laser sprite
-; 	ld a,(laser_id)
-; 	call vdu_sprite_select
-; 	call vdu_sprite_clear_frames
-; 	ld hl,BUF_LASER_A
-; 	ld b,2 ; two bitmaps for laser
-; @sprite_laser_loop:
-; 	push bc
-; 	push hl
-; 	call vdu_sprite_add_buff
-; 	pop hl
-; 	inc hl
-; 	pop bc
-; 	djnz @sprite_laser_loop
-; all done
+; define laser sprites
+    call init_player_laser
     ret
 ; end sprites_init
 

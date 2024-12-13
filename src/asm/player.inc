@@ -17,7 +17,7 @@ player_ships: db 3 ; integer
 speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
 
 player_weapons_count: db 0
-player_weapons_max: equ 3
+player_weapons_max: equ 4
 
 player_defaults:
     db player               ; type
@@ -149,7 +149,7 @@ player_not_dead: ; yay we didn't die
     call vdu_sprite_move_abs168
 ; process player laser fire
     pop af ; restore flags from spacebar check
-    jp nz,fire_laser ; will return to caller from there
+    jp nz,player_spawn_laser ; will return to caller from there
     ret
 ; end player_input
 

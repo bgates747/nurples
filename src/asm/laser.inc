@@ -29,10 +29,10 @@ laser_points:            db                   0 ; 1 bytes points awarded for kil
 laser_shield_damage:     db                   0 ; 1 bytes shield points deducted for collision
 laser_frame:             db                   0 ; 1 bytes current animation frame
 laser_end_variables: ; for when we want to traverse this table in reverse
-laser_speed: equ -6*256 ; 6 pixels per frame 16.8 fixed
+speed_laser: equ -6*256 ; 6 pixels per frame 16.8 fixed
 laser_animation_timer_reset: equ 2 ; animate every two frames
 
-laser_control:
+move_player_laser:
 ; point to laser sprite variables
     ld iy,laser_start_variables
     ld (table_pointer),iy
@@ -60,7 +60,7 @@ laser_control:
     call vdu_sprite_move_abs168
 ; return to caller
     ret
-; end laser_control
+; end move_player_laser
 
 fire_laser:
 ; point to laser sprite variables
@@ -82,9 +82,10 @@ fire_laser:
 ; y-coordinate
     ld hl,(ix+sprite_y)
     ld de,-6*256 ; set laser y a few pixels above player
+    add hl,de
     ld (iy+sprite_y),hl
 ; set laser velocity
-    ld hl,laser_speed
+    ld hl,speed_laser
     ld (iy+sprite_yvel),hl
 ; set laser animation frame and timer
     xor a ; first frame

@@ -51,17 +51,19 @@ exit:
     ; include "images_tiles_xevious.inc"
     include "images_sprites.inc"
     include "images_ui.inc"
-    include "laser.inc"
+    ; include "laser.inc"
     include "levels.inc"
     include "levels_tileset_0.inc"
     ; include "levels_xevious.inc"
     include "player.inc"
+    include "player_laser.inc"
     include "state.inc"
     include "targeting.inc"
     include "tiles.inc"
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
+    include "sprites_new.inc"
 
     align 256
 
@@ -194,11 +196,15 @@ init:
 main:
 ; start a new game
     call game_initialize
+
+    ; CALL DEBUG_PRINT_TABLE
+    ; CALL DEBUG_WAITKEYPRESS
 main_loop:
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
     call do_game
+    ; CALL DEBUG_PRINT_TABLE
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
     ; call vdu_vblank ; DEBUG
@@ -235,18 +241,24 @@ DEBUG_PRINT:
 
 DEBUG_PRINT_TABLE:
     PUSH_ALL
-    call vdu_home_cursor
+    ; call vdu_home_cursor
+    ld c,0
+    ld b,0
+    call vdu_move_cursor
+
+    ; ld a,(player_weapons_count)
+    ; call printHexA
+    ; call printNewLine
+
     ; LIST_FIELD sprite_move_program,3 ; DEBUG
     ; LIST_FIELD sprite_type,1 ; DEBUG
 
-    ld ix,table_base
+    ld ix,player_weapons_begin
     call dump_sprite_record
-    call printNewLine
     call printNewLine
 
-    lea ix,ix+table_record_size
+    ld ix,player_begin
     call dump_sprite_record
-    call printNewLine
 
     ; call waitKeypress
     POP_ALL

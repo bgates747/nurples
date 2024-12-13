@@ -10,15 +10,15 @@
     "file.lastUsedOpenFilter": "Tiled Projects (*.tiled-project)",
     "fileStates": {
         "dg0.tsx": {
-            "scaleInDock": 1.2955,
+            "scaleInDock": 2,
             "scaleInEditor": 1
         },
         "dg0_00.tmx": {
-            "scale": 1.5,
+            "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 217.33333333333331,
-                "y": 280.33333333333326
+                "x": 28,
+                "y": 311.75
             }
         },
         "dg0_01.tmx": {
