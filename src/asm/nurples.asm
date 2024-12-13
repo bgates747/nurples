@@ -253,11 +253,11 @@ DEBUG_PRINT_TABLE:
     ; LIST_FIELD sprite_move_program,3 ; DEBUG
     ; LIST_FIELD sprite_type,1 ; DEBUG
 
-    ld ix,player_weapons_begin
-    call dump_sprite_record
-    call printNewLine
+    ; ld ix,player_weapons_begin
+    ; call dump_sprite_record
+    ; call printNewLine
 
-    ld ix,player_begin
+    ; ld ix,player_begin
     call dump_sprite_record
 
     ; call waitKeypress

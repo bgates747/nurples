@@ -96,3 +96,32 @@ en_nav_seek_zag:
     ld hl,(iy+sprite_heading)
     jp @compute_velocities
 ; end en_nav_seek_zag
+
+
+init_enemy_seekers:
+; set pointer to seeker sprite table
+    ld iy,seekers_base
+    ld a,(iy+sprite_id) ; loop counter / sprite id
+    call DEBUG_PRINT
+    call DEBUG_WAITKEYPRESS
+; define seeker sprites
+@loop:
+    push af
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_SEEKER_000
+	ld b,32 ; 32 bitmaps for seeker
+@sprite_seeker_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @sprite_seeker_loop
+    pop af ; restore loop counter / sprite id
+    inc a
+    cp seekers_max
+    jp nz,@loop
+    ret
+; end init_enemy_seekers
