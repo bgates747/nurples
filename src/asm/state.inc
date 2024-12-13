@@ -26,8 +26,9 @@ game_initialize:
     ld (table_active_sprites),a
     ld hl,table_base
     ld (table_pointer),hl
-; initialize sprites
+; initialize sprites and active tiles table
     call sprites_init
+    call table_init
 ; initialize the first level
     ld a,tiles_dg
     call init_tileset

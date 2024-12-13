@@ -60,6 +60,7 @@ exit:
     include "player_weapons.inc"
     include "state.inc"
     include "targeting.inc"
+    include "tile_table.inc"
     include "tiles.inc"
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"

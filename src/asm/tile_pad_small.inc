@@ -30,7 +30,7 @@ activate_pad_small:
 move_pad_small:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
-    jp nz,table_deactivate_sprite
+    jp nz,table_deactivate_tile
     call check_enemy_collisions
     ret m ; was collision so nothing more to do
 ; check whether it is time to spawn a seeker
