@@ -52,7 +52,7 @@ game_initialize:
 
 game_playing:
 ; Main gameplay loop
-    ; call tiles_plot
+    call tiles_plot
 
 ; set gfx origin and viewport to playing field window
     ld bc,origin_left

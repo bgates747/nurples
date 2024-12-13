@@ -9613,9 +9613,9 @@ PC     Output      Line
 0452D1 10          0010*   	db 16          ; num cols
 0452D2 20 00 00    0011*   	dl 32          ; num rows
 0452D5 00 02 00    0012*   	dl 512 ; base bufferId
-0452D8 00 00 00 00 0013*   	db 000,000,000,000,000,101,116,034,139,115,104,000,000,000,000,000
-       00 65 74 22 
-       8B 73 68 00 
+0452D8 00 00 00 00 0013*   	db 000,000,000,000,000,101,116,115,100,115,104,000,000,000,000,000
+       00 65 74 73 
+       64 73 68 00 
        00 00 00 00 
 0452E8 00 00 00 65 0014*   	db 000,000,000,101,098,116,113,114,114,115,116,097,104,000,000,000
        62 74 71 72 
@@ -9637,10 +9637,10 @@ PC     Output      Line
        97 A7 D8 D8 
        B6 71 41 42 
        F8 43 44 74 
-045338 71 69 62 9A 0019*   	db 113,105,098,154,155,097,098,097,165,168,055,248,001,248,056,114
+045338 71 69 62 9A 0019*   	db 113,105,098,154,155,097,098,097,165,168,055,248,000,248,056,114
        9B 61 62 61 
        A5 A8 37 F8 
-       01 F8 38 72 
+       00 F8 38 72 
 045348 71 72 64 72 0020*   	db 113,114,100,114,113,100,113,114,113,114,049,050,248,051,052,098
        71 64 71 72 
        71 72 31 32 
@@ -9657,7 +9657,7 @@ PC     Output      Line
        5B 62 72 62 
        88 89 47 48 
        DB 61 62 61 
-045388 64 71 49 00 0024*   	db 100,113,073,000,075,171,220,172,134,135,171,220,236,220,220,172
+045388 64 71 49 05 0024*   	db 100,113,073,005,075,171,220,172,134,135,171,220,236,220,220,172
        4B AB DC AC 
        86 87 AB DC 
        EC DC DC AC 
@@ -9776,7 +9776,7 @@ PC     Output      Line
 04550B             0022*   player_defaults:
 04550B 05          0023*       db player               ; type
 04550C 2B 01 00    0024*       dl BUF_SHIP_0L          ; base_bufferId
-04550F E4 59 04    0025*       dl do_player            ; move_program
+04550F E8 59 04    0025*       dl do_player            ; move_program
 045512 00          0026*       db 0                    ; collisions
 045513 10          0027*       db 16                   ; dim_x
 045514 10          0028*       db 16                   ; dim_y
@@ -9815,8 +9815,8 @@ PC     Output      Line
 045556 FD 1F 04    0059*       ld (iy+sprite_y),de
 045559 CD CC 1F 04 0060*       call vdu_sprite_move_abs168
 04555D CD 76 1F 04 0061*       call vdu_sprite_show
-045561 21 EF 59 04 0062*       ld hl,player_alive
-045565 22 E1 59 04 0063*       ld (player_state),hl
+045561 21 F3 59 04 0062*       ld hl,player_alive
+045565 22 E5 59 04 0063*       ld (player_state),hl
 045569 FD CB 1D F6 0064*       set sprite_alive,(iy+sprite_collisions)
 04556D C9          0065*       ret
 04556E             0066*   
@@ -10338,7 +10338,7 @@ PC     Output      Line
 04590E             0015*   game_main_menu:
 04590E             0016*       ; Handle main menu options
 04590E             0017*       ; Example: Check input for "Start Game"
-04590E CD 13 5A 04 0018*       call check_input_menu
+04590E CD 17 5A 04 0018*       call check_input_menu
 045912 C2 17 59 04 0019*       jp nz, game_initialize ; Start game on selection
 045916 C9          0020*       ret
 045917             0021*   
@@ -10375,176 +10375,175 @@ PC     Output      Line
 045959             0052*   
 045959             0053*   game_playing:
 045959             0054*   ; Main gameplay loop
-045959             0055*       ; call tiles_plot
-045959             0056*   
-045959             0057*   ; set gfx origin and viewport to playing field window
-045959 01 80 00 00 0058*       ld bc,origin_left
-04595D 11 00 00 00 0059*       ld de,origin_top
-045961 CD D0 19 04 0060*       call vdu_set_gfx_origin
-045965 01 00 00 00 0061*       ld bc,field_left
-045969 11 00 00 00 0062*       ld de,field_top
-04596D DD 21 FF 00 0063*       ld ix,field_right
+045959 CD 10 61 04 0055*       call tiles_plot
+04595D             0056*   
+04595D             0057*   ; set gfx origin and viewport to playing field window
+04595D 01 80 00 00 0058*       ld bc,origin_left
+045961 11 00 00 00 0059*       ld de,origin_top
+045965 CD D0 19 04 0060*       call vdu_set_gfx_origin
+045969 01 00 00 00 0061*       ld bc,field_left
+04596D 11 00 00 00 0062*       ld de,field_top
+045971 DD 21 FF 00 0063*       ld ix,field_right
        00          
-045972 FD 21 7F 01 0064*       ld iy,field_bottom
+045976 FD 21 7F 01 0064*       ld iy,field_bottom
        00          
-045977 CD EB 19 04 0065*       call vdu_set_gfx_viewport
-04597B             0066*   
-04597B CD E4 59 04 0067*       call do_player
-04597F             0068*       ; call do_enemies
-04597F             0069*   ; update UI: TODO make this a standalone function
-04597F CD 04 56 04 0070*       call print_score
-045983 C9          0071*       ret
-045984             0072*   
-045984             0073*   game_paused:
-045984             0074*       ; Pause menu logic
-045984 CD 16 5A 04 0075*       call check_input_pause
-045988 C2 59 59 04 0076*       jp nz, game_playing ; Resume game
-04598C CA 0E 59 04 0077*       jp z, game_main_menu ; Exit to main menu
-045990 C9          0078*       ret
-045991             0079*   
-045991             0080*   game_level_transition:
-045991             0081*       ; Handle level transitions
-045991 CD 17 5A 04 0082*       call load_next_level
-045995 21 59 59 04 0083*       ld hl, game_playing
-045999 22 00 59 04 0084*       ld (game_state), hl
-04599D C9          0085*       ret
-04599E             0086*   
-04599E             0087*   game_over:
-04599E             0088*       ; Display game over screen
-04599E CD 18 5A 04 0089*       call display_game_over
-0459A2 C2 0E 59 04 0090*       jp nz, game_main_menu ; Return to main menu on input
-0459A6 C9          0091*       ret
-0459A7             0092*   
-0459A7             0093*   game_victory:
-0459A7             0094*       ; Display victory screen
-0459A7 CD 19 5A 04 0095*       call display_victory
-0459AB C2 0E 59 04 0096*       jp nz, game_main_menu ; Return to main menu on input
-0459AF C9          0097*       ret
-0459B0             0098*   
-0459B0             0099*   ; ========================
-0459B0             0100*   ; Supporting States
-0459B0             0101*   ; ========================
-0459B0             0102*   
-0459B0             0103*   game_loading:
-0459B0             0104*       ; Show loading screen while preparing assets
-0459B0 CD 1A 5A 04 0105*       call load_resources
-0459B4 21 17 59 04 0106*       ld hl, game_initialize
-0459B8 22 00 59 04 0107*       ld (game_state), hl
-0459BC C9          0108*       ret
-0459BD             0109*   
-0459BD             0110*   game_cutscene:
-0459BD             0111*       ; Play a non-interactive cutscene
-0459BD CD 1B 5A 04 0112*       call play_cutscene
-0459C1 C2 59 59 04 0113*       jp nz, game_playing ; Return to gameplay after cutscene
-0459C5 C9          0114*       ret
-0459C6             0115*   
-0459C6             0116*   game_inventory:
-0459C6             0117*       ; Open inventory or shop
-0459C6 CD 1C 5A 04 0118*       call display_inventory
-0459CA C2 59 59 04 0119*       jp nz, game_playing ; Return to gameplay after inventory close
-0459CE C9          0120*       ret
-0459CF             0121*   
-0459CF             0122*   game_map:
-0459CF             0123*       ; Display map or quest
-0459CF CD 1D 5A 04 0124*       call display_map
-0459D3 C2 59 59 04 0125*       jp nz, game_playing ; Return to gameplay after map close
-0459D7 C9          0126*       ret
-0459D8             0127*   
-0459D8             0128*   game_exit:
-0459D8             0129*       ; Handle exit logic
-0459D8 CD 1E 5A 04 0130*       call save_game
-0459DC C3 1F 5A 04 0131*       jp exit_game         ; Safely shut down
-0459E0 C9          0132*       ret
-0459E1             0133*   
-0459E1             0134*   ; ========================
-0459E1             0135*   ; Sub-state branching (Example for player state)
-0459E1             0136*   ; ========================
-0459E1             0137*   
-0459E1 EF 59 04    0138*   player_state:  dl player_alive ; Player state variable
-0459E4             0139*   
-0459E4             0140*   do_player:
-0459E4 2A E1 59 04 0141*       ld hl,(player_state)
-0459E8             0142*       callHL                ; Call the corresponding player state
-0459E8 01 EE 59 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-0459EC C5          0002*M1     push bc ; which constitutes the return address
-0459ED E9          0003*M1     jp (hl) ; Jump to the address in HL
-0459EE             0004*M1 @@:
-0459EE C9          0143*       ret
-0459EF             0144*   
-0459EF             0145*   player_alive:
-0459EF CD 6E 55 04 0146*       call player_input     ; Handle player input
-0459F3 CD E0 57 04 0147*       call move_weapons    ; Handle laser movement and collision detection
-0459F7 C9          0148*       ret
-0459F8             0149*   
-0459F8             0150*   player_dead:
-0459F8 CD E0 57 04 0151*       call move_weapons    ; Handle laser movement and collision detection
-0459FC C9          0152*       ret
-0459FD             0153*   
-0459FD             0154*   do_enemies:
-0459FD 2A 08 5A 04 0155*       ld hl,(enemies_state)
-045A01             0156*       callHL
-045A01 01 07 5A 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-045A05 C5          0002*M1     push bc ; which constitutes the return address
-045A06 E9          0003*M1     jp (hl) ; Jump to the address in HL
-045A07             0004*M1 @@:
-045A07 C9          0157*       ret
-045A08 0E 5A 04    0158*   enemies_state: dl enemies_alive
-045A0B             0159*   
-045A0B             0160*   enemies_dead:
-045A0B C9          0161*       ret
-045A0C             0162*   
-045A0C             0163*   enemies_respawning:
-045A0C C9          0164*       ret
-045A0D             0165*   
-045A0D             0166*   enemies_respawn:
-045A0D C9          0167*       ret
-045A0E             0168*   
-045A0E             0169*   enemies_alive:
-045A0E CD 33 21 04 0170*       call move_enemies
-045A12 C9          0171*       ret
-045A13             0172*   
-045A13             0173*   check_input_menu:
-045A13 C9          0174*       ret
-045A14             0175*   
-045A14             0176*   update_game_world:
-045A14 C9          0177*       ret
-045A15             0178*   
-045A15             0179*   check_game_events:
-045A15 C9          0180*       ret
-045A16             0181*   
-045A16             0182*   check_input_pause:
-045A16 C9          0183*       ret
-045A17             0184*   
-045A17             0185*   load_next_level:
-045A17 C9          0186*       ret
-045A18             0187*   
-045A18             0188*   display_game_over:
-045A18 C9          0189*       ret
-045A19             0190*   
-045A19             0191*   display_victory:
-045A19 C9          0192*       ret
-045A1A             0193*   
-045A1A             0194*   load_resources:
-045A1A C9          0195*       ret
-045A1B             0196*   
-045A1B             0197*   play_cutscene:
-045A1B C9          0198*       ret
-045A1C             0199*   
-045A1C             0200*   display_inventory:
-045A1C C9          0201*       ret
-045A1D             0202*   
-045A1D             0203*   display_map:
-045A1D C9          0204*       ret
-045A1E             0205*   
-045A1E             0206*   save_game:
-045A1E C9          0207*       ret
-045A1F             0208*   
-045A1F             0209*   exit_game:
-045A1F C9          0210*       ret
-045A20             0211*   
-045A20             0062        include "targeting.inc"
-045A20 FF FF FF FF 0001*       align 256
-       FF FF FF FF 
+04597B CD EB 19 04 0065*       call vdu_set_gfx_viewport
+04597F             0066*   
+04597F CD E8 59 04 0067*       call do_player
+045983             0068*       ; call do_enemies
+045983             0069*   ; update UI: TODO make this a standalone function
+045983 CD 04 56 04 0070*       call print_score
+045987 C9          0071*       ret
+045988             0072*   
+045988             0073*   game_paused:
+045988             0074*       ; Pause menu logic
+045988 CD 1A 5A 04 0075*       call check_input_pause
+04598C C2 59 59 04 0076*       jp nz, game_playing ; Resume game
+045990 CA 0E 59 04 0077*       jp z, game_main_menu ; Exit to main menu
+045994 C9          0078*       ret
+045995             0079*   
+045995             0080*   game_level_transition:
+045995             0081*       ; Handle level transitions
+045995 CD 1B 5A 04 0082*       call load_next_level
+045999 21 59 59 04 0083*       ld hl, game_playing
+04599D 22 00 59 04 0084*       ld (game_state), hl
+0459A1 C9          0085*       ret
+0459A2             0086*   
+0459A2             0087*   game_over:
+0459A2             0088*       ; Display game over screen
+0459A2 CD 1C 5A 04 0089*       call display_game_over
+0459A6 C2 0E 59 04 0090*       jp nz, game_main_menu ; Return to main menu on input
+0459AA C9          0091*       ret
+0459AB             0092*   
+0459AB             0093*   game_victory:
+0459AB             0094*       ; Display victory screen
+0459AB CD 1D 5A 04 0095*       call display_victory
+0459AF C2 0E 59 04 0096*       jp nz, game_main_menu ; Return to main menu on input
+0459B3 C9          0097*       ret
+0459B4             0098*   
+0459B4             0099*   ; ========================
+0459B4             0100*   ; Supporting States
+0459B4             0101*   ; ========================
+0459B4             0102*   
+0459B4             0103*   game_loading:
+0459B4             0104*       ; Show loading screen while preparing assets
+0459B4 CD 1E 5A 04 0105*       call load_resources
+0459B8 21 17 59 04 0106*       ld hl, game_initialize
+0459BC 22 00 59 04 0107*       ld (game_state), hl
+0459C0 C9          0108*       ret
+0459C1             0109*   
+0459C1             0110*   game_cutscene:
+0459C1             0111*       ; Play a non-interactive cutscene
+0459C1 CD 1F 5A 04 0112*       call play_cutscene
+0459C5 C2 59 59 04 0113*       jp nz, game_playing ; Return to gameplay after cutscene
+0459C9 C9          0114*       ret
+0459CA             0115*   
+0459CA             0116*   game_inventory:
+0459CA             0117*       ; Open inventory or shop
+0459CA CD 20 5A 04 0118*       call display_inventory
+0459CE C2 59 59 04 0119*       jp nz, game_playing ; Return to gameplay after inventory close
+0459D2 C9          0120*       ret
+0459D3             0121*   
+0459D3             0122*   game_map:
+0459D3             0123*       ; Display map or quest
+0459D3 CD 21 5A 04 0124*       call display_map
+0459D7 C2 59 59 04 0125*       jp nz, game_playing ; Return to gameplay after map close
+0459DB C9          0126*       ret
+0459DC             0127*   
+0459DC             0128*   game_exit:
+0459DC             0129*       ; Handle exit logic
+0459DC CD 22 5A 04 0130*       call save_game
+0459E0 C3 23 5A 04 0131*       jp exit_game         ; Safely shut down
+0459E4 C9          0132*       ret
+0459E5             0133*   
+0459E5             0134*   ; ========================
+0459E5             0135*   ; Sub-state branching (Example for player state)
+0459E5             0136*   ; ========================
+0459E5             0137*   
+0459E5 F3 59 04    0138*   player_state:  dl player_alive ; Player state variable
+0459E8             0139*   
+0459E8             0140*   do_player:
+0459E8 2A E5 59 04 0141*       ld hl,(player_state)
+0459EC             0142*       callHL                ; Call the corresponding player state
+0459EC 01 F2 59 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+0459F0 C5          0002*M1     push bc ; which constitutes the return address
+0459F1 E9          0003*M1     jp (hl) ; Jump to the address in HL
+0459F2             0004*M1 @@:
+0459F2 C9          0143*       ret
+0459F3             0144*   
+0459F3             0145*   player_alive:
+0459F3 CD 6E 55 04 0146*       call player_input     ; Handle player input
+0459F7 CD E0 57 04 0147*       call move_weapons    ; Handle laser movement and collision detection
+0459FB C9          0148*       ret
+0459FC             0149*   
+0459FC             0150*   player_dead:
+0459FC CD E0 57 04 0151*       call move_weapons    ; Handle laser movement and collision detection
+045A00 C9          0152*       ret
+045A01             0153*   
+045A01             0154*   do_enemies:
+045A01 2A 0C 5A 04 0155*       ld hl,(enemies_state)
+045A05             0156*       callHL
+045A05 01 0B 5A 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+045A09 C5          0002*M1     push bc ; which constitutes the return address
+045A0A E9          0003*M1     jp (hl) ; Jump to the address in HL
+045A0B             0004*M1 @@:
+045A0B C9          0157*       ret
+045A0C 12 5A 04    0158*   enemies_state: dl enemies_alive
+045A0F             0159*   
+045A0F             0160*   enemies_dead:
+045A0F C9          0161*       ret
+045A10             0162*   
+045A10             0163*   enemies_respawning:
+045A10 C9          0164*       ret
+045A11             0165*   
+045A11             0166*   enemies_respawn:
+045A11 C9          0167*       ret
+045A12             0168*   
+045A12             0169*   enemies_alive:
+045A12 CD 33 21 04 0170*       call move_enemies
+045A16 C9          0171*       ret
+045A17             0172*   
+045A17             0173*   check_input_menu:
+045A17 C9          0174*       ret
+045A18             0175*   
+045A18             0176*   update_game_world:
+045A18 C9          0177*       ret
+045A19             0178*   
+045A19             0179*   check_game_events:
+045A19 C9          0180*       ret
+045A1A             0181*   
+045A1A             0182*   check_input_pause:
+045A1A C9          0183*       ret
+045A1B             0184*   
+045A1B             0185*   load_next_level:
+045A1B C9          0186*       ret
+045A1C             0187*   
+045A1C             0188*   display_game_over:
+045A1C C9          0189*       ret
+045A1D             0190*   
+045A1D             0191*   display_victory:
+045A1D C9          0192*       ret
+045A1E             0193*   
+045A1E             0194*   load_resources:
+045A1E C9          0195*       ret
+045A1F             0196*   
+045A1F             0197*   play_cutscene:
+045A1F C9          0198*       ret
+045A20             0199*   
+045A20             0200*   display_inventory:
+045A20 C9          0201*       ret
+045A21             0202*   
+045A21             0203*   display_map:
+045A21 C9          0204*       ret
+045A22             0205*   
+045A22             0206*   save_game:
+045A22 C9          0207*       ret
+045A23             0208*   
+045A23             0209*   exit_game:
+045A23 C9          0210*       ret
+045A24             0211*   
+045A24             0062        include "targeting.inc"
+045A24 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
