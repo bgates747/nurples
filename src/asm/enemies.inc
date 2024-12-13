@@ -1,11 +1,5 @@
 max_enemy_sprites: db 4
 
-; sprite_type
-enemy_dead: equ 0
-enemy_air: equ 1
-enemy_ground: equ 2
-enemy_projectile: equ 3
-explosion: equ 4
 move_enemies:
 ; are there any active enemies or explosions?
     ld a,(table_active_sprites)
@@ -19,7 +13,7 @@ move_enemies:
 @they_live:
 ; initialize pointers and loop counter
     ld iy,table_base ; set iy to first record in table
-    ld b,table_max_records ; loop counter
+    ld b,table_num_records ; loop counter
 @move_loop:
     ld (table_pointer),iy ; update table pointer
     push bc ; backup loop counter
@@ -50,14 +44,14 @@ move_enemies:
     call vdu_sprite_move_abs168
 ; fall through to @next_record
 @next_record:
-    lea iy,iy+table_bytes_per_record
+    lea iy,iy+table_record_size
     xor a ; clears carry flag
     ld (sprite_screen_edge),a ; clear screen edge collision flag
     pop bc ; get back our loop counter
     djnz @move_loop ; loop until we've checked all the records
 ; reset all just spawned flags
     ld iy,table_base
-    ld b,table_max_records
+    ld b,table_num_records ; loop counter
 @reset_just_spawned:
     push bc ; back up loop counter
     bit 7,(iy+sprite_type) ; check if just spawned
@@ -77,7 +71,7 @@ move_enemies:
     call vdu_sprite_move_abs168
     call vdu_sprite_show
 @@:
-    lea iy,iy+table_bytes_per_record
+    lea iy,iy+table_record_size
     pop bc ; get back loop counter
     djnz @reset_just_spawned
 ; and done
@@ -105,7 +99,7 @@ check_enemy_collision_laser: ; check for collisions with laser
     call enemy_kill
     ret
 check_enemy_collision_player: ; check for collisions with player
-    ld ix,player_start_variables
+    ld ix,player_begin
     bit sprite_alive,(ix+sprite_collisions)
     ret z ; player dead, no collision
     call check_collision

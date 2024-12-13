@@ -46,13 +46,12 @@ game_initialize:
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl
-    ret
 ; done initializing
     ret
 
 game_playing:
 ; Main gameplay loop
-    call tiles_plot
+    ; call tiles_plot
 
 ; set gfx origin and viewport to playing field window
     ld bc,origin_left
@@ -65,7 +64,7 @@ game_playing:
     call vdu_set_gfx_viewport
 
     call do_player
-    call do_enemies
+    ; call do_enemies
 ; update UI: TODO make this a standalone function
     call print_score
     ret

@@ -1,5 +1,15 @@
+; sprite_type
+enemy_dead: equ 0
+enemy_air: equ 1
+enemy_ground: equ 2
+enemy_projectile: equ 3
+explosion: equ 4
+player: equ 5
+player_air: equ 6
+player_ground: equ 7
+
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_bytes_per_record:    equ  41; 40 bytes ;40 bytes per sprite record
+table_record_size:    equ  41; 40 bytes ;40 bytes per sprite record
 sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
 ; sprite state variables
 sprite_state_variables:    equ   1; beginning of sprite state variables
@@ -31,13 +41,21 @@ sprite_frame:              equ  40; 1 bytes ;current animation frame
 ; ###### SPRITE TABLE VARIABLES ######
 ; maximum number of sprites
 table_max_records: equ 16 ; it can handle more but this is pushing it
-table_total_bytes: equ table_max_records*table_bytes_per_record
+; table_total_bytes: equ table_end-table_start_variables
 
 ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
     align 256
-table_base: 
-sprite_start_variables:  blkb table_total_bytes, 0 ; fill with zeroes
-sprite_end_variables: ; in case we want to traverse the table in reverse
+table_base:
+player_weapons_begin: blkw table_record_size*player_weapons_max,0
+player_weapons_end:
+player_begin: blkw table_record_size,0
+player_end:
+enemy_sprites_begin:
+seekers_base: blkb table_record_size*seekers_max
+enemy_sprites_end:
+table_end:
+
+table_num_records: equ table_end-table_base/table_record_size
 
 ; pointer to top address of current record, initialized to table_base
 table_pointer: dl table_base
@@ -85,11 +103,11 @@ table_init:
     ld ix,table_base
     xor a ; sprite id
     ld c,0 ; sprite type
-    ld b,table_max_records ; loop counter
+    ld b,table_num_records ; loop counter
 @loop:
     ld (ix+sprite_id),a
     ld (ix+sprite_type),c
-    lea ix,ix+table_bytes_per_record
+    lea ix,ix+table_record_size
     inc a
     djnz @loop
     ret
@@ -102,13 +120,13 @@ table_init:
 ; affects: bumps table_active_sprites by one
 table_get_next_id:
     ld ix,table_base
-    ld b,table_max_records
+    ld b,table_num_records ; loop counter
     ld c,0 ; sprite id counter
 @loop:
     ld a,(ix+sprite_type)
     and a
     jr z,@found
-    lea ix,ix+table_bytes_per_record
+    lea ix,ix+table_record_size
     inc c
     djnz @loop
 @notfound:
@@ -143,21 +161,20 @@ table_deactivate_sprite:
 sprites_init:
 ; initialize sprites
 	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
-	xor a
+	xor a ; loop counter / sprite id
 @sprite_loop:
-	push af
+	push af ; save loop counter / sprite id
 	call vdu_sprite_select
 	ld hl,BUF_CRATER ; can be anything, but why not a smoking hole in the ground?
 	call vdu_sprite_add_buff
-	pop af
-	inc a
-	cp table_max_records+2 ; tack on sprites for player and laser
-	jr nz,@sprite_loop
-	inc a
+	pop af ; restore loop counter / sprite id
+    inc a
+    cp table_num_records
+    jp nz,@sprite_loop
 	call vdu_sprite_activate
 
 ; define player sprite
-	ld a,(player_id)
+	ld a,(player_begin+sprite_id)
 	call vdu_sprite_select
 	call vdu_sprite_clear_frames
 	ld hl,BUF_SHIP_0L
@@ -171,20 +188,20 @@ sprites_init:
 	pop bc
 	djnz @sprite_player_loop
 
-; define laser sprite
-	ld a,(laser_id)
-	call vdu_sprite_select
-	call vdu_sprite_clear_frames
-	ld hl,BUF_LASER_A
-	ld b,2 ; two bitmaps for laser
-@sprite_laser_loop:
-	push bc
-	push hl
-	call vdu_sprite_add_buff
-	pop hl
-	inc hl
-	pop bc
-	djnz @sprite_laser_loop
+; ; define laser sprite
+; 	ld a,(laser_id)
+; 	call vdu_sprite_select
+; 	call vdu_sprite_clear_frames
+; 	ld hl,BUF_LASER_A
+; 	ld b,2 ; two bitmaps for laser
+; @sprite_laser_loop:
+; 	push bc
+; 	push hl
+; 	call vdu_sprite_add_buff
+; 	pop hl
+; 	inc hl
+; 	pop bc
+; 	djnz @sprite_laser_loop
 ; all done
     ret
 ; end sprites_init
@@ -283,7 +300,7 @@ alter_sprite:
     lea iy,iy+sprite_definitions ; bump pointer to copy to
     push iy ; pointer to default sprite settings
     pop de ; address to copy to
-    ld bc,table_bytes_per_record-sprite_definitions ; number of bytes to copy
+    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
     ldir ; copies new defaults existing sprite record
 ; return to caller
     ld iy,(table_pointer) ; reset table_pointer
@@ -304,7 +321,7 @@ spawn_sprite:
     lea ix,ix+sprite_definitions ; bump pointer to copy to
     push ix ; pointer to default sprite settings
     pop de ; address to copy to
-    ld bc,table_bytes_per_record-sprite_definitions ; number of bytes to copy
+    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
     ldir ; copies defaults to new sprite record
 ; return to caller
     pop ix ; restore pointer to new sprite record

@@ -1,21 +1,24 @@
     align 256
+
+seekers_count: db 0
+seekers_max: equ 3
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 
 seeker_defaults:
     db enemy_air         ; type
-    dl BUF_SEEKER_000	    ; base_bufferId
-    dl move_enemy_seeker	; move_program
+    dl BUF_SEEKER_000        ; base_bufferId
+    dl move_enemy_seeker    ; move_program
     db collides_with_laser | collides_with_player ; collisions
-    db 16	                ; dim_x
+    db 16                    ; dim_x
     db 16                   ; dim_y
     db 32                   ; num_orientations
     db 1                    ; num_animations
-    db 0	                ; animation
-    db 0	                ; animation_timer
-    db 1	                ; move_timer
-    db 0	                ; move_step
-    db 10	                ; points
-    db 2	                ; shield_damage
+    db 0                    ; animation
+    db 0                    ; animation_timer
+    db 1                    ; move_timer
+    db 0                    ; move_step
+    db 10                    ; points
+    db 2                    ; shield_damage
     db 0                    ; frame
 
 enemy_spawn_seeker:

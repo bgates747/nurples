@@ -3,7 +3,7 @@
 ; ##### LASER SPRITE PARAMETERS #####
 ; uses the same offsets from its table base as the main sprite table:
 laser_start_variables: ; label marking beginning of table
-laser_id:                db table_max_records+1 ; 1 bytes unique spriteId, zero-based
+laser_id:                db player_weapons_begin-table_base/table_record_size ; 1 bytes unique spriteId, zero-based
 ; sprite state variables
 laser_x:                 dl                   0 ; 3 bytes 16.8 fractional x position in pixels
 laser_y:                 dl                   0 ; 3 bytes 16.8 fractional y position in pixels
@@ -74,7 +74,7 @@ fire_laser:
     set sprite_alive,(iy+sprite_collisions)
 ; initialize laser sprite parameters
 ; x-coordinate
-    ld ix,player_start_variables
+    ld ix,player_begin
     ld hl,(ix+sprite_x)
     ld de,5*256 ; horizontal center with player sprite
     add hl,de

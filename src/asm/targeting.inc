@@ -6,11 +6,12 @@
 ;    ub.c and ud.e as 16.8 signed fixed point numbers
 ;    representing delta-x/y *to* target respectively
 orientation_to_player:
+    ld ix,player_begin
     ld iy,(table_pointer) 
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
-    ld ix,(player_x)
-    ld iy,(player_y)
+    ld ix,(ix+sprite_x)
+    ld iy,(ix+sprite_y)
     call dxy168
     push bc ; dx
     push de ; dy
@@ -41,9 +42,10 @@ lead_angle: dl 0x000000 ; lead angle
 ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
 ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
 targeting_computer:
+    ld ix,player_begin
 ; ; compute target velocity from x,y component velocities
-;     ld bc,(player_xvel) 
-;     ld de,(player_yvel)
+;     ld bc,(ix+sprite_xvel) 
+;     ld de,(ix+sprite_yvel)
 ;     ld hl,-1*256 ; account for vertical ground movement
 ;     add hl,de
 ;     ex de,hl ; ud.e = player_yvel-1
@@ -104,12 +106,12 @@ targeting_computer:
 
     ; call printInline
     ; asciz "\r\nVtx"
-    ; ld hl,(player_xvel)
+    ; ld hl,(ix+sprite_xvel)
     ; call print_s168_hl
 
     ; call printInline
     ; asciz "\r\nVty"
-    ; ld hl,(player_yvel)
+    ; ld hl,(ix+sprite_yvel)
     ; ld de,-1*256 ; account for vertical ground movement
     ; add hl,de
     ; call print_s168_hl

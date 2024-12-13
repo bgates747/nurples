@@ -16,43 +16,36 @@ player_ships: db 3 ; integer
 
 speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
 
-; ######### PLAYER SPRITE PARAMETERS ##########
-; uses the same offsets from its table base as the main sprite table:
-player_start_variables: ; label marking beginning of table
-player_id:                db table_max_records ; 1 bytes unique spriteId, zero-based
-; sprite state variables
-player_x:                 dl                 0 ; 3 bytes 16.8 fractional x position in pixels
-player_y:                 dl                 0 ; 3 bytes 16.8 fractional y position in pixels
-player_xvel:              dl                 0 ; 3 bytes x-component velocity, 16.8 fixed, pixels
-player_yvel:              dl                 0 ; 3 bytes y-component velocity, 16.8 fixed, pixels
-player_vel:               dl             3*256 ; 3 bytes velocity px/frame (16.8 fixed)
-player_heading:           dl                 0 ; 3 bytes sprite movement direction deg256 16.8 fixed
-player_orientation:       dl                 0 ; 3 bytes orientation bits
-; sprite definition variables
-player_type:              db                 0 ; 1 bytes not currently used
-player_base_bufferId:     dl       BUF_SHIP_0L ; 3 bytes bitmap bufferId
-player_move_program:      dl                 0 ; 3 bytes not currently used
-player_collisions:        db                 0 ; 1 bytes see collisions.inc constants for bit definitions
-player_dim_x:             db                16 ; 1 bytes sprite width in pixels
-player_dim_y:             db                16 ; 1 bytes sprite height in pixels
-player_num_orientations:  db                 1 ; 1 bytes number of orientations for this sprite
-player_num_animations:    db                 3 ; 1 bytes number of animations for this sprite
-player_animation:         db                 1 ; 1 bytes current animation index, zero-based
-player_animation_timer:   db                 0 ; 1 bytes when hits zero, draw next animation
-player_move_timer:        db                 0 ; 1 bytes when zero, go to next move program, or step
-player_move_step:         db                 0 ; 1 bytes stage in a move program sequence, varies
-player_points:            db                 0 ; 1 bytes points awarded for killing this sprite type
-player_shield_damage:     db                 0 ; 1 bytes shield points deducted for collision
-player_frame:             db                 0 ; 1 bytes current animation frame
-player_end_variables: ; for when we want to traverse this table in reverse
+player_weapons_count: db 0
+player_weapons_max: equ 3
+
+player_defaults:
+    db player               ; type
+    dl BUF_SHIP_0L          ; base_bufferId
+    dl do_player            ; move_program
+    db 0                    ; collisions
+    db 16                   ; dim_x
+    db 16                   ; dim_y
+    db 1                    ; num_orientations
+    db 1                    ; num_animations
+    db 0                    ; animation
+    db 0                    ; animation_timer
+    db 0                    ; move_timer
+    db 0                    ; move_step
+    db 0                    ; points
+    db 0                    ; shield_damage
+    db 0                    ; frame
+
 
 ; set initial player position
 ; inputs: none,everything is hardcoded
 ; outputs: player_x/y set to bottom-left corner of screen
 ; destroys: a
 player_init:
-	ld a,(player_id)
-	call vdu_sprite_select
+    ld iy,player_begin
+    ld (table_pointer),iy
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
     call vdu_sprite_clear_frames
     ld hl,BUF_SHIP_0L
     call vdu_sprite_add_buff
@@ -61,15 +54,14 @@ player_init:
     ld hl,BUF_SHIP_2R
     call vdu_sprite_add_buff
     ld bc,0
-    ld (player_x),bc
+    ld (iy+sprite_x),bc
     ld de,sprite_bottom*256 ; max sprite y-coordinate
-    ld (player_y),de
+    ld (iy+sprite_y),de
     call vdu_sprite_move_abs168
     call vdu_sprite_show
     ld hl,player_alive
     ld (player_state),hl
-    ld hl,player_collisions
-    set sprite_alive,(hl)
+    set sprite_alive,(iy+sprite_collisions)
     ret
 
 ; process player keyboard input, set player bitmap
@@ -80,6 +72,8 @@ player_init:
 ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
 ; TODO: requires sprite implementation
 player_input:
+    ld iy,player_begin
+    ld (table_pointer),iy
 ; ; did we die last frame?
 ;     ld a,(player_collisions)
 ;     and %00000010 ; zero flag will be set if not dead
@@ -89,15 +83,15 @@ player_input:
 ;     ret ; done
 player_not_dead: ; yay we didn't die
 ; reset player component velocities to zero as the default
-	ld hl,0
-	ld (player_xvel),hl
-	ld (player_yvel),hl
+    ld hl,0
+    ld (iy+sprite_xvel),hl
+    ld (iy+sprite_yvel),hl
 ; make ship the active sprite
-    ld a,(player_id)
+    ld a,(iy+sprite_id)
     call vdu_sprite_select
 ; check for keypresses and branch accordingly
 ; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
-    MOSCALL	mos_getkbmap ;ix = pointer to MOS virtual keys table
+    MOSCALL    mos_getkbmap ;ix = pointer to MOS virtual keys table
 ; we test all four arrow keys and add/subract velocities accordingly
 ; this handles the case where two opposing movement keys
 ; are down simultaneously (velocities will net to zero)
@@ -113,46 +107,46 @@ player_not_dead: ; yay we didn't die
 ; 26 Left: move player left
     bit 1,(ix+3)
     jp z,@F
-    ld hl,(player_xvel)
+    ld hl,(iy+sprite_xvel)
     ld bc,-speed_player
     add hl,bc
-    ld (player_xvel),hl
+    ld (iy+sprite_xvel),hl
     dec a ; set ship's animation to left
 @@:
 ; 122 Right: move player right
     bit 1,(ix+15)
-	jp z,@F
-    ld hl,(player_xvel)
+    jp z,@F
+    ld hl,(iy+sprite_xvel)
     ld bc,speed_player
     add hl,bc
-    ld (player_xvel),hl
+    ld (iy+sprite_xvel),hl
     inc a ; set ship's animation to right
 @@:
 ; 58 Up: move player up
     bit 1,(ix+7)
-	jp z,@F
-    ld hl,(player_yvel)
+    jp z,@F
+    ld hl,(iy+sprite_yvel)
     ld bc,-speed_player
     add hl,bc
-    ld (player_yvel),hl
+    ld (iy+sprite_yvel),hl
 @@:
 ; 42 Down: move player down
     bit 1,(ix+5)
-	jp z,@F
-    ld hl,(player_yvel)
+    jp z,@F
+    ld hl,(iy+sprite_yvel)
     ld bc,speed_player
     add hl,bc
-    ld (player_yvel),hl
+    ld (iy+sprite_yvel),hl
 @@:
 ; a should land here loaded with the correct frame
     call vdu_sprite_select_frame
 ; draw player at updated position
-    ld iy,player_start_variables
+    ld iy,player_begin
     ld (table_pointer),iy
     call move_sprite
-    ld bc,(player_x)
-    ld de,(player_y)
-	call vdu_sprite_move_abs168
+    ld bc,(iy+sprite_x)
+    ld de,(iy+sprite_y)
+    call vdu_sprite_move_abs168
 ; process player laser fire
     pop af ; restore flags from spacebar check
     jp nz,fire_laser ; will return to caller from there

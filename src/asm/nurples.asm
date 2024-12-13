@@ -56,12 +56,12 @@ exit:
     include "levels_tileset_0.inc"
     ; include "levels_xevious.inc"
     include "player.inc"
-    include "sprites.inc"
     include "state.inc"
     include "targeting.inc"
     include "tiles.inc"
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
+    include "sprites.inc"
 
     align 256
 
@@ -138,7 +138,7 @@ init:
     ld hl,loading_complete
     call printString
     call vdu_flip 
-    call waitKeypress
+    ; call waitKeypress
 
 ; set up display for gameplay
     ; ld a,8
@@ -194,16 +194,11 @@ init:
 main:
 ; start a new game
     call game_initialize
-
 main_loop:
 ; update the global timestamp
     call timestamp_tick
-
 ; do gamestate logic
     call do_game
-
-    ; CALL DEBUG_PRINT_TABLE
-
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
     ; call vdu_vblank ; DEBUG
@@ -212,11 +207,11 @@ main_loop:
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
     rst.lil $08 ; get IX pointer to System Variables
-    
     ld a, (ix + $05) ; get ASCII code of key pressed
     cp 27 ; check if 27 (ascii code for ESC)   
     jp z, main_end ; if pressed, jump to exit
-
+    
+; escape not pressed so loop
     jp main_loop
 
 main_end:
@@ -249,7 +244,7 @@ DEBUG_PRINT_TABLE:
     call printNewLine
     call printNewLine
 
-    lea ix,ix+table_bytes_per_record
+    lea ix,ix+table_record_size
     call dump_sprite_record
     call printNewLine
 

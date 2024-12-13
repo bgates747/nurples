@@ -258,7 +258,7 @@ DEBUG_PRINT_TABLE:
     call printNewLine
     call printNewLine
 
-    lea ix,ix+table_bytes_per_record
+    lea ix,ix+table_record_size
     call dump_sprite_record
     call printNewLine
 
