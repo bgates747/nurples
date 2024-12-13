@@ -154,26 +154,29 @@ move_player_laser:
 init_player_laser:
 ; set pointer to laser sprite table
     ld iy,player_weapons_begin
-    ld a,(iy+sprite_id) ; loop counter / sprite id
+    ld a,(iy+sprite_id) ; sprite id
+    ld e,player_weapons_max ; sprite loop counter
 ; define laser sprites
-@loop:
+@sprites_loop:
     push af
+    push de
 	call vdu_sprite_select
 	call vdu_sprite_clear_frames
 	ld hl,BUF_LASER_A
 	ld b,2 ; two bitmaps for laser
-@sprite_laser_loop:
+@frames_loop:
 	push bc
 	push hl
 	call vdu_sprite_add_buff
 	pop hl
 	inc hl
 	pop bc
-	djnz @sprite_laser_loop
-    pop af ; restore loop counter / sprite id
+	djnz @frames_loop
+    pop de ; sprite loop counter
+    pop af ; sprite id
     inc a
-    cp player_weapons_max
-    jp nz,@loop
+    dec e
+    jp nz,@sprites_loop
 ; set laser firing timer to zero
     ld iy,tmr_laser
     ld hl,0

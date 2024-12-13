@@ -52,9 +52,6 @@ spawn_sprite_from_sprite_new:
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
     scf ; set carry flag to indicate success
-
-    CALL DEBUG_PRINT_TABLE
-    ; CALL DEBUG_WAITKEYPRESS
     ret
 ; end spawn_sprite_from_sprite_new
 
