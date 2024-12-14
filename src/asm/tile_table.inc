@@ -165,6 +165,11 @@ spawn_active_tile:
     ld (ix+tile_x),hl
     ld hl,(tiles_y_plot-1) ; shift up one byte to get 16.8 fixed point
     ld (ix+tile_y),hl
+; set default tile velocities
+    ld hl,0
+    ld (ix+tile_xvel),hl
+    ld hl,1*256 ; 1 pixel per frame
+    ld (ix+tile_yvel),hl
 ; return to caller
     set 7,(ix+tile_type) ; set just spawned flag
     scf ; set carry flag to indicate success

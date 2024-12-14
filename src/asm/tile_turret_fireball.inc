@@ -30,17 +30,17 @@ activate_turret_fireball:
 
 move_turret_fireball:
     call move_active_tile 
-    or a ; a will be non-zero if have scrolled off screen
-    jp nz,table_deactivate_tile
-    call check_enemy_collisions
-    ret m ; was collision so nothing more to do
-; target player
-    ld hl,speed_fireball
-    ld (Vp),hl ; param for targeting_computer
-    call orientation_to_player
-    call targeting_computer
-    ld (iy+tile_heading),hl ; save active tile heading
-    call tile_frame_heading
+    ; call check_enemy_collisions
+    ; ret m ; was collision so nothing more to do
+; ; target player
+;     ld hl,speed_fireball
+;     ld (Vp),hl ; param for targeting_computer
+;     call orientation_to_player
+;     call targeting_computer
+;     ld (iy+tile_heading),hl ; save active tile heading
+;     call tile_frame_heading
+    call draw_active_tile
+    RET ; DEBUG
 ; check whether it is time to spawn a fireball
     dec (iy+tile_move_timer)
     ret nz

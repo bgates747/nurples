@@ -6,6 +6,7 @@ collides_with_player: equ %00000001
 collides_with_laser: equ %00000010
 sprite_alive: equ 6 ; set when sprite is alive
 sprite_just_died: equ 7 ; set when sprite just died
+tile_just_died: equ 7 ; set when tile just died
 
 collide_top: equ %00001000
 collide_bottom: equ %00000100

@@ -63,6 +63,8 @@ sprite_bottom: equ field_bottom-16
 sprite_left: equ field_left
 sprite_right: equ field_right-16
 
+tile_bottom: equ 384
+
 ; ######### COLLISION SPRITE PARAMETERS ##########
 ; integer coordinates are all that are needed for collision calculations
 collision_x: db 0x00 

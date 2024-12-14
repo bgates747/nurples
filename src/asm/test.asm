@@ -62,6 +62,7 @@ exit:
     include "targeting.inc"
     include "tile_table.inc"
     include "tiles.inc"
+    include "tiles_active.inc"
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
@@ -200,29 +201,70 @@ main:
     call game_initialize
 
 ; DEBUG
-    call vdu_home_cursor
-
     ld hl,128 ; x
     ld (tiles_x_plot),hl
-    ld hl,128 ; y
+    ld hl,0 ; y
     ld (tiles_y_plot),hl
     call activate_turret_fireball
 
-    ld hl,(ix+tile_base_bufferId)
-    call vdu_buff_select
-    ld bc,(ix+tile_x)
-    ld de,(ix+tile_y)
-    call vdu_plot_bmp168
+@main_loop:
+    call vdu_clg
+    call vdu_home_cursor
 
-
-    ld ix,tile_table_base
-    CALL dump_tile_record
+; move_tiles:
+; are there any active tiles?
+    ld a,(num_active_tiles)
+    and a ; will be zero if no alive tiles
+    ret z ; if no active tiles, we're done
+; initialize pointers and loop counter
+    ld iy,tile_stack ; set iy to first record in table
+@move_loop:
+    ld (tile_stack_pointer),iy ; update stack pointer
+    ld hl,(iy)
+    sign_hlu ; check for list terminator
+    ret z ; end of stack so we're done
+; point iy to tile record
+    ld iy,(iy) ; iy points to the current tile record
+    ld (tile_table_pointer),iy ; update table pointer
+; check top bit of tile_type to see if tile is just spawned
+    ld a,(iy+tile_type)
+    bit 7,a
+    ; jp nz,@just_spawned ; if just spawned, skip to next record
+; otherwise we prepare to move the tile
+    ld hl,(iy+tile_move_program) ; load the behavior subroutine address
+    callHL
+; move_tiles_loop_return: return from behavior subroutines
+    ld iy,(tile_table_pointer) ; get back table pointer
+    JP @next_record ; DEBUG
     
-    lea ix,ix+tile_table_record_size
-    CALL dump_tile_record
+; now we check results of all the moves
+    bit tile_just_died,(iy+tile_collisions)
+    jp z,@next_record ; if not dead, go to next record
+    call table_deactivate_tile ; otherwise, deactivate tile
+    ld iy,(tile_stack_pointer) ; get back stack pointer
+    jp @move_loop
+@just_spawned:
+    res 7,(iy+tile_type) ; clear just spawned flag
+    ; fall through to @next_record
+@next_record:
+    ; CALL DEBUG_PRINT
+    ; CALL DEBUG_WAITKEYPRESS
 
-    CALL DEBUG_WAITKEYPRESS
-    jp main_end
+    ld iy,(tile_stack_pointer)
+    lea iy,iy+3 ; next tile stack record
+    jp @move_loop ; loop until we've checked all the records
+; end move_tiles
+
+; poll keyboard for escape keypress
+    ld a, $08 ; code to send to MOS
+    rst.lil $08 ; get IX pointer to System Variables
+    ld a, (ix + $05) ; get ASCII code of key pressed
+    cp 27 ; check if 27 (ascii code for ESC)   
+    jp z, main_end ; if pressed, jump to exit
+    
+    call vdu_vblank
+
+    jp @main_loop
 ; END DEBUG
 
 main_loop:

@@ -62,6 +62,7 @@ exit:
     include "targeting.inc"
     include "tile_table.inc"
     include "tiles.inc"
+    include "tiles_active.inc"
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
