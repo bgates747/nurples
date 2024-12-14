@@ -81,7 +81,8 @@ init:
     call vdu_clear_all_buffers
 
 ; set up the display
-    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
+    ; ld a,8;+128 ; 136   320   240   64    60hz double-buffered
+    ld a,20;+128 ; 136   512   384   64    60hz double-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
@@ -143,7 +144,7 @@ init:
     ld hl,loading_complete
     call printString
     call vdu_flip 
-    ; call waitKeypress
+    call waitKeypress
 
 ; set up display for gameplay
     ; ld a,8
