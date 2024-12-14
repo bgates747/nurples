@@ -133,26 +133,6 @@ do_active_tiles:
     ret ; done
 ; end do_active_tiles
 
-; create a new sprite at the same location as an active tile
-; inputs: hl = pointer to new sprite default settings, tiles_x_plot, tiles_y_plot set
-spawn_sprite_from_tile:
-    call spawn_sprite
-    ret nc ; no carry means no free sprite slots, so we go home
-; update the new sprite's position and make it visible
-    ld hl,(tiles_x_plot)
-    hlu_mul256
-    push hl
-    pop bc
-    ld (ix+sprite_x),bc
-    ld de,-1*256 ; TODO: implement y-coord for reals
-    ld (ix+sprite_y),de
-    ld hl,1*256
-    ld (ix+sprite_yvel),hl
-; return to caller
-    scf ; set carry flag to indicate success
-    ret
-; end spawn_sprite_from_tile
-
 move_active_tile:
 ; y-axis movement
     ld hl,(iy+sprite_y)

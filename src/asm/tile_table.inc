@@ -29,13 +29,21 @@ tile_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 tile_frame:              equ  40; 1 bytes ;current animation frame
 
 ; ###### tile TABLE VARIABLES ######
-tile_stack: blkb 257*3,0 ; stack of pointers to tile records, final 0 is the list terminator
+tile_stack: blkb 256*3,0 ; stack of pointers to tile records
+    db 0 ; list terminator
+tile_stack_end:
 tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
 tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
 num_active_tiles: dl 0 ; how many active tiles
 next_tile_id: db 0 ; next available tile id
+new_tile_table_pointer: dl 0 ; pointer to new tile record
 
 tile_table_init:
+; clear the tile stack
+    xor a ; write zeroes to tile stack
+    ld hl,tile_stack
+    ld bc,tile_stack_end-tile_stack
+    call clear_mem
 ; clear the tile table
     xor a ; write zeroes to tile table
     ld hl,tile_table_base ; address to copy from
@@ -50,6 +58,14 @@ tile_table_init:
     lea ix,ix+table_record_size
     inc a
     djnz @loop
+; set pointers to top of tile stack and tile table
+    ld hl,next_tile_id
+    ld a,255 ; will wrap around to 0 on first call to create active tile
+    ld (hl),a
+    ld hl,tile_table_base
+    ld (tile_table_pointer),hl
+    ld hl,tile_stack
+    ld (tile_stack_pointer),hl
     ret
 ; end tile_table_init
 
@@ -58,11 +74,12 @@ tile_table_init:
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
 ; destroys: a,hl,ix
-; affects: bumps num_active_tiles by one
+; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 tile_table_get_next_id:
     ld hl,num_active_tiles
     inc (hl)
     jp nz,@F ; check rollover to > 256 active tiles
+    dec (hl) ; undo increment
     xor a ; reset carry flag indicating that we didn't find a free tile
     ret
 @@: ; point ix to next tile record
@@ -73,6 +90,10 @@ tile_table_get_next_id:
     mlt de ; de is now the offset to the table entry
     ld ix,tile_table_base ; point to base address of tile table
     add ix,de ; ix is now the address of the table entry
+; add tile pointer to tile stack
+    ld hl,tile_stack
+    add hl,de ; de was already set to the correct offset
+    ld (hl),ix
 ; return tile id
     ld a,(hl)
     scf ; sets carry flag indicating we found a free tile
@@ -80,12 +101,26 @@ tile_table_get_next_id:
 ; end tile_table_get_next_id
 
 ; deactivate the tile with the given id
-; inputs: iy set to tile record
-; outputs: nothingblkw
+; inputs: iy pointing to tile stack record
+; outputs: tile stack pointer unchanged, effectively pointing to next record
 ; destroys: a,hl
-; affects: decrements num_active_tiles by one
+; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
 table_deactivate_tile: ; TODO: implement
-
+    ld hl,num_active_tiles
+    dec (hl) ; decrement number of active tiles
+; remove tile pointer from tile stack
+    push iy ; pointer to tile stack record
+    pop de ; address to copy to
+    ld h,(hl) ; number of active tiles
+    dec h ; zero-based index
+    ld l,3 ; number of bytes per tile stack record
+    mlt hl ; hl = offset from base stack record
+    inc hl ; to pick up zero terminator
+    or a ; clear carry
+    sbc hl,de ; number of bytes to copy
+    push hl
+    pop bc ; number of bytes to copy
+    lddr ; shift stack records down
     ret
 ; end table_deactivate_tile
 
@@ -105,43 +140,49 @@ alter_tile:
     ret
 ; end alter_tile
 
-; create a new tile at the same location as an existing tile
-; inputs: hl = pointer to new tile default settings, tile_table_pointer = existing tile
-spawn_tile:
+; spawn a new active tile at the prescribed location
+; inputs: hl = pointer to new tile default settings, bc,de = x,y position (integer)
+; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
+;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
+; destroys: a,hl,ix
+; preserves: bc,de (x,y position)
+; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
+spawn_active_tile:
+    push de ; back up y position
+    push bc ; back up x position
     push hl ; back up pointer to new tile defaults
     call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
     pop hl ; restore pointer to new tile defaults
-    ret nc ; no carry means no free tile slots, so we go home
+    jp nc,@no_tile ; no carry means no free tile slots, so we go home
 ; copy default settings to new tile
-    push ix ; back up pointer to new tile record
+    ld (new_tile_table_pointer),ix ; save pointer to new tile record
     lea ix,ix+tile_definitions ; bump pointer to copy to
     push ix ; pointer to default tile settings
     pop de ; address to copy to
     ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
     ldir ; copies defaults to new tile record
+; copy tile position from inputs
+    ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
+    xor a ; to zero out fractional bytes
+    pop bc ; restore x position
+    pop de ; restore y position
+    ld (ix+tile_x),a
+    ld (ix+tile_x+1),c
+    ld (ix+tile_x+2),b
+    ld (ix+tile_y),a
+    ld (ix+tile_y+1),e
+    ld (ix+tile_y+2),d
 ; return to caller
-    pop ix ; restore pointer to new tile record
     set 7,(ix+tile_type) ; set just spawned flag
     scf ; set carry flag to indicate success
     ret
-
-; inputs: hl = pointer to new tile default settings, tile_table_pointer = existing tile
-spawn_tile_from_tile: 
-    call spawn_tile
-    ret nc ; no carry means no free tile slots, so we go home
-; copy tile position, velocity and orientation from existing tile
-    ld iy,(tile_table_pointer) ; get existing tile record
-    ld hl,(iy+tile_x)
-    ld (ix+tile_x),hl
-    ld hl,(iy+tile_y)
-    ld (ix+tile_y),hl
-; return to caller
-    set 7,(ix+tile_type) ; set just spawned flag
-    scf ; set carry flag to indicate success
+@no_tile: ; dummy pops to balance stack (restores x,y inputs as well)
+    pop bc
+    pop de
     ret
 
 ; compute animation frame based on tile_animation and tile_heading
-; inputs: tile_table_pointer set to tile record
+; inputs: iy set to tile record
 ; outputs: a, tile_frame set to animation frame
 ; destroys: a,hl
 tile_frame_heading_animation:
@@ -158,7 +199,7 @@ tile_frame_heading_animation:
 ; end tile_frame_heading_animation
 
 ; compute animation frame based on tile_heading
-; inputs: tile_table_pointer set to tile record
+; inputs: iy set to tile record
 ; outputs: a, tile_frame set to animation frame
 ; destroys: a,hl
 tile_frame_heading:
@@ -185,31 +226,6 @@ dump_tile_record:
     asciz "\r\ny:   "
     ld hl,(ix+tile_y)
     call print_s168_hl
-
-    call printInline
-    asciz "\r\nxv:  "
-    ld hl,(ix+tile_xvel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nyv:  "
-    ld hl,(ix+tile_yvel)
-    call print_s168_hl
-
-    ; call printInline
-    ; asciz "\r\nv:   "
-    ; ld hl,(ix+tile_vel)
-    ; call print_s168_hl
-
-    ; call printInline
-    ; asciz "\r\nhdg  "
-    ; ld hl,(ix+tile_heading)
-    ; call print_s168_hl
-
-    ; call printInline
-    ; asciz "\r\nori: "
-    ; ld hl,(ix+tile_orientation)
-    ; call print_s168_hl
     
     call printInline
     asciz "\r\ntyp: "
@@ -286,7 +302,8 @@ dump_tile_record:
     ; ld a,(ix+tile_frame)
     ; call printHexA
 
-    ; call printNewLine
+    call printNewLine
+    call printNewLine
 
     ; call waitKeypress
     ret

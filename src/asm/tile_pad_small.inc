@@ -19,7 +19,7 @@ pad_small_defaults:
 activate_pad_small:
     ld hl,pad_small_defaults
 ; get next available sprite id
-    call spawn_sprite_from_tile
+    call spawn_active_tile
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
     ld a,64

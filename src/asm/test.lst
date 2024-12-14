@@ -9776,7 +9776,7 @@ PC     Output      Line
 04550B             0022*   player_defaults:
 04550B 05          0023*       db player               ; type
 04550C 2B 01 00    0024*       dl BUF_SHIP_0L          ; base_bufferId
-04550F E8 59 04    0025*       dl do_player            ; move_program
+04550F EC 59 04    0025*       dl do_player            ; move_program
 045512 00          0026*       db 0                    ; collisions
 045513 10          0027*       db 16                   ; dim_x
 045514 10          0028*       db 16                   ; dim_y
@@ -9815,8 +9815,8 @@ PC     Output      Line
 045556 FD 1F 04    0059*       ld (iy+sprite_y),de
 045559 CD CC 1F 04 0060*       call vdu_sprite_move_abs168
 04555D CD 76 1F 04 0061*       call vdu_sprite_show
-045561 21 F3 59 04 0062*       ld hl,player_alive
-045565 22 E5 59 04 0063*       ld (player_state),hl
+045561 21 F7 59 04 0062*       ld hl,player_alive
+045565 22 E9 59 04 0063*       ld (player_state),hl
 045569 FD CB 1D F6 0064*       set sprite_alive,(iy+sprite_collisions)
 04556D C9          0065*       ret
 04556E             0066*   
@@ -10338,7 +10338,7 @@ PC     Output      Line
 04590E             0015*   game_main_menu:
 04590E             0016*       ; Handle main menu options
 04590E             0017*       ; Example: Check input for "Start Game"
-04590E CD 17 5A 04 0018*       call check_input_menu
+04590E CD 1B 5A 04 0018*       call check_input_menu
 045912 C2 17 59 04 0019*       jp nz, game_initialize ; Start game on selection
 045916 C9          0020*       ret
 045917             0021*   
@@ -10352,199 +10352,199 @@ PC     Output      Line
 045928             0029*   ; initialize sprites and active tiles table
 045928 CD D9 64 04 0030*       call sprites_init
 04592C CD 81 64 04 0031*       call table_init
-045930             0032*   ; initialize the first level
-045930 3E 00       0033*       ld a,tiles_dg
-045932 CD 1A 52 04 0034*       call init_tileset
-045936             0035*   ; initialize player
-045936 21 00 00 00 0036*       ld hl,0
-04593A 22 00 55 04 0037*       ld (player_score),hl
-04593E 2A 06 55 04 0038*       ld hl,(player_max_shields)
-045942 22 03 55 04 0039*       ld (player_shields),hl
-045946 3E 03       0040*       ld a,3
-045948 32 09 55 04 0041*       ld (player_ships),a
-04594C CD 1E 55 04 0042*       call player_init
-045950             0043*   ; ; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
-045950             0044*   ;     ld hl,enemies_dead
-045950             0045*   ;     ld (enemies_state),hl
-045950             0046*   ; ; END TODO
-045950             0047*   ; set the game state to playing
-045950 21 59 59 04 0048*       ld hl,game_playing
-045954 22 00 59 04 0049*       ld (game_state), hl
-045958             0050*   ; done initializing
-045958 C9          0051*       ret
-045959             0052*   
-045959             0053*   game_playing:
-045959             0054*   ; Main gameplay loop
-045959 CD 10 61 04 0055*       call tiles_plot
-04595D             0056*   
-04595D             0057*   ; set gfx origin and viewport to playing field window
-04595D 01 80 00 00 0058*       ld bc,origin_left
-045961 11 00 00 00 0059*       ld de,origin_top
-045965 CD D0 19 04 0060*       call vdu_set_gfx_origin
-045969 01 00 00 00 0061*       ld bc,field_left
-04596D 11 00 00 00 0062*       ld de,field_top
-045971 DD 21 FF 00 0063*       ld ix,field_right
+045930 CD D4 5E 04 0032*       call tile_table_init
+045934             0033*   ; initialize the first level
+045934 3E 00       0034*       ld a,tiles_dg
+045936 CD 1A 52 04 0035*       call init_tileset
+04593A             0036*   ; initialize player
+04593A 21 00 00 00 0037*       ld hl,0
+04593E 22 00 55 04 0038*       ld (player_score),hl
+045942 2A 06 55 04 0039*       ld hl,(player_max_shields)
+045946 22 03 55 04 0040*       ld (player_shields),hl
+04594A 3E 03       0041*       ld a,3
+04594C 32 09 55 04 0042*       ld (player_ships),a
+045950 CD 1E 55 04 0043*       call player_init
+045954             0044*   ; ; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
+045954             0045*   ;     ld hl,enemies_dead
+045954             0046*   ;     ld (enemies_state),hl
+045954             0047*   ; ; END TODO
+045954             0048*   ; set the game state to playing
+045954 21 5D 59 04 0049*       ld hl,game_playing
+045958 22 00 59 04 0050*       ld (game_state), hl
+04595C             0051*   ; done initializing
+04595C C9          0052*       ret
+04595D             0053*   
+04595D             0054*   game_playing:
+04595D             0055*   ; Main gameplay loop
+04595D CD 10 61 04 0056*       call tiles_plot
+045961             0057*   
+045961             0058*   ; set gfx origin and viewport to playing field window
+045961 01 80 00 00 0059*       ld bc,origin_left
+045965 11 00 00 00 0060*       ld de,origin_top
+045969 CD D0 19 04 0061*       call vdu_set_gfx_origin
+04596D 01 00 00 00 0062*       ld bc,field_left
+045971 11 00 00 00 0063*       ld de,field_top
+045975 DD 21 FF 00 0064*       ld ix,field_right
        00          
-045976 FD 21 7F 01 0064*       ld iy,field_bottom
+04597A FD 21 7F 01 0065*       ld iy,field_bottom
        00          
-04597B CD EB 19 04 0065*       call vdu_set_gfx_viewport
-04597F             0066*   
-04597F CD E8 59 04 0067*       call do_player
-045983             0068*       ; call do_enemies
-045983             0069*   ; update UI: TODO make this a standalone function
-045983 CD 04 56 04 0070*       call print_score
-045987 C9          0071*       ret
-045988             0072*   
-045988             0073*   game_paused:
-045988             0074*       ; Pause menu logic
-045988 CD 1A 5A 04 0075*       call check_input_pause
-04598C C2 59 59 04 0076*       jp nz, game_playing ; Resume game
-045990 CA 0E 59 04 0077*       jp z, game_main_menu ; Exit to main menu
-045994 C9          0078*       ret
-045995             0079*   
-045995             0080*   game_level_transition:
-045995             0081*       ; Handle level transitions
-045995 CD 1B 5A 04 0082*       call load_next_level
-045999 21 59 59 04 0083*       ld hl, game_playing
-04599D 22 00 59 04 0084*       ld (game_state), hl
-0459A1 C9          0085*       ret
-0459A2             0086*   
-0459A2             0087*   game_over:
-0459A2             0088*       ; Display game over screen
-0459A2 CD 1C 5A 04 0089*       call display_game_over
-0459A6 C2 0E 59 04 0090*       jp nz, game_main_menu ; Return to main menu on input
-0459AA C9          0091*       ret
-0459AB             0092*   
-0459AB             0093*   game_victory:
-0459AB             0094*       ; Display victory screen
-0459AB CD 1D 5A 04 0095*       call display_victory
-0459AF C2 0E 59 04 0096*       jp nz, game_main_menu ; Return to main menu on input
-0459B3 C9          0097*       ret
-0459B4             0098*   
-0459B4             0099*   ; ========================
-0459B4             0100*   ; Supporting States
-0459B4             0101*   ; ========================
-0459B4             0102*   
-0459B4             0103*   game_loading:
-0459B4             0104*       ; Show loading screen while preparing assets
-0459B4 CD 1E 5A 04 0105*       call load_resources
-0459B8 21 17 59 04 0106*       ld hl, game_initialize
-0459BC 22 00 59 04 0107*       ld (game_state), hl
-0459C0 C9          0108*       ret
-0459C1             0109*   
-0459C1             0110*   game_cutscene:
-0459C1             0111*       ; Play a non-interactive cutscene
-0459C1 CD 1F 5A 04 0112*       call play_cutscene
-0459C5 C2 59 59 04 0113*       jp nz, game_playing ; Return to gameplay after cutscene
-0459C9 C9          0114*       ret
-0459CA             0115*   
-0459CA             0116*   game_inventory:
-0459CA             0117*       ; Open inventory or shop
-0459CA CD 20 5A 04 0118*       call display_inventory
-0459CE C2 59 59 04 0119*       jp nz, game_playing ; Return to gameplay after inventory close
-0459D2 C9          0120*       ret
-0459D3             0121*   
-0459D3             0122*   game_map:
-0459D3             0123*       ; Display map or quest
-0459D3 CD 21 5A 04 0124*       call display_map
-0459D7 C2 59 59 04 0125*       jp nz, game_playing ; Return to gameplay after map close
-0459DB C9          0126*       ret
-0459DC             0127*   
-0459DC             0128*   game_exit:
-0459DC             0129*       ; Handle exit logic
-0459DC CD 22 5A 04 0130*       call save_game
-0459E0 C3 23 5A 04 0131*       jp exit_game         ; Safely shut down
-0459E4 C9          0132*       ret
-0459E5             0133*   
-0459E5             0134*   ; ========================
-0459E5             0135*   ; Sub-state branching (Example for player state)
-0459E5             0136*   ; ========================
-0459E5             0137*   
-0459E5 F3 59 04    0138*   player_state:  dl player_alive ; Player state variable
-0459E8             0139*   
-0459E8             0140*   do_player:
-0459E8 2A E5 59 04 0141*       ld hl,(player_state)
-0459EC             0142*       callHL                ; Call the corresponding player state
-0459EC 01 F2 59 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-0459F0 C5          0002*M1     push bc ; which constitutes the return address
-0459F1 E9          0003*M1     jp (hl) ; Jump to the address in HL
-0459F2             0004*M1 @@:
-0459F2 C9          0143*       ret
-0459F3             0144*   
-0459F3             0145*   player_alive:
-0459F3 CD 6E 55 04 0146*       call player_input     ; Handle player input
-0459F7 CD E0 57 04 0147*       call move_weapons    ; Handle laser movement and collision detection
-0459FB C9          0148*       ret
-0459FC             0149*   
-0459FC             0150*   player_dead:
-0459FC CD E0 57 04 0151*       call move_weapons    ; Handle laser movement and collision detection
-045A00 C9          0152*       ret
-045A01             0153*   
-045A01             0154*   do_enemies:
-045A01 2A 0C 5A 04 0155*       ld hl,(enemies_state)
-045A05             0156*       callHL
-045A05 01 0B 5A 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-045A09 C5          0002*M1     push bc ; which constitutes the return address
-045A0A E9          0003*M1     jp (hl) ; Jump to the address in HL
-045A0B             0004*M1 @@:
-045A0B C9          0157*       ret
-045A0C 12 5A 04    0158*   enemies_state: dl enemies_alive
-045A0F             0159*   
-045A0F             0160*   enemies_dead:
-045A0F C9          0161*       ret
-045A10             0162*   
-045A10             0163*   enemies_respawning:
-045A10 C9          0164*       ret
-045A11             0165*   
-045A11             0166*   enemies_respawn:
-045A11 C9          0167*       ret
-045A12             0168*   
-045A12             0169*   enemies_alive:
-045A12 CD 33 21 04 0170*       call move_enemies
-045A16 C9          0171*       ret
-045A17             0172*   
-045A17             0173*   check_input_menu:
-045A17 C9          0174*       ret
-045A18             0175*   
-045A18             0176*   update_game_world:
-045A18 C9          0177*       ret
-045A19             0178*   
-045A19             0179*   check_game_events:
-045A19 C9          0180*       ret
-045A1A             0181*   
-045A1A             0182*   check_input_pause:
-045A1A C9          0183*       ret
-045A1B             0184*   
-045A1B             0185*   load_next_level:
-045A1B C9          0186*       ret
-045A1C             0187*   
-045A1C             0188*   display_game_over:
-045A1C C9          0189*       ret
-045A1D             0190*   
-045A1D             0191*   display_victory:
-045A1D C9          0192*       ret
-045A1E             0193*   
-045A1E             0194*   load_resources:
-045A1E C9          0195*       ret
-045A1F             0196*   
-045A1F             0197*   play_cutscene:
-045A1F C9          0198*       ret
-045A20             0199*   
-045A20             0200*   display_inventory:
-045A20 C9          0201*       ret
-045A21             0202*   
-045A21             0203*   display_map:
-045A21 C9          0204*       ret
-045A22             0205*   
-045A22             0206*   save_game:
-045A22 C9          0207*       ret
-045A23             0208*   
-045A23             0209*   exit_game:
-045A23 C9          0210*       ret
-045A24             0211*   
-045A24             0062        include "targeting.inc"
-045A24 FF FF FF FF 0001*       align 256
-       FF FF FF FF 
+04597F CD EB 19 04 0066*       call vdu_set_gfx_viewport
+045983             0067*   
+045983 CD EC 59 04 0068*       call do_player
+045987             0069*       ; call do_enemies
+045987             0070*   ; update UI: TODO make this a standalone function
+045987 CD 04 56 04 0071*       call print_score
+04598B C9          0072*       ret
+04598C             0073*   
+04598C             0074*   game_paused:
+04598C             0075*       ; Pause menu logic
+04598C CD 1E 5A 04 0076*       call check_input_pause
+045990 C2 5D 59 04 0077*       jp nz, game_playing ; Resume game
+045994 CA 0E 59 04 0078*       jp z, game_main_menu ; Exit to main menu
+045998 C9          0079*       ret
+045999             0080*   
+045999             0081*   game_level_transition:
+045999             0082*       ; Handle level transitions
+045999 CD 1F 5A 04 0083*       call load_next_level
+04599D 21 5D 59 04 0084*       ld hl, game_playing
+0459A1 22 00 59 04 0085*       ld (game_state), hl
+0459A5 C9          0086*       ret
+0459A6             0087*   
+0459A6             0088*   game_over:
+0459A6             0089*       ; Display game over screen
+0459A6 CD 20 5A 04 0090*       call display_game_over
+0459AA C2 0E 59 04 0091*       jp nz, game_main_menu ; Return to main menu on input
+0459AE C9          0092*       ret
+0459AF             0093*   
+0459AF             0094*   game_victory:
+0459AF             0095*       ; Display victory screen
+0459AF CD 21 5A 04 0096*       call display_victory
+0459B3 C2 0E 59 04 0097*       jp nz, game_main_menu ; Return to main menu on input
+0459B7 C9          0098*       ret
+0459B8             0099*   
+0459B8             0100*   ; ========================
+0459B8             0101*   ; Supporting States
+0459B8             0102*   ; ========================
+0459B8             0103*   
+0459B8             0104*   game_loading:
+0459B8             0105*       ; Show loading screen while preparing assets
+0459B8 CD 22 5A 04 0106*       call load_resources
+0459BC 21 17 59 04 0107*       ld hl, game_initialize
+0459C0 22 00 59 04 0108*       ld (game_state), hl
+0459C4 C9          0109*       ret
+0459C5             0110*   
+0459C5             0111*   game_cutscene:
+0459C5             0112*       ; Play a non-interactive cutscene
+0459C5 CD 23 5A 04 0113*       call play_cutscene
+0459C9 C2 5D 59 04 0114*       jp nz, game_playing ; Return to gameplay after cutscene
+0459CD C9          0115*       ret
+0459CE             0116*   
+0459CE             0117*   game_inventory:
+0459CE             0118*       ; Open inventory or shop
+0459CE CD 24 5A 04 0119*       call display_inventory
+0459D2 C2 5D 59 04 0120*       jp nz, game_playing ; Return to gameplay after inventory close
+0459D6 C9          0121*       ret
+0459D7             0122*   
+0459D7             0123*   game_map:
+0459D7             0124*       ; Display map or quest
+0459D7 CD 25 5A 04 0125*       call display_map
+0459DB C2 5D 59 04 0126*       jp nz, game_playing ; Return to gameplay after map close
+0459DF C9          0127*       ret
+0459E0             0128*   
+0459E0             0129*   game_exit:
+0459E0             0130*       ; Handle exit logic
+0459E0 CD 26 5A 04 0131*       call save_game
+0459E4 C3 27 5A 04 0132*       jp exit_game         ; Safely shut down
+0459E8 C9          0133*       ret
+0459E9             0134*   
+0459E9             0135*   ; ========================
+0459E9             0136*   ; Sub-state branching (Example for player state)
+0459E9             0137*   ; ========================
+0459E9             0138*   
+0459E9 F7 59 04    0139*   player_state:  dl player_alive ; Player state variable
+0459EC             0140*   
+0459EC             0141*   do_player:
+0459EC 2A E9 59 04 0142*       ld hl,(player_state)
+0459F0             0143*       callHL                ; Call the corresponding player state
+0459F0 01 F6 59 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+0459F4 C5          0002*M1     push bc ; which constitutes the return address
+0459F5 E9          0003*M1     jp (hl) ; Jump to the address in HL
+0459F6             0004*M1 @@:
+0459F6 C9          0144*       ret
+0459F7             0145*   
+0459F7             0146*   player_alive:
+0459F7 CD 6E 55 04 0147*       call player_input     ; Handle player input
+0459FB CD E0 57 04 0148*       call move_weapons    ; Handle laser movement and collision detection
+0459FF C9          0149*       ret
+045A00             0150*   
+045A00             0151*   player_dead:
+045A00 CD E0 57 04 0152*       call move_weapons    ; Handle laser movement and collision detection
+045A04 C9          0153*       ret
+045A05             0154*   
+045A05             0155*   do_enemies:
+045A05 2A 10 5A 04 0156*       ld hl,(enemies_state)
+045A09             0157*       callHL
+045A09 01 0F 5A 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+045A0D C5          0002*M1     push bc ; which constitutes the return address
+045A0E E9          0003*M1     jp (hl) ; Jump to the address in HL
+045A0F             0004*M1 @@:
+045A0F C9          0158*       ret
+045A10 16 5A 04    0159*   enemies_state: dl enemies_alive
+045A13             0160*   
+045A13             0161*   enemies_dead:
+045A13 C9          0162*       ret
+045A14             0163*   
+045A14             0164*   enemies_respawning:
+045A14 C9          0165*       ret
+045A15             0166*   
+045A15             0167*   enemies_respawn:
+045A15 C9          0168*       ret
+045A16             0169*   
+045A16             0170*   enemies_alive:
+045A16 CD 33 21 04 0171*       call move_enemies
+045A1A C9          0172*       ret
+045A1B             0173*   
+045A1B             0174*   check_input_menu:
+045A1B C9          0175*       ret
+045A1C             0176*   
+045A1C             0177*   update_game_world:
+045A1C C9          0178*       ret
+045A1D             0179*   
+045A1D             0180*   check_game_events:
+045A1D C9          0181*       ret
+045A1E             0182*   
+045A1E             0183*   check_input_pause:
+045A1E C9          0184*       ret
+045A1F             0185*   
+045A1F             0186*   load_next_level:
+045A1F C9          0187*       ret
+045A20             0188*   
+045A20             0189*   display_game_over:
+045A20 C9          0190*       ret
+045A21             0191*   
+045A21             0192*   display_victory:
+045A21 C9          0193*       ret
+045A22             0194*   
+045A22             0195*   load_resources:
+045A22 C9          0196*       ret
+045A23             0197*   
+045A23             0198*   play_cutscene:
+045A23 C9          0199*       ret
+045A24             0200*   
+045A24             0201*   display_inventory:
+045A24 C9          0202*       ret
+045A25             0203*   
+045A25             0204*   display_map:
+045A25 C9          0205*       ret
+045A26             0206*   
+045A26             0207*   save_game:
+045A26 C9          0208*       ret
+045A27             0209*   
+045A27             0210*   exit_game:
+045A27 C9          0211*       ret
+045A28             0212*   
+045A28             0062        include "targeting.inc"
+045A28 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11011,286 +11011,291 @@ PC     Output      Line
 045ECA 00 6D 04    0036*   tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
 045ECD 00 00 00    0037*   num_active_tiles: dl 0 ; how many active tiles
 045ED0 00          0038*   next_tile_id: db 0 ; next available tile id
-045ED1             0039*   
-045ED1             0040*   tile_table_init:
-045ED1             0041*   ; clear the tile table
-045ED1 AF          0042*       xor a ; write zeroes to tile table
-045ED2 21 00 6D 04 0043*       ld hl,tile_table_base ; address to copy from
-045ED6 01 00 40 00 0044*       ld bc,tile_table_end-tile_table_base ; number of bytes to clear
-045EDA CD 3E 07 04 0045*       call clear_mem
-045EDE             0046*   ; write tile ids
-045EDE DD 21 00 6D 0047*       ld ix,tile_table_base
+045ED1 00 00 00    0039*   new_tile_table_pointer: dl 0 ; pointer to new tile record
+045ED4             0040*   
+045ED4             0041*   tile_table_init:
+045ED4             0042*   ; clear the tile stack
+045ED4 AF          0043*       xor a ; write zeroes to tile stack
+045ED5 21 C6 5B 04 0044*       ld hl,tile_stack
+045ED9 01 01 03 00 0045*       ld bc,tile_stack_end-tile_stack
+045EDD CD 3E 07 04 0046*       call clear_mem
+045EE1             0047*   ; clear the tile table
+045EE1 AF          0048*       xor a ; write zeroes to tile table
+045EE2 21 00 6D 04 0049*       ld hl,tile_table_base ; address to copy from
+045EE6 01 00 40 00 0050*       ld bc,tile_table_end-tile_table_base ; number of bytes to clear
+045EEA CD 3E 07 04 0051*       call clear_mem
+045EEE             0052*   ; write tile ids
+045EEE DD 21 00 6D 0053*       ld ix,tile_table_base
        04          
-045EE3 AF          0048*       xor a ; tile id
-045EE4 06 00       0049*       ld b,0 ; loop counter
-045EE6             0050*   @loop:
-045EE6 DD 77 00    0051*       ld (ix+tile_id),a
-045EE9 ED 32 40    0052*       lea ix,ix+table_record_size
-045EEC 3C          0053*       inc a
-045EED 10 F7       0054*       djnz @loop
-045EEF C9          0055*       ret
-045EF0             0056*   ; end tile_table_init
-045EF0             0057*   
-045EF0             0058*   ; gets the next available tile id
-045EF0             0059*   ; inputs; none
-045EF0             0060*   ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
-045EF0             0061*   ;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
-045EF0             0062*   ; destroys: a,hl,ix
-045EF0             0063*   ; affects: bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
-045EF0             0064*   tile_table_get_next_id:
-045EF0 21 CD 5E 04 0065*       ld hl,num_active_tiles
-045EF4 34          0066*       inc (hl)
-045EF5 C2 FC 5E 04 0067*       jp nz,@F ; check rollover to > 256 active tiles
-045EF9 35          0068*       dec (hl) ; undo increment
-045EFA AF          0069*       xor a ; reset carry flag indicating that we didn't find a free tile
-045EFB C9          0070*       ret
-045EFC             0071*   @@: ; point ix to next tile record
-045EFC 21 D0 5E 04 0072*       ld hl,next_tile_id
-045F00 34          0073*       inc (hl)
-045F01 56          0074*       ld d,(hl) ; index into tile table
-045F02 1E 40       0075*       ld e,tile_table_record_size
-045F04 ED 5C       0076*       mlt de ; de is now the offset to the table entry
-045F06 DD 21 00 6D 0077*       ld ix,tile_table_base ; point to base address of tile table
+045EF3 AF          0054*       xor a ; tile id
+045EF4 06 00       0055*       ld b,0 ; loop counter
+045EF6             0056*   @loop:
+045EF6 DD 77 00    0057*       ld (ix+tile_id),a
+045EF9 ED 32 40    0058*       lea ix,ix+table_record_size
+045EFC 3C          0059*       inc a
+045EFD 10 F7       0060*       djnz @loop
+045EFF             0061*   ; set pointers to top of tile stack and tile table
+045EFF 21 D0 5E 04 0062*       ld hl,next_tile_id
+045F03 3E FF       0063*       ld a,255 ; will wrap around to 0 on first call to create active tile
+045F05 77          0064*       ld (hl),a
+045F06 21 00 6D 04 0065*       ld hl,tile_table_base
+045F0A 22 CA 5E 04 0066*       ld (tile_table_pointer),hl
+045F0E 21 C6 5B 04 0067*       ld hl,tile_stack
+045F12 22 C7 5E 04 0068*       ld (tile_stack_pointer),hl
+045F16 C9          0069*       ret
+045F17             0070*   ; end tile_table_init
+045F17             0071*   
+045F17             0072*   ; gets the next available tile id
+045F17             0073*   ; inputs; none
+045F17             0074*   ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
+045F17             0075*   ;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
+045F17             0076*   ; destroys: a,hl,ix
+045F17             0077*   ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
+045F17             0078*   tile_table_get_next_id:
+045F17 21 CD 5E 04 0079*       ld hl,num_active_tiles
+045F1B 34          0080*       inc (hl)
+045F1C C2 23 5F 04 0081*       jp nz,@F ; check rollover to > 256 active tiles
+045F20 35          0082*       dec (hl) ; undo increment
+045F21 AF          0083*       xor a ; reset carry flag indicating that we didn't find a free tile
+045F22 C9          0084*       ret
+045F23             0085*   @@: ; point ix to next tile record
+045F23 21 D0 5E 04 0086*       ld hl,next_tile_id
+045F27 34          0087*       inc (hl)
+045F28 56          0088*       ld d,(hl) ; index into tile table
+045F29 1E 40       0089*       ld e,tile_table_record_size
+045F2B ED 5C       0090*       mlt de ; de is now the offset to the table entry
+045F2D DD 21 00 6D 0091*       ld ix,tile_table_base ; point to base address of tile table
        04          
-045F0B DD 19       0078*       add ix,de ; ix is now the address of the table entry
-045F0D             0079*   ; add tile pointer to tile stack
-045F0D 21 C6 5B 04 0080*       ld hl,tile_stack
-045F11 19          0081*       add hl,de ; de was already set to the correct offset
-045F12 ED 3F       0082*       ld (hl),ix
-045F14             0083*   ; return tile id
-045F14 7E          0084*       ld a,(hl)
-045F15 37          0085*       scf ; sets carry flag indicating we found a free tile
-045F16 C9          0086*       ret ; done
-045F17             0087*   ; end tile_table_get_next_id
-045F17             0088*   
-045F17             0089*   ; deactivate the tile with the given id
-045F17             0090*   ; inputs: iy pointing to tile stack record
-045F17             0091*   ; outputs: tile stack pointer unchanged, effectively pointing to next record
-045F17             0092*   ; destroys: a,hl
-045F17             0093*   ; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
-045F17             0094*   table_deactivate_tile: ; TODO: implement
-045F17 21 CD 5E 04 0095*       ld hl,num_active_tiles
-045F1B 35          0096*       dec (hl) ; decrement number of active tiles
-045F1C             0097*   ; remove tile pointer from tile stack
-045F1C FD E5       0098*       push iy ; pointer to tile stack record
-045F1E D1          0099*       pop de ; address to copy to
-045F1F 66          0100*       ld h,(hl) ; number of active tiles
-045F20 2E 03       0101*       ld l,3 ; number of bytes per tile stack record
-045F22 ED 6C       0102*       mlt hl ; hl = offset from base stack record
-045F24             0103*       sign_hlu ; zero actually means 256
-045F24 19          0001*M1     add hl,de
-045F25 B7          0002*M1     or a ; clear flags
-045F26 ED 52       0003*M1     sbc hl,de
-045F28 C2 30 5F 04 0104*       jp nz,@F ; < 256 so jump ahead
-045F2C 21 00 03 00 0105*       ld hl,256*3 ; 256 stack records
-045F30             0106*   @@:
-045F30 23          0107*       inc hl ; to pick up zero terminator
-045F31 B7          0108*       or a ; clear carry
-045F32 ED 52       0109*       sbc hl,de ; number of bytes to copy
-045F34 E5          0110*       push hl
-045F35 C1          0111*       pop bc ; number of bytes to copy
-045F36 ED B8       0112*       lddr ; shift stack records down
-045F38 C9          0113*       ret
-045F39             0114*   ; end table_deactivate_tile
-045F39             0115*   
-045F39             0116*   ; change an existing tile to a new type, keeping its position and velocity the same
-045F39             0117*   ; inputs: hl = pointer to new tile default settings, tile_table_pointer = existing tile
-045F39             0118*   alter_tile:
-045F39             0119*   ; copy default settings to new tile
-045F39 ED 33 16    0120*       lea iy,iy+tile_definitions ; bump pointer to copy to
-045F3C FD E5       0121*       push iy ; pointer to default tile settings
-045F3E D1          0122*       pop de ; address to copy to
-045F3F 01 2A 00 00 0123*       ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
-045F43 ED B0       0124*       ldir ; copies new defaults existing tile record
-045F45             0125*   ; return to caller
-045F45 FD 2A CA 5E 0126*       ld iy,(tile_table_pointer) ; reset tile_table_pointer
+045F32 DD 19       0092*       add ix,de ; ix is now the address of the table entry
+045F34             0093*   ; add tile pointer to tile stack
+045F34 21 C6 5B 04 0094*       ld hl,tile_stack
+045F38 19          0095*       add hl,de ; de was already set to the correct offset
+045F39 ED 3F       0096*       ld (hl),ix
+045F3B             0097*   ; return tile id
+045F3B 7E          0098*       ld a,(hl)
+045F3C 37          0099*       scf ; sets carry flag indicating we found a free tile
+045F3D C9          0100*       ret ; done
+045F3E             0101*   ; end tile_table_get_next_id
+045F3E             0102*   
+045F3E             0103*   ; deactivate the tile with the given id
+045F3E             0104*   ; inputs: iy pointing to tile stack record
+045F3E             0105*   ; outputs: tile stack pointer unchanged, effectively pointing to next record
+045F3E             0106*   ; destroys: a,hl
+045F3E             0107*   ; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
+045F3E             0108*   table_deactivate_tile: ; TODO: implement
+045F3E 21 CD 5E 04 0109*       ld hl,num_active_tiles
+045F42 35          0110*       dec (hl) ; decrement number of active tiles
+045F43             0111*   ; remove tile pointer from tile stack
+045F43 FD E5       0112*       push iy ; pointer to tile stack record
+045F45 D1          0113*       pop de ; address to copy to
+045F46 66          0114*       ld h,(hl) ; number of active tiles
+045F47 25          0115*       dec h ; zero-based index
+045F48 2E 03       0116*       ld l,3 ; number of bytes per tile stack record
+045F4A ED 6C       0117*       mlt hl ; hl = offset from base stack record
+045F4C 23          0118*       inc hl ; to pick up zero terminator
+045F4D B7          0119*       or a ; clear carry
+045F4E ED 52       0120*       sbc hl,de ; number of bytes to copy
+045F50 E5          0121*       push hl
+045F51 C1          0122*       pop bc ; number of bytes to copy
+045F52 ED B8       0123*       lddr ; shift stack records down
+045F54 C9          0124*       ret
+045F55             0125*   ; end table_deactivate_tile
+045F55             0126*   
+045F55             0127*   ; change an existing tile to a new type, keeping its position and velocity the same
+045F55             0128*   ; inputs: hl = pointer to new tile default settings, tile_table_pointer = existing tile
+045F55             0129*   alter_tile:
+045F55             0130*   ; copy default settings to new tile
+045F55 ED 33 16    0131*       lea iy,iy+tile_definitions ; bump pointer to copy to
+045F58 FD E5       0132*       push iy ; pointer to default tile settings
+045F5A D1          0133*       pop de ; address to copy to
+045F5B 01 2A 00 00 0134*       ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+045F5F ED B0       0135*       ldir ; copies new defaults existing tile record
+045F61             0136*   ; return to caller
+045F61 FD 2A CA 5E 0137*       ld iy,(tile_table_pointer) ; reset tile_table_pointer
        04          
-045F4A FD CB 16 FE 0127*       set 7,(iy+tile_type) ; set just spawned flag
-045F4E 37          0128*       scf ; set carry flag to indicate success
-045F4F C9          0129*       ret
-045F50             0130*   ; end alter_tile
-045F50             0131*   
-045F50             0132*   ; create a new tile at the same location as an existing tile
-045F50             0133*   ; inputs: hl = pointer to new tile default settings, tile_table_pointer = existing tile
-045F50             0134*   spawn_active_tile:
-045F50 E5          0135*       push hl ; back up pointer to new tile defaults
-045F51 CD F0 5E 04 0136*       call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
-045F55 E1          0137*       pop hl ; restore pointer to new tile defaults
-045F56 D0          0138*       ret nc ; no carry means no free tile slots, so we go home
-045F57             0139*   ; copy default settings to new tile
-045F57 DD E5       0140*       push ix ; back up pointer to new tile record
-045F59 ED 32 16    0141*       lea ix,ix+tile_definitions ; bump pointer to copy to
-045F5C DD E5       0142*       push ix ; pointer to default tile settings
-045F5E D1          0143*       pop de ; address to copy to
-045F5F 01 2A 00 00 0144*       ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
-045F63 ED B0       0145*       ldir ; copies defaults to new tile record
-045F65             0146*   ; return to caller
-045F65 DD E1       0147*       pop ix ; restore pointer to new tile record
-045F67 DD CB 16 FE 0148*       set 7,(ix+tile_type) ; set just spawned flag
-045F6B 37          0149*       scf ; set carry flag to indicate success
-045F6C C9          0150*       ret
-045F6D             0151*   
-045F6D             0152*   ; compute animation frame based on tile_animation and tile_heading
-045F6D             0153*   ; inputs: tile_table_pointer set to tile record
-045F6D             0154*   ; outputs: a, tile_frame set to animation frame
-045F6D             0155*   ; destroys: a,hl
-045F6D             0156*   tile_frame_heading_animation:
-045F6D FD 7E 11    0157*       ld a,(iy+tile_heading+1) ; we want the integer portion
-045F70 CB 3F       0158*       srl a ; divide integer portion by 8
-045F72 CB 3F       0159*       srl a
-045F74 CB 3F       0160*       srl a
-045F76 FD 66 22    0161*       ld h,(iy+tile_animation)
-045F79 2E 20       0162*       ld l,32 ; 32 orientation frames per animation
-045F7B ED 6C       0163*       mlt hl ; hl = offset from base animation
-045F7D 85          0164*       add a,l ; modulo256 since tile_frame is only 1 byte
-045F7E FD 77 28    0165*       ld (iy+tile_frame),a
-045F81 C9          0166*       ret
-045F82             0167*   ; end tile_frame_heading_animation
-045F82             0168*   
-045F82             0169*   ; compute animation frame based on tile_heading
-045F82             0170*   ; inputs: tile_table_pointer set to tile record
-045F82             0171*   ; outputs: a, tile_frame set to animation frame
-045F82             0172*   ; destroys: a,hl
-045F82             0173*   tile_frame_heading:
-045F82 FD 7E 11    0174*       ld a,(iy+tile_heading+1) ; we want the integer portion
-045F85 CB 3F       0175*       srl a ; divide integer portion by 8
-045F87 CB 3F       0176*       srl a
-045F89 CB 3F       0177*       srl a
-045F8B FD 77 28    0178*       ld (iy+tile_frame),a
-045F8E C9          0179*       ret
-045F8F             0180*   ; end tile_frame_heading
-045F8F             0181*   dump_tile_record:
-045F8F             0182*       ; call vdu_home_cursor
-045F8F CD 10 01 04 0183*       call printInline
-045F93 69 64 3A 20 0184*       asciz "id:   "
+045F66 FD CB 16 FE 0138*       set 7,(iy+tile_type) ; set just spawned flag
+045F6A 37          0139*       scf ; set carry flag to indicate success
+045F6B C9          0140*       ret
+045F6C             0141*   ; end alter_tile
+045F6C             0142*   
+045F6C             0143*   ; spawn a new active tile at the prescribed location
+045F6C             0144*   ; inputs: hl = pointer to new tile default settings, bc,de = x,y position (integer)
+045F6C             0145*   ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
+045F6C             0146*   ;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
+045F6C             0147*   ; destroys: a,hl,ix
+045F6C             0148*   ; preserves: bc,de (x,y position)
+045F6C             0149*   ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
+045F6C             0150*   spawn_active_tile:
+045F6C D5          0151*       push de ; back up y position
+045F6D C5          0152*       push bc ; back up x position
+045F6E E5          0153*       push hl ; back up pointer to new tile defaults
+045F6F CD 17 5F 04 0154*       call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
+045F73 E1          0155*       pop hl ; restore pointer to new tile defaults
+045F74 D2 A9 5F 04 0156*       jp nc,@no_tile ; no carry means no free tile slots, so we go home
+045F78             0157*   ; copy default settings to new tile
+045F78 DD 22 D1 5E 0158*       ld (new_tile_table_pointer),ix ; save pointer to new tile record
+       04          
+045F7D ED 32 16    0159*       lea ix,ix+tile_definitions ; bump pointer to copy to
+045F80 DD E5       0160*       push ix ; pointer to default tile settings
+045F82 D1          0161*       pop de ; address to copy to
+045F83 01 2A 00 00 0162*       ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+045F87 ED B0       0163*       ldir ; copies defaults to new tile record
+045F89             0164*   ; copy tile position from inputs
+045F89 DD 2A D1 5E 0165*       ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
+       04          
+045F8E AF          0166*       xor a ; to zero out fractional bytes
+045F8F C1          0167*       pop bc ; restore x position
+045F90 D1          0168*       pop de ; restore y position
+045F91 DD 77 01    0169*       ld (ix+tile_x),a
+045F94 DD 71 02    0170*       ld (ix+tile_x+1),c
+045F97 DD 70 03    0171*       ld (ix+tile_x+2),b
+045F9A DD 77 04    0172*       ld (ix+tile_y),a
+045F9D DD 73 05    0173*       ld (ix+tile_y+1),e
+045FA0 DD 72 06    0174*       ld (ix+tile_y+2),d
+045FA3             0175*   ; return to caller
+045FA3 DD CB 16 FE 0176*       set 7,(ix+tile_type) ; set just spawned flag
+045FA7 37          0177*       scf ; set carry flag to indicate success
+045FA8 C9          0178*       ret
+045FA9             0179*   @no_tile: ; dummy pops to balance stack (restores x,y inputs as well)
+045FA9 C1          0180*       pop bc
+045FAA D1          0181*       pop de
+045FAB C9          0182*       ret
+045FAC             0183*   
+045FAC             0184*   ; compute animation frame based on tile_animation and tile_heading
+045FAC             0185*   ; inputs: iy set to tile record
+045FAC             0186*   ; outputs: a, tile_frame set to animation frame
+045FAC             0187*   ; destroys: a,hl
+045FAC             0188*   tile_frame_heading_animation:
+045FAC FD 7E 11    0189*       ld a,(iy+tile_heading+1) ; we want the integer portion
+045FAF CB 3F       0190*       srl a ; divide integer portion by 8
+045FB1 CB 3F       0191*       srl a
+045FB3 CB 3F       0192*       srl a
+045FB5 FD 66 22    0193*       ld h,(iy+tile_animation)
+045FB8 2E 20       0194*       ld l,32 ; 32 orientation frames per animation
+045FBA ED 6C       0195*       mlt hl ; hl = offset from base animation
+045FBC 85          0196*       add a,l ; modulo256 since tile_frame is only 1 byte
+045FBD FD 77 28    0197*       ld (iy+tile_frame),a
+045FC0 C9          0198*       ret
+045FC1             0199*   ; end tile_frame_heading_animation
+045FC1             0200*   
+045FC1             0201*   ; compute animation frame based on tile_heading
+045FC1             0202*   ; inputs: iy set to tile record
+045FC1             0203*   ; outputs: a, tile_frame set to animation frame
+045FC1             0204*   ; destroys: a,hl
+045FC1             0205*   tile_frame_heading:
+045FC1 FD 7E 11    0206*       ld a,(iy+tile_heading+1) ; we want the integer portion
+045FC4 CB 3F       0207*       srl a ; divide integer portion by 8
+045FC6 CB 3F       0208*       srl a
+045FC8 CB 3F       0209*       srl a
+045FCA FD 77 28    0210*       ld (iy+tile_frame),a
+045FCD C9          0211*       ret
+045FCE             0212*   ; end tile_frame_heading
+045FCE             0213*   dump_tile_record:
+045FCE             0214*       ; call vdu_home_cursor
+045FCE CD 10 01 04 0215*       call printInline
+045FD2 69 64 3A 20 0216*       asciz "id:   "
        20 20 00    
-045F9A DD 7E 00    0185*       ld a,(ix+tile_id)
-045F9D CD 5A 01 04 0186*       call printHexA
-045FA1             0187*   
-045FA1 CD 10 01 04 0188*       call printInline
-045FA5 0D 0A 78 3A 0189*       asciz "\r\nx:   "
+045FD9 DD 7E 00    0217*       ld a,(ix+tile_id)
+045FDC CD 5A 01 04 0218*       call printHexA
+045FE0             0219*   
+045FE0 CD 10 01 04 0220*       call printInline
+045FE4 0D 0A 78 3A 0221*       asciz "\r\nx:   "
        20 20 20 00 
-045FAD DD 27 01    0190*       ld hl,(ix+tile_x)
-045FB0 CD 38 03 04 0191*       call print_s168_hl
-045FB4             0192*   
-045FB4 CD 10 01 04 0193*       call printInline
-045FB8 0D 0A 79 3A 0194*       asciz "\r\ny:   "
+045FEC DD 27 01    0222*       ld hl,(ix+tile_x)
+045FEF CD 38 03 04 0223*       call print_s168_hl
+045FF3             0224*   
+045FF3 CD 10 01 04 0225*       call printInline
+045FF7 0D 0A 79 3A 0226*       asciz "\r\ny:   "
        20 20 20 00 
-045FC0 DD 27 04    0195*       ld hl,(ix+tile_y)
-045FC3 CD 38 03 04 0196*       call print_s168_hl
-045FC7             0197*   
-045FC7 CD 10 01 04 0198*       call printInline
-045FCB 0D 0A 78 76 0199*       asciz "\r\nxv:  "
-       3A 20 20 00 
-045FD3 DD 27 07    0200*       ld hl,(ix+tile_xvel)
-045FD6 CD 38 03 04 0201*       call print_s168_hl
-045FDA             0202*   
-045FDA CD 10 01 04 0203*       call printInline
-045FDE 0D 0A 79 76 0204*       asciz "\r\nyv:  "
-       3A 20 20 00 
-045FE6 DD 27 0A    0205*       ld hl,(ix+tile_yvel)
-045FE9 CD 38 03 04 0206*       call print_s168_hl
-045FED             0207*   
-045FED             0208*       ; call printInline
-045FED             0209*       ; asciz "\r\nv:   "
-045FED             0210*       ; ld hl,(ix+tile_vel)
-045FED             0211*       ; call print_s168_hl
-045FED             0212*   
-045FED             0213*       ; call printInline
-045FED             0214*       ; asciz "\r\nhdg  "
-045FED             0215*       ; ld hl,(ix+tile_heading)
-045FED             0216*       ; call print_s168_hl
-045FED             0217*   
-045FED             0218*       ; call printInline
-045FED             0219*       ; asciz "\r\nori: "
-045FED             0220*       ; ld hl,(ix+tile_orientation)
-045FED             0221*       ; call print_s168_hl
-045FED             0222*   
-045FED CD 10 01 04 0223*       call printInline
-045FF1 0D 0A 74 79 0224*       asciz "\r\ntyp: "
+045FFF DD 27 04    0227*       ld hl,(ix+tile_y)
+046002 CD 38 03 04 0228*       call print_s168_hl
+046006             0229*   
+046006 CD 10 01 04 0230*       call printInline
+04600A 0D 0A 74 79 0231*       asciz "\r\ntyp: "
        70 3A 20 00 
-045FF9 DD 7E 16    0225*       ld a,(ix+tile_type)
-045FFC CD 5A 01 04 0226*       call printHexA
-046000             0227*   
-046000 CD 10 01 04 0228*       call printInline
-046004 0D 0A 42 49 0229*       asciz "\r\nBId: "
+046012 DD 7E 16    0232*       ld a,(ix+tile_type)
+046015 CD 5A 01 04 0233*       call printHexA
+046019             0234*   
+046019 CD 10 01 04 0235*       call printInline
+04601D 0D 0A 42 49 0236*       asciz "\r\nBId: "
        64 3A 20 00 
-04600C DD 27 17    0230*       ld hl,(ix+tile_base_bufferId)
-04600F CD 37 01 04 0231*       call printHex24
-046013             0232*   
-046013 CD 10 01 04 0233*       call printInline
-046017 0D 0A 6D 50 0234*       asciz "\r\nmPg: "
+046025 DD 27 17    0237*       ld hl,(ix+tile_base_bufferId)
+046028 CD 37 01 04 0238*       call printHex24
+04602C             0239*   
+04602C CD 10 01 04 0240*       call printInline
+046030 0D 0A 6D 50 0241*       asciz "\r\nmPg: "
        67 3A 20 00 
-04601F DD 27 1A    0235*       ld hl,(ix+tile_move_program)
-046022 CD 37 01 04 0236*       call printHex24
-046026             0237*   
-046026 CD 10 01 04 0238*       call printInline
-04602A 0D 0A 63 6F 0239*       asciz "\r\ncol: "
+046038 DD 27 1A    0242*       ld hl,(ix+tile_move_program)
+04603B CD 37 01 04 0243*       call printHex24
+04603F             0244*   
+04603F CD 10 01 04 0245*       call printInline
+046043 0D 0A 63 6F 0246*       asciz "\r\ncol: "
        6C 3A 20 00 
-046032 DD 7E 1D    0240*       ld a,(ix+tile_collisions)
-046035 CD B5 03 04 0241*       call printBin8
-046039             0242*   
-046039             0243*       ; call printInline
-046039             0244*       ; asciz "\r\nszx: "
-046039             0245*       ; ld a,(ix+tile_dim_x)
-046039             0246*       ; call printHexA
-046039             0247*   
-046039             0248*       ; call printInline
-046039             0249*       ; asciz "\r\nszy: "
-046039             0250*       ; ld a,(ix+tile_dim_y)
-046039             0251*       ; call printHexA
-046039             0252*   
-046039             0253*       ; call printInline
-046039             0254*       ; asciz "\r\n#ori:"
-046039             0255*       ; ld a,(ix+tile_num_orientations)
-046039             0256*       ; call printHexA
-046039             0257*   
-046039             0258*       ; call printInline
-046039             0259*       ; asciz "\r\n#ani:"
-046039             0260*       ; ld a,(ix+tile_num_animations)
-046039             0261*       ; call printHexA
-046039             0262*   
-046039             0263*       ; call printInline
-046039             0264*       ; asciz "\r\nani: "
-046039             0265*       ; ld a,(ix+tile_animation)
-046039             0266*       ; call printHexA
-046039             0267*   
-046039             0268*       ; call printInline
-046039             0269*       ; asciz "\r\nanit:"
-046039             0270*       ; ld a,(ix+tile_animation_timer)
-046039             0271*       ; call printHexA
-046039             0272*   
-046039             0273*       ; call printInline
-046039             0274*       ; asciz "\r\nmvt: "
-046039             0275*       ; ld a,(ix+tile_move_timer)
-046039             0276*       ; call printHexA
-046039             0277*   
-046039             0278*       ; call printInline
-046039             0279*       ; asciz "\r\nmvs: "
-046039             0280*       ; ld a,(ix+tile_move_step)
-046039             0281*       ; call printHexA
-046039             0282*   
-046039             0283*       ; call printInline
-046039             0284*       ; asciz "\r\npts: "
-046039             0285*       ; ld a,(ix+tile_points)
-046039             0286*       ; call printHexA
-046039             0287*   
-046039             0288*       ; call printInline
-046039             0289*       ; asciz "\r\ndmg: "
-046039             0290*       ; ld a,(ix+tile_shield_damage)
-046039             0291*       ; call printHexA
-046039             0292*   
-046039             0293*       ; call printInline
-046039             0294*       ; asciz "\r\nfrm: "
-046039             0295*       ; ld a,(ix+tile_frame)
-046039             0296*       ; call printHexA
-046039             0297*   
-046039             0298*       ; call printNewLine
-046039             0299*   
-046039             0300*       ; call waitKeypress
-046039 C9          0301*       ret
-04603A             0064        include "tiles.inc"
-04603A FF FF FF FF 0001*       align 256
+04604B DD 7E 1D    0247*       ld a,(ix+tile_collisions)
+04604E CD B5 03 04 0248*       call printBin8
+046052             0249*   
+046052             0250*       ; call printInline
+046052             0251*       ; asciz "\r\nszx: "
+046052             0252*       ; ld a,(ix+tile_dim_x)
+046052             0253*       ; call printHexA
+046052             0254*   
+046052             0255*       ; call printInline
+046052             0256*       ; asciz "\r\nszy: "
+046052             0257*       ; ld a,(ix+tile_dim_y)
+046052             0258*       ; call printHexA
+046052             0259*   
+046052             0260*       ; call printInline
+046052             0261*       ; asciz "\r\n#ori:"
+046052             0262*       ; ld a,(ix+tile_num_orientations)
+046052             0263*       ; call printHexA
+046052             0264*   
+046052             0265*       ; call printInline
+046052             0266*       ; asciz "\r\n#ani:"
+046052             0267*       ; ld a,(ix+tile_num_animations)
+046052             0268*       ; call printHexA
+046052             0269*   
+046052             0270*       ; call printInline
+046052             0271*       ; asciz "\r\nani: "
+046052             0272*       ; ld a,(ix+tile_animation)
+046052             0273*       ; call printHexA
+046052             0274*   
+046052             0275*       ; call printInline
+046052             0276*       ; asciz "\r\nanit:"
+046052             0277*       ; ld a,(ix+tile_animation_timer)
+046052             0278*       ; call printHexA
+046052             0279*   
+046052             0280*       ; call printInline
+046052             0281*       ; asciz "\r\nmvt: "
+046052             0282*       ; ld a,(ix+tile_move_timer)
+046052             0283*       ; call printHexA
+046052             0284*   
+046052             0285*       ; call printInline
+046052             0286*       ; asciz "\r\nmvs: "
+046052             0287*       ; ld a,(ix+tile_move_step)
+046052             0288*       ; call printHexA
+046052             0289*   
+046052             0290*       ; call printInline
+046052             0291*       ; asciz "\r\npts: "
+046052             0292*       ; ld a,(ix+tile_points)
+046052             0293*       ; call printHexA
+046052             0294*   
+046052             0295*       ; call printInline
+046052             0296*       ; asciz "\r\ndmg: "
+046052             0297*       ; ld a,(ix+tile_shield_damage)
+046052             0298*       ; call printHexA
+046052             0299*   
+046052             0300*       ; call printInline
+046052             0301*       ; asciz "\r\nfrm: "
+046052             0302*       ; ld a,(ix+tile_frame)
+046052             0303*       ; call printHexA
+046052             0304*   
+046052 CD 2C 01 04 0305*       call printNewLine
+046056 CD 2C 01 04 0306*       call printNewLine
+04605A             0307*   
+04605A             0308*       ; call waitKeypress
+04605A C9          0309*       ret
+04605B             0064        include "tiles.inc"
+04605B FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11331,15 +11336,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF       
+       FF          
 046100             0002*   
 046100             0003*   ; ######### TILES #########
 046100             0004*   ; TODO: implement buffering of tiles here when there isn't other stuff to do
@@ -11728,7 +11725,7 @@ PC     Output      Line
 046313             0019*   activate_pad_small:
 046313 21 00 63 04 0020*       ld hl,pad_small_defaults
 046317             0021*   ; get next available sprite id
-046317 CD 50 5F 04 0022*       call spawn_active_tile
+046317 CD 6C 5F 04 0022*       call spawn_active_tile
 04631B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
 04631C             0024*   ; other specific initialization
 04631C 3E 40       0025*       ld a,64
@@ -11739,7 +11736,7 @@ PC     Output      Line
 046322             0030*   move_pad_small:
 046322 CD 0F 62 04 0031*       call move_active_tile
 046326 B7          0032*       or a ; a will be non-zero if have scrolled off screen
-046327 C2 17 5F 04 0033*       jp nz,table_deactivate_tile
+046327 C2 3E 5F 04 0033*       jp nz,table_deactivate_tile
 04632B CD DF 21 04 0034*       call check_enemy_collisions
 04632F F8          0035*       ret m ; was collision so nothing more to do
 046330             0036*   ; check whether it is time to spawn a seeker
@@ -11820,7 +11817,7 @@ PC     Output      Line
 046413             0019*   activate_turret_fireball:
 046413 21 00 64 04 0020*       ld hl,turret_fireball_defaults
 046417             0021*   ; get next available sprite id
-046417 CD 50 5F 04 0022*       call spawn_active_tile
+046417 CD 6C 5F 04 0022*       call spawn_active_tile
 04641B D0          0023*       ret nc ; no carry means no free sprite slots, so we go home
 04641C             0024*   ; other specific initialization
 04641C 3E 40       0025*       ld a,64
@@ -11831,7 +11828,7 @@ PC     Output      Line
 046422             0030*   move_turret_fireball:
 046422 CD 0F 62 04 0031*       call move_active_tile
 046426 B7          0032*       or a ; a will be non-zero if have scrolled off screen
-046427 C2 17 5F 04 0033*       jp nz,table_deactivate_tile
+046427 C2 3E 5F 04 0033*       jp nz,table_deactivate_tile
 04642B CD DF 21 04 0034*       call check_enemy_collisions
 04642F F8          0035*       ret m ; was collision so nothing more to do
 046430             0036*   ; target player
@@ -12650,274 +12647,295 @@ PC     Output      Line
 046933             0199    ; start a new game
 046933 CD 17 59 04 0200        call game_initialize
 046937             0201    
-046937             0202        ; CALL DEBUG_PRINT_TABLE
-046937             0203        ; CALL DEBUG_WAITKEYPRESS
-046937             0204    main_loop:
-046937             0205    ; update the global timestamp
-046937 CD F9 17 04 0206        call timestamp_tick
-04693B             0207    ; do gamestate logic
-04693B CD 03 59 04 0208        call do_game
-04693F             0209    
-04693F             0210    ; DEBUG
-04693F             0211        ; CALL DEBUG_PRINT_TABLE
-04693F             0212        ; CALL DEBUG_WAITKEYPRESS
-04693F             0213    ; END DEBUG
-04693F             0214    
-04693F             0215    ; wait for the next vblank mitigate flicker and for loop timing
-04693F CD BF 19 04 0216        call vdu_vblank
-046943             0217        ; call vdu_vblank ; DEBUG
-046943             0218        ; call vdu_vblank ; DEBUG
-046943             0219    
-046943             0220    ; poll keyboard for escape keypress
-046943 3E 08       0221        ld a, $08 ; code to send to MOS
-046945 5B CF       0222        rst.lil $08 ; get IX pointer to System Variables
-046947 DD 7E 05    0223        ld a, (ix + $05) ; get ASCII code of key pressed
-04694A FE 1B       0224        cp 27 ; check if 27 (ascii code for ESC)
-04694C CA 54 69 04 0225        jp z, main_end ; if pressed, jump to exit
-046950             0226    
-046950             0227    ; escape not pressed so loop
-046950 C3 37 69 04 0228        jp main_loop
-046954             0229    
-046954             0230    main_end:
-046954 CD 05 19 04 0231        call vdu_cursor_on
-046958 C9          0232        ret
-046959             0233    
-046959             0234    DEBUG_PRINT:
-046959             0235        PUSH_ALL
-046959 08          0001M1      ex af,af'
-04695A D9          0002M1      exx
-04695B F5          0003M1      push af
-04695C E5          0004M1      push hl
-04695D C5          0005M1      push bc
-04695E D5          0006M1      push de
-04695F             0007M1  
-04695F 08          0008M1      ex af,af'
-046960 D9          0009M1      exx
-046961 F5          0010M1      push af
-046962 E5          0011M1      push hl
-046963 C5          0012M1      push bc
-046964 D5          0013M1      push de
-046965 DD E5       0014M1      push ix
-046967 FD E5       0015M1      push iy
-046969 0E 00       0236        ld c,0
-04696B 06 00       0237        ld b,0
-04696D CD 37 19 04 0238        call vdu_move_cursor
-046971             0239        POP_ALL
-046971 FD E1       0001M1      pop iy
-046973 DD E1       0002M1      pop ix
-046975 D1          0003M1      pop de
-046976 C1          0004M1      pop bc
-046977 E1          0005M1      pop hl
-046978 F1          0006M1      pop af
-046979 08          0007M1      ex af,af'
-04697A D9          0008M1      exx
-04697B             0009M1  
-04697B D1          0010M1      pop de
-04697C C1          0011M1      pop bc
-04697D E1          0012M1      pop hl
-04697E F1          0013M1      pop af
-04697F 08          0014M1      ex af,af'
-046980 D9          0015M1      exx
-046981             0240        PUSH_ALL
-046981 08          0001M1      ex af,af'
-046982 D9          0002M1      exx
-046983 F5          0003M1      push af
-046984 E5          0004M1      push hl
-046985 C5          0005M1      push bc
-046986 D5          0006M1      push de
-046987             0007M1  
-046987 08          0008M1      ex af,af'
-046988 D9          0009M1      exx
-046989 F5          0010M1      push af
-04698A E5          0011M1      push hl
-04698B C5          0012M1      push bc
-04698C D5          0013M1      push de
-04698D DD E5       0014M1      push ix
-04698F FD E5       0015M1      push iy
-046991 CD 64 06 04 0241        call dumpFlags
-046995             0242        POP_ALL
-046995 FD E1       0001M1      pop iy
-046997 DD E1       0002M1      pop ix
-046999 D1          0003M1      pop de
-04699A C1          0004M1      pop bc
-04699B E1          0005M1      pop hl
-04699C F1          0006M1      pop af
-04699D 08          0007M1      ex af,af'
-04699E D9          0008M1      exx
-04699F             0009M1  
-04699F D1          0010M1      pop de
-0469A0 C1          0011M1      pop bc
-0469A1 E1          0012M1      pop hl
-0469A2 F1          0013M1      pop af
-0469A3 08          0014M1      ex af,af'
-0469A4 D9          0015M1      exx
-0469A5             0243        PUSH_ALL
-0469A5 08          0001M1      ex af,af'
-0469A6 D9          0002M1      exx
-0469A7 F5          0003M1      push af
-0469A8 E5          0004M1      push hl
-0469A9 C5          0005M1      push bc
-0469AA D5          0006M1      push de
-0469AB             0007M1  
-0469AB 08          0008M1      ex af,af'
-0469AC D9          0009M1      exx
-0469AD F5          0010M1      push af
-0469AE E5          0011M1      push hl
-0469AF C5          0012M1      push bc
-0469B0 D5          0013M1      push de
-0469B1 DD E5       0014M1      push ix
-0469B3 FD E5       0015M1      push iy
-0469B5 CD C6 04 04 0244        call dumpRegistersHex
-0469B9             0245        ; call waitKeypress
-0469B9             0246        POP_ALL
-0469B9 FD E1       0001M1      pop iy
-0469BB DD E1       0002M1      pop ix
-0469BD D1          0003M1      pop de
-0469BE C1          0004M1      pop bc
-0469BF E1          0005M1      pop hl
-0469C0 F1          0006M1      pop af
-0469C1 08          0007M1      ex af,af'
-0469C2 D9          0008M1      exx
-0469C3             0009M1  
-0469C3 D1          0010M1      pop de
-0469C4 C1          0011M1      pop bc
-0469C5 E1          0012M1      pop hl
-0469C6 F1          0013M1      pop af
-0469C7 08          0014M1      ex af,af'
-0469C8 D9          0015M1      exx
-0469C9 C9          0247        ret
-0469CA             0248    
-0469CA             0249    DEBUG_PRINT_TABLE:
-0469CA             0250        PUSH_ALL
-0469CA 08          0001M1      ex af,af'
-0469CB D9          0002M1      exx
-0469CC F5          0003M1      push af
-0469CD E5          0004M1      push hl
-0469CE C5          0005M1      push bc
-0469CF D5          0006M1      push de
-0469D0             0007M1  
-0469D0 08          0008M1      ex af,af'
-0469D1 D9          0009M1      exx
-0469D2 F5          0010M1      push af
-0469D3 E5          0011M1      push hl
-0469D4 C5          0012M1      push bc
-0469D5 D5          0013M1      push de
-0469D6 DD E5       0014M1      push ix
-0469D8 FD E5       0015M1      push iy
-0469DA             0251        ; call vdu_home_cursor
-0469DA 0E 00       0252        ld c,0
-0469DC 06 00       0253        ld b,0
-0469DE CD 37 19 04 0254        call vdu_move_cursor
-0469E2             0255    
-0469E2             0256        ; ld a,(player_weapons_count)
-0469E2             0257        ; call printHexA
-0469E2             0258        ; call printNewLine
-0469E2             0259    
-0469E2             0260        ; LIST_FIELD sprite_move_program,3 ; DEBUG
-0469E2             0261        ; LIST_FIELD sprite_type,1 ; DEBUG
-0469E2             0262    
-0469E2 DD 21 00 6B 0263        ld ix,player_weapons_begin
+046937             0202    ; DEBUG
+046937 CD 00 19 04 0203        call vdu_home_cursor
+04693B             0204    
+04693B 21 00 64 04 0205        ld hl,turret_fireball_defaults
+04693F 01 80 00 00 0206        ld bc,128 ; x
+046943 11 80 00 00 0207        ld de,128 ; y
+046947 CD 6C 5F 04 0208        call spawn_active_tile
+04694B             0209    
+04694B DD 27 17    0210        ld hl,(ix+tile_base_bufferId)
+04694E CD 38 1A 04 0211        call vdu_buff_select
+046952 DD 07 01    0212        ld bc,(ix+tile_x)
+046955 DD 17 04    0213        ld de,(ix+tile_y)
+046958 CD 3C 1E 04 0214        call vdu_plot_bmp168
+04695C             0215    
+04695C             0216    
+04695C DD 21 00 6D 0217        ld ix,tile_table_base
        04          
-0469E7 CD 69 66 04 0264        call dump_sprite_record
-0469EB CD 2C 01 04 0265        call printNewLine
-0469EF CD 2C 01 04 0266        call printNewLine
-0469F3             0267    
-0469F3 ED 32 40    0268        lea ix,ix+table_record_size
-0469F6 CD 69 66 04 0269        call dump_sprite_record
-0469FA CD 2C 01 04 0270        call printNewLine
-0469FE CD 2C 01 04 0271        call printNewLine
-046A02             0272    
-046A02 ED 32 40    0273        lea ix,ix+table_record_size
-046A05 CD 69 66 04 0274        call dump_sprite_record
-046A09 CD 2C 01 04 0275        call printNewLine
-046A0D CD 2C 01 04 0276        call printNewLine
-046A11             0277    
-046A11 ED 32 40    0278        lea ix,ix+table_record_size
-046A14 CD 69 66 04 0279        call dump_sprite_record
-046A18 CD 2C 01 04 0280        call printNewLine
-046A1C CD 2C 01 04 0281        call printNewLine
-046A20             0282    
-046A20             0283        ; ld ix,player_begin
-046A20             0284        ; call dump_sprite_record
-046A20             0285    
-046A20             0286        ; call waitKeypress
-046A20             0287        POP_ALL
-046A20 FD E1       0001M1      pop iy
-046A22 DD E1       0002M1      pop ix
-046A24 D1          0003M1      pop de
-046A25 C1          0004M1      pop bc
-046A26 E1          0005M1      pop hl
-046A27 F1          0006M1      pop af
-046A28 08          0007M1      ex af,af'
-046A29 D9          0008M1      exx
-046A2A             0009M1  
-046A2A D1          0010M1      pop de
-046A2B C1          0011M1      pop bc
-046A2C E1          0012M1      pop hl
-046A2D F1          0013M1      pop af
-046A2E 08          0014M1      ex af,af'
-046A2F D9          0015M1      exx
-046A30 C9          0288        RET
-046A31             0289    
-046A31             0290    DEBUG_WAITKEYPRESS:
-046A31             0291        PUSH_ALL
-046A31 08          0001M1      ex af,af'
-046A32 D9          0002M1      exx
-046A33 F5          0003M1      push af
-046A34 E5          0004M1      push hl
-046A35 C5          0005M1      push bc
-046A36 D5          0006M1      push de
-046A37             0007M1  
-046A37 08          0008M1      ex af,af'
-046A38 D9          0009M1      exx
-046A39 F5          0010M1      push af
-046A3A E5          0011M1      push hl
-046A3B C5          0012M1      push bc
-046A3C D5          0013M1      push de
-046A3D DD E5       0014M1      push ix
-046A3F FD E5       0015M1      push iy
-046A41 CD C5 06 04 0292        call waitKeypress
-046A45             0293        POP_ALL
-046A45 FD E1       0001M1      pop iy
-046A47 DD E1       0002M1      pop ix
-046A49 D1          0003M1      pop de
-046A4A C1          0004M1      pop bc
-046A4B E1          0005M1      pop hl
-046A4C F1          0006M1      pop af
-046A4D 08          0007M1      ex af,af'
-046A4E D9          0008M1      exx
-046A4F             0009M1  
-046A4F D1          0010M1      pop de
-046A50 C1          0011M1      pop bc
-046A51 E1          0012M1      pop hl
-046A52 F1          0013M1      pop af
-046A53 08          0014M1      ex af,af'
-046A54 D9          0015M1      exx
-046A55 C9          0294        RET
-046A56             0295    
-046A56             0296    DEBUG_PRINT_FIELDS:
-046A56             0297        ; PUSH_ALL
-046A56 01 00 00 00 0298        ld bc,0
-046A5A 4F          0299        ld c,a
-046A5B DD 21 00 6B 0300        ld ix,table_base
+046961 CD CE 5F 04 0218        CALL dump_tile_record
+046965             0219    
+046965 ED 32 40    0220        lea ix,ix+tile_table_record_size
+046968 CD CE 5F 04 0221        CALL dump_tile_record
+04696C             0222    
+04696C CD 6E 6A 04 0223        CALL DEBUG_WAITKEYPRESS
+046970 C3 91 69 04 0224        jp main_end
+046974             0225    ; END DEBUG
+046974             0226    main_loop:
+046974             0227    ; update the global timestamp
+046974 CD F9 17 04 0228        call timestamp_tick
+046978             0229    ; do gamestate logic
+046978 CD 03 59 04 0230        call do_game
+04697C             0231    
+04697C             0232    ; DEBUG
+04697C             0233        ; CALL DEBUG_PRINT_TABLE
+04697C             0234        ; CALL DEBUG_WAITKEYPRESS
+04697C             0235    ; END DEBUG
+04697C             0236    
+04697C             0237    ; wait for the next vblank mitigate flicker and for loop timing
+04697C CD BF 19 04 0238        call vdu_vblank
+046980             0239        ; call vdu_vblank ; DEBUG
+046980             0240        ; call vdu_vblank ; DEBUG
+046980             0241    
+046980             0242    ; poll keyboard for escape keypress
+046980 3E 08       0243        ld a, $08 ; code to send to MOS
+046982 5B CF       0244        rst.lil $08 ; get IX pointer to System Variables
+046984 DD 7E 05    0245        ld a, (ix + $05) ; get ASCII code of key pressed
+046987 FE 1B       0246        cp 27 ; check if 27 (ascii code for ESC)
+046989 CA 91 69 04 0247        jp z, main_end ; if pressed, jump to exit
+04698D             0248    
+04698D             0249    ; escape not pressed so loop
+04698D C3 74 69 04 0250        jp main_loop
+046991             0251    
+046991             0252    main_end:
+046991 CD 05 19 04 0253        call vdu_cursor_on
+046995 C9          0254        ret
+046996             0255    
+046996             0256    DEBUG_PRINT:
+046996             0257        PUSH_ALL
+046996 08          0001M1      ex af,af'
+046997 D9          0002M1      exx
+046998 F5          0003M1      push af
+046999 E5          0004M1      push hl
+04699A C5          0005M1      push bc
+04699B D5          0006M1      push de
+04699C             0007M1  
+04699C 08          0008M1      ex af,af'
+04699D D9          0009M1      exx
+04699E F5          0010M1      push af
+04699F E5          0011M1      push hl
+0469A0 C5          0012M1      push bc
+0469A1 D5          0013M1      push de
+0469A2 DD E5       0014M1      push ix
+0469A4 FD E5       0015M1      push iy
+0469A6 0E 00       0258        ld c,0
+0469A8 06 00       0259        ld b,0
+0469AA CD 37 19 04 0260        call vdu_move_cursor
+0469AE             0261        POP_ALL
+0469AE FD E1       0001M1      pop iy
+0469B0 DD E1       0002M1      pop ix
+0469B2 D1          0003M1      pop de
+0469B3 C1          0004M1      pop bc
+0469B4 E1          0005M1      pop hl
+0469B5 F1          0006M1      pop af
+0469B6 08          0007M1      ex af,af'
+0469B7 D9          0008M1      exx
+0469B8             0009M1  
+0469B8 D1          0010M1      pop de
+0469B9 C1          0011M1      pop bc
+0469BA E1          0012M1      pop hl
+0469BB F1          0013M1      pop af
+0469BC 08          0014M1      ex af,af'
+0469BD D9          0015M1      exx
+0469BE             0262        PUSH_ALL
+0469BE 08          0001M1      ex af,af'
+0469BF D9          0002M1      exx
+0469C0 F5          0003M1      push af
+0469C1 E5          0004M1      push hl
+0469C2 C5          0005M1      push bc
+0469C3 D5          0006M1      push de
+0469C4             0007M1  
+0469C4 08          0008M1      ex af,af'
+0469C5 D9          0009M1      exx
+0469C6 F5          0010M1      push af
+0469C7 E5          0011M1      push hl
+0469C8 C5          0012M1      push bc
+0469C9 D5          0013M1      push de
+0469CA DD E5       0014M1      push ix
+0469CC FD E5       0015M1      push iy
+0469CE CD 64 06 04 0263        call dumpFlags
+0469D2             0264        POP_ALL
+0469D2 FD E1       0001M1      pop iy
+0469D4 DD E1       0002M1      pop ix
+0469D6 D1          0003M1      pop de
+0469D7 C1          0004M1      pop bc
+0469D8 E1          0005M1      pop hl
+0469D9 F1          0006M1      pop af
+0469DA 08          0007M1      ex af,af'
+0469DB D9          0008M1      exx
+0469DC             0009M1  
+0469DC D1          0010M1      pop de
+0469DD C1          0011M1      pop bc
+0469DE E1          0012M1      pop hl
+0469DF F1          0013M1      pop af
+0469E0 08          0014M1      ex af,af'
+0469E1 D9          0015M1      exx
+0469E2             0265        PUSH_ALL
+0469E2 08          0001M1      ex af,af'
+0469E3 D9          0002M1      exx
+0469E4 F5          0003M1      push af
+0469E5 E5          0004M1      push hl
+0469E6 C5          0005M1      push bc
+0469E7 D5          0006M1      push de
+0469E8             0007M1  
+0469E8 08          0008M1      ex af,af'
+0469E9 D9          0009M1      exx
+0469EA F5          0010M1      push af
+0469EB E5          0011M1      push hl
+0469EC C5          0012M1      push bc
+0469ED D5          0013M1      push de
+0469EE DD E5       0014M1      push ix
+0469F0 FD E5       0015M1      push iy
+0469F2 CD C6 04 04 0266        call dumpRegistersHex
+0469F6             0267        ; call waitKeypress
+0469F6             0268        POP_ALL
+0469F6 FD E1       0001M1      pop iy
+0469F8 DD E1       0002M1      pop ix
+0469FA D1          0003M1      pop de
+0469FB C1          0004M1      pop bc
+0469FC E1          0005M1      pop hl
+0469FD F1          0006M1      pop af
+0469FE 08          0007M1      ex af,af'
+0469FF D9          0008M1      exx
+046A00             0009M1  
+046A00 D1          0010M1      pop de
+046A01 C1          0011M1      pop bc
+046A02 E1          0012M1      pop hl
+046A03 F1          0013M1      pop af
+046A04 08          0014M1      ex af,af'
+046A05 D9          0015M1      exx
+046A06 C9          0269        ret
+046A07             0270    
+046A07             0271    DEBUG_PRINT_TABLE:
+046A07             0272        PUSH_ALL
+046A07 08          0001M1      ex af,af'
+046A08 D9          0002M1      exx
+046A09 F5          0003M1      push af
+046A0A E5          0004M1      push hl
+046A0B C5          0005M1      push bc
+046A0C D5          0006M1      push de
+046A0D             0007M1  
+046A0D 08          0008M1      ex af,af'
+046A0E D9          0009M1      exx
+046A0F F5          0010M1      push af
+046A10 E5          0011M1      push hl
+046A11 C5          0012M1      push bc
+046A12 D5          0013M1      push de
+046A13 DD E5       0014M1      push ix
+046A15 FD E5       0015M1      push iy
+046A17             0273        ; call vdu_home_cursor
+046A17 0E 00       0274        ld c,0
+046A19 06 00       0275        ld b,0
+046A1B CD 37 19 04 0276        call vdu_move_cursor
+046A1F             0277    
+046A1F             0278        ; ld a,(player_weapons_count)
+046A1F             0279        ; call printHexA
+046A1F             0280        ; call printNewLine
+046A1F             0281    
+046A1F             0282        ; LIST_FIELD sprite_move_program,3 ; DEBUG
+046A1F             0283        ; LIST_FIELD sprite_type,1 ; DEBUG
+046A1F             0284    
+046A1F DD 21 00 6B 0285        ld ix,player_weapons_begin
        04          
-046A60 DD 09       0301        add ix,bc
-046A62 06 08       0302        ld b,table_num_records
-046A64             0303    @@:
-046A64 DD E5       0304        push ix
-046A66 E1          0305        pop hl
-046A67 C5          0306        push bc ; save loop counter
-046A68 3E 01       0307        ld a,1 ; print one byte
-046A6A CD CA 06 04 0308        call dumpMemoryHex
-046A6E ED 32 40    0309        lea ix,ix+table_record_size
-046A71 C1          0310        pop bc ; restore loop counter
-046A72 10 F0       0311        djnz @b
-046A74             0312        ; POP_ALL
-046A74 C9          0313        ret
-046A75             0314    
-046A75             0315        include "tables.inc"
-046A75             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
-046A75 FF FF FF FF 0002*       align 256
+046A24 CD 69 66 04 0286        call dump_sprite_record
+046A28 CD 2C 01 04 0287        call printNewLine
+046A2C CD 2C 01 04 0288        call printNewLine
+046A30             0289    
+046A30 ED 32 40    0290        lea ix,ix+table_record_size
+046A33 CD 69 66 04 0291        call dump_sprite_record
+046A37 CD 2C 01 04 0292        call printNewLine
+046A3B CD 2C 01 04 0293        call printNewLine
+046A3F             0294    
+046A3F ED 32 40    0295        lea ix,ix+table_record_size
+046A42 CD 69 66 04 0296        call dump_sprite_record
+046A46 CD 2C 01 04 0297        call printNewLine
+046A4A CD 2C 01 04 0298        call printNewLine
+046A4E             0299    
+046A4E ED 32 40    0300        lea ix,ix+table_record_size
+046A51 CD 69 66 04 0301        call dump_sprite_record
+046A55 CD 2C 01 04 0302        call printNewLine
+046A59 CD 2C 01 04 0303        call printNewLine
+046A5D             0304    
+046A5D             0305        ; ld ix,player_begin
+046A5D             0306        ; call dump_sprite_record
+046A5D             0307    
+046A5D             0308        ; call waitKeypress
+046A5D             0309        POP_ALL
+046A5D FD E1       0001M1      pop iy
+046A5F DD E1       0002M1      pop ix
+046A61 D1          0003M1      pop de
+046A62 C1          0004M1      pop bc
+046A63 E1          0005M1      pop hl
+046A64 F1          0006M1      pop af
+046A65 08          0007M1      ex af,af'
+046A66 D9          0008M1      exx
+046A67             0009M1  
+046A67 D1          0010M1      pop de
+046A68 C1          0011M1      pop bc
+046A69 E1          0012M1      pop hl
+046A6A F1          0013M1      pop af
+046A6B 08          0014M1      ex af,af'
+046A6C D9          0015M1      exx
+046A6D C9          0310        RET
+046A6E             0311    
+046A6E             0312    DEBUG_WAITKEYPRESS:
+046A6E             0313        PUSH_ALL
+046A6E 08          0001M1      ex af,af'
+046A6F D9          0002M1      exx
+046A70 F5          0003M1      push af
+046A71 E5          0004M1      push hl
+046A72 C5          0005M1      push bc
+046A73 D5          0006M1      push de
+046A74             0007M1  
+046A74 08          0008M1      ex af,af'
+046A75 D9          0009M1      exx
+046A76 F5          0010M1      push af
+046A77 E5          0011M1      push hl
+046A78 C5          0012M1      push bc
+046A79 D5          0013M1      push de
+046A7A DD E5       0014M1      push ix
+046A7C FD E5       0015M1      push iy
+046A7E CD C5 06 04 0314        call waitKeypress
+046A82             0315        POP_ALL
+046A82 FD E1       0001M1      pop iy
+046A84 DD E1       0002M1      pop ix
+046A86 D1          0003M1      pop de
+046A87 C1          0004M1      pop bc
+046A88 E1          0005M1      pop hl
+046A89 F1          0006M1      pop af
+046A8A 08          0007M1      ex af,af'
+046A8B D9          0008M1      exx
+046A8C             0009M1  
+046A8C D1          0010M1      pop de
+046A8D C1          0011M1      pop bc
+046A8E E1          0012M1      pop hl
+046A8F F1          0013M1      pop af
+046A90 08          0014M1      ex af,af'
+046A91 D9          0015M1      exx
+046A92 C9          0316        RET
+046A93             0317    
+046A93             0318    DEBUG_PRINT_FIELDS:
+046A93             0319        ; PUSH_ALL
+046A93 01 00 00 00 0320        ld bc,0
+046A97 4F          0321        ld c,a
+046A98 DD 21 00 6B 0322        ld ix,table_base
+       04          
+046A9D DD 09       0323        add ix,bc
+046A9F 06 08       0324        ld b,table_num_records
+046AA1             0325    @@:
+046AA1 DD E5       0326        push ix
+046AA3 E1          0327        pop hl
+046AA4 C5          0328        push bc ; save loop counter
+046AA5 3E 01       0329        ld a,1 ; print one byte
+046AA7 CD CA 06 04 0330        call dumpMemoryHex
+046AAB ED 32 40    0331        lea ix,ix+table_record_size
+046AAE C1          0332        pop bc ; restore loop counter
+046AAF 10 F0       0333        djnz @b
+046AB1             0334        ; POP_ALL
+046AB1 C9          0335        ret
+046AB2             0336    
+046AB2 FF FF FF FF 0337        align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -12936,35 +12954,21 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF    
-046B00             0003*   
-046B00             0004*   table_base: equ $
-046B00             0005*   player_weapons_begin: equ table_base ; blkb table_record_size*player_weapons_max,0
-046B00             0006*   player_weapons_end: equ table_record_size*player_weapons_max+player_weapons_begin
-046B00             0007*   player_begin: equ player_weapons_end
-046B00             0008*   player_end: equ table_record_size+player_begin
-046B00             0009*   enemy_sprites_begin: equ player_end
-046B00             0010*   seekers_base: equ enemy_sprites_begin ; blkb table_record_size*seekers_max,0
-046B00             0011*   enemy_sprites_end: equ table_record_size*seekers_max+seekers_base
-046B00             0012*   table_end: equ enemy_sprites_end
+       FF FF       
+046B00             0338        include "tables.inc"
+046B00             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
+046B00             0002*   table_base: equ $
+046B00             0003*   player_weapons_begin: equ table_base ; blkb table_record_size*player_weapons_max,0
+046B00             0004*   player_weapons_end: equ table_record_size*player_weapons_max+player_weapons_begin
+046B00             0005*   player_begin: equ player_weapons_end
+046B00             0006*   player_end: equ table_record_size+player_begin
+046B00             0007*   enemy_sprites_begin: equ player_end
+046B00             0008*   seekers_base: equ enemy_sprites_begin ; blkb table_record_size*seekers_max,0
+046B00             0009*   enemy_sprites_end: equ table_record_size*seekers_max+seekers_base
+046B00             0010*   table_end: equ enemy_sprites_end
+046B00             0011*   
+046B00             0012*   table_num_records: equ table_end-table_base/table_record_size
 046B00             0013*   
-046B00             0014*   table_num_records: equ table_end-table_base/table_record_size
-046B00             0015*   
-046B00             0016*   ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
-046B00             0017*   tile_table_base: equ table_end
-046B00             0018*   tile_table_end: equ 256*tile_table_record_size+tile_table_base
+046B00             0014*   ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
+046B00             0015*   tile_table_base: equ table_end
+046B00             0016*   tile_table_end: equ 256*tile_table_record_size+tile_table_base

@@ -1,6 +1,4 @@
 ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
-    align 256
-
 table_base: equ $
 player_weapons_begin: equ table_base ; blkb table_record_size*player_weapons_max,0
 player_weapons_end: equ table_record_size*player_weapons_max+player_weapons_begin

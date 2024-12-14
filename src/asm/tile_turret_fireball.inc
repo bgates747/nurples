@@ -19,7 +19,7 @@ turret_fireball_defaults:
 activate_turret_fireball:
     ld hl,turret_fireball_defaults
 ; get next available sprite id
-    call spawn_sprite_from_tile
+    call spawn_active_tile
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
     ld a,64
