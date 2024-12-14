@@ -202,10 +202,11 @@ main:
 ; DEBUG
     call vdu_home_cursor
 
-    ld hl,turret_fireball_defaults
-    ld bc,128 ; x
-    ld de,128 ; y
-    call spawn_active_tile
+    ld hl,128 ; x
+    ld (tiles_x_plot),hl
+    ld hl,128 ; y
+    ld (tiles_y_plot),hl
+    call activate_turret_fireball
 
     ld hl,(ix+tile_base_bufferId)
     call vdu_buff_select
@@ -223,6 +224,7 @@ main:
     CALL DEBUG_WAITKEYPRESS
     jp main_end
 ; END DEBUG
+
 main_loop:
 ; update the global timestamp
     call timestamp_tick

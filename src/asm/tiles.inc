@@ -9,7 +9,9 @@ tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits z
 tiles_cols: db 0 ; number of tile columns in the current level
 
 cur_baseBufferId: dl 0
+    db 0 ; padding for byte-shifting
 tiles_x_plot: dl 0
+    db 0 ; padding for byte-shifting
 tiles_y_plot: dl -15
 
 tiles_plot:

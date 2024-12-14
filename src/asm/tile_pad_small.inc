@@ -18,12 +18,12 @@ pad_small_defaults:
 
 activate_pad_small:
     ld hl,pad_small_defaults
-; get next available sprite id
+; get next available tile id
     call spawn_active_tile
-    ret nc ; no carry means no free sprite slots, so we go home
+    ret nc ; no carry means no free tile slots, so we go home
 ; other specific initialization
     ld a,64
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 ; end activate_pad_small
 
@@ -34,12 +34,12 @@ move_pad_small:
     call check_enemy_collisions
     ret m ; was collision so nothing more to do
 ; check whether it is time to spawn a seeker
-    dec (iy+sprite_move_timer)
+    dec (iy+tile_move_timer)
     ret nz
 pad_small_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,64 ; range is now 64-127
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
     call enemy_spawn_seeker
     ret

@@ -1,7 +1,8 @@
     align 256
 turret_fireball_defaults:
     db enemy_ground         ; type
-    dl BUF_TURRET_000       ; base_bufferId
+    ; dl BUF_TURRET_000       ; base_bufferId
+    dl BUF_CRATER       ; base_bufferId DEBUG
     dl move_turret_fireball ; move_program
     db collides_with_laser  ; collisions
     db 16                   ; dim_x
@@ -18,12 +19,12 @@ turret_fireball_defaults:
 
 activate_turret_fireball:
     ld hl,turret_fireball_defaults
-; get next available sprite id
+; get next available active tile id
     call spawn_active_tile
-    ret nc ; no carry means no free sprite slots, so we go home
+    ret nc ; no carry means no free active tile slots, so we go home
 ; other specific initialization
     ld a,64
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a seeker
+    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 ; end activate_turret_fireball
 
@@ -38,10 +39,10 @@ move_turret_fireball:
     ld (Vp),hl ; param for targeting_computer
     call orientation_to_player
     call targeting_computer
-    ld (iy+sprite_heading),hl ; save sprite heading
-    call sprite_frame_heading
+    ld (iy+tile_heading),hl ; save active tile heading
+    call tile_frame_heading
 ; check whether it is time to spawn a fireball
-    dec (iy+sprite_move_timer)
+    dec (iy+tile_move_timer)
     ret nz
 ; spwan a fireball    
     call enemy_spawn_fireball
@@ -50,5 +51,5 @@ turret_fireball_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,24 ; range is now 24-55
-    ld (iy+sprite_move_timer),a ; when this hits zero,will spawn a fireball
+    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
     ret

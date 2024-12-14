@@ -141,19 +141,17 @@ alter_tile:
 ; end alter_tile
 
 ; spawn a new active tile at the prescribed location
-; inputs: hl = pointer to new tile default settings, bc,de = x,y position (integer)
+; inputs: hl = pointer to new tile default settings, tiles_x_plot, tiles_y_plot = x,y position
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
 ; destroys: a,hl,ix
 ; preserves: bc,de (x,y position)
 ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 spawn_active_tile:
-    push de ; back up y position
-    push bc ; back up x position
     push hl ; back up pointer to new tile defaults
     call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
     pop hl ; restore pointer to new tile defaults
-    jp nc,@no_tile ; no carry means no free tile slots, so we go home
+    ret nc ; no carry means no free tile slots, so we go home
 ; copy default settings to new tile
     ld (new_tile_table_pointer),ix ; save pointer to new tile record
     lea ix,ix+tile_definitions ; bump pointer to copy to
@@ -163,23 +161,15 @@ spawn_active_tile:
     ldir ; copies defaults to new tile record
 ; copy tile position from inputs
     ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
-    xor a ; to zero out fractional bytes
-    pop bc ; restore x position
-    pop de ; restore y position
-    ld (ix+tile_x),a
-    ld (ix+tile_x+1),c
-    ld (ix+tile_x+2),b
-    ld (ix+tile_y),a
-    ld (ix+tile_y+1),e
-    ld (ix+tile_y+2),d
+    ld hl,(tiles_x_plot-1) ; shift up one byte to get 16.8 fixed point
+    ld (ix+tile_x),hl
+    ld hl,(tiles_y_plot-1) ; shift up one byte to get 16.8 fixed point
+    ld (ix+tile_y),hl
 ; return to caller
     set 7,(ix+tile_type) ; set just spawned flag
     scf ; set carry flag to indicate success
     ret
-@no_tile: ; dummy pops to balance stack (restores x,y inputs as well)
-    pop bc
-    pop de
-    ret
+; end spawn_active_tile
 
 ; compute animation frame based on tile_animation and tile_heading
 ; inputs: iy set to tile record
