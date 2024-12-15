@@ -80,14 +80,14 @@
     ENDMACRO
 
     ; TODO: implement this
-    ; MACRO A_TO_HLU
-    ;     push.s af
-    ;     inc sp
-    ;     push.s hl
-    ;     pop hl
-    ;     inc sp
-    ;     inc sp
-    ; ENDMACRO
+    MACRO A_TO_HLU
+        push.s af
+        inc sp
+        push.s hl
+        pop hl
+        inc sp
+        inc sp
+    ENDMACRO
 
 A_TO_HLU:
     ; call is 7 cycles
