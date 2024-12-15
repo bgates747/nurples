@@ -21,7 +21,7 @@ img_load_init:
     ld hl,224*256 
     ld (logo_ypos),hl
     ex de,hl
-    ld hl,-240*256
+    ld hl,-240+24*256
     ; ld de,-256*[sprites_num_images+tiles_dg_num_images+ui_num_images]
     ld de,sprites_num_images+tiles_dg_num_images+ui_num_images*256
     call sdiv168 ; ud.e = distance / num images = y velocity

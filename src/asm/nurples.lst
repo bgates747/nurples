@@ -3675,7 +3675,7 @@ PC     Output      Line
 041615 21 00 E0 00 0021*       ld hl,224*256
 041619 22 CB 16 04 0022*       ld (logo_ypos),hl
 04161D EB          0023*       ex de,hl
-04161E 21 00 10 FF 0024*       ld hl,-240*256
+04161E 21 00 28 FF 0024*       ld hl,-240+24*256
 041622             0025*       ; ld de,-256*[sprites_num_images+tiles_dg_num_images+ui_num_images]
 041622 11 00 0C 01 0026*       ld de,sprites_num_images+tiles_dg_num_images+ui_num_images*256
 041626 CD 2E 0B 04 0027*       call sdiv168 ; ud.e = distance / num images = y velocity
@@ -9756,14 +9756,14 @@ PC     Output      Line
        00 00 C0 00 
        BE 56 04 01 
        00 00       
-045689 01 00 00 00 0014*   	dl 1, 512, 384, 196608, fn_splash_bg, 2
-       02 00 80 01 
-       00 00 00 03 
-       CF 56 04 02 
-       00 00       
-04569B 01 00 00 40 0015*   	dl 1, 320, 240, 76800, fn_splash_logo, 3
+045689 01 00 00 40 0014*   	dl 1, 320, 240, 76800, fn_splash_bg, 2
        01 00 F0 00 
        00 00 2C 01 
+       CF 56 04 02 
+       00 00       
+04569B 01 00 00 A0 0015*   	dl 1, 160, 106, 16960, fn_splash_logo, 3
+       00 00 6A 00 
+       00 40 42 00 
        E2 56 04 03 
        00 00       
 0456AD             0016*   
@@ -12851,8 +12851,8 @@ PC     Output      Line
 046D58 CD CE 16 04 0089        call load_ui_images
 046D5C             0090    
 046D5C             0091    ; set up the display
-046D5C             0092        ; ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-046D5C 3E 94       0093        ld a,20+128 ; 136   512   384   64    60hz double-buffered
+046D5C 3E 88       0092        ld a,8+128 ; 136   320   240   64    60hz double-buffered
+046D5E             0093        ; ld a,20 ;  512   384   64    60hz single-buffered
 046D5E CD 14 1B 04 0094        call vdu_set_screen_mode
 046D62 AF          0095        xor a
 046D63 CD 25 1B 04 0096        call vdu_set_scaling

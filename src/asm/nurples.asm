@@ -89,8 +89,8 @@ init:
     call load_ui_images
 
 ; set up the display
-    ; ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-    ld a,20 ;  512   384   64    60hz single-buffered
+    ld a,8+128 ; 136   320   240   64    60hz double-buffered
+    ; ld a,20 ;  512   384   64    60hz single-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
