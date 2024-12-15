@@ -10,35 +10,35 @@
 ;  
 ;------------------------------------------------------------------------
 
-; ;------------------------------------------------------------------------
-; ; DEPRECATED BY umul24 in fixed168.inc
-; ;------------------------------------------------------------------------
-; ; umul24:	HL = HL*DE (unsigned)
-; ; Preserves AF, BC, DE
-; ; Uses a fast multiply routine.
-; ;------------------------------------------------------------------------
-; umul24:
-; 	push	DE 
-; 	push	BC
-; 	push	AF	
-; 	push	HL
-; 	pop		BC
-;     ld	 	a, 24 ; No. of bits to process 
-;     ld	 	hl, 0 ; Result
-; umul24_lp:
-; 	add	hl,hl
-; 	ex	de,hl
-; 	add	hl,hl
-; 	ex	de,hl
-; 	jr	nc,umul24_nc
-; 	add	hl,bc
-; umul24_nc: 
-; 	dec	a
-; 	jr	nz,umul24_lp
-; 	pop	af
-; 	pop	bc
-; 	pop	de
-; 	ret
+;------------------------------------------------------------------------
+; DEPRECATED BY umul24 in fixed168.inc
+;------------------------------------------------------------------------
+; umul24:	HL = HL*DE (unsigned)
+; Preserves AF, BC, DE
+; Uses a fast multiply routine.
+;------------------------------------------------------------------------
+umul24:
+	push	DE 
+	push	BC
+	push	AF	
+	push	HL
+	pop		BC
+    ld	 	a, 24 ; No. of bits to process 
+    ld	 	hl, 0 ; Result
+umul24_lp:
+	add	hl,hl
+	ex	de,hl
+	add	hl,hl
+	ex	de,hl
+	jr	nc,umul24_nc
+	add	hl,bc
+umul24_nc: 
+	dec	a
+	jr	nz,umul24_lp
+	pop	af
+	pop	bc
+	pop	de
+	ret
 
 
 ;------------------------------------------------------------------------

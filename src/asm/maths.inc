@@ -121,6 +121,17 @@ hlu_udiv256:
     add hl,hl ; * 256
     ENDMACRO
 
+; https://discord.com/channels/1158535358624039014/1282290921815408681/1317793870070812715
+    MACRO uhl_udiv256
+    ld a,l
+    dec sp
+    push hl
+    inc sp
+    pop hl
+    inc hl
+    dec.s hl ; <-- the .s sets hlu to zero (undocumented)
+    ENDMACRO
+
 add_bcd_arg1: db #00,#00,#00,#00
 add_bcd_arg2: db #00,#00,#00,#00
 

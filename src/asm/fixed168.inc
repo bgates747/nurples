@@ -116,11 +116,11 @@ mul24:
 @hl: dl 0
 @de: dl 0
 
-; UHL * UDE --> UHL (unsigned)
-umul24:
-    call mul24
-    ld hl,(mul24out)
-    ret
+; ; UHL * UDE --> UHL (unsigned)
+; umul24:
+;     call mul24
+;     ld hl,(mul24out)
+;     ret
 
 ; UH.L = UH.L*UD.E (unsigned)
 umul168:
