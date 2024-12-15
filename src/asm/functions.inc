@@ -1,108 +1,5 @@
     align 256
 
-    MACRO printChar char
-    LD A, char
-    RST.LIL 10h
-    ENDMACRO
-
-; Simulated call to subroutine at HL
-; inputs: HL pointing to the subroutine address plus whatever the called function expects
-; outputs: whatever the subroutine does, including HL and BC
-; destroys: only what the subroutine does, but always BC
-    MACRO callHL
-    ld bc,@F ; Address of first instruction after the jump
-    push bc ; which constitutes the return address
-    jp (hl) ; Jump to the address in HL
-@@:
-    ENDMACRO
-
-; Simulated call to subroutine at IX
-; inputs: IX pointing to the subroutine address plus whatever the called function expects
-; outputs: whatever the subroutine does, including IX and BC
-; destroys: only what the subroutine does, but always BC
-    MACRO callIX
-    ld bc,@F ; Address of first instruction after the jump
-    push bc ; which constitutes the return address
-    jp (ix) ; Jump to the address in IX
-@@:
-    ENDMACRO
-
-; Simulated call to soubroutinte at IY
-; inputs: IY pointing to the subroutine address plus whatever the called function expects
-; outputs: whatever the subroutine does, including IY and BC
-; destroys: only what the subroutine does, but always BC
-    MACRO callIY
-    ld bc,@F ; Address of first instruction after the jump
-    push bc ; which constitutes the return address
-    jp (iy) ; Jump to the address in IY
-@@:
-    ENDMACRO
-
-; put the value in HLU into the accumulator
-; destroys: af
-    MACRO HLU_TO_A
-    push hl ; 4 cycles
-    inc sp ; 1 cycle
-    pop af ; 4 cycles
-    dec sp ; 1 cycle
-    ; 10 cycles total
-    ENDMACRO
-
-A_TO_HLU:
-    ; call is 7 cycles
-    ld (@scratch),hl ; 7 cycles
-    ld (@scratch+2),a ; 5 cycles
-    ld hl,(@scratch) ; 7 cycles
-    ret ; 6 cycles
-    ; 25 cycles total
-@scratch: dl 0
-
-    ; TODO: implement this
-    ; MACRO A_TO_HLU
-    ;     push.s af
-    ;     inc sp
-    ;     push.s hl
-    ;     pop hl
-    ;     inc sp
-    ;     inc sp
-    ; ENDMACRO
-
-    MACRO PUSH_ALL
-    ex af,af'
-    exx
-    push af
-    push hl
-    push bc
-    push de
-
-    ex af,af'
-    exx
-    push af
-    push hl
-    push bc
-    push de
-    push ix
-    push iy
-    ENDMACRO
-
-    MACRO POP_ALL
-    pop iy
-    pop ix
-    pop de
-    pop bc
-    pop hl
-    pop af
-    ex af,af'
-    exx
-
-    pop de
-    pop bc
-    pop hl
-    pop af
-    ex af,af'
-    exx
-    ENDMACRO
-
 ; Print a zero-terminated string inline with code, e.g.:
 ;
 ;    call printInline
@@ -429,7 +326,8 @@ u168_to_ascii:
     inc de
 ; Convert integer part
     push hl ; Save HL (we’ll need the fractional part later)
-    call hlu_udiv256 ; Shift to get integer portion in HL
+    ; call hlu_udiv256 ; Shift to get integer portion in HL
+    uhl_udiv256 ; Shift to get integer portion in HL
     ld bc, -10000
     call @one_int
     ld bc, -1000

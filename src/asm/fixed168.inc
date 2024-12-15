@@ -401,7 +401,8 @@ distance168:
 ; compute dy^2
     ld hl,(dy168)
     call hlu_abs
-    call hlu_udiv256 ; make integer to avoid overflow
+    ; call hlu_udiv256 ; make integer to avoid overflow
+    uhl_udiv256 ; make integer to avoid overflow
     push hl
     pop de
     call umul24 ; hl = dy^2
@@ -409,7 +410,8 @@ distance168:
 ; compute dx^2
     ld hl,(dx168)
     call hlu_abs
-    call hlu_udiv256 ; make integer to avoid overflow
+    ; call hlu_udiv256 ; make integer to avoid overflow
+    uhl_udiv256 ; make integer to avoid overflow
     push hl
     pop de
     call umul24 ; hl = dx^2

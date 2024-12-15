@@ -1,14 +1,4 @@
     align 256
-; test the sign of HL
-; inputs: HL obviously
-; outputs: sign flag set if HL is negative, zero flag set if HL is zero
-; destroys: flags    
-    MACRO sign_hlu
-    add hl,de
-    or a ; clear flags
-    sbc hl,de
-    ENDMACRO
-
 
 ;------------------------------------------------------------------------
 ; Scratch area for calculations
@@ -109,28 +99,6 @@ hlu_udiv256:
     ld hl,(@buffer+1)
     ret
 @buffer: ds 4
-
-    MACRO hlu_mul256
-    add hl,hl ; * 2
-    add hl,hl ; * 4
-    add hl,hl ; * 8
-    add hl,hl ; * 16 
-    add hl,hl ; * 32
-    add hl,hl ; * 64
-    add hl,hl ; * 128
-    add hl,hl ; * 256
-    ENDMACRO
-
-; https://discord.com/channels/1158535358624039014/1282290921815408681/1317793870070812715
-    MACRO uhl_udiv256
-    ld a,l
-    dec sp
-    push hl
-    inc sp
-    pop hl
-    inc hl
-    dec.s hl ; <-- the .s sets hlu to zero (undocumented)
-    ENDMACRO
 
 add_bcd_arg1: db #00,#00,#00,#00
 add_bcd_arg2: db #00,#00,#00,#00
