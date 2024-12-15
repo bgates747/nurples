@@ -41,6 +41,7 @@ exit:
     include "vdu_sprites.inc"
 
 ; APPLICATION INCLUDES
+    include "ascii.inc"
     include "collisions.inc"
     include "enemies.inc"
     include "enemy_fireball.inc"
@@ -72,7 +73,6 @@ exit:
 
 ; --- MAIN PROGRAM FILE ---
 hello_world: asciz "Welcome to Purple Nurples!"
-loading_ui: asciz "Loading UI"
 loading_time: asciz "Loading time:"
 loading_complete: asciz "Press any key to continue."
 
@@ -80,9 +80,17 @@ init:
 ; clear all buffers
     call vdu_clear_all_buffers
 
+; print loading ui message
+    call vdu_cls
+    ld hl,loading_ui
+    call printString
+    call vdu_flip
+; load UI images
+    call load_ui_images
+
 ; set up the display
     ; ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-    ld a,20;+128 ; 136   512   384   64    60hz double-buffered
+    ld a,20 ;  512   384   64    60hz single-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
@@ -115,14 +123,6 @@ init:
     ld e,39 ; right
     ld b,0; bottom
     call vdu_set_txt_viewport
-
-; print loading ui message
-    ld hl,loading_ui
-    call printString
-    call vdu_flip
-
-; load UI images
-    call load_ui_images
 
 ; load sprites
     call img_load_init ; sets up the animated load screen
