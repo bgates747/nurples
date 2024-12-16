@@ -1,12 +1,14 @@
     assume adl=1 
     org 0x040000 
+    include "mos_api.inc"
+    include "macros.inc"
+
     jp start 
     align 64 
     db "MOS" 
     db 00h 
     db 01h 
 
-scratch: dl 0
 start: 
     push af
     push bc
@@ -15,24 +17,10 @@ start:
     push iy
 
 ; MAIN PROGRAM
-    ld (scratch),sp
-    ld hl,(scratch)
+    ld hl,0x030201
+    ld a,0xAB
+    A_TO_HLU
     call printHexUHL
-    call printNewLine
-
-    push.s af
-    ld (scratch),sp
-    ld hl,(scratch)
-    call printHexUHL
-    call printNewLine
-    pop.s af
-
-    push af
-    ld (scratch),sp
-    ld hl,(scratch)
-    call printHexUHL
-    call printNewLine
-    pop af
 ; END MAIN PROGRAM
 
 exit:
@@ -45,16 +33,6 @@ exit:
     ret
 
 ; BASIC DEBUG FUNCTIONS
-
-; put the value in HLU into the accumulator
-; destroys: af
-    MACRO HLU_TO_A
-    push hl ; 4 cycles
-    inc sp ; 1 cycle
-    pop af ; 4 cycles
-    dec sp ; 1 cycle
-    ; 10 cycles total
-    ENDMACRO
 
 ; Print a zero-terminated string
 ; HL: Pointer to string

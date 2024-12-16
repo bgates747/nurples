@@ -79,25 +79,17 @@
     ; 10 cycles total
     ENDMACRO
 
-    ; TODO: implement this
+; puth the value in the accumulator into HLU
+; affects: HLU
+; destroys: nothing
     MACRO A_TO_HLU
-        push.s af
-        inc sp
-        push.s hl
-        pop hl
-        inc sp
-        inc sp
+    ld (@F),hl ; 7 cycles
+    ld (@F+2),a ; 5 cycles
+    ld hl,(@F) ; 7 cycles
+    jp @F+3 ; 5 cycles
+    ; 24 cycles total
+@@: dl 0x000000
     ENDMACRO
-
-A_TO_HLU:
-    ; call is 7 cycles
-    ld (@scratch),hl ; 7 cycles
-    ld (@scratch+2),a ; 5 cycles
-    ld hl,(@scratch) ; 7 cycles
-    ret ; 6 cycles
-    ; 25 cycles total
-@scratch: dl 0
-
 
     MACRO PUSH_ALL
     ex af,af'

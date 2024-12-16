@@ -378,63 +378,59 @@ PC     Output      Line
 040060             0079*       ; 10 cycles total
 040060             0080*       ENDMACRO
 040060             0081*   
-040060             0082*       ; TODO: implement this
-040060             0083*       ; MACRO A_TO_HLU
-040060             0084*       ;     push.s af
-040060             0085*       ;     inc sp
-040060             0086*       ;     push.s hl
-040060             0087*       ;     pop hl
-040060             0088*       ;     inc sp
-040060             0089*       ;     inc sp
-040060             0090*       ; ENDMACRO
-040060             0091*   
-040060             0092*   A_TO_HLU:
-040060             0093*       ; call is 7 cycles
-040060 22 6D 00 04 0094*       ld (@scratch),hl ; 7 cycles
-040064 32 6F 00 04 0095*       ld (@scratch+2),a ; 5 cycles
-040068 2A 6D 00 04 0096*       ld hl,(@scratch) ; 7 cycles
-04006C C9          0097*       ret ; 6 cycles
-04006D             0098*       ; 25 cycles total
-04006D 00 00 00    0099*   @scratch: dl 0
-040070             0100*   
-040070             0101*   
-040070             0102*       MACRO PUSH_ALL
-040070             0103*       ex af,af'
-040070             0104*       exx
-040070             0105*       push af
-040070             0106*       push hl
-040070             0107*       push bc
-040070             0108*       push de
-040070             0109*   
-040070             0110*       ex af,af'
-040070             0111*       exx
-040070             0112*       push af
-040070             0113*       push hl
-040070             0114*       push bc
-040070             0115*       push de
-040070             0116*       push ix
-040070             0117*       push iy
-040070             0118*       ENDMACRO
-040070             0119*   
-040070             0120*       MACRO POP_ALL
-040070             0121*       pop iy
-040070             0122*       pop ix
-040070             0123*       pop de
-040070             0124*       pop bc
-040070             0125*       pop hl
-040070             0126*       pop af
-040070             0127*       ex af,af'
-040070             0128*       exx
-040070             0129*   
-040070             0130*       pop de
-040070             0131*       pop bc
-040070             0132*       pop hl
-040070             0133*       pop af
-040070             0134*       ex af,af'
-040070             0135*       exx
-040070             0136*       ENDMACRO
-040070             0031        include "functions.inc"
-040070 FF FF FF FF 0001*       align 256
+040060             0082*   ; puth the value in the accumulator into HLU
+040060             0083*   ; affects: HLU
+040060             0084*   ; destroys: nothing
+040060             0085*       MACRO A_TO_HLU
+040060             0086*       ld (@F),hl ; 7 cycles
+040060             0087*       ld (@F+2),a ; 5 cycles
+040060             0088*       ld hl,(@F) ; 7 cycles
+040060             0089*       jp @F+3 ; 5 cycles
+040060             0090*       ; 24 cycles total
+040060             0091*   @@: dl 0x000000
+040060             0092*       ENDMACRO
+040060             0093*   
+040060             0094*       MACRO PUSH_ALL
+040060             0095*       ex af,af'
+040060             0096*       exx
+040060             0097*       push af
+040060             0098*       push hl
+040060             0099*       push bc
+040060             0100*       push de
+040060             0101*   
+040060             0102*       ex af,af'
+040060             0103*       exx
+040060             0104*       push af
+040060             0105*       push hl
+040060             0106*       push bc
+040060             0107*       push de
+040060             0108*       push ix
+040060             0109*       push iy
+040060             0110*       ENDMACRO
+040060             0111*   
+040060             0112*       MACRO POP_ALL
+040060             0113*       pop iy
+040060             0114*       pop ix
+040060             0115*       pop de
+040060             0116*       pop bc
+040060             0117*       pop hl
+040060             0118*       pop af
+040060             0119*       ex af,af'
+040060             0120*       exx
+040060             0121*   
+040060             0122*       pop de
+040060             0123*       pop bc
+040060             0124*       pop hl
+040060             0125*       pop af
+040060             0126*       ex af,af'
+040060             0127*       exx
+040060             0128*       ENDMACRO
+040060             0031        include "functions.inc"
+040060 FF FF FF FF 0001*       align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -1598,268 +1594,266 @@ PC     Output      Line
 04073A             0011*   ;------------------------------------------------------------------------
 04073A             0012*   
 04073A             0013*   ;------------------------------------------------------------------------
-04073A             0014*   ; DEPRECATED BY umul24 in fixed168.inc
-04073A             0015*   ;------------------------------------------------------------------------
-04073A             0016*   ; umul24:	HL = HL*DE (unsigned)
-04073A             0017*   ; Preserves AF, BC, DE
-04073A             0018*   ; Uses a fast multiply routine.
-04073A             0019*   ;------------------------------------------------------------------------
-04073A             0020*   umul24:
-04073A D5          0021*   	push	DE
-04073B C5          0022*   	push	BC
-04073C F5          0023*   	push	AF
-04073D E5          0024*   	push	HL
-04073E C1          0025*   	pop		BC
-04073F 3E 18       0026*       ld	 	a, 24 ; No. of bits to process
-040741 21 00 00 00 0027*       ld	 	hl, 0 ; Result
-040745             0028*   umul24_lp:
-040745 29          0029*   	add	hl,hl
-040746 EB          0030*   	ex	de,hl
-040747 29          0031*   	add	hl,hl
-040748 EB          0032*   	ex	de,hl
-040749 30 01       0033*   	jr	nc,umul24_nc
-04074B 09          0034*   	add	hl,bc
-04074C             0035*   umul24_nc:
-04074C 3D          0036*   	dec	a
-04074D 20 F6       0037*   	jr	nz,umul24_lp
-04074F F1          0038*   	pop	af
-040750 C1          0039*   	pop	bc
-040751 D1          0040*   	pop	de
-040752 C9          0041*   	ret
-040753             0042*   
-040753             0043*   
-040753             0044*   ;------------------------------------------------------------------------
-040753             0045*   ; udiv24
-040753             0046*   ; Unsigned 24-bit division
-040753             0047*   ; Divides HLU by DEU. Gives result in DEU (and BC), remainder in HLU.
-040753             0048*   ;
-040753             0049*   ; Uses AF BC DE HL
-040753             0050*   ; Uses Restoring Division algorithm
-040753             0051*   ;------------------------------------------------------------------------
-040753             0052*   
-040753             0053*   udiv24:
-040753 E5          0054*   	push	hl
-040754 C1          0055*   	pop		bc	;move dividend to BCU
-040755 21 00 00 00 0056*   	ld		hl,0	;result
-040759 A7          0057*   	and		a
-04075A ED 52       0058*   	sbc		hl,de	;test for div by 0
-04075C C8          0059*   	ret		z		;it's zero, carry flag is clear
-04075D 19          0060*   	add		hl,de	;HL is 0 again
-04075E 3E 18       0061*   	ld		a,24	;number of loops through.
-040760             0062*   udiv1:
-040760 C5          0063*   	push	bc	;complicated way of doing this because of lack of access to top bits
-040761 E3          0064*   	ex		(sp),hl
-040762 37          0065*   	scf
-040763 ED 6A       0066*   	adc	hl,hl
-040765 E3          0067*   	ex	(sp),hl
-040766 C1          0068*   	pop	bc		;we now have bc = (bc * 2) + 1
-040767             0069*   
-040767 ED 6A       0070*   	adc	hl,hl
-040769 A7          0071*   	and	a		;is this the bug
-04076A ED 52       0072*   	sbc	hl,de
-04076C 30 02       0073*   	jr	nc,udiv2
-04076E 19          0074*   	add	hl,de
-04076F             0075*   ;	dec	c
-04076F 0B          0076*   	dec	bc
-040770             0077*   udiv2:
-040770 3D          0078*   	dec	a
-040771 20 ED       0079*   	jr	nz,udiv1
-040773 37          0080*   	scf		;flag used for div0 error
-040774 C5          0081*   	push	bc
-040775 D1          0082*   	pop		de	;remainder
-040776 C9          0083*   	ret
+04073A             0014*   ; umul24:	HL = HL*DE (unsigned)
+04073A             0015*   ; Preserves AF, BC, DE
+04073A             0016*   ; Uses a fast multiply routine.
+04073A             0017*   ;------------------------------------------------------------------------
+04073A             0018*   umul24:
+04073A D5          0019*   	push	DE
+04073B C5          0020*   	push	BC
+04073C F5          0021*   	push	AF
+04073D E5          0022*   	push	HL
+04073E C1          0023*   	pop		BC
+04073F 3E 18       0024*       ld	 	a, 24 ; No. of bits to process
+040741 21 00 00 00 0025*       ld	 	hl, 0 ; Result
+040745             0026*   umul24_lp:
+040745 29          0027*   	add	hl,hl
+040746 EB          0028*   	ex	de,hl
+040747 29          0029*   	add	hl,hl
+040748 EB          0030*   	ex	de,hl
+040749 30 01       0031*   	jr	nc,umul24_nc
+04074B 09          0032*   	add	hl,bc
+04074C             0033*   umul24_nc:
+04074C 3D          0034*   	dec	a
+04074D 20 F6       0035*   	jr	nz,umul24_lp
+04074F F1          0036*   	pop	af
+040750 C1          0037*   	pop	bc
+040751 D1          0038*   	pop	de
+040752 C9          0039*   	ret
+040753             0040*   
+040753             0041*   
+040753             0042*   ;------------------------------------------------------------------------
+040753             0043*   ; udiv24
+040753             0044*   ; Unsigned 24-bit division
+040753             0045*   ; Divides HLU by DEU. Gives result in DEU (and BC), remainder in HLU.
+040753             0046*   ;
+040753             0047*   ; Uses AF BC DE HL
+040753             0048*   ; Uses Restoring Division algorithm
+040753             0049*   ;------------------------------------------------------------------------
+040753             0050*   
+040753             0051*   udiv24:
+040753 E5          0052*   	push	hl
+040754 C1          0053*   	pop		bc	;move dividend to BCU
+040755 21 00 00 00 0054*   	ld		hl,0	;result
+040759 A7          0055*   	and		a
+04075A ED 52       0056*   	sbc		hl,de	;test for div by 0
+04075C C8          0057*   	ret		z		;it's zero, carry flag is clear
+04075D 19          0058*   	add		hl,de	;HL is 0 again
+04075E 3E 18       0059*   	ld		a,24	;number of loops through.
+040760             0060*   udiv1:
+040760 C5          0061*   	push	bc	;complicated way of doing this because of lack of access to top bits
+040761 E3          0062*   	ex		(sp),hl
+040762 37          0063*   	scf
+040763 ED 6A       0064*   	adc	hl,hl
+040765 E3          0065*   	ex	(sp),hl
+040766 C1          0066*   	pop	bc		;we now have bc = (bc * 2) + 1
+040767             0067*   
+040767 ED 6A       0068*   	adc	hl,hl
+040769 A7          0069*   	and	a		;is this the bug
+04076A ED 52       0070*   	sbc	hl,de
+04076C 30 02       0071*   	jr	nc,udiv2
+04076E 19          0072*   	add	hl,de
+04076F             0073*   ;	dec	c
+04076F 0B          0074*   	dec	bc
+040770             0075*   udiv2:
+040770 3D          0076*   	dec	a
+040771 20 ED       0077*   	jr	nz,udiv1
+040773 37          0078*   	scf		;flag used for div0 error
+040774 C5          0079*   	push	bc
+040775 D1          0080*   	pop		de	;remainder
+040776 C9          0081*   	ret
+040777             0082*   
+040777             0083*   
 040777             0084*   
-040777             0085*   
-040777             0086*   
-040777             0087*   ;------------------------------------------------------------------------
-040777             0088*   ; neg24
-040777             0089*   ; Returns: HLU = 0-HLU
-040777             0090*   ; preserves all other registers
-040777             0091*   ;------------------------------------------------------------------------
-040777             0092*   neg24:
-040777 D5          0093*   	push	de
-040778 EB          0094*   	ex		de,hl
-040779 21 00 00 00 0095*   	ld		hl,0
-04077D B7          0096*   	or		a
-04077E ED 52       0097*   	sbc		hl,de
-040780 D1          0098*   	pop		de
-040781 C9          0099*   	ret
-040782             0100*   
-040782             0101*   ;------------------------------------------------------------------------
-040782             0102*   ; or_hlu_deu: 24 bit bitwise OR
-040782             0103*   ; Returns: hlu = hlu OR deu
-040782             0104*   ; preserves all other registers
-040782             0105*   ;------------------------------------------------------------------------
-040782             0106*   or_hlu_deu:
-040782 22 0B 08 04 0107*   	ld	(bitbuf1),hl
-040786 ED 53 0E 08 0108*   	ld	(bitbuf2),de
+040777             0085*   ;------------------------------------------------------------------------
+040777             0086*   ; neg24
+040777             0087*   ; Returns: HLU = 0-HLU
+040777             0088*   ; preserves all other registers
+040777             0089*   ;------------------------------------------------------------------------
+040777             0090*   neg24:
+040777 D5          0091*   	push	de
+040778 EB          0092*   	ex		de,hl
+040779 21 00 00 00 0093*   	ld		hl,0
+04077D B7          0094*   	or		a
+04077E ED 52       0095*   	sbc		hl,de
+040780 D1          0096*   	pop		de
+040781 C9          0097*   	ret
+040782             0098*   
+040782             0099*   ;------------------------------------------------------------------------
+040782             0100*   ; or_hlu_deu: 24 bit bitwise OR
+040782             0101*   ; Returns: hlu = hlu OR deu
+040782             0102*   ; preserves all other registers
+040782             0103*   ;------------------------------------------------------------------------
+040782             0104*   or_hlu_deu:
+040782 22 0B 08 04 0105*   	ld	(bitbuf1),hl
+040786 ED 53 0E 08 0106*   	ld	(bitbuf2),de
        04          
-04078B D5          0109*   	push	de	;preserve DEU
-04078C C5          0110*   	push	bc	;preserve BCU
-04078D 06 03       0111*   	ld		b,3
-04078F 21 0B 08 04 0112*   	ld	hl,bitbuf1
-040793 11 0B 08 04 0113*   	ld	de,bitbuf1
-040797             0114*   orloop_24:
-040797 1A          0115*   	ld	a,(de)
-040798 B6          0116*   	or	(hl)
-040799 12          0117*   	ld	(de),a
-04079A 13          0118*   	inc	de
-04079B 23          0119*   	inc	hl
-04079C 10 F9       0120*   	djnz	orloop_24
-04079E 2A 0E 08 04 0121*   	ld	hl,(bitbuf2)
-0407A2 C1          0122*   	pop		bc	;restore BC
-0407A3 D1          0123*   	pop		de	;restore DE
-0407A4             0124*   
-0407A4             0125*   ;------------------------------------------------------------------------
-0407A4             0126*   ; and_hlu_deu: 24 bit bitwise AND
-0407A4             0127*   ; Returns: hlu = hlu AND deu
-0407A4             0128*   ; preserves all other registers
-0407A4             0129*   ;------------------------------------------------------------------------
-0407A4             0130*   and_hlu_deu:
-0407A4 22 0B 08 04 0131*   	ld	(bitbuf1),hl
-0407A8 ED 53 0E 08 0132*   	ld	(bitbuf2),de
+04078B D5          0107*   	push	de	;preserve DEU
+04078C C5          0108*   	push	bc	;preserve BCU
+04078D 06 03       0109*   	ld		b,3
+04078F 21 0B 08 04 0110*   	ld	hl,bitbuf1
+040793 11 0B 08 04 0111*   	ld	de,bitbuf1
+040797             0112*   orloop_24:
+040797 1A          0113*   	ld	a,(de)
+040798 B6          0114*   	or	(hl)
+040799 12          0115*   	ld	(de),a
+04079A 13          0116*   	inc	de
+04079B 23          0117*   	inc	hl
+04079C 10 F9       0118*   	djnz	orloop_24
+04079E 2A 0E 08 04 0119*   	ld	hl,(bitbuf2)
+0407A2 C1          0120*   	pop		bc	;restore BC
+0407A3 D1          0121*   	pop		de	;restore DE
+0407A4             0122*   
+0407A4             0123*   ;------------------------------------------------------------------------
+0407A4             0124*   ; and_hlu_deu: 24 bit bitwise AND
+0407A4             0125*   ; Returns: hlu = hlu AND deu
+0407A4             0126*   ; preserves all other registers
+0407A4             0127*   ;------------------------------------------------------------------------
+0407A4             0128*   and_hlu_deu:
+0407A4 22 0B 08 04 0129*   	ld	(bitbuf1),hl
+0407A8 ED 53 0E 08 0130*   	ld	(bitbuf2),de
        04          
-0407AD D5          0133*   	push	de	;preserve DEU
-0407AE C5          0134*   	push	bc	;preserve BCU
-0407AF 06 03       0135*   	ld		b,3
-0407B1 21 0B 08 04 0136*   	ld	hl,bitbuf1
-0407B5 11 0B 08 04 0137*   	ld	de,bitbuf1
-0407B9             0138*   andloop_24:
-0407B9 1A          0139*   	ld	a,(de)
-0407BA A6          0140*   	and	(hl)
-0407BB 12          0141*   	ld	(de),a
-0407BC 13          0142*   	inc	de
-0407BD 23          0143*   	inc	hl
-0407BE 10 F9       0144*   	djnz	andloop_24
-0407C0 2A 0E 08 04 0145*   	ld	hl,(bitbuf2)
-0407C4 C1          0146*   	pop		bc	;restore BC
-0407C5 D1          0147*   	pop		de	;restore DE
-0407C6             0148*   
-0407C6             0149*   ;------------------------------------------------------------------------
-0407C6             0150*   ; xor_hlu_deu: 24 bit bitwise XOR
-0407C6             0151*   ; Returns: hlu = hlu XOR deu
-0407C6             0152*   ; preserves all other registers
-0407C6             0153*   ;------------------------------------------------------------------------
-0407C6             0154*   xor_hlu_deu:
-0407C6 22 0B 08 04 0155*   	ld	(bitbuf1),hl
-0407CA ED 53 0E 08 0156*   	ld	(bitbuf2),de
+0407AD D5          0131*   	push	de	;preserve DEU
+0407AE C5          0132*   	push	bc	;preserve BCU
+0407AF 06 03       0133*   	ld		b,3
+0407B1 21 0B 08 04 0134*   	ld	hl,bitbuf1
+0407B5 11 0B 08 04 0135*   	ld	de,bitbuf1
+0407B9             0136*   andloop_24:
+0407B9 1A          0137*   	ld	a,(de)
+0407BA A6          0138*   	and	(hl)
+0407BB 12          0139*   	ld	(de),a
+0407BC 13          0140*   	inc	de
+0407BD 23          0141*   	inc	hl
+0407BE 10 F9       0142*   	djnz	andloop_24
+0407C0 2A 0E 08 04 0143*   	ld	hl,(bitbuf2)
+0407C4 C1          0144*   	pop		bc	;restore BC
+0407C5 D1          0145*   	pop		de	;restore DE
+0407C6             0146*   
+0407C6             0147*   ;------------------------------------------------------------------------
+0407C6             0148*   ; xor_hlu_deu: 24 bit bitwise XOR
+0407C6             0149*   ; Returns: hlu = hlu XOR deu
+0407C6             0150*   ; preserves all other registers
+0407C6             0151*   ;------------------------------------------------------------------------
+0407C6             0152*   xor_hlu_deu:
+0407C6 22 0B 08 04 0153*   	ld	(bitbuf1),hl
+0407CA ED 53 0E 08 0154*   	ld	(bitbuf2),de
        04          
-0407CF D5          0157*   	push	de	;preserve DEU
-0407D0 C5          0158*   	push	bc	;preserve BCU
-0407D1 06 03       0159*   	ld		b,3
-0407D3 21 0B 08 04 0160*   	ld	hl,bitbuf1
-0407D7 11 0B 08 04 0161*   	ld	de,bitbuf1
-0407DB             0162*   xorloop_24:
-0407DB 1A          0163*   	ld	a,(de)
-0407DC AE          0164*   	xor	(hl)
-0407DD 12          0165*   	ld	(de),a
-0407DE 13          0166*   	inc	de
-0407DF 23          0167*   	inc	hl
-0407E0 10 F9       0168*   	djnz	xorloop_24
-0407E2 2A 0E 08 04 0169*   	ld	hl,(bitbuf2)
-0407E6 C1          0170*   	pop		bc	;restore BC
-0407E7 D1          0171*   	pop		de	;restore DE
-0407E8             0172*   
-0407E8             0173*   ;------------------------------------------------------------------------
-0407E8             0174*   ; shl_hlu: 24 bit shift left hlu by a positions
-0407E8             0175*   ; Returns: hlu = hlu << a
-0407E8             0176*   ;		   a = 0
-0407E8             0177*   ; NOTE: only considers a up to 16 bits.
-0407E8             0178*   ; preserves all other registers
-0407E8             0179*   ; modified by Brandon R. Gates to use a instead of de
-0407E8             0180*   ;------------------------------------------------------------------------
-0407E8             0181*   shl_hlu:
-0407E8 B7          0182*   	or a
-0407E9 C8          0183*   	ret		z		;we're done
-0407EA 29          0184*   	add		hl,hl	;shift HLU left
-0407EB 3D          0185*   	dec a
-0407EC 18 FA       0186*   	jr		shl_hlu
-0407EE             0187*   
-0407EE             0188*   ;------------------------------------------------------------------------
-0407EE             0189*   ; shr_hlu: 24 bit shift right hlu by a positions
-0407EE             0190*   ; Returns: hlu = hlu >> a
-0407EE             0191*   ;		   a = 0
-0407EE             0192*   ; NOTE: only considers a up to 16 bits.
-0407EE             0193*   ; preserves all other registers
-0407EE             0194*   ; modified by Brandon R. Gates to use a instead of de
-0407EE             0195*   ;------------------------------------------------------------------------
-0407EE             0196*   shr_hlu:
-0407EE 22 0B 08 04 0197*   	ld		(bitbuf1),hl
-0407F2 21 0D 08 04 0198*   	ld		hl,bitbuf1+2
-0407F6             0199*   @shr_loop:
-0407F6 B7          0200*   	or a
-0407F7 28 0D       0201*   	jr		z,@shr_done		;we're done
-0407F9             0202*   ;carry is clear from or instruction
-0407F9 CB 1E       0203*   	rr		(hl)
-0407FB 2B          0204*   	dec		hl
-0407FC CB 1E       0205*   	rr		(hl)
-0407FE 2B          0206*   	dec		hl
-0407FF CB 1E       0207*   	rr		(hl)
-040801 23          0208*   	inc		hl
-040802 23          0209*   	inc		hl
-040803 3D          0210*   	dec a
-040804 18 F0       0211*   	jr		@shr_loop
-040806             0212*   @shr_done:
-040806 2A 0B 08 04 0213*   	ld		hl,(bitbuf1)	;collect result
-04080A C9          0214*   	ret
-04080B             0215*   
+0407CF D5          0155*   	push	de	;preserve DEU
+0407D0 C5          0156*   	push	bc	;preserve BCU
+0407D1 06 03       0157*   	ld		b,3
+0407D3 21 0B 08 04 0158*   	ld	hl,bitbuf1
+0407D7 11 0B 08 04 0159*   	ld	de,bitbuf1
+0407DB             0160*   xorloop_24:
+0407DB 1A          0161*   	ld	a,(de)
+0407DC AE          0162*   	xor	(hl)
+0407DD 12          0163*   	ld	(de),a
+0407DE 13          0164*   	inc	de
+0407DF 23          0165*   	inc	hl
+0407E0 10 F9       0166*   	djnz	xorloop_24
+0407E2 2A 0E 08 04 0167*   	ld	hl,(bitbuf2)
+0407E6 C1          0168*   	pop		bc	;restore BC
+0407E7 D1          0169*   	pop		de	;restore DE
+0407E8             0170*   
+0407E8             0171*   ;------------------------------------------------------------------------
+0407E8             0172*   ; shl_hlu: 24 bit shift left hlu by a positions
+0407E8             0173*   ; Returns: hlu = hlu << a
+0407E8             0174*   ;		   a = 0
+0407E8             0175*   ; NOTE: only considers a up to 16 bits.
+0407E8             0176*   ; preserves all other registers
+0407E8             0177*   ; modified by Brandon R. Gates to use a instead of de
+0407E8             0178*   ;------------------------------------------------------------------------
+0407E8             0179*   shl_hlu:
+0407E8 B7          0180*   	or a
+0407E9 C8          0181*   	ret		z		;we're done
+0407EA 29          0182*   	add		hl,hl	;shift HLU left
+0407EB 3D          0183*   	dec a
+0407EC 18 FA       0184*   	jr		shl_hlu
+0407EE             0185*   
+0407EE             0186*   ;------------------------------------------------------------------------
+0407EE             0187*   ; shr_hlu: 24 bit shift right hlu by a positions
+0407EE             0188*   ; Returns: hlu = hlu >> a
+0407EE             0189*   ;		   a = 0
+0407EE             0190*   ; NOTE: only considers a up to 16 bits.
+0407EE             0191*   ; preserves all other registers
+0407EE             0192*   ; modified by Brandon R. Gates to use a instead of de
+0407EE             0193*   ;------------------------------------------------------------------------
+0407EE             0194*   shr_hlu:
+0407EE 22 0B 08 04 0195*   	ld		(bitbuf1),hl
+0407F2 21 0D 08 04 0196*   	ld		hl,bitbuf1+2
+0407F6             0197*   @shr_loop:
+0407F6 B7          0198*   	or a
+0407F7 28 0D       0199*   	jr		z,@shr_done		;we're done
+0407F9             0200*   ;carry is clear from or instruction
+0407F9 CB 1E       0201*   	rr		(hl)
+0407FB 2B          0202*   	dec		hl
+0407FC CB 1E       0203*   	rr		(hl)
+0407FE 2B          0204*   	dec		hl
+0407FF CB 1E       0205*   	rr		(hl)
+040801 23          0206*   	inc		hl
+040802 23          0207*   	inc		hl
+040803 3D          0208*   	dec a
+040804 18 F0       0209*   	jr		@shr_loop
+040806             0210*   @shr_done:
+040806 2A 0B 08 04 0211*   	ld		hl,(bitbuf1)	;collect result
+04080A C9          0212*   	ret
+04080B             0213*   
+04080B             0214*   ;------------------------------------------------------------------------
+04080B             0215*   ; Scratch area for calculations
 04080B             0216*   ;------------------------------------------------------------------------
-04080B             0217*   ; Scratch area for calculations
-04080B             0218*   ;------------------------------------------------------------------------
-04080B 00 00 00    0219*   bitbuf1:	dw24	0	;bit manipulation buffer 1
-04080E 00 00 00    0220*   bitbuf2:	dw24	0	;bit manipulation buffer 2
-040811             0221*   
+04080B 00 00 00    0217*   bitbuf1:	dw24	0	;bit manipulation buffer 1
+04080E 00 00 00    0218*   bitbuf2:	dw24	0	;bit manipulation buffer 2
+040811             0219*   
+040811             0220*   ; -----------------------------------------------------------------------
+040811             0221*   ; Functions added by Brandon R. Gates
 040811             0222*   ; -----------------------------------------------------------------------
-040811             0223*   ; Functions added by Brandon R. Gates
-040811             0224*   ; -----------------------------------------------------------------------
-040811             0225*   
-040811             0226*   ;------------------------------------------------------------------------
-040811             0227*   ; shr_hlu_div: Quick division by powers of two based on log2 of A
-040811             0228*   ;              Determines the LSB of A and shifts HLU accordingly.
-040811             0229*   ;              HLU = HLU >> LSB(A)
-040811             0230*   ; Returns: HLU = HLU >> LSB(A)
-040811             0231*   ; Destroys: af
-040811             0232*   ;------------------------------------------------------------------------
-040811             0233*   shr_hlu_log2a:
-040811 B7          0234*   	or a    ; check for zero
-040812 C8          0235*   	ret z   ; nothing to shift so we're done
-040813 C5          0236*   	push 	bc ; preserve
-040814 06 00       0237*   	ld		b,0 ; clear b
-040816             0238*   @find_bit:
-040816 0F          0239*   	rrca ; bit 0 to carry
-040817 DA 20 08 04 0240*   	jp c,@found_bit
-04081B 04          0241*   	inc b ; next bit
-04081C C3 16 08 04 0242*   	jp @find_bit
-040820             0243*   @found_bit:
-040820 78          0244*   	ld a,b
-040821 CD EE 07 04 0245*   	call shr_hlu
-040825 C1          0246*   	pop 	bc ; restore
-040826 C9          0247*   	ret
-040827             0248*   ; end shr_hlu_log2a
-040827             0249*   
-040827             0250*   ;------------------------------------------------------------------------
-040827             0251*   ; shl_hlu_log2a: Quick multiplication by powers of two based on log2 of A
-040827             0252*   ;                Determines the LSB of A and shifts HLU accordingly.
-040827             0253*   ;                HLU = HLU << LSB(A)
-040827             0254*   ; Returns: HLU = HLU << LSB(A)
-040827             0255*   ; Destroys: af
-040827             0256*   ;------------------------------------------------------------------------
-040827             0257*   shl_hlu_log2a:
-040827 B7          0258*   	or a    ; check for zero
-040828 C8          0259*   	ret z   ; nothing to shift so we're done
-040829 C5          0260*   	push 	bc ; preserve
-04082A 06 00       0261*   	ld		b,0 ; clear b
-04082C             0262*   @find_bit:
-04082C 0F          0263*   	rrca ; bit 0 to carry
-04082D DA 36 08 04 0264*   	jp c,@found_bit
-040831 04          0265*   	inc b ; next bit
-040832 C3 2C 08 04 0266*   	jp @find_bit
-040836             0267*   @found_bit:
-040836 78          0268*   	ld a,b
-040837 CD E8 07 04 0269*   	call shl_hlu
-04083B C1          0270*   	pop 	bc ; restore
-04083C C9          0271*   	ret
-04083D             0272*   ; end shl_hlu_log2a
+040811             0223*   
+040811             0224*   ;------------------------------------------------------------------------
+040811             0225*   ; shr_hlu_div: Quick division by powers of two based on log2 of A
+040811             0226*   ;              Determines the LSB of A and shifts HLU accordingly.
+040811             0227*   ;              HLU = HLU >> LSB(A)
+040811             0228*   ; Returns: HLU = HLU >> LSB(A)
+040811             0229*   ; Destroys: af
+040811             0230*   ;------------------------------------------------------------------------
+040811             0231*   shr_hlu_log2a:
+040811 B7          0232*   	or a    ; check for zero
+040812 C8          0233*   	ret z   ; nothing to shift so we're done
+040813 C5          0234*   	push 	bc ; preserve
+040814 06 00       0235*   	ld		b,0 ; clear b
+040816             0236*   @find_bit:
+040816 0F          0237*   	rrca ; bit 0 to carry
+040817 DA 20 08 04 0238*   	jp c,@found_bit
+04081B 04          0239*   	inc b ; next bit
+04081C C3 16 08 04 0240*   	jp @find_bit
+040820             0241*   @found_bit:
+040820 78          0242*   	ld a,b
+040821 CD EE 07 04 0243*   	call shr_hlu
+040825 C1          0244*   	pop 	bc ; restore
+040826 C9          0245*   	ret
+040827             0246*   ; end shr_hlu_log2a
+040827             0247*   
+040827             0248*   ;------------------------------------------------------------------------
+040827             0249*   ; shl_hlu_log2a: Quick multiplication by powers of two based on log2 of A
+040827             0250*   ;                Determines the LSB of A and shifts HLU accordingly.
+040827             0251*   ;                HLU = HLU << LSB(A)
+040827             0252*   ; Returns: HLU = HLU << LSB(A)
+040827             0253*   ; Destroys: af
+040827             0254*   ;------------------------------------------------------------------------
+040827             0255*   shl_hlu_log2a:
+040827 B7          0256*   	or a    ; check for zero
+040828 C8          0257*   	ret z   ; nothing to shift so we're done
+040829 C5          0258*   	push 	bc ; preserve
+04082A 06 00       0259*   	ld		b,0 ; clear b
+04082C             0260*   @find_bit:
+04082C 0F          0261*   	rrca ; bit 0 to carry
+04082D DA 36 08 04 0262*   	jp c,@found_bit
+040831 04          0263*   	inc b ; next bit
+040832 C3 2C 08 04 0264*   	jp @find_bit
+040836             0265*   @found_bit:
+040836 78          0266*   	ld a,b
+040837 CD E8 07 04 0267*   	call shl_hlu
+04083B C1          0268*   	pop 	bc ; restore
+04083C C9          0269*   	ret
+04083D             0270*   ; end shl_hlu_log2a
 04083D             0033        include "maths.inc"
 04083D FF FF FF FF 0001*       align 256
        FF FF FF FF 
