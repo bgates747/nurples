@@ -83,12 +83,10 @@
 ; affects: HLU
 ; destroys: nothing
     MACRO A_TO_HLU
-    ld (@F),hl ; 7 cycles
-    ld (@F+2),a ; 5 cycles
-    ld hl,(@F) ; 7 cycles
-    jp @F+3 ; 5 cycles
-    ; 24 cycles total
-@@: dl 0x000000
+    ld (@F+1),hl ; 7 cycles
+    ld (@F+3),a ; 5 cycles
+@@: ld hl,0x000000 ; 4 cycles
+    ; 16 cycles total
     ENDMACRO
 
     MACRO PUSH_ALL
