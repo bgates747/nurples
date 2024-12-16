@@ -21,7 +21,7 @@ move_weapons:
     jp z,@next_record ; ... and we skip to next record
 ; otherwise we prepare to move the sprite
     ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
-    callHL
+    CALL_HL
 ; move_weapons_loop_return: return from behavior subroutines
     ld iy,(table_pointer) ; get back table pointer
 ; ; now we check results of all the moves

@@ -116,7 +116,7 @@ do_active_tiles:
     mlt de ; de is now the offset to the table entry
     add hl,de ; hl is now the address of the table entry
     ld hl,(hl) ; hl is now the activation routine address
-    callHL ; call the activation routine
+    CALL_HL ; call the activation routine
 @next_tile:
 ; bump x-coords the width of one tile and save it
     ld hl,(tiles_x_plot)

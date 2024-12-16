@@ -81,7 +81,7 @@ move_tiles:
     jp z,@next_record ; ... and we skip to next record
 ; otherwise we prepare to move the tile
     ld hl,(iy+tile_move_program) ; load the behavior subroutine address
-    callHL
+    CALL_HL
 ; move_tiles_loop_return: return from behavior subroutines
     ld iy,(tile_table_pointer) ; get back table pointer
 ; now we check results of all the moves

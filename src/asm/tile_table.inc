@@ -152,6 +152,7 @@ spawn_active_tile:
     call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
     pop hl ; restore pointer to new tile defaults
     ret nc ; no carry means no free tile slots, so we go home
+    ; HL 046800 turret_fireball_defaults, ix 0470A4 tile_table_base
 ; copy default settings to new tile
     ld (new_tile_table_pointer),ix ; save pointer to new tile record
     lea ix,ix+tile_definitions ; bump pointer to copy to
@@ -159,6 +160,7 @@ spawn_active_tile:
     pop de ; address to copy to
     ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
     ldir ; copies defaults to new tile record
+    ; hl 04692A, de 0471E4, ix 0471BA, iy 000000, defaults copied correctly
 ; copy tile position from inputs
     ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
     ld hl,(tiles_x_plot-1) ; shift up one byte to get 16.8 fixed point
@@ -173,6 +175,13 @@ spawn_active_tile:
 ; return to caller
     set 7,(ix+tile_type) ; set just spawned flag
     scf ; set carry flag to indicate success
+
+; DEBUG
+    CALL DEBUG_PRINT
+    CALL DEBUG_PRINT_TILE_TABLE
+    CALL DEBUG_WAITKEYPRESS
+; END DEBUG
+
     ret
 ; end spawn_active_tile
 
@@ -206,99 +215,123 @@ tile_frame_heading:
     ret
 ; end tile_frame_heading
 dump_tile_record:
-    ; call vdu_home_cursor
     call printInline
-    asciz "id:   "
+    asciz "id  : "
     ld a,(ix+tile_id)
     call printHexA
 
     call printInline
-    asciz "\r\nx:   "
+    asciz "\r\nx   :"
     ld hl,(ix+tile_x)
     call print_s168_hl
 
     call printInline
-    asciz "\r\ny:   "
+    asciz "\r\ny   :"
     ld hl,(ix+tile_y)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nxv  :"
+    ld hl,(ix+tile_xvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nyv  :"
+    ld hl,(ix+tile_yvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nv   :"
+    ld hl,(ix+tile_vel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nhdg :"
+    ld hl,(ix+tile_heading)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nori :"
+    ld hl,(ix+tile_orientation)
     call print_s168_hl
     
     call printInline
-    asciz "\r\ntyp: "
+    asciz "\r\ntyp : "
     ld a,(ix+tile_type)
     call printHexA
     
     call printInline
-    asciz "\r\nBId: "
+    asciz "\r\nBId : "
     ld hl,(ix+tile_base_bufferId)
     call printHex24
 
     call printInline
-    asciz "\r\nmPg: "
+    asciz "\r\nmPg : "
     ld hl,(ix+tile_move_program)
     call printHex24
 
     call printInline
-    asciz "\r\ncol: "
+    asciz "\r\ncol : "
     ld a,(ix+tile_collisions)
     call printBin8
 
-    ; call printInline
-    ; asciz "\r\nszx: "
-    ; ld a,(ix+tile_dim_x)
-    ; call printHexA
+    call printInline
+    asciz "\r\nszx : "
+    ld a,(ix+tile_dim_x)
+    call printHexA
     
-    ; call printInline
-    ; asciz "\r\nszy: "
-    ; ld a,(ix+tile_dim_y)
-    ; call printHexA
+    call printInline
+    asciz "\r\nszy : "
+    ld a,(ix+tile_dim_y)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\n#ori:"
-    ; ld a,(ix+tile_num_orientations)
-    ; call printHexA
+    call printInline
+    asciz "\r\n#ori: "
+    ld a,(ix+tile_num_orientations)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\n#ani:"
-    ; ld a,(ix+tile_num_animations)
-    ; call printHexA
+    call printInline
+    asciz "\r\n#ani: "
+    ld a,(ix+tile_num_animations)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\nani: "
-    ; ld a,(ix+tile_animation)
-    ; call printHexA
+    call printInline
+    asciz "\r\nani : "
+    ld a,(ix+tile_animation)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\nanit:"
-    ; ld a,(ix+tile_animation_timer)
-    ; call printHexA
+    call printInline
+    asciz "\r\nanit: "
+    ld a,(ix+tile_animation_timer)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\nmvt: "
-    ; ld a,(ix+tile_move_timer)
-    ; call printHexA
+    call printInline
+    asciz "\r\nmvt : "
+    ld a,(ix+tile_move_timer)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\nmvs: "
-    ; ld a,(ix+tile_move_step)
-    ; call printHexA
+    call printInline
+    asciz "\r\nmvs : "
+    ld a,(ix+tile_move_step)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\npts: "
-    ; ld a,(ix+tile_points)
-    ; call printHexA
+    call printInline
+    asciz "\r\npts : "
+    ld a,(ix+tile_points)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\ndmg: "
-    ; ld a,(ix+tile_shield_damage)
-    ; call printHexA
+    call printInline
+    asciz "\r\ndmg : "
+    ld a,(ix+tile_shield_damage)
+    call printHexA
 
-    ; call printInline
-    ; asciz "\r\nfrm: "
-    ; ld a,(ix+tile_frame)
-    ; call printHexA
+    call printInline
+    asciz "\r\nfrm : "
+    ld a,(ix+tile_frame)
+    call printHexA
 
-    call printNewLine
-    call printNewLine
+    ; call printNewLine
+    ; call printNewLine
 
     ; call waitKeypress
     ret

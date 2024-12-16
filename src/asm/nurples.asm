@@ -90,7 +90,7 @@ init:
     call load_ui_images
 
 ; set up the display
-    ld a,8+128 ; 136   320   240   64    60hz double-buffered
+    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
     ; ld a,20 ;  512   384   64    60hz single-buffered
     call vdu_set_screen_mode
     xor a
@@ -210,10 +210,10 @@ main_loop:
 ; do gamestate logic
     call do_game
 
-; DEBUG
-    ; CALL DEBUG_PRINT_TABLE
-    ; CALL DEBUG_WAITKEYPRESS
-; END DEBUG
+; ; DEBUG
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
@@ -236,8 +236,8 @@ main_end:
 
 DEBUG_PRINT:
     PUSH_ALL
-    ld c,0
-    ld b,0
+    ld c,0 ; X
+    ld b,0 ; Y
     call vdu_move_cursor
     POP_ALL
     PUSH_ALL
@@ -248,6 +248,19 @@ DEBUG_PRINT:
     ; call waitKeypress
     POP_ALL
     ret
+
+DEBUG_PRINT_TILE_TABLE:
+    PUSH_ALL
+    ld c,0 ; X
+    ld b,9 ; Y
+    call vdu_move_cursor
+
+    ld ix,tile_table_base
+    call dump_tile_record
+    ; call printNewLine
+    POP_ALL
+    ret
+; end DEBUG_PRINT_TILE_TABLE
 
 DEBUG_PRINT_TABLE:
     PUSH_ALL

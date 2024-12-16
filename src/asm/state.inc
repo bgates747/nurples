@@ -5,7 +5,7 @@ game_state:  dl game_main_menu
 
 do_game:
     ld hl,(game_state)   ; Load the current game state
-    callHL                ; Call the corresponding state handler
+    CALL_HL                ; Call the corresponding state handler
     ret
 
 ; ========================
@@ -141,7 +141,7 @@ player_state:  dl player_alive ; Player state variable
 
 do_player:
     ld hl,(player_state)
-    callHL                ; Call the corresponding player state
+    CALL_HL                ; Call the corresponding player state
     ret
 
 player_alive:
@@ -155,7 +155,7 @@ player_dead:
 
 do_enemies: 
     ld hl,(enemies_state)
-    callHL
+    CALL_HL
     ret
 enemies_state: dl enemies_alive
 
