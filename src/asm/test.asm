@@ -80,12 +80,56 @@ loading_complete: asciz "Press any key to continue."
 init:
     ret
 
+buffer: 
+    ; db 0x0D,0x0E,0x0F
+    ; db 0x0A,0x0B,0x0C
+    db 0x07,0x08,0x09
+    db 0x04,0x05,0x06
+    db 0x01,0x02,0x03
+
 main:
+    ld ix,buffer
+    ld hl,(ix+0)
+    push hl
+    ld hl,(ix+3)
+    push hl
+    ld hl,(ix+6)
+    push hl
+
+; ; the testing is here
+;     pop hl
+;     pop hl
+;     call printHex24 ; 0x060504
+;     call printNewLine
+; ; end of testing
+
+; ; the testing is here
+;     pop hl
+;     inc sp
+;     pop hl
+;     dec sp
+;     call printHex24 ; 0x070605
+;     call printNewLine
+; ; end of testing
+
+; the testing is here
+    pop hl
+    dec sp
+    pop hl
+    inc sp
+    call printHex24 ; 0x050403
     call printNewLine
+; end of testing
 
+    pop hl
 
-    
+    ; ld a,0xAB
+    ; A_TO_HLU
+    ; call printHex24
+    ; call printNewLine
+
     jp main_end
+
 ; test umul24ss
     call vdu_vblank ; synchronize timer
     ld iy,tmr_test
