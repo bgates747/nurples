@@ -69,23 +69,23 @@
 @@:
     ENDMACRO
 
-; put the value in HLU into the accumulator
+; put the value in HLU into A
 ; destroys: af
     MACRO HLU_TO_A
+    dec sp ; 1 cycle
     push hl ; 4 cycles
     inc sp ; 1 cycle
     pop af ; 4 cycles
-    dec sp ; 1 cycle
     ; 10 cycles total
     ENDMACRO
 
-; put the value in a into hlu
+; put the value in A into HLU
 ; affects: HLU
 ; destroys: nothing
     MACRO A_TO_HLU
-    ld (@F+1),hl ; 7 cycles
-    ld (@F+3),a ; 5 cycles
-@@: ld hl,0x000000 ; 4 cycles
+    ld ($+8+1),hl ; 7 cycles
+    ld ($+4+3),a ; 5 cycles
+    ld hl,0x000000 ; 4 cycles
     ; 16 cycles total
     ENDMACRO
 
