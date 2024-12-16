@@ -79,7 +79,7 @@ hlu_div16:
 hlu_sdiv256:
     xor a ; assume hl is positive
     ld (@buffer),hl
-    sign_hlu
+    SIGN_HLU
     jp p,@hl_pos
     dec a
 @hl_pos:

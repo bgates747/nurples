@@ -167,7 +167,7 @@ udiv168:
 ; multiply remainder by 256
     hlu_mul256
 ; skip fractional computation if remainder is zero
-    sign_hlu
+    SIGN_HLU
     jr nz,@div_frac
     xor a
     jr @write_frac
@@ -402,7 +402,7 @@ distance168:
     ld hl,(dy168)
     call hlu_abs
     ; call hlu_udiv256 ; make integer to avoid overflow
-    uhl_udiv256 ; make integer to avoid overflow
+    SRL_UHL ; make integer to avoid overflow
     push hl
     pop de
     call umul24 ; hl = dy^2
@@ -411,7 +411,7 @@ distance168:
     ld hl,(dx168)
     call hlu_abs
     ; call hlu_udiv256 ; make integer to avoid overflow
-    uhl_udiv256 ; make integer to avoid overflow
+    SRL_UHL ; make integer to avoid overflow
     push hl
     pop de
     call umul24 ; hl = dx^2

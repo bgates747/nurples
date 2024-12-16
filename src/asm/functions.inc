@@ -327,7 +327,7 @@ u168_to_ascii:
 ; Convert integer part
     push hl ; Save HL (we’ll need the fractional part later)
     ; call hlu_udiv256 ; Shift to get integer portion in HL
-    uhl_udiv256 ; Shift to get integer portion in HL
+    SRL_UHL ; Shift to get integer portion in HL
     ld bc, -10000
     call @one_int
     ld bc, -1000
