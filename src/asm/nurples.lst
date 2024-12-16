@@ -378,7 +378,7 @@ PC     Output      Line
 040060             0079*       ; 10 cycles total
 040060             0080*       ENDMACRO
 040060             0081*   
-040060             0082*   ; puth the value in the accumulator into HLU
+040060             0082*   ; put the value in a into hlu
 040060             0083*   ; affects: HLU
 040060             0084*   ; destroys: nothing
 040060             0085*       MACRO A_TO_HLU

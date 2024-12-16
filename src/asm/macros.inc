@@ -79,7 +79,7 @@
     ; 10 cycles total
     ENDMACRO
 
-; puth the value in the accumulator into HLU
+; put the value in a into hlu
 ; affects: HLU
 ; destroys: nothing
     MACRO A_TO_HLU

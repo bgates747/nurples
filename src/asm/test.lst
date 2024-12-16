@@ -338,53 +338,63 @@ PC     Output      Line
 040000             0079*       ; 10 cycles total
 040000             0080*       ENDMACRO
 040000             0081*   
-040000             0082*   ; puth the value in the accumulator into HLU
-040000             0083*   ; affects: HLU
-040000             0084*   ; destroys: nothing
-040000             0085*       MACRO A_TO_HLU
-040000             0086*       ld (@F),hl ; 7 cycles
-040000             0087*       ld (@F+2),a ; 5 cycles
-040000             0088*       ld hl,(@F) ; 7 cycles
-040000             0089*       jp @F+3 ; 5 cycles
-040000             0090*       ; 24 cycles total
-040000             0091*   @@: dl 0x000000
-040000             0092*       ENDMACRO
+040000             0082*   ; ; put the value ina into hlu
+040000             0083*   ; ; affects: HLU
+040000             0084*   ; ; destroys: nothing
+040000             0085*   ;     MACRO A_TO_HLU
+040000             0086*   ;     ld (@F),hl ; 7 cycles
+040000             0087*   ;     ld (@F+2),a ; 5 cycles
+040000             0088*   ;     ld hl,(@F) ; 7 cycles
+040000             0089*   ;     jp @F+3 ; 5 cycles
+040000             0090*   ;     ; 24 cycles total
+040000             0091*   ; @@: dl 0x000000
+040000             0092*   ;     ENDMACRO
 040000             0093*   
-040000             0094*       MACRO PUSH_ALL
-040000             0095*       ex af,af'
-040000             0096*       exx
-040000             0097*       push af
-040000             0098*       push hl
-040000             0099*       push bc
-040000             0100*       push de
-040000             0101*   
-040000             0102*       ex af,af'
-040000             0103*       exx
-040000             0104*       push af
-040000             0105*       push hl
-040000             0106*       push bc
-040000             0107*       push de
-040000             0108*       push ix
-040000             0109*       push iy
-040000             0110*       ENDMACRO
+040000             0094*   ; put the value ina into hlu
+040000             0095*   ; affects: HLU
+040000             0096*   ; destroys: nothing
+040000             0097*       MACRO A_TO_HLU
+040000             0098*       ld (@F+1),hl ; 7 cycles
+040000             0099*       ld (@F+3),a ; 5 cycles
+040000             0100*   @@: ld hl,0x000000 ; 4 cycles
+040000             0101*       ; 16 cycles total
+040000             0102*       ENDMACRO
+040000             0103*   
+040000             0104*       MACRO PUSH_ALL
+040000             0105*       ex af,af'
+040000             0106*       exx
+040000             0107*       push af
+040000             0108*       push hl
+040000             0109*       push bc
+040000             0110*       push de
 040000             0111*   
-040000             0112*       MACRO POP_ALL
-040000             0113*       pop iy
-040000             0114*       pop ix
-040000             0115*       pop de
-040000             0116*       pop bc
-040000             0117*       pop hl
-040000             0118*       pop af
-040000             0119*       ex af,af'
-040000             0120*       exx
+040000             0112*       ex af,af'
+040000             0113*       exx
+040000             0114*       push af
+040000             0115*       push hl
+040000             0116*       push bc
+040000             0117*       push de
+040000             0118*       push ix
+040000             0119*       push iy
+040000             0120*       ENDMACRO
 040000             0121*   
-040000             0122*       pop de
-040000             0123*       pop bc
-040000             0124*       pop hl
-040000             0125*       pop af
-040000             0126*       ex af,af'
-040000             0127*       exx
-040000             0128*       ENDMACRO
+040000             0122*       MACRO POP_ALL
+040000             0123*       pop iy
+040000             0124*       pop ix
+040000             0125*       pop de
+040000             0126*       pop bc
+040000             0127*       pop hl
+040000             0128*       pop af
+040000             0129*       ex af,af'
+040000             0130*       exx
+040000             0131*   
+040000             0132*       pop de
+040000             0133*       pop bc
+040000             0134*       pop hl
+040000             0135*       pop af
+040000             0136*       ex af,af'
+040000             0137*       exx
+040000             0138*       ENDMACRO
 040000             0005    
 040000 C3 45 00 04 0006        jp start
 040004 FF FF FF FF 0007        align 64
@@ -417,106 +427,104 @@ PC     Output      Line
 04004C 21 01 02 03 0020        ld hl,0x030201
 040050 3E AB       0021        ld a,0xAB
 040052             0022        A_TO_HLU
-040052 22 62 00 04 0001M1      ld (@F),hl ; 7 cycles
-040056 32 64 00 04 0002M1      ld (@F+2),a ; 5 cycles
-04005A 2A 62 00 04 0003M1      ld hl,(@F) ; 7 cycles
-04005E C3 65 00 04 0004M1      jp @F+3 ; 5 cycles
-040062             0005M1      ; 24 cycles total
-040062 00 00 00    0006M1  @@: dl 0x000000
-040065 CD C5 00 04 0023        call printHexUHL
-040069             0024    ; END MAIN PROGRAM
-040069             0025    
-040069             0026    exit:
-040069 FD E1       0027        pop iy
-04006B DD E1       0028        pop ix
-04006D D1          0029        pop de
-04006E C1          0030        pop bc
-04006F F1          0031        pop af
-040070 21 00 00 00 0032        ld hl,0
-040074 C9          0033        ret
-040075             0034    
-040075             0035    ; BASIC DEBUG FUNCTIONS
-040075             0036    
-040075             0037    ; Print a zero-terminated string
-040075             0038    ; HL: Pointer to string
-040075             0039    printString:
-040075 C5          0040        PUSH BC
-040076 01 00 00 00 0041        LD BC,0
-04007A 3E 00       0042        LD A,0
-04007C 5B DF       0043        RST.LIL 18h
-04007E C1          0044        POP BC
-04007F C9          0045        RET
-040080             0046    ; print a VDU sequence
-040080             0047    ; HL: Pointer to VDU sequence - <1 byte length> <data>
-040080             0048    sendVDUsequence:
-040080 C5          0049        PUSH BC
-040081 01 00 00 00 0050        LD BC, 0
-040085 4E          0051        LD C, (HL)
-040086 5B DF       0052        RST.LIL 18h
-040088 C1          0053        POP BC
-040089 C9          0054        RET
-04008A             0055    ; Print Newline sequence to VDP
-04008A             0056    ; destroys bc
-04008A             0057    printNewLine:
-04008A F5          0058        push af ; for some reason rst.lil 10h sets carry flag
-04008B 3E 0D       0059        LD A, '\r'
-04008D 5B D7       0060        RST.LIL 10h
-04008F 3E 0A       0061        LD A, '\n'
-040091 5B D7       0062        RST.LIL 10h
-040093 F1          0063        pop af
-040094 C9          0064        RET
-040095             0065    
-040095             0066    ; Print a 24-bit HEX number
-040095             0067    ; HLU: Number to print
-040095             0068    printHex24:
-040095             0069        HLU_TO_A
-040095 E5          0001M1      push hl ; 4 cycles
-040096 33          0002M1      inc sp ; 1 cycle
-040097 F1          0003M1      pop af ; 4 cycles
-040098 3B          0004M1      dec sp ; 1 cycle
-040099             0005M1      ; 10 cycles total
-040099 CD A3 00 04 0070        CALL printHex8
-04009D             0071    ; Print a 16-bit HEX number
-04009D             0072    ; HL: Number to print
-04009D             0073    printHex16:
-04009D 7C          0074        LD A,H
-04009E CD A3 00 04 0075        CALL printHex8
-0400A2 7D          0076        LD A,L
-0400A3             0077    ; Print an 8-bit HEX number
-0400A3             0078    ; A: Number to print
-0400A3             0079    printHex8:
-0400A3 4F          0080        LD C,A
-0400A4 1F          0081        RRA
-0400A5 1F          0082        RRA
-0400A6 1F          0083        RRA
-0400A7 1F          0084        RRA
-0400A8 CD AD 00 04 0085        CALL @F
-0400AC 79          0086        LD A,C
-0400AD             0087    @@:
-0400AD E6 0F       0088        AND 0Fh
-0400AF C6 90       0089        ADD A,90h
-0400B1 27          0090        DAA
-0400B2 CE 40       0091        ADC A,40h
-0400B4 27          0092        DAA
-0400B5 5B D7       0093        RST.LIL 10h
-0400B7 C9          0094        RET
-0400B8             0095    
-0400B8             0096    printHexA:
-0400B8 F5          0097        push af
-0400B9 C5          0098        push bc
-0400BA CD A3 00 04 0099        call printHex8
-0400BE 3E 20       0100        ld a,' '
-0400C0 5B D7       0101        rst.lil 10h
-0400C2 C1          0102        pop bc
-0400C3 F1          0103        pop af
-0400C4 C9          0104        ret
-0400C5             0105    
-0400C5             0106    printHexUHL:
-0400C5 F5          0107        push af
-0400C6 C5          0108        push bc
-0400C7 E5          0109        push hl
-0400C8 CD 95 00 04 0110        call printHex24
-0400CC E1          0111        pop hl
-0400CD C1          0112        pop bc
-0400CE F1          0113        pop af
-0400CF C9          0114        ret
+040052 22 5B 00 04 0001M1      ld (@F+1),hl ; 7 cycles
+040056 32 5D 00 04 0002M1      ld (@F+3),a ; 5 cycles
+04005A 21 00 00 00 0003M1  @@: ld hl,0x000000 ; 4 cycles
+04005E             0004M1      ; 16 cycles total
+04005E CD BE 00 04 0023        call printHexUHL
+040062             0024    ; END MAIN PROGRAM
+040062             0025    
+040062             0026    exit:
+040062 FD E1       0027        pop iy
+040064 DD E1       0028        pop ix
+040066 D1          0029        pop de
+040067 C1          0030        pop bc
+040068 F1          0031        pop af
+040069 21 00 00 00 0032        ld hl,0
+04006D C9          0033        ret
+04006E             0034    
+04006E             0035    ; BASIC DEBUG FUNCTIONS
+04006E             0036    
+04006E             0037    ; Print a zero-terminated string
+04006E             0038    ; HL: Pointer to string
+04006E             0039    printString:
+04006E C5          0040        PUSH BC
+04006F 01 00 00 00 0041        LD BC,0
+040073 3E 00       0042        LD A,0
+040075 5B DF       0043        RST.LIL 18h
+040077 C1          0044        POP BC
+040078 C9          0045        RET
+040079             0046    ; print a VDU sequence
+040079             0047    ; HL: Pointer to VDU sequence - <1 byte length> <data>
+040079             0048    sendVDUsequence:
+040079 C5          0049        PUSH BC
+04007A 01 00 00 00 0050        LD BC, 0
+04007E 4E          0051        LD C, (HL)
+04007F 5B DF       0052        RST.LIL 18h
+040081 C1          0053        POP BC
+040082 C9          0054        RET
+040083             0055    ; Print Newline sequence to VDP
+040083             0056    ; destroys bc
+040083             0057    printNewLine:
+040083 F5          0058        push af ; for some reason rst.lil 10h sets carry flag
+040084 3E 0D       0059        LD A, '\r'
+040086 5B D7       0060        RST.LIL 10h
+040088 3E 0A       0061        LD A, '\n'
+04008A 5B D7       0062        RST.LIL 10h
+04008C F1          0063        pop af
+04008D C9          0064        RET
+04008E             0065    
+04008E             0066    ; Print a 24-bit HEX number
+04008E             0067    ; HLU: Number to print
+04008E             0068    printHex24:
+04008E             0069        HLU_TO_A
+04008E E5          0001M1      push hl ; 4 cycles
+04008F 33          0002M1      inc sp ; 1 cycle
+040090 F1          0003M1      pop af ; 4 cycles
+040091 3B          0004M1      dec sp ; 1 cycle
+040092             0005M1      ; 10 cycles total
+040092 CD 9C 00 04 0070        CALL printHex8
+040096             0071    ; Print a 16-bit HEX number
+040096             0072    ; HL: Number to print
+040096             0073    printHex16:
+040096 7C          0074        LD A,H
+040097 CD 9C 00 04 0075        CALL printHex8
+04009B 7D          0076        LD A,L
+04009C             0077    ; Print an 8-bit HEX number
+04009C             0078    ; A: Number to print
+04009C             0079    printHex8:
+04009C 4F          0080        LD C,A
+04009D 1F          0081        RRA
+04009E 1F          0082        RRA
+04009F 1F          0083        RRA
+0400A0 1F          0084        RRA
+0400A1 CD A6 00 04 0085        CALL @F
+0400A5 79          0086        LD A,C
+0400A6             0087    @@:
+0400A6 E6 0F       0088        AND 0Fh
+0400A8 C6 90       0089        ADD A,90h
+0400AA 27          0090        DAA
+0400AB CE 40       0091        ADC A,40h
+0400AD 27          0092        DAA
+0400AE 5B D7       0093        RST.LIL 10h
+0400B0 C9          0094        RET
+0400B1             0095    
+0400B1             0096    printHexA:
+0400B1 F5          0097        push af
+0400B2 C5          0098        push bc
+0400B3 CD 9C 00 04 0099        call printHex8
+0400B7 3E 20       0100        ld a,' '
+0400B9 5B D7       0101        rst.lil 10h
+0400BB C1          0102        pop bc
+0400BC F1          0103        pop af
+0400BD C9          0104        ret
+0400BE             0105    
+0400BE             0106    printHexUHL:
+0400BE F5          0107        push af
+0400BF C5          0108        push bc
+0400C0 E5          0109        push hl
+0400C1 CD 8E 00 04 0110        call printHex24
+0400C5 E1          0111        pop hl
+0400C6 C1          0112        pop bc
+0400C7 F1          0113        pop af
+0400C8 C9          0114        ret
