@@ -201,20 +201,11 @@ main:
 ; start a new game
     call game_initialize
 
-    ; CALL DEBUG_PRINT_TABLE
-    ; CALL DEBUG_WAITKEYPRESS
 main_loop:
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
     call do_game
-
-; ; DEBUG
-;     CALL DEBUG_PRINT
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_PRINT_TILE_STACK
-;     ; CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank

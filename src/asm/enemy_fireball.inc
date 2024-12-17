@@ -1,5 +1,6 @@
     align 256
 speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
+fireballs_max: equ 4
 
 fireball_defaults:
     db enemy_projectile        ; type
@@ -20,7 +21,9 @@ fireball_defaults:
 
 enemy_spawn_fireball:
     ld hl,fireball_defaults
-    call spawn_sprite_from_sprite
+    ld ix,fireballs_base
+    ld b,fireballs_max
+    call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
 ; ------------------------------------------------

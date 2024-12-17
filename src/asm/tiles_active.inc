@@ -147,3 +147,32 @@ draw_active_tile:
     call vdu_plot_bmp168
     ret
 ; end draw_active_tile
+
+; create a new sprite at the same location as the current tile
+; inputs: hl = pointer to new sprite default settings, tile_table_pointer = current tile
+;         ix = pointer to sprite group, b = number of records in sprite group
+; affects: bumps table_active_sprites by one
+spawn_sprite_from_tile: 
+    push hl ; back up pointer to new sprite defaults
+    call table_get_next_id_new ; if available: a = new sprite id, ix = pointer to new sprite vars
+    pop hl ; restore pointer to new sprite defaults
+    ret nc ; no carry means no free sprite slots, so we go home
+; copy default settings to new sprite
+    push ix ; back up pointer to new sprite record
+    lea ix,ix+sprite_definitions ; bump pointer to copy to
+    push ix ; pointer to default sprite settings
+    pop de ; address to copy to
+    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+    pop ix ; restore pointer to new sprite record
+; copy sprite position, velocity and orientation from existing tile
+    ld iy,(tile_table_pointer) ; get existing tile record
+    ld hl,(iy+tile_x)
+    ld (ix+sprite_x),hl
+    ld hl,(iy+tile_y)
+    ld (ix+sprite_y),hl
+; return to caller
+    set 7,(ix+sprite_type) ; set just spawned flag
+    scf ; set carry flag to indicate success
+    ret
+; end spawn_sprite_from_tile

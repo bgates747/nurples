@@ -66,7 +66,7 @@ game_playing:
     call vdu_set_gfx_viewport
 
     call do_player
-    ; call do_enemies
+    call do_enemies
     call move_tiles
 ; update UI: TODO make this a standalone function
     call print_score
