@@ -83,7 +83,9 @@ tile_table_get_next_id:
     dec (hl) ; undo increment
     xor a ; reset carry flag indicating that we didn't find a free tile
     ret
-@@: ; point ix to next tile record
+@@:
+    ld a,(hl) ; number of active tiles
+; point ix to next tile record
     ld hl,next_tile_id
     inc (hl)
     ld d,(hl) ; index into tile table
@@ -93,7 +95,11 @@ tile_table_get_next_id:
     add ix,de ; ix is now the address of the table entry
 ; add tile pointer to tile stack
     ld hl,tile_stack
-    add hl,de ; de was already set to the correct offset
+    ld d,a ; number of active tiles
+    dec d ; zero-based index
+    ld e,3 ; three bytes per tile record
+    mlt de ; offset into tile stack
+    add hl,de ; hl points to top of the active tiles
     ld (hl),ix
 ; return tile id
     ld a,(ix+tile_id)
@@ -106,7 +112,7 @@ tile_table_get_next_id:
 ; outputs: tile stack pointer unchanged, effectively pointing to next record
 ; destroys: a,hl
 ; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
-table_deactivate_tile: ; TODO: implement
+table_deactivate_tile: 
     ld hl,num_active_tiles
     ld a,(hl) ; number of active tiles
     dec (hl) ; decrement number of active tiles
@@ -130,25 +136,27 @@ table_deactivate_tile: ; TODO: implement
     pop bc ; bc = number of bytes to copy
     pop hl ; hl = address to copy from
 
-
-
-
-; DEBUG
-    CALL DEBUG_PRINT
-    CALL DEBUG_PRINT_TILE_TABLE
-    CALL DEBUG_PRINT_TILE_STACK
-    CALL DEBUG_WAITKEYPRESS
-; END DEBUG
+; ; DEBUG
+;     CALL DEBUG_PRINT
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_PRINT_TILE_STACK
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
 
     lddr ; shift stack records down
 
-; DEBUG
-    CALL DEBUG_PRINT
-    CALL DEBUG_PRINT_TILE_TABLE
-    CALL DEBUG_PRINT_TILE_STACK
-    CALL DEBUG_WAITKEYPRESS
-; END DEBUG
+; ; DEBUG
+;     CALL DEBUG_PRINT
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_PRINT_TILE_STACK
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
 
+    ld hl,(tile_stack_pointer) ; reset tile_stack_pointer
+    dec hl
+    dec hl
+    dec hl
+    ld (tile_stack_pointer),hl
 
     ret
 ; end table_deactivate_tile

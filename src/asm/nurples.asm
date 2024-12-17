@@ -332,9 +332,16 @@ DEBUG_PRINT_FIELDS:
 
 DEBUG_PRINT_TILE_STACK:
     PUSH_ALL
-    ld ix,tile_stack
     call printNewLine
-    ld b,4
+    call printNewLine
+    ld hl,(tile_stack_pointer)
+    call printHexUHL
+    call printNewLine
+    ld a,(num_active_tiles)
+    call printHexA
+    call printNewLine
+    ld ix,tile_stack
+    ld b,8
 @loop:
     push bc
     ld hl,(ix)
