@@ -96,7 +96,7 @@ tile_table_get_next_id:
     add hl,de ; de was already set to the correct offset
     ld (hl),ix
 ; return tile id
-    ld a,(hl)
+    ld a,(ix+tile_id)
     scf ; sets carry flag indicating we found a free tile
     ret ; done
 ; end tile_table_get_next_id
