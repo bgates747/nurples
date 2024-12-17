@@ -29,12 +29,270 @@ tile_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 tile_frame:              equ  40; 1 bytes ;current animation frame
 
 ; ###### tile TABLE VARIABLES ######
-tile_stack: blkb 256*3,0 ; stack of pointers to tile records
-    db 0 ; list terminator
+    align 256
+tile_stack: ; blkb 256*3,0 ; stack of pointers to tile records
+    dl 0x000000 ; 0
+    dl 0x000000 ; 1
+    dl 0x000000 ; 2
+    dl 0x000000 ; 3
+    dl 0x000000 ; 4
+    dl 0x000000 ; 5
+    dl 0x000000 ; 6
+    dl 0x000000 ; 7
+    dl 0x000000 ; 8
+    dl 0x000000 ; 9
+    dl 0x000000 ; 10
+    dl 0x000000 ; 11
+    dl 0x000000 ; 12
+    dl 0x000000 ; 13
+    dl 0x000000 ; 14
+    dl 0x000000 ; 15
+    dl 0x000000 ; 16
+    dl 0x000000 ; 17
+    dl 0x000000 ; 18
+    dl 0x000000 ; 19
+    dl 0x000000 ; 20
+    dl 0x000000 ; 21
+    dl 0x000000 ; 22
+    dl 0x000000 ; 23
+    dl 0x000000 ; 24
+    dl 0x000000 ; 25
+    dl 0x000000 ; 26
+    dl 0x000000 ; 27
+    dl 0x000000 ; 28
+    dl 0x000000 ; 29
+    dl 0x000000 ; 30
+    dl 0x000000 ; 31
+    dl 0x000000 ; 32
+    dl 0x000000 ; 33
+    dl 0x000000 ; 34
+    dl 0x000000 ; 35
+    dl 0x000000 ; 36
+    dl 0x000000 ; 37
+    dl 0x000000 ; 38
+    dl 0x000000 ; 39
+    dl 0x000000 ; 40
+    dl 0x000000 ; 41
+    dl 0x000000 ; 42
+    dl 0x000000 ; 43
+    dl 0x000000 ; 44
+    dl 0x000000 ; 45
+    dl 0x000000 ; 46
+    dl 0x000000 ; 47
+    dl 0x000000 ; 48
+    dl 0x000000 ; 49
+    dl 0x000000 ; 50
+    dl 0x000000 ; 51
+    dl 0x000000 ; 52
+    dl 0x000000 ; 53
+    dl 0x000000 ; 54
+    dl 0x000000 ; 55
+    dl 0x000000 ; 56
+    dl 0x000000 ; 57
+    dl 0x000000 ; 58
+    dl 0x000000 ; 59
+    dl 0x000000 ; 60
+    dl 0x000000 ; 61
+    dl 0x000000 ; 62
+    dl 0x000000 ; 63
+    dl 0x000000 ; 64
+    dl 0x000000 ; 65
+    dl 0x000000 ; 66
+    dl 0x000000 ; 67
+    dl 0x000000 ; 68
+    dl 0x000000 ; 69
+    dl 0x000000 ; 70
+    dl 0x000000 ; 71
+    dl 0x000000 ; 72
+    dl 0x000000 ; 73
+    dl 0x000000 ; 74
+    dl 0x000000 ; 75
+    dl 0x000000 ; 76
+    dl 0x000000 ; 77
+    dl 0x000000 ; 78
+    dl 0x000000 ; 79
+    dl 0x000000 ; 80
+    dl 0x000000 ; 81
+    dl 0x000000 ; 82
+    dl 0x000000 ; 83
+    dl 0x000000 ; 84
+    dl 0x000000 ; 85
+    dl 0x000000 ; 86
+    dl 0x000000 ; 87
+    dl 0x000000 ; 88
+    dl 0x000000 ; 89
+    dl 0x000000 ; 90
+    dl 0x000000 ; 91
+    dl 0x000000 ; 92
+    dl 0x000000 ; 93
+    dl 0x000000 ; 94
+    dl 0x000000 ; 95
+    dl 0x000000 ; 96
+    dl 0x000000 ; 97
+    dl 0x000000 ; 98
+    dl 0x000000 ; 99
+    dl 0x000000 ; 100
+    dl 0x000000 ; 101
+    dl 0x000000 ; 102
+    dl 0x000000 ; 103
+    dl 0x000000 ; 104
+    dl 0x000000 ; 105
+    dl 0x000000 ; 106
+    dl 0x000000 ; 107
+    dl 0x000000 ; 108
+    dl 0x000000 ; 109
+    dl 0x000000 ; 110
+    dl 0x000000 ; 111
+    dl 0x000000 ; 112
+    dl 0x000000 ; 113
+    dl 0x000000 ; 114
+    dl 0x000000 ; 115
+    dl 0x000000 ; 116
+    dl 0x000000 ; 117
+    dl 0x000000 ; 118
+    dl 0x000000 ; 119
+    dl 0x000000 ; 120
+    dl 0x000000 ; 121
+    dl 0x000000 ; 122
+    dl 0x000000 ; 123
+    dl 0x000000 ; 124
+    dl 0x000000 ; 125
+    dl 0x000000 ; 126
+    dl 0x000000 ; 127
+    dl 0x000000 ; 128
+    dl 0x000000 ; 129
+    dl 0x000000 ; 130
+    dl 0x000000 ; 131
+    dl 0x000000 ; 132
+    dl 0x000000 ; 133
+    dl 0x000000 ; 134
+    dl 0x000000 ; 135
+    dl 0x000000 ; 136
+    dl 0x000000 ; 137
+    dl 0x000000 ; 138
+    dl 0x000000 ; 139
+    dl 0x000000 ; 140
+    dl 0x000000 ; 141
+    dl 0x000000 ; 142
+    dl 0x000000 ; 143
+    dl 0x000000 ; 144
+    dl 0x000000 ; 145
+    dl 0x000000 ; 146
+    dl 0x000000 ; 147
+    dl 0x000000 ; 148
+    dl 0x000000 ; 149
+    dl 0x000000 ; 150
+    dl 0x000000 ; 151
+    dl 0x000000 ; 152
+    dl 0x000000 ; 153
+    dl 0x000000 ; 154
+    dl 0x000000 ; 155
+    dl 0x000000 ; 156
+    dl 0x000000 ; 157
+    dl 0x000000 ; 158
+    dl 0x000000 ; 159
+    dl 0x000000 ; 160
+    dl 0x000000 ; 161
+    dl 0x000000 ; 162
+    dl 0x000000 ; 163
+    dl 0x000000 ; 164
+    dl 0x000000 ; 165
+    dl 0x000000 ; 166
+    dl 0x000000 ; 167
+    dl 0x000000 ; 168
+    dl 0x000000 ; 169
+    dl 0x000000 ; 170
+    dl 0x000000 ; 171
+    dl 0x000000 ; 172
+    dl 0x000000 ; 173
+    dl 0x000000 ; 174
+    dl 0x000000 ; 175
+    dl 0x000000 ; 176
+    dl 0x000000 ; 177
+    dl 0x000000 ; 178
+    dl 0x000000 ; 179
+    dl 0x000000 ; 180
+    dl 0x000000 ; 181
+    dl 0x000000 ; 182
+    dl 0x000000 ; 183
+    dl 0x000000 ; 184
+    dl 0x000000 ; 185
+    dl 0x000000 ; 186
+    dl 0x000000 ; 187
+    dl 0x000000 ; 188
+    dl 0x000000 ; 189
+    dl 0x000000 ; 190
+    dl 0x000000 ; 191
+    dl 0x000000 ; 192
+    dl 0x000000 ; 193
+    dl 0x000000 ; 194
+    dl 0x000000 ; 195
+    dl 0x000000 ; 196
+    dl 0x000000 ; 197
+    dl 0x000000 ; 198
+    dl 0x000000 ; 199
+    dl 0x000000 ; 200
+    dl 0x000000 ; 201
+    dl 0x000000 ; 202
+    dl 0x000000 ; 203
+    dl 0x000000 ; 204
+    dl 0x000000 ; 205
+    dl 0x000000 ; 206
+    dl 0x000000 ; 207
+    dl 0x000000 ; 208
+    dl 0x000000 ; 209
+    dl 0x000000 ; 210
+    dl 0x000000 ; 211
+    dl 0x000000 ; 212
+    dl 0x000000 ; 213
+    dl 0x000000 ; 214
+    dl 0x000000 ; 215
+    dl 0x000000 ; 216
+    dl 0x000000 ; 217
+    dl 0x000000 ; 218
+    dl 0x000000 ; 219
+    dl 0x000000 ; 220
+    dl 0x000000 ; 221
+    dl 0x000000 ; 222
+    dl 0x000000 ; 223
+    dl 0x000000 ; 224
+    dl 0x000000 ; 225
+    dl 0x000000 ; 226
+    dl 0x000000 ; 227
+    dl 0x000000 ; 228
+    dl 0x000000 ; 229
+    dl 0x000000 ; 230
+    dl 0x000000 ; 231
+    dl 0x000000 ; 232
+    dl 0x000000 ; 233
+    dl 0x000000 ; 234
+    dl 0x000000 ; 235
+    dl 0x000000 ; 236
+    dl 0x000000 ; 237
+    dl 0x000000 ; 238
+    dl 0x000000 ; 239
+    dl 0x000000 ; 240
+    dl 0x000000 ; 241
+    dl 0x000000 ; 242
+    dl 0x000000 ; 243
+    dl 0x000000 ; 244
+    dl 0x000000 ; 245
+    dl 0x000000 ; 246
+    dl 0x000000 ; 247
+    dl 0x000000 ; 248
+    dl 0x000000 ; 249
+    dl 0x000000 ; 250
+    dl 0x000000 ; 251
+    dl 0x000000 ; 252
+    dl 0x000000 ; 253
+    dl 0x000000 ; 254
+    dl 0x000000 ; 255
+    dl 0x000000 ; list terminator
+
 tile_stack_end:
 tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
 tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
-num_active_tiles: dl 0 ; how many active tiles
+num_active_tiles: db 0 ; how many active tiles
 next_tile_id: db 0 ; next available tile id
 new_tile_table_pointer: dl 0 ; pointer to new tile record
 
@@ -101,12 +359,13 @@ tile_table_get_next_id:
 ; end tile_table_get_next_id
 
 ; deactivate the tile with the given id
-; inputs: iy pointing to tile stack record
+; inputs: tile_stack_pointer pointing to stack record to deactivate
 ; outputs: tile stack pointer unchanged, effectively pointing to next record
 ; destroys: a,hl
 ; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
-table_deactivate_tile: ; TODO: implement
+table_deactivate_tile:
     ld hl,num_active_tiles
+    ld a,(hl) ; number of active tiles
     dec (hl) ; decrement number of active tiles
 ; remove tile pointer from tile stack
     push iy ; pointer to tile stack record
@@ -119,7 +378,8 @@ table_deactivate_tile: ; TODO: implement
     or a ; clear carry
     sbc hl,de ; number of bytes to copy
     push hl
-    pop bc ; number of bytes to copy
+    pop bc ; bc = number of bytes to copy
+    pop hl ; hl = address to copy from
     lddr ; shift stack records down
     ret
 ; end table_deactivate_tile
@@ -152,7 +412,6 @@ spawn_active_tile:
     call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
     pop hl ; restore pointer to new tile defaults
     ret nc ; no carry means no free tile slots, so we go home
-    ; HL 046800 turret_fireball_defaults, ix 0470A4 tile_table_base
 ; copy default settings to new tile
     ld (new_tile_table_pointer),ix ; save pointer to new tile record
     lea ix,ix+tile_definitions ; bump pointer to copy to
@@ -160,7 +419,6 @@ spawn_active_tile:
     pop de ; address to copy to
     ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
     ldir ; copies defaults to new tile record
-    ; hl 04692A, de 0471E4, ix 0471BA, iy 000000, defaults copied correctly
 ; copy tile position from inputs
     ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
     ld hl,(tiles_x_plot-1) ; shift up one byte to get 16.8 fixed point
