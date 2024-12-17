@@ -1,8 +1,8 @@
     align 256
 turret_fireball_defaults:
     db enemy_ground         ; type
-    ; dl BUF_TURRET_000       ; base_bufferId
-    dl BUF_CRATER       ; base_bufferId DEBUG
+    dl BUF_TURRET_000       ; base_bufferId
+    ; dl BUF_CRATER       ; base_bufferId DEBUG
     dl move_turret_fireball ; move_program
     db collides_with_laser  ; collisions
     db 16                   ; dim_x
@@ -30,17 +30,18 @@ activate_turret_fireball:
 
 move_turret_fireball:
     call move_active_tile 
+    jp z,table_deactivate_tile
     ; call check_enemy_collisions
     ; ret m ; was collision so nothing more to do
-; ; target player
-;     ld hl,speed_fireball
-;     ld (Vp),hl ; param for targeting_computer
-;     call orientation_to_player
-;     call targeting_computer
-;     ld (iy+tile_heading),hl ; save active tile heading
-;     call tile_frame_heading
+; target player
+    call tile_orientation_to_player
+    ld hl,speed_fireball
+    ld (Vp),hl ; param for targeting_computer
+    call targeting_computer
+    ld (iy+tile_heading),hl ; save active tile heading
+    call tile_frame_heading
     call draw_active_tile
-    RET ; DEBUG
+    ret ; DEBUG
 ; check whether it is time to spawn a fireball
     dec (iy+tile_move_timer)
     ret nz

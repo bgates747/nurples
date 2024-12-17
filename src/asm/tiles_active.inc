@@ -51,7 +51,7 @@ move_active_tile:
     ld de,-tile_bottom*256
     adc hl,de    
     ret m ; still on screen so do nothing further
-    set tile_just_died,(iy+tile_collisions) ; scrolled off screen so deactivate
+    xor a ; signal caller that tile has scrolled off screen
     ret
 ; end move_active_tile
 
@@ -67,6 +67,14 @@ move_tiles:
 ; point iy to tile record
     ld iy,(iy) ; iy points to the current tile record
     ld (tile_table_pointer),iy ; update table pointer
+
+; ; DEBUG
+;     CALL DEBUG_PRINT
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_PRINT_TILE_STACK
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
+
     ; push bc ; backup loop counter
 ; check top bit of tile_type to see if tile is just spawned
     ld a,(iy+tile_type)

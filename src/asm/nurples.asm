@@ -210,12 +210,12 @@ main_loop:
 ; do gamestate logic
     call do_game
 
-; DEBUG
-    CALL DEBUG_PRINT
-    CALL DEBUG_PRINT_TILE_TABLE
-    CALL DEBUG_PRINT_TILE_STACK
-    ; CALL DEBUG_WAITKEYPRESS
-; END DEBUG
+; ; DEBUG
+;     CALL DEBUG_PRINT
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_PRINT_TILE_STACK
+;     ; CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
@@ -253,13 +253,11 @@ DEBUG_PRINT:
 
 DEBUG_PRINT_TILE_TABLE:
     PUSH_ALL
-    ld c,0 ; X
-    ld b,9 ; Y
-    call vdu_move_cursor
-
-    ld ix,tile_table_base
+    call printNewLine
+    ld ix,tile_stack
+    ld ix,(ix)
     call dump_tile_record
-    ; call printNewLine
+    call printNewLine
     POP_ALL
     ret
 ; end DEBUG_PRINT_TILE_TABLE
@@ -352,5 +350,13 @@ DEBUG_PRINT_TILE_STACK:
     djnz @loop
     POP_ALL
     ret
+
+DEBUG_DUMP_PLAYER_RECORD:
+    PUSH_ALL
+    call printNewLine
+    CALL dump_player_record
+    call printNewLine
+    POP_ALL
+    RET
 
     include "tables.inc"

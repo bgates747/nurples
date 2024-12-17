@@ -1,5 +1,5 @@
 ; ###### tile TABLE FIELD INDICES ######
-tile_table_record_size:         equ  64; 40 bytes ;40 bytes per tile record
+tile_table_record_size:         equ  64; 41 bytes ;41 bytes per tile record
 tile_id:                 equ   0; 1 bytes ;unique tileId, zero-based
 ; tile state variables
 tile_state_variables:    equ   1; beginning of tile state variables

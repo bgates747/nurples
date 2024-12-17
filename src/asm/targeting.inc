@@ -2,12 +2,14 @@
 
 ; compute orientation to player 
 ; based on relative positions
-; returns: h.l 16.8 fixed angle256 to player
+; returns: uh.l 16.8 fixed angle256 to player
 ;    ub.c and ud.e as 16.8 signed fixed point numbers
 ;    representing delta-x/y *to* target respectively
+; inputs: iy pointed at sprite record
+; destroys: everything except iy (sprite record pointer)
 orientation_to_player:
+    push iy ; preserve sprite record pointer
     ld ix,player_begin
-    ld iy,(table_pointer) 
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     ld ix,(ix+sprite_x)
@@ -19,9 +21,37 @@ orientation_to_player:
     ld (Bearing_t),hl
     pop de ; dy
     pop bc ; dx
-    ld iy,(table_pointer) 
+    pop iy ; restore sprite record pointer
     ret
 ; end orientation_to_player
+
+; compute orientation to player 
+; based on relative positions
+; returns: uh.l 16.8 fixed angle256 to player
+;    ub.c and ud.e as 16.8 signed fixed point numbers
+;    representing delta-x/y *to* target respectively
+; inputs: iy pointed at tile record
+; destroys: everything except iy (tile record pointer)
+tile_orientation_to_player:
+    ld ix,player_begin
+; compute dx
+    ld hl,(ix+sprite_x)
+    ld de,(iy+tile_x)
+    or a ; clear carry
+    sbc hl,de ; dx
+    push hl ; save dx
+; compute dy
+    ld hl,(ix+sprite_y)
+    ld de,(iy+tile_y)
+    or a ; clear carry
+    sbc hl,de ; dy
+    ex de,hl ; de = dy
+; compute angle to player
+    pop bc ; dx (was hl)
+    call atan2_168fast ; uh.l = angle to player
+    ld (Bearing_t),hl
+    ret
+; end tile_orientation_to_player
 
 ; targeting_computer variables fixed 16.8 format
 Bearing_t: dl 0x000000 ; angle to target
@@ -36,7 +66,7 @@ Heading_p: dl 0x000000 ; angle of projectile motion
 lead_angle: dl 0x000000 ; lead angle
 
 ; Inputs:   Vp velocity of projectile set,
-;           IY pointed to sprite record, 
+;           iy pointed to sprite record, 
 ;           player position and velocities correctly set
 ; Outputs:  uh.l is the 16.8 fixed firing angle256
 ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
@@ -73,6 +103,9 @@ targeting_computer:
 ; ; add lead angle to target bearing
 ;     ld de,(Bearing_t)
 ;     add hl,de ; h.l = lead angle+target bearing
+
+    ld hl,(Bearing_t) ; DEBUG
+
     push hl
 
 ; compute component projectile velocities
