@@ -12,6 +12,5 @@ table_end: equ enemy_sprites_end
 table_num_records: equ table_end-table_base/table_record_size
 
 ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
-; tile_table_base: equ table_end
-tile_table_base: equ 0x050000 ; DEBUG
+tile_table_base: equ table_end
 tile_table_end: equ 256*tile_table_record_size+tile_table_base

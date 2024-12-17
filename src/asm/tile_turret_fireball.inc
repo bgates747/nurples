@@ -29,16 +29,7 @@ activate_turret_fireball:
 ; end activate_turret_fireball
 
 move_turret_fireball:
-; DEBUG
-    CALL DEBUG_PRINT
-    CALL DEBUG_PRINT_TILE_TABLE
-    CALL DEBUG_PRINT_TILE_STACK
-    ; CALL DEBUG_WAITKEYPRESS
-; END DEBUG
-
     call move_active_tile 
-    or a ; a will be non-zero if have scrolled off screen
-    jp nz,table_deactivate_tile
     ; call check_enemy_collisions
     ; ret m ; was collision so nothing more to do
 ; ; target player

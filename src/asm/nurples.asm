@@ -210,10 +210,10 @@ main_loop:
 ; do gamestate logic
     call do_game
 
-; ; DEBUG
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
+; DEBUG
+    ; CALL DEBUG_PRINT_TABLE
+    ; CALL DEBUG_WAITKEYPRESS
+; END DEBUG
 
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank

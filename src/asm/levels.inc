@@ -40,7 +40,7 @@ next_tileset:
     inc (hl) ; bump to next index
     call get_tileset_ptr ; ix = pointer to tileset_ptrs record
     ld hl,(ix) ; ix = pointer to tileset levels lut
-    SIGN_HLU ; check for list terminator (0)
+    sign_hlu ; check for list terminator (0)
     jp nz,@F ; not end of list
     ld a,-1 ; will wrap around to zero on the next iteration
     ld (tileset_ptr_idx),a
@@ -73,7 +73,7 @@ next_level:
     inc (hl) ; bump to next level
     call get_level_ptr ; ix points to current level lookup record
     ld hl,(ix) ; hl = pointer to next level lookup record
-    SIGN_HLU ; check for list terminator (0)
+    sign_hlu ; check for list terminator (0)
     jp nz,@F ; not end of list
     xor a ; reset level to zero
     ld (cur_level),a
