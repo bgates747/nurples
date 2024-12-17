@@ -379,8 +379,15 @@ table_deactivate_tile:
     sbc hl,de ; number of bytes to copy
     push hl
     pop bc ; bc = number of bytes to copy
-    pop hl ; hl = address to copy from
     lddr ; shift stack records down
+
+; ; DEBUG
+;     CALL DEBUG_PRINT
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_PRINT_TILE_STACK
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
+
     ret
 ; end table_deactivate_tile
 
@@ -433,13 +440,6 @@ spawn_active_tile:
 ; return to caller
     set 7,(ix+tile_type) ; set just spawned flag
     scf ; set carry flag to indicate success
-
-; DEBUG
-    CALL DEBUG_PRINT
-    CALL DEBUG_PRINT_TILE_TABLE
-    CALL DEBUG_WAITKEYPRESS
-; END DEBUG
-
     ret
 ; end spawn_active_tile
 
@@ -533,60 +533,60 @@ dump_tile_record:
     ld a,(ix+tile_collisions)
     call printBin8
 
-    call printInline
-    asciz "\r\nszx : "
-    ld a,(ix+tile_dim_x)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nszx : "
+    ; ld a,(ix+tile_dim_x)
+    ; call printHexA
     
-    call printInline
-    asciz "\r\nszy : "
-    ld a,(ix+tile_dim_y)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nszy : "
+    ; ld a,(ix+tile_dim_y)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\n#ori: "
-    ld a,(ix+tile_num_orientations)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\n#ori: "
+    ; ld a,(ix+tile_num_orientations)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\n#ani: "
-    ld a,(ix+tile_num_animations)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\n#ani: "
+    ; ld a,(ix+tile_num_animations)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nani : "
-    ld a,(ix+tile_animation)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nani : "
+    ; ld a,(ix+tile_animation)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nanit: "
-    ld a,(ix+tile_animation_timer)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nanit: "
+    ; ld a,(ix+tile_animation_timer)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nmvt : "
-    ld a,(ix+tile_move_timer)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nmvt : "
+    ; ld a,(ix+tile_move_timer)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nmvs : "
-    ld a,(ix+tile_move_step)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nmvs : "
+    ; ld a,(ix+tile_move_step)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\npts : "
-    ld a,(ix+tile_points)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\npts : "
+    ; ld a,(ix+tile_points)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\ndmg : "
-    ld a,(ix+tile_shield_damage)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\ndmg : "
+    ; ld a,(ix+tile_shield_damage)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nfrm : "
-    ld a,(ix+tile_frame)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nfrm : "
+    ; ld a,(ix+tile_frame)
+    ; call printHexA
 
     ; call printNewLine
     ; call printNewLine

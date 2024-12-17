@@ -328,4 +328,20 @@ DEBUG_PRINT_FIELDS:
     ; POP_ALL
     ret
 
+DEBUG_PRINT_TILE_STACK:
+    PUSH_ALL
+    ld ix,tile_stack
+    call printNewLine
+    ld b,4
+@loop:
+    push bc
+    ld hl,(ix)
+    call printHexUHL
+    call printNewLine
+    lea ix,ix+3
+    pop bc
+    djnz @loop
+    POP_ALL
+    ret
+
     include "tables.inc"

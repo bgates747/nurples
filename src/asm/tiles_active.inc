@@ -50,8 +50,15 @@ move_active_tile:
 ; y-axis bottom is all we need to test
     ld de,-tile_bottom*256
     adc hl,de    
+
+; DEBUG
+    CALL DEBUG_PRINT
+    CALL DEBUG_PRINT_TILE_TABLE
+    CALL DEBUG_PRINT_TILE_STACK
+; END DEBUG
+
     ret m ; still on screen so do nothing further
-    set tile_just_died,(iy+tile_collisions) ; scrolled off screen so deactivate
+    xor a ; return zero to indicate tile scrolled off screen
     ret
 ; end move_active_tile
 
@@ -132,7 +139,7 @@ check_tile_collision_player: ; check for collisions with player
 ; end check_tile_collisions
 ; END TODO
 
-; this routine vanquishes the tile tile
+; this routine vanquishes the tile
 ; and replaces it with an animated explosion
 ; destroys: everything except index registers
 ; returns: a=-1 to indicate tile died, and an incandescent ball of debris and gas
