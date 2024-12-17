@@ -58,7 +58,6 @@ move_active_tile:
 move_tiles:
 ; initialize pointers and loop counter
     ld iy,tile_stack ; set iy to first record in table
-    ; ld b,table_num_records ; loop counter
 @move_loop:
     ld (tile_stack_pointer),iy ; update stack pointer
     ld a,(iy+2)
@@ -67,40 +66,24 @@ move_tiles:
 ; point iy to tile record
     ld iy,(iy) ; iy points to the current tile record
     ld (tile_table_pointer),iy ; update table pointer
-
-; ; DEBUG
-;     CALL DEBUG_PRINT
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_PRINT_TILE_STACK
-;     CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
-
-    ; push bc ; backup loop counter
 ; check top bit of tile_type to see if tile is just spawned
     ld a,(iy+tile_type)
     bit 7,a
     jp nz,@just_spawned ; if just spawned, skip to next record
 ; check tile_type to see if tile is active
     and a ; if zero, tile is dead 
-    jp z,@next_record ; ... and we skip to next record
+    ret z ; end of stack so we're done
 ; otherwise we prepare to move the tile
     ld hl,(iy+tile_move_program) ; load the behavior subroutine address
     CALL_HL
-; move_tiles_loop_return: return from behavior subroutines
-    ld iy,(tile_table_pointer) ; get back table pointer
-; now we check results of all the moves
-    bit tile_just_died,(iy+tile_collisions)
-    jp z,@next_record ; if not dead, go to next record
-    call table_deactivate_tile ; otherwise, deactivate tile
-    ld iy,(tile_stack_pointer) ; get back stack pointer
-    jp @move_loop
-@just_spawned:
-    res 7,(iy+tile_type) ; clear just spawned flag
-    ; fall through to @next_record
+ ; get back stack pointer and loop
 @next_record:
     ld iy,(tile_stack_pointer)
     lea iy,iy+3 ; next tile stack record
     jp @move_loop ; loop until we've checked all the records
+@just_spawned:
+    res 7,(iy+tile_type) ; clear just spawned flag
+    jp @next_record
 ; end move_tiles
 
 ; TODO: much if this is deprecated by new tile table system and needs to be rewritten

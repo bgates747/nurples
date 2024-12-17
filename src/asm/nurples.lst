@@ -12135,129 +12135,117 @@ PC     Output      Line
 046859             0059*   ; initialize pointers and loop counter
 046859 FD 21 00 61 0060*       ld iy,tile_stack ; set iy to first record in table
        04          
-04685E             0061*       ; ld b,table_num_records ; loop counter
-04685E             0062*   @move_loop:
-04685E FD 22 03 64 0063*       ld (tile_stack_pointer),iy ; update stack pointer
+04685E             0061*   @move_loop:
+04685E FD 22 03 64 0062*       ld (tile_stack_pointer),iy ; update stack pointer
        04          
-046863 FD 7E 02    0064*       ld a,(iy+2)
-046866 B7          0065*       or a ; will be zero if at end of stack
-046867 C8          0066*       ret z ; end of stack so we're done
-046868             0067*   ; point iy to tile record
-046868 FD 37 00    0068*       ld iy,(iy) ; iy points to the current tile record
-04686B FD 22 06 64 0069*       ld (tile_table_pointer),iy ; update table pointer
+046863 FD 7E 02    0063*       ld a,(iy+2)
+046866 B7          0064*       or a ; will be zero if at end of stack
+046867 C8          0065*       ret z ; end of stack so we're done
+046868             0066*   ; point iy to tile record
+046868 FD 37 00    0067*       ld iy,(iy) ; iy points to the current tile record
+04686B FD 22 06 64 0068*       ld (tile_table_pointer),iy ; update table pointer
        04          
-046870             0070*   
-046870             0071*   ; ; DEBUG
-046870             0072*   ;     CALL DEBUG_PRINT
-046870             0073*   ;     CALL DEBUG_PRINT_TILE_TABLE
-046870             0074*   ;     CALL DEBUG_PRINT_TILE_STACK
-046870             0075*   ;     CALL DEBUG_WAITKEYPRESS
-046870             0076*   ; ; END DEBUG
-046870             0077*   
-046870             0078*       ; push bc ; backup loop counter
-046870             0079*   ; check top bit of tile_type to see if tile is just spawned
-046870 FD 7E 16    0080*       ld a,(iy+tile_type)
-046873 CB 7F       0081*       bit 7,a
-046875 C2 A1 68 04 0082*       jp nz,@just_spawned ; if just spawned, skip to next record
-046879             0083*   ; check tile_type to see if tile is active
-046879 A7          0084*       and a ; if zero, tile is dead
-04687A CA A5 68 04 0085*       jp z,@next_record ; ... and we skip to next record
-04687E             0086*   ; otherwise we prepare to move the tile
-04687E FD 27 1A    0087*       ld hl,(iy+tile_move_program) ; load the behavior subroutine address
-046881             0088*       CALL_HL
-046881 01 87 68 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-046885 C5          0002*M1     push bc ; which constitutes the return address
-046886 E9          0003*M1     jp (hl) ; Jump to the address in HL
-046887             0004*M1 @@:
-046887             0089*   ; move_tiles_loop_return: return from behavior subroutines
-046887 FD 2A 06 64 0090*       ld iy,(tile_table_pointer) ; get back table pointer
+046870             0069*   ; check top bit of tile_type to see if tile is just spawned
+046870 FD 7E 16    0070*       ld a,(iy+tile_type)
+046873 CB 7F       0071*       bit 7,a
+046875 C2 90 68 04 0072*       jp nz,@just_spawned ; if just spawned, skip to next record
+046879             0073*   ; check tile_type to see if tile is active
+046879 A7          0074*       and a ; if zero, tile is dead
+04687A C8          0075*       ret z ; end of stack so we're done
+04687B             0076*   ; otherwise we prepare to move the tile
+04687B FD 27 1A    0077*       ld hl,(iy+tile_move_program) ; load the behavior subroutine address
+04687E             0078*       CALL_HL
+04687E 01 84 68 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+046882 C5          0002*M1     push bc ; which constitutes the return address
+046883 E9          0003*M1     jp (hl) ; Jump to the address in HL
+046884             0004*M1 @@:
+046884             0079*    ; get back stack pointer and loop
+046884             0080*   @next_record:
+046884 FD 2A 03 64 0081*       ld iy,(tile_stack_pointer)
        04          
-04688C             0091*   ; now we check results of all the moves
-04688C FD CB 1D 7E 0092*       bit tile_just_died,(iy+tile_collisions)
-046890 CA A5 68 04 0093*       jp z,@next_record ; if not dead, go to next record
-046894 CD 83 64 04 0094*       call table_deactivate_tile ; otherwise, deactivate tile
-046898 FD 2A 03 64 0095*       ld iy,(tile_stack_pointer) ; get back stack pointer
+046889 ED 33 03    0082*       lea iy,iy+3 ; next tile stack record
+04688C C3 5E 68 04 0083*       jp @move_loop ; loop until we've checked all the records
+046890             0084*   @just_spawned:
+046890 FD CB 16 BE 0085*       res 7,(iy+tile_type) ; clear just spawned flag
+046894 C3 84 68 04 0086*       jp @next_record
+046898             0087*   ; end move_tiles
+046898             0088*   
+046898             0089*   ; TODO: much if this is deprecated by new tile table system and needs to be rewritten
+046898             0090*   check_tile_collisions:
+046898             0091*   ; ; check what we collide with
+046898             0092*   ;     ld a,(iy+tile_collisions)
+046898             0093*   ;     push af ; save collision flags
+046898             0094*   ;     and collides_with_player ; check for collisions with player
+046898             0095*   ;     call nz,check_tile_collision_player
+046898             0096*   ;     pop af ; restore collision flags
+046898             0097*   ;     and collides_with_laser ; check for collisions with laser
+046898             0098*   ;     call nz,check_tile_collision_laser
+046898 C9          0099*       ret
+046899             0100*   check_tile_collision_laser: ; check for collisions with laser
+046899             0101*       ; ld ix,laser_start_variables
+046899             0102*       ; bit tile_alive,(ix+tile_collisions)
+046899             0103*       ; ret z ; laser dead, nothing to do
+046899             0104*       ; call check_collision
+046899             0105*       ; ret p ; no collision
+046899             0106*       ; ld ix,laser_start_variables
+046899             0107*       ; set tile_just_died,(ix+tile_collisions)
+046899             0108*       ; set tile_alive,(ix+tile_collisions)
+046899             0109*       ; call tile_kill
+046899 C9          0110*       ret
+04689A             0111*   check_tile_collision_player: ; check for collisions with player
+04689A             0112*       ; ld ix,player_begin
+04689A             0113*       ; bit tile_alive,(ix+tile_collisions)
+04689A             0114*       ; ret z ; player dead, no collision
+04689A             0115*       ; call check_collision
+04689A             0116*       ; ret p ; no collision
+04689A             0117*       ; call tile_kill
+04689A C9          0118*       ret
+04689B             0119*   ; end check_tile_collisions
+04689B             0120*   ; END TODO
+04689B             0121*   
+04689B             0122*   ; this routine vanquishes the tile tile
+04689B             0123*   ; and replaces it with an animated explosion
+04689B             0124*   ; destroys: everything except index registers
+04689B             0125*   ; returns: a=-1 to indicate tile died, and an incandescent ball of debris and gas
+04689B             0126*   tile_kill:
+04689B FD 2A 03 64 0127*       ld iy,(tile_stack_pointer)
        04          
-04689D C3 5E 68 04 0096*       jp @move_loop
-0468A1             0097*   @just_spawned:
-0468A1 FD CB 16 BE 0098*       res 7,(iy+tile_type) ; clear just spawned flag
-0468A5             0099*       ; fall through to @next_record
-0468A5             0100*   @next_record:
-0468A5 FD 2A 03 64 0101*       ld iy,(tile_stack_pointer)
-       04          
-0468AA ED 33 03    0102*       lea iy,iy+3 ; next tile stack record
-0468AD C3 5E 68 04 0103*       jp @move_loop ; loop until we've checked all the records
-0468B1             0104*   ; end move_tiles
-0468B1             0105*   
-0468B1             0106*   ; TODO: much if this is deprecated by new tile table system and needs to be rewritten
-0468B1             0107*   check_tile_collisions:
-0468B1             0108*   ; ; check what we collide with
-0468B1             0109*   ;     ld a,(iy+tile_collisions)
-0468B1             0110*   ;     push af ; save collision flags
-0468B1             0111*   ;     and collides_with_player ; check for collisions with player
-0468B1             0112*   ;     call nz,check_tile_collision_player
-0468B1             0113*   ;     pop af ; restore collision flags
-0468B1             0114*   ;     and collides_with_laser ; check for collisions with laser
-0468B1             0115*   ;     call nz,check_tile_collision_laser
-0468B1 C9          0116*       ret
-0468B2             0117*   check_tile_collision_laser: ; check for collisions with laser
-0468B2             0118*       ; ld ix,laser_start_variables
-0468B2             0119*       ; bit tile_alive,(ix+tile_collisions)
-0468B2             0120*       ; ret z ; laser dead, nothing to do
-0468B2             0121*       ; call check_collision
-0468B2             0122*       ; ret p ; no collision
-0468B2             0123*       ; ld ix,laser_start_variables
-0468B2             0124*       ; set tile_just_died,(ix+tile_collisions)
-0468B2             0125*       ; set tile_alive,(ix+tile_collisions)
-0468B2             0126*       ; call tile_kill
-0468B2 C9          0127*       ret
-0468B3             0128*   check_tile_collision_player: ; check for collisions with player
-0468B3             0129*       ; ld ix,player_begin
-0468B3             0130*       ; bit tile_alive,(ix+tile_collisions)
-0468B3             0131*       ; ret z ; player dead, no collision
-0468B3             0132*       ; call check_collision
-0468B3             0133*       ; ret p ; no collision
-0468B3             0134*       ; call tile_kill
-0468B3 C9          0135*       ret
-0468B4             0136*   ; end check_tile_collisions
-0468B4             0137*   ; END TODO
-0468B4             0138*   
-0468B4             0139*   ; this routine vanquishes the tile tile
-0468B4             0140*   ; and replaces it with an animated explosion
-0468B4             0141*   ; destroys: everything except index registers
-0468B4             0142*   ; returns: a=-1 to indicate tile died, and an incandescent ball of debris and gas
-0468B4             0143*   tile_kill:
-0468B4 FD 2A 03 64 0144*       ld iy,(tile_stack_pointer)
-       04          
-0468B9 2A 00 59 04 0145*       ld hl,(player_score)
-0468BD 01 00 00 00 0146*       ld bc,0 ; clear bcu
-0468C1 FD 4E 26    0147*       ld c,(iy+tile_points)
-0468C4 09          0148*       add hl,bc
-0468C5 22 00 59 04 0149*       ld (player_score),hl
-0468C9 C3 13 28 04 0150*       jp spawn_explosion
-0468CD             0151*   ; end tile_kill
-0468CD             0152*   
-0468CD             0153*   draw_active_tile:
-0468CD FD 27 17    0154*       ld hl,(iy+tile_base_bufferId)
-0468D0 FD 7E 28    0155*       ld a,(iy+tile_frame)
-0468D3 85          0156*       add a,l ; TODO: with a little work we could make all tile base buffer ids align to 256
-0468D4 6F          0157*       ld l,a
-0468D5 3E 00       0158*       ld a,0 ; preserve carry
-0468D7 8C          0159*       adc a,h
-0468D8 67          0160*       ld h,a
-0468D9 CD 38 1A 04 0161*       call vdu_buff_select ; buffer id of animation frame
-0468DD FD 07 01    0162*       ld bc,(iy+tile_x)
-0468E0 FD 17 04    0163*       ld de,(iy+tile_y)
-0468E3 CD 3C 1E 04 0164*       call vdu_plot_bmp168
-0468E7 C9          0165*       ret
-0468E8             0166*   ; end draw_active_tile
-0468E8             0068        include "tile_pad_small.inc"
-0468E8 FF FF FF FF 0001*       align 256
+0468A0 2A 00 59 04 0128*       ld hl,(player_score)
+0468A4 01 00 00 00 0129*       ld bc,0 ; clear bcu
+0468A8 FD 4E 26    0130*       ld c,(iy+tile_points)
+0468AB 09          0131*       add hl,bc
+0468AC 22 00 59 04 0132*       ld (player_score),hl
+0468B0 C3 13 28 04 0133*       jp spawn_explosion
+0468B4             0134*   ; end tile_kill
+0468B4             0135*   
+0468B4             0136*   draw_active_tile:
+0468B4 FD 27 17    0137*       ld hl,(iy+tile_base_bufferId)
+0468B7 FD 7E 28    0138*       ld a,(iy+tile_frame)
+0468BA 85          0139*       add a,l ; TODO: with a little work we could make all tile base buffer ids align to 256
+0468BB 6F          0140*       ld l,a
+0468BC 3E 00       0141*       ld a,0 ; preserve carry
+0468BE 8C          0142*       adc a,h
+0468BF 67          0143*       ld h,a
+0468C0 CD 38 1A 04 0144*       call vdu_buff_select ; buffer id of animation frame
+0468C4 FD 07 01    0145*       ld bc,(iy+tile_x)
+0468C7 FD 17 04    0146*       ld de,(iy+tile_y)
+0468CA CD 3C 1E 04 0147*       call vdu_plot_bmp168
+0468CE C9          0148*       ret
+0468CF             0149*   ; end draw_active_tile
+0468CF             0068        include "tile_pad_small.inc"
+0468CF FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF          
 046900             0002*   pad_small_defaults:
 046900 01          0003*       db tile_pad_small       ; type
 046901 0A 01 00    0004*       dl BUF_PAD              ; base_bufferId
@@ -12391,7 +12379,7 @@ PC     Output      Line
 046A36 CD 67 60 04 0040*       call targeting_computer
 046A3A FD 2F 10    0041*       ld (iy+tile_heading),hl ; save active tile heading
 046A3D CD 27 65 04 0042*       call tile_frame_heading
-046A41 CD CD 68 04 0043*       call draw_active_tile
+046A41 CD B4 68 04 0043*       call draw_active_tile
 046A45 C9          0044*       ret ; DEBUG
 046A46             0045*   ; check whether it is time to spawn a fireball
 046A46 FD 35 24    0046*       dec (iy+tile_move_timer)
