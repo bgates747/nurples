@@ -112,13 +112,18 @@ table_deactivate_tile: ; TODO: implement
     dec (hl) ; decrement number of active tiles
 
     ld d,a ; number of active tiles
+    inc d ; bump one for list terminator
     ld e,3 ; three bytes per tile record
     mlt de ; offset into tile stack
     ld hl,tile_stack ; point to base address of tile stack
     add hl,de ; hl points to top of the active tiles
+    inc hl ; bump one for list terminator
     push hl ; save pointer to top of active tiles
 
     ld de,(tile_stack_pointer) ; pointer to current stack record (target address)
+    inc de
+    inc de
+    inc de
     or a ; clear carry
     sbc hl,de
     push hl
@@ -128,14 +133,22 @@ table_deactivate_tile: ; TODO: implement
 
 
 
-; ; DEBUG
-;     CALL DEBUG_PRINT
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_PRINT_TILE_STACK
-;     CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
+; DEBUG
+    CALL DEBUG_PRINT
+    CALL DEBUG_PRINT_TILE_TABLE
+    CALL DEBUG_PRINT_TILE_STACK
+    CALL DEBUG_WAITKEYPRESS
+; END DEBUG
 
     lddr ; shift stack records down
+
+; DEBUG
+    CALL DEBUG_PRINT
+    CALL DEBUG_PRINT_TILE_TABLE
+    CALL DEBUG_PRINT_TILE_STACK
+    CALL DEBUG_WAITKEYPRESS
+; END DEBUG
+
 
     ret
 ; end table_deactivate_tile
