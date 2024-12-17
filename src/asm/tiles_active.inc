@@ -56,16 +56,12 @@ move_active_tile:
 ; end move_active_tile
 
 move_tiles:
-; are there any active tiles?
-    ld a,(num_active_tiles)
-    and a ; will be zero if no alive tiles
-    ret z ; if no active tiles, we're done
 ; initialize pointers and loop counter
     ld iy,tile_stack ; set iy to first record in table
     ; ld b,table_num_records ; loop counter
 @move_loop:
     ld (tile_stack_pointer),iy ; update stack pointer
-    ld a,(iy)
+    ld a,(iy+2)
     or a ; will be zero if at end of stack
     ret z ; end of stack so we're done
 ; point iy to tile record
