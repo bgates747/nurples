@@ -29,8 +29,9 @@ tile_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 tile_frame:              equ  40; 1 bytes ;current animation frame
 
 ; ###### tile TABLE VARIABLES ######
+    align 256
 tile_stack: blkb 256*3,0 ; stack of pointers to tile records
-    db 0 ; list terminator
+    dl 0 ; list terminator
 tile_stack_end:
 tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
 tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
@@ -107,20 +108,35 @@ tile_table_get_next_id:
 ; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
 table_deactivate_tile: ; TODO: implement
     ld hl,num_active_tiles
+    ld a,(hl) ; number of active tiles
     dec (hl) ; decrement number of active tiles
-; remove tile pointer from tile stack
-    push iy ; pointer to tile stack record
-    pop de ; address to copy to
-    ld h,(hl) ; number of active tiles
-    dec h ; zero-based index
-    ld l,3 ; number of bytes per tile stack record
-    mlt hl ; hl = offset from base stack record
-    inc hl ; to pick up zero terminator
+
+    ld d,a ; number of active tiles
+    ld e,3 ; three bytes per tile record
+    mlt de ; offset into tile stack
+    ld hl,tile_stack ; point to base address of tile stack
+    add hl,de ; hl points to top of the active tiles
+    push hl ; save pointer to top of active tiles
+
+    ld de,(tile_stack_pointer) ; pointer to current stack record (target address)
     or a ; clear carry
-    sbc hl,de ; number of bytes to copy
+    sbc hl,de
     push hl
-    pop bc ; number of bytes to copy
+    pop bc ; bc = number of bytes to copy
+    pop hl ; hl = address to copy from
+
+
+
+
+; ; DEBUG
+;     CALL DEBUG_PRINT
+;     CALL DEBUG_PRINT_TILE_TABLE
+;     CALL DEBUG_PRINT_TILE_STACK
+;     CALL DEBUG_WAITKEYPRESS
+; ; END DEBUG
+
     lddr ; shift stack records down
+
     ret
 ; end table_deactivate_tile
 
