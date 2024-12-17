@@ -1,13 +1,6 @@
 move_weapons:
 ; initialize pointers and loop counter
     ld iy,player_weapons_begin ; set iy to first record in table
-    ; PUSH_ALL
-    ; ; call vdu_home_cursor
-    ; ; call dumpRegistersHex
-    ; CALL DEBUG_PRINT_TABLE
-    ; ; CALL DEBUG_WAITKEYPRESS
-    ; POP_ALL
-
     ld b,player_weapons_max ; loop counter
 @move_loop:
     ld (table_pointer),iy ; update table pointer
@@ -18,18 +11,10 @@ move_weapons:
     jp nz,@next_record ; if just spawned, skip to next record
 ; check sprite_type to see if sprite is active
     and a ; if zero, sprite is dead 
-    jp z,@next_record ; ... and we skip to next record
-; otherwise we prepare to move the sprite
+    jp z,@next_record ; ... skip to next record
+; otherwise move the sprite
     ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
-    CALL_HL
-; move_weapons_loop_return: return from behavior subroutines
-    ld iy,(table_pointer) ; get back table pointer
-; ; now we check results of all the moves
-;     bit sprite_just_died,(iy+sprite_collisions)
-;     jp z,@draw_sprite ; if not dead, draw sprite
-;     call table_deactivate_sprite 
-;     jp @next_record ; and to the next record
-@draw_sprite:
+    CALL_HL ; run the behavior subroutine
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     ld bc,(iy+sprite_x)

@@ -53,7 +53,6 @@ exit:
     ; include "images_tiles_xevious.inc"
     include "images_sprites.inc"
     include "images_ui.inc"
-    ; include "laser.inc"
     include "levels.inc"
     include "levels_tileset_0.inc"
     ; include "levels_xevious.inc"
