@@ -108,51 +108,37 @@ tile_table_get_next_id:
 ; end tile_table_get_next_id
 
 ; deactivate the tile with the given id
-; inputs: iy pointing to tile stack record
-; outputs: tile stack pointer unchanged, effectively pointing to next record
+; inputs: tile_stack_pointer set to record to remove
+; outputs: decrements num_active_tiles by one, tile_stack_pointer set to record above removed record, removes tile pointer from the tile stack, shifts stack records above it down one position
 ; destroys: a,hl
-; affects: decrements num_active_tiles by one, removes tile pointer from the tile stack, shifts stack records above it down one position
 table_deactivate_tile: 
-    ld hl,num_active_tiles
-    ld a,(hl) ; number of active tiles
-    dec (hl) ; decrement number of active tiles
-
-    ld d,a ; number of active tiles
-    inc d ; bump one for list terminator
-    ld e,3 ; three bytes per tile record
-    mlt de ; offset into tile stack
-    ld hl,tile_stack ; point to base address of tile stack
-    add hl,de ; hl points to top of the active tiles
-    inc hl ; bump one for list terminator
-    push hl ; save pointer to top of active tiles
-
-    ld de,(tile_stack_pointer) ; pointer to current stack record (target address)
-    inc de
-    inc de
-    inc de
+; compute address to copy from
+    ld hl,(tile_stack_pointer)
+    inc hl
+    inc hl
+    inc hl
+    push hl ; save copy from address
+; compute bytes to copy
+    ld a,(num_active_tiles)
+    ld l,a
+    ld h,3
+    mlt hl
+    ld de,tile_stack
+    add hl,de ; hl = bottom of stack address
+    ld de,(tile_stack_pointer)
     or a ; clear carry
-    sbc hl,de
+    sbc hl,de ; hl = bytes to copy
     push hl
-    pop bc ; bc = number of bytes to copy
-    pop hl ; hl = address to copy from
-
-; ; DEBUG
-;     CALL DEBUG_PRINT
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_PRINT_TILE_STACK
-;     CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
-
-    lddr ; shift stack records down
-
-; ; DEBUG
-;     CALL DEBUG_PRINT
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_PRINT_TILE_STACK
-;     CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
-
-    ld hl,(tile_stack_pointer) ; reset tile_stack_pointer
+    pop bc ; bytes to copy
+; compute target address
+    ld de,(tile_stack_pointer)
+; copy bytes
+    pop hl ; copy from address
+    ldir
+; update stack pointer and active tile count
+    ld hl,num_active_tiles
+    dec (hl)
+    ld hl,(tile_stack_pointer)
     dec hl
     dec hl
     dec hl
