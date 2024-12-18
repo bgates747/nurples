@@ -160,6 +160,7 @@ sprites_init:
 
 ; define enemy sprites
     call init_enemy_seekers
+    call init_enemy_fireballs
     ret
 ; end sprites_init
 

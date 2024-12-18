@@ -62,3 +62,32 @@ move_enemy_fireball:
     ret p ; no collision so nothing to do
     jp enemy_kill
 ; end move_enemy_fireball
+
+init_enemy_fireballs:
+; set pointer to seeker sprite table
+    ld iy,fireballs_base
+    ld a,(iy+sprite_id) ; sprite id
+    ld e,fireballs_max ; sprite loop counter
+; define seeker sprites
+@sprites_loop:
+    push af
+    push de
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_FIREBALL_A
+	ld b,2
+@frames_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @frames_loop
+    pop de ; sprite loop counter
+    pop af ; sprite id
+    inc a
+    dec e
+    jp nz,@sprites_loop
+    ret
+; end init_enemy_fireballs
