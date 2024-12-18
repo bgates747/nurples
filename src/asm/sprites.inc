@@ -103,13 +103,9 @@ table_init:
     lea ix,ix+table_record_size
     inc a
     djnz @loop
-
-; ; DEBUG
-;     ld a,sprite_type
-;     call DEBUG_PRINT_FIELDS
-;     CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
     ret
+; end table_init
+
 ; deactivate the sprite with the given id
 ; inputs: iy set to sprite record
 ; outputs: nothing
@@ -118,8 +114,6 @@ table_deactivate_sprite:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     call vdu_sprite_hide
-    ; xor a
-    ; ld (iy+sprite_type),a
     res sprite_alive,(iy+sprite_collisions)
     res sprite_just_died,(iy+sprite_collisions)
     ret
@@ -170,20 +164,17 @@ sprites_init:
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
 ; destroys: a,b,c,hl,ix
 table_get_next_id:
-    ld c,(ix+sprite_id) ; sprite id counter
 @loop:
-    ld a,(ix+sprite_type)
-    and a
+    bit sprite_alive,(ix+sprite_collisions)
     jr z,@found
     lea ix,ix+table_record_size
-    inc c
     djnz @loop
 @notfound:
     xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
     ret
 @found:
 ; return sprite id
-    ld a,c
+    ld a,(ix+sprite_id)
     scf ; sets carry flag indicating we found a free sprite
     ret ; done
 ; end table_get_next_id
