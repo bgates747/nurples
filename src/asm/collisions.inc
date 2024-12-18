@@ -19,7 +19,7 @@ collision_table_pointer: dl 0x000000 ; pointer to the sprite in the group being 
 ; representing the radius of the collidable object
 ; inputs: ix and iy point to the colliding objects' sprite/tile table records
 ; outputs: uh.l = distance - sum of radii
-;          zero flag set or sign flag negative if collision detected
+;          zero flag set if collision detected
 ;          dx168 and dy168 are also populated with the signed displacements
 ; destroys: everything except indexes
 check_collision:
@@ -47,6 +47,9 @@ check_collision:
     ld d,a ; ud.e = sum of radii
     or a ; clear carry
     sbc hl,de ; uh.l = distance - sum of radii
+    ret z ; return collision
+    ret p ; return no collision
+    xor a ; return collision
     ret
 ; end check_collision
 
@@ -62,7 +65,7 @@ check_sprite_group_collisions:
     jp z,@next_record ; not alive so skip to next record
 ; sprite alive so check for collision
     call check_collision
-    jp p,@next_record ; no collision
+    jp nz,@next_record ; no collision
 ; set sprite_just_died flag for each entity and return to caller
     pop bc ; dummy pop to balance stack
     set sprite_just_died,(ix+sprite_collisions)
@@ -88,7 +91,7 @@ check_enemy_collision_laser: ; check for collisions with laser
 check_enemy_collision_player: ; check for collisions with player
     ld ix,player_begin
     call check_collision
-    ret p ; no collision so nothing to do
+    ret nz ; no collision so nothing to do
     set sprite_just_died,(ix+sprite_collisions)
     set sprite_just_died,(iy+sprite_collisions)
     xor a ; signal collision detected
@@ -105,6 +108,5 @@ enemy_kill:
     ld c,(iy+sprite_points)
     add hl,bc
     ld (player_score),hl
-    ret ; DEBUG
     jp spawn_explosion
 ; end enemy_kill

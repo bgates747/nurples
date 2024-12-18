@@ -15,8 +15,6 @@ player_max_shields: dl 16 ; integer
 player_ships: db 3 ; integer
 
 speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
-
-player_weapons_count: db 0
 player_lasers_max: equ 4
 
 player_defaults:

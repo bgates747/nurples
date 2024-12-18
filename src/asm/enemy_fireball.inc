@@ -1,22 +1,22 @@
     align 256
 speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
-fireballs_max: equ 4
+fireballs_max: equ 1
 
 fireball_defaults:
-    db enemy_projectile        ; type
-    dl BUF_FIREBALL_A	    ; base_bufferId
-    dl move_enemy_fireball	; move_program
+    db enemy_projectile     ; type
+    dl BUF_FIREBALL_A       ; base_bufferId
+    dl move_enemy_fireball  ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
-    db 7	                ; dim_x
+    db 7                    ; dim_x
     db 7                    ; dim_y
     db 1                    ; num_orientations
     db 1                    ; num_animations
-    db 0	                ; animation
-    db 0	                ; animation_timer
-    db 0	                ; move_timer
-    db 0	                ; move_step
-    db 20	                ; points
-    db 5	                ; shield_damage
+    db 0                    ; animation
+    db 0                    ; animation_timer
+    db 0                    ; move_timer
+    db 0                    ; move_step
+    db 0                    ; points
+    db 5                    ; shield_damage
     db 0                    ; frame
 
 enemy_spawn_fireball:
@@ -59,7 +59,7 @@ move_enemy_fireball:
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
     call check_enemy_collision_player
-    ret p ; no collision so nothing to do
+    ret nz ; no collision so nothing to do
     jp enemy_kill
 ; end move_enemy_fireball
 
@@ -72,18 +72,18 @@ init_enemy_fireballs:
 @sprites_loop:
     push af
     push de
-	call vdu_sprite_select
-	call vdu_sprite_clear_frames
-	ld hl,BUF_FIREBALL_A
-	ld b,2
+    call vdu_sprite_select
+    call vdu_sprite_clear_frames
+    ld hl,BUF_FIREBALL_A
+    ld b,2
 @frames_loop:
-	push bc
-	push hl
-	call vdu_sprite_add_buff
-	pop hl
-	inc hl
-	pop bc
-	djnz @frames_loop
+    push bc
+    push hl
+    call vdu_sprite_add_buff
+    pop hl
+    inc hl
+    pop bc
+    djnz @frames_loop
     pop de ; sprite loop counter
     pop af ; sprite id
     inc a

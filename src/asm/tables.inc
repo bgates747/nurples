@@ -13,7 +13,9 @@ seekers_end: equ table_record_size*seekers_max+seekers_base
 fireballs_base: equ seekers_end
 fireballs_end: equ table_record_size*fireballs_max+fireballs_base
 enemy_sprites_end: equ fireballs_end
-table_end: equ enemy_sprites_end
+explosions_base: equ enemy_sprites_end
+explosions_end: equ table_record_size*explosions_max+explosions_base
+table_end: equ explosions_end
 
 table_num_records: equ table_end-table_base/table_record_size
 table_num_enemy_records: equ enemy_sprites_end-enemy_sprites_begin/table_record_size

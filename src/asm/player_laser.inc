@@ -27,12 +27,6 @@ player_spawn_laser:
     ld iy,tmr_laser
     call timestamp_tmr_get
     ret p ; not time to fire
-; check if at max weapons active
-    ld a,(player_weapons_count)
-    cp player_lasers_max
-    ret z ; at max weapons active
-    inc a
-    ld (player_weapons_count),a
 ; reset timer
     ld hl,(tmr_laser_reset)
     call timestamp_tmr_set
@@ -64,13 +58,11 @@ player_spawn_laser:
 ; end player_spawn_laser
 
 move_player_laser:
-; run the movement program for the laser player
+; run the movement program for the laser
     call move_sprite
     ld a,(sprite_screen_edge)
     or a ; a will be non-zero if have scrolled off screen
     jp z,@F ; still on screen
-    ld hl,player_weapons_count
-    dec (hl)
     jp table_deactivate_sprite
 @@: ; check animation timer
     dec (iy+sprite_animation_timer)

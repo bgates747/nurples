@@ -1,9 +1,11 @@
     align 256
+
+explosions_max: equ 8
 explosion_defaults:
     db explosion            ; type
     dl BUF_EXPLOSION_A	    ; base_bufferId
     dl move_explosion	    ; move_program
-    db 0                    ; collisions
+    db %01000000            ; collisions bit 6 signals sprite alive
     db 7	                ; dim_x
     db 7                    ; dim_y
     db 1                    ; num_orientations
@@ -18,13 +20,23 @@ explosion_defaults:
 
 spawn_explosion:
     ld hl,explosion_defaults
-    call alter_sprite
+    ld ix,explosions_base
+    ld b,explosions_max
+    call spawn_sprite_from_sprite
+    jp nc,table_deactivate_sprite ; no carry means no free sprite slots, so we deactivate parent sprite and go home
 ; other specific initialization
     ld hl,0
-    ld (iy+sprite_xvel),hl
+    ld (ix+sprite_xvel),hl
     ld hl,1*256
-    ld (iy+sprite_yvel),hl
-    ret
+    ld (ix+sprite_yvel),hl
+
+; DEBUG
+    CALL DEBUG_PRINT
+    CALL DEBUG_PRINT_TABLE
+    ; CALL DEBUG_WAITKEYPRESS
+; END DEBUG
+; deactivate parent sprite
+    jp table_deactivate_sprite
 ; end spawn_explosion
 
 move_explosion:
@@ -49,3 +61,40 @@ move_explosion:
     call vdu_plot_bmp168
     jp table_deactivate_sprite
 ; end move_explosion
+
+move_explosions:
+; initialize pointers and loop counter
+    ld iy,explosions_base ; set iy to first record in table
+    ld b,explosions_max ; loop counter
+    call move_sprite_group
+    ret
+; end move_explosions
+
+init_explosions:
+; set pointer to explosion sprite table
+    ld iy,explosions_base
+    ld a,(iy+sprite_id) ; sprite id
+    ld e,explosions_max ; sprite loop counter
+; define explosion sprites
+@sprites_loop:
+    push af
+    push de
+	call vdu_sprite_select
+	call vdu_sprite_clear_frames
+	ld hl,BUF_EXPLOSION_A
+	ld b,5 ; 5 bitmaps for explosion
+@frames_loop:
+	push bc
+	push hl
+	call vdu_sprite_add_buff
+	pop hl
+	inc hl
+	pop bc
+	djnz @frames_loop
+    pop de ; sprite loop counter
+    pop af ; sprite id
+    inc a
+    dec e
+    jp nz,@sprites_loop
+    ret
+; end init_explosions

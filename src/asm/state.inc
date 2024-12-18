@@ -65,6 +65,7 @@ game_playing:
 
     call do_player
     call do_enemies
+    call move_explosions
     call move_tiles
 ; update UI: TODO make this a standalone function
     call print_score

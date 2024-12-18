@@ -260,42 +260,16 @@ DEBUG_PRINT_TILE_TABLE:
 
 DEBUG_PRINT_TABLE:
     PUSH_ALL
-    ; call vdu_home_cursor
-    ld c,0
-    ld b,0
-    call vdu_move_cursor
-
-    ; ld a,(player_weapons_count)
-    ; call printHexA
-    ; call printNewLine
-
-    ; LIST_FIELD sprite_move_program,3 ; DEBUG
-    ; LIST_FIELD sprite_type,1 ; DEBUG
-
-    ld ix,player_weapons_begin
+    call printNewLine
     call dump_sprite_record
     call printNewLine
     call printNewLine
 
-    lea ix,ix+table_record_size
+    push iy
+    pop ix
     call dump_sprite_record
     call printNewLine
     call printNewLine
-
-    lea ix,ix+table_record_size
-    call dump_sprite_record
-    call printNewLine
-    call printNewLine
-
-    lea ix,ix+table_record_size
-    call dump_sprite_record
-    call printNewLine
-    call printNewLine
-
-    ; ld ix,player_begin
-    ; call dump_sprite_record
-
-    ; call waitKeypress
     POP_ALL
     RET
 

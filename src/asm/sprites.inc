@@ -155,6 +155,9 @@ sprites_init:
 ; define enemy sprites
     call init_enemy_seekers
     call init_enemy_fireballs
+
+; define explosion sprites
+    call init_explosions
     ret
 ; end sprites_init
 
@@ -195,7 +198,7 @@ spawn_sprite_from_sprite:
     ld bc,table_record_size-sprite_definitions ; number of bytes to copy
     ldir ; copies defaults to new sprite record
     pop ix ; restore pointer to new sprite record
-; copy sprite position, velocity and orientation from existing sprite
+; copy sprite position from existing sprite
     ld iy,(table_pointer) ; get existing sprite record
     ld hl,(iy+sprite_x)
     ld (ix+sprite_x),hl
@@ -207,32 +210,6 @@ spawn_sprite_from_sprite:
     scf ; set carry flag to indicate success
     ret
 ; end spawn_sprite_from_sprite
-
-; change an existing sprite to a new type, keeping its position and velocity the same
-; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
-;         ix = pointer to sprite group, b = number of records in sprite group
-alter_sprite:
-    push hl ; back up pointer to new sprite defaults
-    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-    pop hl ; restore pointer to new sprite defaults
-    ret nc ; no carry means no free sprite slots, so we go home
-; copy default settings to new sprite
-    push ix ; back up pointer to new sprite record
-    lea ix,ix+sprite_definitions ; bump pointer to copy to
-    push ix ; pointer to default sprite settings
-    pop de ; address to copy to
-    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
-    ldir ; copies defaults to new sprite record
-    pop ix ; restore pointer to new sprite record
-; copy sprite position, velocity and orientation from existing sprite
-    ld iy,(table_pointer) ; get existing sprite record
-    ld hl,(iy+sprite_x)
-    ld (ix+sprite_x),hl
-    ld hl,(iy+sprite_y)
-    ld (ix+sprite_y),hl
-; return to caller
-    scf ; set carry flag to indicate success
-; end alter_sprite
 
 ; call the behavior subroutines for a specified sprite group
 ; inputs: iy = pointer to sprite group, b = number of records in sprite group
@@ -256,6 +233,8 @@ move_sprite_group:
     CALL_HL ; run the behavior subroutine
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
+    ld a,(iy+sprite_frame)
+    call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
@@ -509,50 +488,50 @@ dump_sprite_record:
     ld a,(ix+sprite_dim_y)
     call printHexA
 
-    call printInline
-    asciz "\r\n#ori: "
-    ld a,(ix+sprite_num_orientations)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\n#ori: "
+    ; ld a,(ix+sprite_num_orientations)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\n#ani: "
-    ld a,(ix+sprite_num_animations)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\n#ani: "
+    ; ld a,(ix+sprite_num_animations)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nani : "
-    ld a,(ix+sprite_animation)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nani : "
+    ; ld a,(ix+sprite_animation)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nanit: "
-    ld a,(ix+sprite_animation_timer)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nanit: "
+    ; ld a,(ix+sprite_animation_timer)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nmvt : "
-    ld a,(ix+sprite_move_timer)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nmvt : "
+    ; ld a,(ix+sprite_move_timer)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nmvs : "
-    ld a,(ix+sprite_move_step)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nmvs : "
+    ; ld a,(ix+sprite_move_step)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\npts : "
-    ld a,(ix+sprite_points)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\npts : "
+    ; ld a,(ix+sprite_points)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\ndmg : "
-    ld a,(ix+sprite_shield_damage)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\ndmg : "
+    ; ld a,(ix+sprite_shield_damage)
+    ; call printHexA
 
-    call printInline
-    asciz "\r\nfrm : "
-    ld a,(ix+sprite_frame)
-    call printHexA
+    ; call printInline
+    ; asciz "\r\nfrm : "
+    ; ld a,(ix+sprite_frame)
+    ; call printHexA
 
     ; call printNewLine
 

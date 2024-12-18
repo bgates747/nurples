@@ -115,7 +115,7 @@ targeting_computer:
     ld de,(Vp) ; Vp should have been set by caller
     call polar_to_cartesian ; ub.c = Vp_x, ud.e = Vp_y
     ld (Vp_x),bc
-    inc d ; account for vertical ground movement
+    ; inc d ; account for vertical ground movement
     ld (Vp_y),de
     pop hl ; uh.l = lead angle+target bearing
     ld (Heading_p),hl
