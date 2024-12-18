@@ -57,6 +57,7 @@ exit:
     include "levels_tileset_0.inc"
     ; include "levels_xevious.inc"
     include "player.inc"
+    include "player_cockpit.inc"
     include "player_laser.inc"
     include "state.inc"
     include "targeting.inc"
@@ -169,6 +170,11 @@ init:
     ld bc,384
     ld de,0
     call vdu_plot_bmp
+; draw player cockpit
+    call draw_player_cockpit
+    ld ix,mfd_display_l
+    call mfd_activate
+    call mfd_init
 ; set gfx origin and viewport to playing field window
     ld bc,origin_left
     ld de,origin_top
