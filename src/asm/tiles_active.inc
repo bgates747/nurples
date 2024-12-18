@@ -120,7 +120,7 @@ draw_active_tile:
 ; affects: bumps table_active_sprites by one
 spawn_sprite_from_tile: 
     push hl ; back up pointer to new sprite defaults
-    call table_get_next_id_new ; if available: a = new sprite id, ix = pointer to new sprite vars
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
     pop hl ; restore pointer to new sprite defaults
     ret nc ; no carry means no free sprite slots, so we go home
 ; copy default settings to new sprite

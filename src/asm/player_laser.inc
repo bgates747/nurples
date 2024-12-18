@@ -42,7 +42,7 @@ player_spawn_laser:
     ld iy,player_begin
     ld (table_pointer),iy
     ld hl,laser_defaults
-    call spawn_sprite_from_sprite_new
+    call spawn_sprite_from_sprite
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
 ; ------------------------------------------------

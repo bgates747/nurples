@@ -58,7 +58,6 @@ exit:
     ; include "levels_xevious.inc"
     include "player.inc"
     include "player_laser.inc"
-    include "player_weapons.inc"
     include "state.inc"
     include "targeting.inc"
     include "tile_table.inc"
@@ -67,7 +66,6 @@ exit:
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
-    include "sprites_new.inc"
 
     align 256
 

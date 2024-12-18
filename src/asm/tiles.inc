@@ -84,12 +84,6 @@ tiles_plot:
     dec (hl)
     ret nz
 @inc_level:
-; increase the number of enemy sprites
-    ld a,(max_enemy_sprites)
-    inc a
-    cp table_max_records ; if we're at the global limit,skip ahead at max level
-    jp z,next_level
-    ld (max_enemy_sprites),a ; otherwise save the updated number
     jp next_level
 ; end tiles_plot
 

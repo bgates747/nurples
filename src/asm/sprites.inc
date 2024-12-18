@@ -111,40 +111,9 @@ table_init:
 ;     CALL DEBUG_WAITKEYPRESS
 ; ; END DEBUG
     ret
-
-; gets the next available sprite id
-; inputs; none
-; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
-; destroys: a,b,c,hl,ix
-; affects: bumps table_active_sprites by one
-table_get_next_id:
-    ld ix,table_base
-    ld b,table_num_records ; loop counter
-    ld c,0 ; sprite id counter
-@loop:
-    ld a,(ix+sprite_type)
-    and a
-    jr z,@found
-    lea ix,ix+table_record_size
-    inc c
-    djnz @loop
-@notfound:
-    xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
-    ret
-@found:
-; bump number of active sprites
-    ld hl,table_active_sprites
-    inc (hl)
-; return sprite id
-    ld a,c
-    scf ; sets carry flag indicating we found a free sprite
-    ret ; done
-; end table_get_next_id
-
 ; deactivate the sprite with the given id
 ; inputs: iy set to sprite record
-; outputs: nothingblkw
+; outputs: nothing
 ; destroys: a,hl
 ; affects: decrements table_active_sprites by one
 table_deactivate_sprite:
@@ -197,6 +166,147 @@ sprites_init:
     call init_enemy_seekers
     ret
 ; end sprites_init
+
+; gets the next available sprite id for a particular sprite group
+; inputs; ix = pointer to sprite group, b = number of records in sprite group
+; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
+;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+; destroys: a,b,c,hl,ix
+; affects: bumps table_active_sprites by one
+table_get_next_id:
+    ld c,(ix+sprite_id) ; sprite id counter
+@loop:
+    ld a,(ix+sprite_type)
+    and a
+    jr z,@found
+    lea ix,ix+table_record_size
+    inc c
+    djnz @loop
+@notfound:
+    xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
+    ret
+@found:
+; bump number of active sprites
+    ld hl,table_active_sprites
+    inc (hl)
+; return sprite id
+    ld a,c
+    scf ; sets carry flag indicating we found a free sprite
+    ret ; done
+; end table_get_next_id
+
+; create a new sprite at the same location as an existing sprite
+; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+;         ix = pointer to sprite group, b = number of records in sprite group
+; affects: bumps table_active_sprites by one
+spawn_sprite_from_sprite: 
+    push hl ; back up pointer to new sprite defaults
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    pop hl ; restore pointer to new sprite defaults
+    ret nc ; no carry means no free sprite slots, so we go home
+; copy default settings to new sprite
+    push ix ; back up pointer to new sprite record
+    lea ix,ix+sprite_definitions ; bump pointer to copy to
+    push ix ; pointer to default sprite settings
+    pop de ; address to copy to
+    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+    pop ix ; restore pointer to new sprite record
+; copy sprite position, velocity and orientation from existing sprite
+    ld iy,(table_pointer) ; get existing sprite record
+    ld hl,(iy+sprite_x)
+    ld (ix+sprite_x),hl
+    ld hl,(iy+sprite_y)
+    ld (ix+sprite_y),hl
+; return to caller
+    set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+    scf ; set carry flag to indicate success
+    ret
+; end spawn_sprite_from_sprite
+
+; change an existing sprite to a new type, keeping its position and velocity the same
+; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+;         ix = pointer to sprite group, b = number of records in sprite group
+alter_sprite:
+    push hl ; back up pointer to new sprite defaults
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    dec (hl) ; decrement table_active_sprites by one since we're not actually creating a new sprite
+    pop hl ; restore pointer to new sprite defaults
+    ret nc ; no carry means no free sprite slots, so we go home
+; copy default settings to new sprite
+    push ix ; back up pointer to new sprite record
+    lea ix,ix+sprite_definitions ; bump pointer to copy to
+    push ix ; pointer to default sprite settings
+    pop de ; address to copy to
+    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+    pop ix ; restore pointer to new sprite record
+; copy sprite position, velocity and orientation from existing sprite
+    ld iy,(table_pointer) ; get existing sprite record
+    ld hl,(iy+sprite_x)
+    ld (ix+sprite_x),hl
+    ld hl,(iy+sprite_y)
+    ld (ix+sprite_y),hl
+; return to caller
+    scf ; set carry flag to indicate success
+; end alter_sprite
+
+; call the behavior subroutines for a specified sprite group
+; inputs: iy = pointer to sprite group, b = number of records in sprite group
+move_sprite_group:
+    push bc ; backup loop counter
+    push iy ; backup table pointer
+@move_loop:
+    ld (table_pointer),iy ; update table pointer
+    push bc ; backup loop counter
+; check top bit of sprite_type to see if sprite is just spawned
+    bit 7,(iy+sprite_type)
+    jp nz,@next_record ; if just spawned, skip to next record
+; check sprite_just_died bit
+    bit sprite_just_died,(iy+sprite_collisions)
+    jp nz,@sprite_died ; if just died, deactivate sprite
+; check sprite_alive bit to see if sprite is active
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@next_record ; ... skip to next record
+; otherwise move the sprite
+    ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
+    CALL_HL ; run the behavior subroutine
+    ld a,(iy+sprite_id) ; get spriteId
+    call vdu_sprite_select ; select sprite 
+    ld bc,(iy+sprite_x)
+    ld de,(iy+sprite_y)
+    call vdu_sprite_move_abs168
+; fall through to @next_record
+@next_record:
+    lea iy,iy+table_record_size
+    xor a ; clears carry flag
+    ld (sprite_screen_edge),a ; clear screen edge collision flag
+    pop bc ; get back our loop counter
+    djnz @move_loop ; loop until we've checked all the records
+; reset all just spawned flags
+    pop iy ; get back table pointer
+    pop bc ; get back loop counter
+@reset_just_spawned:
+    push bc ; back up loop counter
+    bit 7,(iy+sprite_type) ; check if just spawned
+    jp z,@F
+    res 7,(iy+sprite_type) ; clear just spawned flag
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    ld bc,(iy+sprite_x)
+    ld de,(iy+sprite_y)
+    call vdu_sprite_move_abs168
+    call vdu_sprite_show
+@@:
+    lea iy,iy+table_record_size
+    pop bc ; get back loop counter
+    djnz @reset_just_spawned
+    ret
+@sprite_died:
+    call table_deactivate_sprite
+    jp @next_record
+; end move_sprite_group
 
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly
@@ -284,60 +394,6 @@ sprite_compute_velocities:
     ld (iy+sprite_yvel),de ; save y-velocity component 
     ret
 ; end sprite_compute_velocities
-
-; change an existing sprite to a new type, keeping its position and velocity the same
-; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
-alter_sprite:
-; copy default settings to new sprite
-    lea iy,iy+sprite_definitions ; bump pointer to copy to
-    push iy ; pointer to default sprite settings
-    pop de ; address to copy to
-    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
-    ldir ; copies new defaults existing sprite record
-; return to caller
-    ld iy,(table_pointer) ; reset table_pointer
-    set 7,(iy+sprite_type) ; set just spawned flag
-    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
-    scf ; set carry flag to indicate success
-    ret
-; end alter_sprite
-
-; create a new sprite at the same location as an existing sprite
-; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
-spawn_sprite:
-    push hl ; back up pointer to new sprite defaults
-    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-    pop hl ; restore pointer to new sprite defaults
-    ret nc ; no carry means no free sprite slots, so we go home
-; copy default settings to new sprite
-    push ix ; back up pointer to new sprite record
-    lea ix,ix+sprite_definitions ; bump pointer to copy to
-    push ix ; pointer to default sprite settings
-    pop de ; address to copy to
-    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
-    ldir ; copies defaults to new sprite record
-; return to caller
-    pop ix ; restore pointer to new sprite record
-    set 7,(ix+sprite_type) ; set just spawned flag
-    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
-    scf ; set carry flag to indicate success
-    ret
-
-; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
-spawn_sprite_from_sprite: 
-    call spawn_sprite
-    ret nc ; no carry means no free sprite slots, so we go home
-; copy sprite position, velocity and orientation from existing sprite
-    ld iy,(table_pointer) ; get existing sprite record
-    ld hl,(iy+sprite_x)
-    ld (ix+sprite_x),hl
-    ld hl,(iy+sprite_y)
-    ld (ix+sprite_y),hl
-; return to caller
-    set 7,(ix+sprite_type) ; set just spawned flag
-    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
-    scf ; set carry flag to indicate success
-    ret
 
 ; compute animation frame based on sprite_animation and sprite_heading
 ; inputs: table_pointer set to sprite record

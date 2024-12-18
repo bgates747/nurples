@@ -169,6 +169,14 @@ print_score:
     ret
 ; end print_score
 
+player_move_weapons:
+; initialize pointers and loop counter
+    ld iy,player_weapons_begin ; set iy to first record in table
+    ld b,player_lasers_max ; loop counter
+    call move_sprite_group
+    ret
+; end player_move_weapons
+
 ; ###################################################################
 ; TODO: the below is all stuff from the original code we need to port
 ; ###################################################################
