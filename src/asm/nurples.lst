@@ -5993,7 +5993,7 @@ PC     Output      Line
 042595             0002*   ; initialize pointers and loop counter
 042595 FD 21 40 81 0003*       ld iy,enemy_sprites_begin ; set iy to first record in table
        04          
-04259A 06 04       0004*       ld b,table_num_enemy_records ; loop counter
+04259A 06 07       0004*       ld b,table_num_enemy_records ; loop counter
 04259C CD 54 6A 04 0005*       call move_sprite_group
 0425A0 C9          0006*       ret
 0425A1             0007*   ; end move_enemies
@@ -6023,7 +6023,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF    
 042600             0002*   speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
-042600             0003*   fireballs_max: equ 1
+042600             0003*   fireballs_max: equ 4
 042600             0004*   
 042600             0005*   fireball_defaults:
 042600 03          0006*       db enemy_projectile     ; type
@@ -6046,7 +6046,7 @@ PC     Output      Line
 042613 21 00 26 04 0023*       ld hl,fireball_defaults
 042617 DD 21 00 82 0024*       ld ix,fireballs_base
        04          
-04261C 06 01       0025*       ld b,fireballs_max
+04261C 06 04       0025*       ld b,fireballs_max
 04261E CD BF 67 04 0026*       call spawn_sprite_from_tile
 042622 D0          0027*       ret nc ; no carry means no free sprite slots, so we go home
 042623             0028*   ; other specific initialization
@@ -6092,7 +6092,7 @@ PC     Output      Line
 04266E FD 21 00 82 0068*       ld iy,fireballs_base
        04          
 042673 FD 7E 00    0069*       ld a,(iy+sprite_id) ; sprite id
-042676 1E 01       0070*       ld e,fireballs_max ; sprite loop counter
+042676 1E 04       0070*       ld e,fireballs_max ; sprite loop counter
 042678             0071*   ; define seeker sprites
 042678             0072*   @sprites_loop:
 042678 F5          0073*       push af
@@ -6311,7 +6311,7 @@ PC     Output      Line
 042813             0020*   
 042813             0021*   spawn_explosion:
 042813 21 00 28 04 0022*       ld hl,explosion_defaults
-042817 DD 21 40 82 0023*       ld ix,explosions_base
+042817 DD 21 00 83 0023*       ld ix,explosions_base
        04          
 04281C 06 08       0024*       ld b,explosions_max
 04281E CD 22 6A 04 0025*       call spawn_sprite_from_sprite
@@ -6327,7 +6327,7 @@ PC     Output      Line
 042838             0035*   
 042838             0036*   tile_spawn_explosion:
 042838 21 00 28 04 0037*       ld hl,explosion_defaults
-04283C DD 21 40 82 0038*       ld ix,explosions_base
+04283C DD 21 00 83 0038*       ld ix,explosions_base
        04          
 042841 06 08       0039*       ld b,explosions_max
 042843 CD BF 67 04 0040*       call spawn_sprite_from_tile
@@ -6366,7 +6366,7 @@ PC     Output      Line
 042890             0073*   
 042890             0074*   move_explosions:
 042890             0075*   ; initialize pointers and loop counter
-042890 FD 21 40 82 0076*       ld iy,explosions_base ; set iy to first record in table
+042890 FD 21 00 83 0076*       ld iy,explosions_base ; set iy to first record in table
        04          
 042895 06 08       0077*       ld b,explosions_max ; loop counter
 042897 CD 54 6A 04 0078*       call move_sprite_group
@@ -6375,7 +6375,7 @@ PC     Output      Line
 04289C             0081*   
 04289C             0082*   init_explosions:
 04289C             0083*   ; set pointer to explosion sprite table
-04289C FD 21 40 82 0084*       ld iy,explosions_base
+04289C FD 21 00 83 0084*       ld iy,explosions_base
        04          
 0428A1 FD 7E 00    0085*       ld a,(iy+sprite_id) ; sprite id
 0428A4 1E 08       0086*       ld e,explosions_max ; sprite loop counter
@@ -9943,8 +9943,8 @@ PC     Output      Line
        00 65 74 73 
        64 73 68 00 
        00 00 00 00 
-0456E8 00 00 00 65 0014*   	db 000,000,000,101,098,116,113,114,114,115,116,097,104,000,000,000
-       62 74 71 72 
+0456E8 00 00 00 65 0014*   	db 000,000,000,101,098,116,113,098,114,115,116,097,104,000,000,000
+       62 74 71 62 
        72 73 74 61 
        68 00 00 00 
 0456F8 00 65 61 F5 0015*   	db 000,101,097,245,246,098,097,099,098,099,113,113,114,098,104,000
@@ -9959,14 +9959,14 @@ PC     Output      Line
        97 63 61 69 
        62 62 51 52 
        4A 53 54 68 
-045728 05 71 72 96 0018*   	db 005,113,114,150,151,167,216,216,182,113,065,066,248,067,068,116
+045728 71 71 72 96 0018*   	db 113,113,114,150,151,167,216,216,182,113,065,066,248,067,068,116
        97 A7 D8 D8 
        B6 71 41 42 
        F8 43 44 74 
-045738 71 69 62 9A 0019*   	db 113,105,098,154,155,097,098,097,165,168,055,248,000,248,056,114
+045738 71 69 62 9A 0019*   	db 113,105,098,154,155,097,098,097,165,168,055,248,001,248,056,114
        9B 61 62 61 
        A5 A8 37 F8 
-       00 F8 38 72 
+       01 F8 38 72 
 045748 71 72 64 72 0020*   	db 113,114,100,114,113,100,113,114,113,114,049,050,248,051,052,098
        71 64 71 72 
        71 72 31 32 
@@ -9999,9 +9999,9 @@ PC     Output      Line
        71 72 69 72 
        F1 F2 63 61 
        62 61 62 64 
-0457C8 73 79 71 72 0028*   	db 115,121,113,114,097,098,113,114,180,114,113,100,113,121,113,114
+0457C8 73 79 71 72 0028*   	db 115,121,113,114,097,098,113,114,180,097,113,100,113,121,113,114
        61 62 71 72 
-       B4 72 71 64 
+       B4 61 71 64 
        71 79 71 72 
 0457D8 61 62 98 99 0029*   	db 097,098,152,153,098,152,153,098,211,100,097,098,100,243,098,098
        62 98 99 62 
@@ -10059,10 +10059,10 @@ PC     Output      Line
        79 62 62 63 
        69 62 61 D3 
        64 62 66 00 
-0458B8 00 00 67 71 0043*   	db 000,000,103,113,114,100,114,113,100,113,114,179,114,102,000,000
-       72 64 72 71 
+0458B8 00 00 67 71 0043*   	db 000,000,103,113,114,100,114,098,100,113,114,179,097,102,000,000
+       72 64 72 62 
        64 71 72 B3 
-       72 66 00 00 
+       61 66 00 00 
 0458C8 00 00 00 00 0044*   	db 000,000,000,000,000,103,100,097,098,100,102,000,000,000,000,000
        00 67 64 61 
        62 64 66 00 
@@ -12371,14 +12371,14 @@ PC     Output      Line
 04698A             0090*   ; clear the sprite table
 04698A AF          0091*       xor a ; write zeroes to sprite table
 04698B 21 00 80 04 0092*       ld hl,table_base ; address to copy from
-04698F 01 40 04 00 0093*       ld bc,table_end-table_base ; number of bytes to clear
+04698F 01 00 05 00 0093*       ld bc,table_end-table_base ; number of bytes to clear
 046993 CD 31 07 04 0094*       call clear_mem
 046997             0095*   ; write sprite ids
 046997 DD 21 00 80 0096*       ld ix,table_base
        04          
 04699C AF          0097*       xor a ; sprite id
 04699D 0E 00       0098*       ld c,0 ; sprite type
-04699F 06 11       0099*       ld b,table_num_records ; loop counter
+04699F 06 14       0099*       ld b,table_num_records ; loop counter
 0469A1             0100*   @loop:
 0469A1 DD 77 00    0101*       ld (ix+sprite_id),a
 0469A4 DD 71 16    0102*       ld (ix+sprite_type),c
@@ -12412,7 +12412,7 @@ PC     Output      Line
 0469D0 CD 55 20 04 0130*   	call vdu_sprite_add_buff
 0469D4 F1          0131*   	pop af ; restore loop counter / sprite id
 0469D5 3C          0132*       inc a
-0469D6 FE 11       0133*       cp table_num_records
+0469D6 FE 14       0133*       cp table_num_records
 0469D8 C2 C7 69 04 0134*       jp nz,@sprite_loop
 0469DC CD 34 1F 04 0135*   	call vdu_sprite_activate
 0469E0             0136*   
@@ -13275,7 +13275,7 @@ PC     Output      Line
 046F67 DD 21 00 80 0286        ld ix,table_base
        04          
 046F6C DD 09       0287        add ix,bc
-046F6E 06 11       0288        ld b,table_num_records
+046F6E 06 14       0288        ld b,table_num_records
 046F70             0289    @@:
 046F70 DD E5       0290        push ix
 046F72 E1          0291        pop hl

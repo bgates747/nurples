@@ -1,6 +1,6 @@
     align 256
 speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
-fireballs_max: equ 1
+fireballs_max: equ 4
 
 fireball_defaults:
     db enemy_projectile     ; type
