@@ -45,8 +45,7 @@ table_max_records: equ 16 ; it can handle more but this is pushing it
 
 ; pointer to top address of current record, initialized to table_base
 table_pointer: dl table_base
-; how many active sprites
-table_active_sprites: db 0x00
+
 ; flag indicating collision with screen edge
 ; uses orientation codes to specify which edge(s)
 sprite_screen_edge: db #00 
@@ -115,7 +114,6 @@ table_init:
 ; inputs: iy set to sprite record
 ; outputs: nothing
 ; destroys: a,hl
-; affects: decrements table_active_sprites by one
 table_deactivate_sprite:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
@@ -124,8 +122,6 @@ table_deactivate_sprite:
     ; ld (iy+sprite_type),a
     res sprite_alive,(iy+sprite_collisions)
     res sprite_just_died,(iy+sprite_collisions)
-    ld hl,table_active_sprites
-    dec (hl)
     ret
 ; end table_deactivate_sprite
 
@@ -172,7 +168,6 @@ sprites_init:
 ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
 ; destroys: a,b,c,hl,ix
-; affects: bumps table_active_sprites by one
 table_get_next_id:
     ld c,(ix+sprite_id) ; sprite id counter
 @loop:
@@ -186,9 +181,6 @@ table_get_next_id:
     xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
     ret
 @found:
-; bump number of active sprites
-    ld hl,table_active_sprites
-    inc (hl)
 ; return sprite id
     ld a,c
     scf ; sets carry flag indicating we found a free sprite
@@ -198,7 +190,6 @@ table_get_next_id:
 ; create a new sprite at the same location as an existing sprite
 ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
 ;         ix = pointer to sprite group, b = number of records in sprite group
-; affects: bumps table_active_sprites by one
 spawn_sprite_from_sprite: 
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
@@ -231,7 +222,6 @@ spawn_sprite_from_sprite:
 alter_sprite:
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-    dec (hl) ; decrement table_active_sprites by one since we're not actually creating a new sprite
     pop hl ; restore pointer to new sprite defaults
     ret nc ; no carry means no free sprite slots, so we go home
 ; copy default settings to new sprite

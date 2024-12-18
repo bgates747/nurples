@@ -5992,7 +5992,7 @@ PC     Output      Line
 042593 FD 21 40 81 0003*       ld iy,enemy_sprites_begin ; set iy to first record in table
        04          
 042598 06 07       0004*       ld b,table_num_enemy_records ; loop counter
-04259A CD 83 6A 04 0005*       call move_sprite_group
+04259A CD 77 6A 04 0005*       call move_sprite_group
 04259E C9          0006*       ret
 04259F             0007*   ; end move_enemies
 04259F             0048        include "enemy_fireball.inc"
@@ -6077,10 +6077,10 @@ PC     Output      Line
 042658             0054*   
 042658             0055*   move_enemy_fireball:
 042658             0056*   ; run the movement program for the fireball enemy
-042658 CD FD 6A 04 0057*       call move_sprite
-04265C 3A 69 69 04 0058*       ld a,(sprite_screen_edge)
+042658 CD F1 6A 04 0057*       call move_sprite
+04265C 3A 68 69 04 0058*       ld a,(sprite_screen_edge)
 042660 B7          0059*       or a ; a will be non-zero if have scrolled off screen
-042661 C2 AF 69 04 0060*       jp nz,table_deactivate_sprite
+042661 C2 AE 69 04 0060*       jp nz,table_deactivate_sprite
 042665 CD 6A 25 04 0061*       call check_enemy_collision_player
 042669 F0          0062*       ret p ; no collision so nothing to do
 04266A C3 7E 25 04 0063*       jp enemy_kill
@@ -6147,7 +6147,7 @@ PC     Output      Line
 042714             0023*   
 042714             0024*   enemy_spawn_seeker:
 042714 21 01 27 04 0025*       ld hl,seeker_defaults
-042718 CD 27 6A 04 0026*       call spawn_sprite_from_sprite
+042718 CD 1C 6A 04 0026*       call spawn_sprite_from_sprite
 04271C D0          0027*       ret nc ; no carry means no free sprite slots, so we go home
 04271D             0028*   ; other specific initialization
 04271D 21 80 02 00 0029*       ld hl,speed_seeker
@@ -6186,10 +6186,10 @@ PC     Output      Line
 042744 FD 2F 10    0061*       ld (iy+sprite_heading),hl ; save sprite heading
 042747             0062*   ; fall through to @compute_velocities
 042747             0063*   @compute_velocities:
-042747 CD 9E 6B 04 0064*       call sprite_compute_velocities
+042747 CD 92 6B 04 0064*       call sprite_compute_velocities
 04274B             0065*   ; change the animation frame to match heading
-04274B CD CB 6B 04 0066*       call sprite_frame_heading ; a, sprite_frame set to heading-based frame
-04274F CD FD 6A 04 0067*       call move_sprite ; move the sprite
+04274B CD BF 6B 04 0066*       call sprite_frame_heading ; a, sprite_frame set to heading-based frame
+04274F CD F1 6A 04 0067*       call move_sprite ; move the sprite
 042753 B7          0068*       or a ; a will be non-zero if have collided with screen edge
 042754 C2 74 27 04 0069*       jp nz,@zag_switch ; switch direction
 042758 C9          0070*       ret ; didn't hit edge, nothing else to do
@@ -6290,7 +6290,7 @@ PC     Output      Line
 042813             0018*   
 042813             0019*   spawn_explosion:
 042813 21 00 28 04 0020*       ld hl,explosion_defaults
-042817 CD 59 6A 04 0021*       call alter_sprite
+042817 CD 4E 6A 04 0021*       call alter_sprite
 04281B             0022*   ; other specific initialization
 04281B 21 00 00 00 0023*       ld hl,0
 04281F FD 2F 07    0024*       ld (iy+sprite_xvel),hl
@@ -6301,7 +6301,7 @@ PC     Output      Line
 04282A             0029*   
 04282A             0030*   move_explosion:
 04282A             0031*   ; run the movement program for the explosion
-04282A CD FD 6A 04 0032*       call move_sprite
+04282A CD F1 6A 04 0032*       call move_sprite
 04282E B7          0033*       or a ; a will be non-zero if have scrolled off screen
 04282F C2 47 28 04 0034*       jp nz,@make_crater
 042833             0035*   ; do the animations
@@ -6319,7 +6319,7 @@ PC     Output      Line
 04284F FD 07 01    0047*       ld bc,(iy+sprite_x)
 042852 FD 17 04    0048*       ld de,(iy+sprite_y)
 042855 CD 3C 1E 04 0049*       call vdu_plot_bmp168
-042859 C3 AF 69 04 0050*       jp table_deactivate_sprite
+042859 C3 AE 69 04 0050*       jp table_deactivate_sprite
 04285D             0051*   ; end move_explosion
 04285D             0051        include "fonts_list.inc"
 04285D FF FF FF FF 0001*       align 256
@@ -10048,7 +10048,7 @@ PC     Output      Line
 04590B             0022*   player_defaults:
 04590B 05          0023*       db player               ; type
 04590C 2B 01 00    0024*       dl BUF_SHIP_0L          ; base_bufferId
-04590F F4 5D 04    0025*       dl do_player            ; move_program
+04590F EF 5D 04    0025*       dl do_player            ; move_program
 045912 40          0026*       db %01000000            ; collisions bit 6 signals sprite alive
 045913 10          0027*       db 16                   ; dim_x
 045914 10          0028*       db 16                   ; dim_y
@@ -10087,8 +10087,8 @@ PC     Output      Line
 045956 FD 1F 04    0059*       ld (iy+sprite_y),de
 045959 CD CC 1F 04 0060*       call vdu_sprite_move_abs168
 04595D CD 76 1F 04 0061*       call vdu_sprite_show
-045961 21 FF 5D 04 0062*       ld hl,player_alive
-045965 22 F1 5D 04 0063*       ld (player_state),hl
+045961 21 FA 5D 04 0062*       ld hl,player_alive
+045965 22 EC 5D 04 0063*       ld (player_state),hl
 045969 FD CB 1D F6 0064*       set sprite_alive,(iy+sprite_collisions)
 04596D C9          0065*       ret
 04596E             0066*   
@@ -10177,7 +10177,7 @@ PC     Output      Line
        04          
 0459EB FD 22 65 69 0145*       ld (table_pointer),iy
        04          
-0459F0 CD FD 6A 04 0146*       call move_sprite
+0459F0 CD F1 6A 04 0146*       call move_sprite
 0459F4 FD 07 01    0147*       ld bc,(iy+sprite_x)
 0459F7 FD 17 04    0148*       ld de,(iy+sprite_y)
 0459FA CD CC 1F 04 0149*       call vdu_sprite_move_abs168
@@ -10209,7 +10209,7 @@ PC     Output      Line
 045A20 FD 21 00 80 0174*       ld iy,player_weapons_begin ; set iy to first record in table
        04          
 045A25 06 04       0175*       ld b,player_lasers_max ; loop counter
-045A27 CD 83 6A 04 0176*       call move_sprite_group
+045A27 CD 77 6A 04 0176*       call move_sprite_group
 045A2B C9          0177*       ret
 045A2C             0178*   ; end player_move_weapons
 045A2C             0179*   
@@ -10550,7 +10550,7 @@ PC     Output      Line
 045C46 FD 22 65 69 0043*       ld (table_pointer),iy
        04          
 045C4B 21 09 5C 04 0044*       ld hl,laser_defaults
-045C4F CD 27 6A 04 0045*       call spawn_sprite_from_sprite
+045C4F CD 1C 6A 04 0045*       call spawn_sprite_from_sprite
 045C53 D0          0046*       ret nc ; no carry means no free sprite slots, so we go home
 045C54             0047*   ; other specific initialization
 045C54             0048*   ; ------------------------------------------------
@@ -10574,13 +10574,13 @@ PC     Output      Line
 045C77             0065*   
 045C77             0066*   move_player_laser:
 045C77             0067*   ; run the movement program for the laser player
-045C77 CD FD 6A 04 0068*       call move_sprite
-045C7B 3A 69 69 04 0069*       ld a,(sprite_screen_edge)
+045C77 CD F1 6A 04 0068*       call move_sprite
+045C7B 3A 68 69 04 0069*       ld a,(sprite_screen_edge)
 045C7F B7          0070*       or a ; a will be non-zero if have scrolled off screen
 045C80 CA 8D 5C 04 0071*       jp z,@F ; still on screen
 045C84 21 0A 59 04 0072*       ld hl,player_weapons_count
 045C88 35          0073*       dec (hl)
-045C89 C3 AF 69 04 0074*       jp table_deactivate_sprite
+045C89 C3 AE 69 04 0074*       jp table_deactivate_sprite
 045C8D             0075*   @@: ; check animation timer
 045C8D FD 35 23    0076*       dec (iy+sprite_animation_timer)
 045C90 C2 A4 5C 04 0077*       jp nz,@F
@@ -10655,214 +10655,212 @@ PC     Output      Line
 045D0E             0015*   game_main_menu:
 045D0E             0016*       ; Handle main menu options
 045D0E             0017*       ; Example: Check input for "Start Game"
-045D0E CD 23 5E 04 0018*       call check_input_menu
+045D0E CD 1E 5E 04 0018*       call check_input_menu
 045D12 C2 17 5D 04 0019*       jp nz, game_initialize ; Start game on selection
 045D16 C9          0020*       ret
 045D17             0021*   
 045D17             0022*   game_initialize:
 045D17             0023*   ; reset the sprite table
-045D17 CD 8B 69 04 0024*       call table_init
-045D1B AF          0025*       xor a
-045D1C 32 68 69 04 0026*       ld (table_active_sprites),a
-045D20 21 00 80 04 0027*       ld hl,table_base
-045D24 22 65 69 04 0028*       ld (table_pointer),hl
-045D28             0029*   ; initialize sprites and active tiles table
-045D28 CD C8 69 04 0030*       call sprites_init
-045D2C CD 8B 69 04 0031*       call table_init
-045D30 CD 10 63 04 0032*       call tile_table_init
-045D34             0033*   ; initialize the first level
-045D34 3E 00       0034*       ld a,tiles_dg
-045D36 CD 1A 56 04 0035*       call init_tileset
-045D3A             0036*   ; initialize player
-045D3A 21 00 00 00 0037*       ld hl,0
-045D3E 22 00 59 04 0038*       ld (player_score),hl
-045D42 2A 06 59 04 0039*       ld hl,(player_max_shields)
-045D46 22 03 59 04 0040*       ld (player_shields),hl
-045D4A 3E 03       0041*       ld a,3
-045D4C 32 09 59 04 0042*       ld (player_ships),a
-045D50 CD 1E 59 04 0043*       call player_init
-045D54             0044*   ; ; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
-045D54             0045*   ;     ld hl,enemies_dead
-045D54             0046*   ;     ld (enemies_state),hl
-045D54             0047*   ; ; END TODO
-045D54             0048*   ; set the game state to playing
-045D54 21 5D 5D 04 0049*       ld hl,game_playing
-045D58 22 00 5D 04 0050*       ld (game_state), hl
-045D5C             0051*   ; done initializing
-045D5C C9          0052*       ret
-045D5D             0053*   
-045D5D             0054*   game_playing:
-045D5D             0055*   ; Main gameplay loop
-045D5D CD 12 66 04 0056*       call tiles_plot
-045D61             0057*   
-045D61             0058*   ; set gfx origin and viewport to playing field window
-045D61 01 80 00 00 0059*       ld bc,origin_left
-045D65 11 00 00 00 0060*       ld de,origin_top
-045D69 CD D0 19 04 0061*       call vdu_set_gfx_origin
-045D6D 01 00 00 00 0062*       ld bc,field_left
-045D71 11 00 00 00 0063*       ld de,field_top
-045D75 DD 21 FF 00 0064*       ld ix,field_right
+045D17 CD 8A 69 04 0024*       call table_init
+045D1B 21 00 80 04 0025*       ld hl,table_base
+045D1F 22 65 69 04 0026*       ld (table_pointer),hl
+045D23             0027*   ; initialize sprites and active tiles table
+045D23 CD C2 69 04 0028*       call sprites_init
+045D27 CD 8A 69 04 0029*       call table_init
+045D2B CD 10 63 04 0030*       call tile_table_init
+045D2F             0031*   ; initialize the first level
+045D2F 3E 00       0032*       ld a,tiles_dg
+045D31 CD 1A 56 04 0033*       call init_tileset
+045D35             0034*   ; initialize player
+045D35 21 00 00 00 0035*       ld hl,0
+045D39 22 00 59 04 0036*       ld (player_score),hl
+045D3D 2A 06 59 04 0037*       ld hl,(player_max_shields)
+045D41 22 03 59 04 0038*       ld (player_shields),hl
+045D45 3E 03       0039*       ld a,3
+045D47 32 09 59 04 0040*       ld (player_ships),a
+045D4B CD 1E 59 04 0041*       call player_init
+045D4F             0042*   ; ; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
+045D4F             0043*   ;     ld hl,enemies_dead
+045D4F             0044*   ;     ld (enemies_state),hl
+045D4F             0045*   ; ; END TODO
+045D4F             0046*   ; set the game state to playing
+045D4F 21 58 5D 04 0047*       ld hl,game_playing
+045D53 22 00 5D 04 0048*       ld (game_state), hl
+045D57             0049*   ; done initializing
+045D57 C9          0050*       ret
+045D58             0051*   
+045D58             0052*   game_playing:
+045D58             0053*   ; Main gameplay loop
+045D58 CD 12 66 04 0054*       call tiles_plot
+045D5C             0055*   
+045D5C             0056*   ; set gfx origin and viewport to playing field window
+045D5C 01 80 00 00 0057*       ld bc,origin_left
+045D60 11 00 00 00 0058*       ld de,origin_top
+045D64 CD D0 19 04 0059*       call vdu_set_gfx_origin
+045D68 01 00 00 00 0060*       ld bc,field_left
+045D6C 11 00 00 00 0061*       ld de,field_top
+045D70 DD 21 FF 00 0062*       ld ix,field_right
        00          
-045D7A FD 21 7F 01 0065*       ld iy,field_bottom
+045D75 FD 21 7F 01 0063*       ld iy,field_bottom
        00          
-045D7F CD EB 19 04 0066*       call vdu_set_gfx_viewport
-045D83             0067*   
-045D83 CD F4 5D 04 0068*       call do_player
-045D87 CD 0D 5E 04 0069*       call do_enemies
-045D8B CD 4A 67 04 0070*       call move_tiles
-045D8F             0071*   ; update UI: TODO make this a standalone function
-045D8F CD 04 5A 04 0072*       call print_score
-045D93 C9          0073*       ret
-045D94             0074*   
-045D94             0075*   game_paused:
-045D94             0076*       ; Pause menu logic
-045D94 CD 26 5E 04 0077*       call check_input_pause
-045D98 C2 5D 5D 04 0078*       jp nz, game_playing ; Resume game
-045D9C CA 0E 5D 04 0079*       jp z, game_main_menu ; Exit to main menu
-045DA0 C9          0080*       ret
-045DA1             0081*   
-045DA1             0082*   game_level_transition:
-045DA1             0083*       ; Handle level transitions
-045DA1 CD 27 5E 04 0084*       call load_next_level
-045DA5 21 5D 5D 04 0085*       ld hl, game_playing
-045DA9 22 00 5D 04 0086*       ld (game_state), hl
-045DAD C9          0087*       ret
-045DAE             0088*   
-045DAE             0089*   game_over:
-045DAE             0090*       ; Display game over screen
-045DAE CD 28 5E 04 0091*       call display_game_over
-045DB2 C2 0E 5D 04 0092*       jp nz, game_main_menu ; Return to main menu on input
-045DB6 C9          0093*       ret
-045DB7             0094*   
-045DB7             0095*   game_victory:
-045DB7             0096*       ; Display victory screen
-045DB7 CD 29 5E 04 0097*       call display_victory
-045DBB C2 0E 5D 04 0098*       jp nz, game_main_menu ; Return to main menu on input
-045DBF C9          0099*       ret
-045DC0             0100*   
-045DC0             0101*   ; ========================
-045DC0             0102*   ; Supporting States
-045DC0             0103*   ; ========================
-045DC0             0104*   
-045DC0             0105*   game_loading:
-045DC0             0106*       ; Show loading screen while preparing assets
-045DC0 CD 2A 5E 04 0107*       call load_resources
-045DC4 21 17 5D 04 0108*       ld hl, game_initialize
-045DC8 22 00 5D 04 0109*       ld (game_state), hl
-045DCC C9          0110*       ret
-045DCD             0111*   
-045DCD             0112*   game_cutscene:
-045DCD             0113*       ; Play a non-interactive cutscene
-045DCD CD 2B 5E 04 0114*       call play_cutscene
-045DD1 C2 5D 5D 04 0115*       jp nz, game_playing ; Return to gameplay after cutscene
-045DD5 C9          0116*       ret
-045DD6             0117*   
-045DD6             0118*   game_inventory:
-045DD6             0119*       ; Open inventory or shop
-045DD6 CD 2C 5E 04 0120*       call display_inventory
-045DDA C2 5D 5D 04 0121*       jp nz, game_playing ; Return to gameplay after inventory close
-045DDE C9          0122*       ret
-045DDF             0123*   
-045DDF             0124*   game_map:
-045DDF             0125*       ; Display map or quest
-045DDF CD 2D 5E 04 0126*       call display_map
-045DE3 C2 5D 5D 04 0127*       jp nz, game_playing ; Return to gameplay after map close
-045DE7 C9          0128*       ret
-045DE8             0129*   
-045DE8             0130*   game_exit:
-045DE8             0131*       ; Handle exit logic
-045DE8 CD 2E 5E 04 0132*       call save_game
-045DEC C3 2F 5E 04 0133*       jp exit_game         ; Safely shut down
-045DF0 C9          0134*       ret
-045DF1             0135*   
-045DF1             0136*   ; ========================
-045DF1             0137*   ; Sub-state branching (Example for player state)
-045DF1             0138*   ; ========================
-045DF1             0139*   
-045DF1 FF 5D 04    0140*   player_state:  dl player_alive ; Player state variable
-045DF4             0141*   
-045DF4             0142*   do_player:
-045DF4 2A F1 5D 04 0143*       ld hl,(player_state)
-045DF8             0144*       CALL_HL                ; Call the corresponding player state
-045DF8 01 FE 5D 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-045DFC C5          0002*M1     push bc ; which constitutes the return address
-045DFD E9          0003*M1     jp (hl) ; Jump to the address in HL
-045DFE             0004*M1 @@:
-045DFE C9          0145*       ret
-045DFF             0146*   
-045DFF             0147*   player_alive:
-045DFF CD 6E 59 04 0148*       call player_input     ; Handle player input
-045E03 CD 20 5A 04 0149*       call player_move_weapons    ; Handle laser movement and collision detection
-045E07 C9          0150*       ret
-045E08             0151*   
-045E08             0152*   player_dead:
-045E08 CD 20 5A 04 0153*       call player_move_weapons    ; Handle laser movement and collision detection
-045E0C C9          0154*       ret
-045E0D             0155*   
-045E0D             0156*   do_enemies:
-045E0D 2A 18 5E 04 0157*       ld hl,(enemies_state)
-045E11             0158*       CALL_HL
-045E11 01 17 5E 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-045E15 C5          0002*M1     push bc ; which constitutes the return address
-045E16 E9          0003*M1     jp (hl) ; Jump to the address in HL
-045E17             0004*M1 @@:
-045E17 C9          0159*       ret
-045E18 1E 5E 04    0160*   enemies_state: dl enemies_alive
-045E1B             0161*   
-045E1B             0162*   enemies_dead:
-045E1B C9          0163*       ret
-045E1C             0164*   
-045E1C             0165*   enemies_respawning:
-045E1C C9          0166*       ret
-045E1D             0167*   
-045E1D             0168*   enemies_respawn:
-045E1D C9          0169*       ret
-045E1E             0170*   
-045E1E             0171*   enemies_alive:
-045E1E CD 93 25 04 0172*       call move_enemies
-045E22 C9          0173*       ret
-045E23             0174*   
-045E23             0175*   check_input_menu:
-045E23 C9          0176*       ret
-045E24             0177*   
-045E24             0178*   update_game_world:
-045E24 C9          0179*       ret
-045E25             0180*   
-045E25             0181*   check_game_events:
-045E25 C9          0182*       ret
-045E26             0183*   
-045E26             0184*   check_input_pause:
-045E26 C9          0185*       ret
-045E27             0186*   
-045E27             0187*   load_next_level:
-045E27 C9          0188*       ret
-045E28             0189*   
-045E28             0190*   display_game_over:
-045E28 C9          0191*       ret
-045E29             0192*   
-045E29             0193*   display_victory:
-045E29 C9          0194*       ret
-045E2A             0195*   
-045E2A             0196*   load_resources:
-045E2A C9          0197*       ret
-045E2B             0198*   
-045E2B             0199*   play_cutscene:
-045E2B C9          0200*       ret
-045E2C             0201*   
-045E2C             0202*   display_inventory:
-045E2C C9          0203*       ret
-045E2D             0204*   
-045E2D             0205*   display_map:
-045E2D C9          0206*       ret
-045E2E             0207*   
-045E2E             0208*   save_game:
-045E2E C9          0209*       ret
-045E2F             0210*   
-045E2F             0211*   exit_game:
-045E2F C9          0212*       ret
-045E30             0213*   
-045E30             0062        include "targeting.inc"
-045E30 FF FF FF FF 0001*       align 256
+045D7A CD EB 19 04 0064*       call vdu_set_gfx_viewport
+045D7E             0065*   
+045D7E CD EF 5D 04 0066*       call do_player
+045D82 CD 08 5E 04 0067*       call do_enemies
+045D86 CD 4A 67 04 0068*       call move_tiles
+045D8A             0069*   ; update UI: TODO make this a standalone function
+045D8A CD 04 5A 04 0070*       call print_score
+045D8E C9          0071*       ret
+045D8F             0072*   
+045D8F             0073*   game_paused:
+045D8F             0074*       ; Pause menu logic
+045D8F CD 21 5E 04 0075*       call check_input_pause
+045D93 C2 58 5D 04 0076*       jp nz, game_playing ; Resume game
+045D97 CA 0E 5D 04 0077*       jp z, game_main_menu ; Exit to main menu
+045D9B C9          0078*       ret
+045D9C             0079*   
+045D9C             0080*   game_level_transition:
+045D9C             0081*       ; Handle level transitions
+045D9C CD 22 5E 04 0082*       call load_next_level
+045DA0 21 58 5D 04 0083*       ld hl, game_playing
+045DA4 22 00 5D 04 0084*       ld (game_state), hl
+045DA8 C9          0085*       ret
+045DA9             0086*   
+045DA9             0087*   game_over:
+045DA9             0088*       ; Display game over screen
+045DA9 CD 23 5E 04 0089*       call display_game_over
+045DAD C2 0E 5D 04 0090*       jp nz, game_main_menu ; Return to main menu on input
+045DB1 C9          0091*       ret
+045DB2             0092*   
+045DB2             0093*   game_victory:
+045DB2             0094*       ; Display victory screen
+045DB2 CD 24 5E 04 0095*       call display_victory
+045DB6 C2 0E 5D 04 0096*       jp nz, game_main_menu ; Return to main menu on input
+045DBA C9          0097*       ret
+045DBB             0098*   
+045DBB             0099*   ; ========================
+045DBB             0100*   ; Supporting States
+045DBB             0101*   ; ========================
+045DBB             0102*   
+045DBB             0103*   game_loading:
+045DBB             0104*       ; Show loading screen while preparing assets
+045DBB CD 25 5E 04 0105*       call load_resources
+045DBF 21 17 5D 04 0106*       ld hl, game_initialize
+045DC3 22 00 5D 04 0107*       ld (game_state), hl
+045DC7 C9          0108*       ret
+045DC8             0109*   
+045DC8             0110*   game_cutscene:
+045DC8             0111*       ; Play a non-interactive cutscene
+045DC8 CD 26 5E 04 0112*       call play_cutscene
+045DCC C2 58 5D 04 0113*       jp nz, game_playing ; Return to gameplay after cutscene
+045DD0 C9          0114*       ret
+045DD1             0115*   
+045DD1             0116*   game_inventory:
+045DD1             0117*       ; Open inventory or shop
+045DD1 CD 27 5E 04 0118*       call display_inventory
+045DD5 C2 58 5D 04 0119*       jp nz, game_playing ; Return to gameplay after inventory close
+045DD9 C9          0120*       ret
+045DDA             0121*   
+045DDA             0122*   game_map:
+045DDA             0123*       ; Display map or quest
+045DDA CD 28 5E 04 0124*       call display_map
+045DDE C2 58 5D 04 0125*       jp nz, game_playing ; Return to gameplay after map close
+045DE2 C9          0126*       ret
+045DE3             0127*   
+045DE3             0128*   game_exit:
+045DE3             0129*       ; Handle exit logic
+045DE3 CD 29 5E 04 0130*       call save_game
+045DE7 C3 2A 5E 04 0131*       jp exit_game         ; Safely shut down
+045DEB C9          0132*       ret
+045DEC             0133*   
+045DEC             0134*   ; ========================
+045DEC             0135*   ; Sub-state branching (Example for player state)
+045DEC             0136*   ; ========================
+045DEC             0137*   
+045DEC FA 5D 04    0138*   player_state:  dl player_alive ; Player state variable
+045DEF             0139*   
+045DEF             0140*   do_player:
+045DEF 2A EC 5D 04 0141*       ld hl,(player_state)
+045DF3             0142*       CALL_HL                ; Call the corresponding player state
+045DF3 01 F9 5D 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+045DF7 C5          0002*M1     push bc ; which constitutes the return address
+045DF8 E9          0003*M1     jp (hl) ; Jump to the address in HL
+045DF9             0004*M1 @@:
+045DF9 C9          0143*       ret
+045DFA             0144*   
+045DFA             0145*   player_alive:
+045DFA CD 6E 59 04 0146*       call player_input     ; Handle player input
+045DFE CD 20 5A 04 0147*       call player_move_weapons    ; Handle laser movement and collision detection
+045E02 C9          0148*       ret
+045E03             0149*   
+045E03             0150*   player_dead:
+045E03 CD 20 5A 04 0151*       call player_move_weapons    ; Handle laser movement and collision detection
+045E07 C9          0152*       ret
+045E08             0153*   
+045E08             0154*   do_enemies:
+045E08 2A 13 5E 04 0155*       ld hl,(enemies_state)
+045E0C             0156*       CALL_HL
+045E0C 01 12 5E 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+045E10 C5          0002*M1     push bc ; which constitutes the return address
+045E11 E9          0003*M1     jp (hl) ; Jump to the address in HL
+045E12             0004*M1 @@:
+045E12 C9          0157*       ret
+045E13 19 5E 04    0158*   enemies_state: dl enemies_alive
+045E16             0159*   
+045E16             0160*   enemies_dead:
+045E16 C9          0161*       ret
+045E17             0162*   
+045E17             0163*   enemies_respawning:
+045E17 C9          0164*       ret
+045E18             0165*   
+045E18             0166*   enemies_respawn:
+045E18 C9          0167*       ret
+045E19             0168*   
+045E19             0169*   enemies_alive:
+045E19 CD 93 25 04 0170*       call move_enemies
+045E1D C9          0171*       ret
+045E1E             0172*   
+045E1E             0173*   check_input_menu:
+045E1E C9          0174*       ret
+045E1F             0175*   
+045E1F             0176*   update_game_world:
+045E1F C9          0177*       ret
+045E20             0178*   
+045E20             0179*   check_game_events:
+045E20 C9          0180*       ret
+045E21             0181*   
+045E21             0182*   check_input_pause:
+045E21 C9          0183*       ret
+045E22             0184*   
+045E22             0185*   load_next_level:
+045E22 C9          0186*       ret
+045E23             0187*   
+045E23             0188*   display_game_over:
+045E23 C9          0189*       ret
+045E24             0190*   
+045E24             0191*   display_victory:
+045E24 C9          0192*       ret
+045E25             0193*   
+045E25             0194*   load_resources:
+045E25 C9          0195*       ret
+045E26             0196*   
+045E26             0197*   play_cutscene:
+045E26 C9          0198*       ret
+045E27             0199*   
+045E27             0200*   display_inventory:
+045E27 C9          0201*       ret
+045E28             0202*   
+045E28             0203*   display_map:
+045E28 C9          0204*       ret
+045E29             0205*   
+045E29             0206*   save_game:
+045E29 C9          0207*       ret
+045E2A             0208*   
+045E2A             0209*   exit_game:
+045E2A C9          0210*       ret
+045E2B             0211*   
+045E2B             0062        include "targeting.inc"
+045E2B FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -10914,6 +10912,8 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
+       FF FF FF FF 
+       FF          
 045F00             0002*   
 045F00             0003*   ; compute orientation to player
 045F00             0004*   ; based on relative positions
@@ -12057,33 +12057,32 @@ PC     Output      Line
 0467BF             0117*   ; create a new sprite at the same location as the current tile
 0467BF             0118*   ; inputs: hl = pointer to new sprite default settings, tile_table_pointer = current tile
 0467BF             0119*   ;         ix = pointer to sprite group, b = number of records in sprite group
-0467BF             0120*   ; affects: bumps table_active_sprites by one
-0467BF             0121*   spawn_sprite_from_tile:
-0467BF E5          0122*       push hl ; back up pointer to new sprite defaults
-0467C0 CD 0E 6A 04 0123*       call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-0467C4 E1          0124*       pop hl ; restore pointer to new sprite defaults
-0467C5 D0          0125*       ret nc ; no carry means no free sprite slots, so we go home
-0467C6             0126*   ; copy default settings to new sprite
-0467C6 DD E5       0127*       push ix ; back up pointer to new sprite record
-0467C8 ED 32 16    0128*       lea ix,ix+sprite_definitions ; bump pointer to copy to
-0467CB DD E5       0129*       push ix ; pointer to default sprite settings
-0467CD D1          0130*       pop de ; address to copy to
-0467CE 01 2A 00 00 0131*       ld bc,table_record_size-sprite_definitions ; number of bytes to copy
-0467D2 ED B0       0132*       ldir ; copies defaults to new sprite record
-0467D4 DD E1       0133*       pop ix ; restore pointer to new sprite record
-0467D6             0134*   ; copy sprite position, velocity and orientation from existing tile
-0467D6 FD 2A 06 63 0135*       ld iy,(tile_table_pointer) ; get existing tile record
+0467BF             0120*   spawn_sprite_from_tile:
+0467BF E5          0121*       push hl ; back up pointer to new sprite defaults
+0467C0 CD 08 6A 04 0122*       call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+0467C4 E1          0123*       pop hl ; restore pointer to new sprite defaults
+0467C5 D0          0124*       ret nc ; no carry means no free sprite slots, so we go home
+0467C6             0125*   ; copy default settings to new sprite
+0467C6 DD E5       0126*       push ix ; back up pointer to new sprite record
+0467C8 ED 32 16    0127*       lea ix,ix+sprite_definitions ; bump pointer to copy to
+0467CB DD E5       0128*       push ix ; pointer to default sprite settings
+0467CD D1          0129*       pop de ; address to copy to
+0467CE 01 2A 00 00 0130*       ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+0467D2 ED B0       0131*       ldir ; copies defaults to new sprite record
+0467D4 DD E1       0132*       pop ix ; restore pointer to new sprite record
+0467D6             0133*   ; copy sprite position, velocity and orientation from existing tile
+0467D6 FD 2A 06 63 0134*       ld iy,(tile_table_pointer) ; get existing tile record
        04          
-0467DB FD 27 01    0136*       ld hl,(iy+tile_x)
-0467DE DD 2F 01    0137*       ld (ix+sprite_x),hl
-0467E1 FD 27 04    0138*       ld hl,(iy+tile_y)
-0467E4 DD 2F 04    0139*       ld (ix+sprite_y),hl
-0467E7             0140*   ; return to caller
-0467E7 DD CB 16 FE 0141*       set 7,(ix+sprite_type) ; set just spawned flag
-0467EB DD CB 1D F6 0142*       set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
-0467EF 37          0143*       scf ; set carry flag to indicate success
-0467F0 C9          0144*       ret
-0467F1             0145*   ; end spawn_sprite_from_tile
+0467DB FD 27 01    0135*       ld hl,(iy+tile_x)
+0467DE DD 2F 01    0136*       ld (ix+sprite_x),hl
+0467E1 FD 27 04    0137*       ld hl,(iy+tile_y)
+0467E4 DD 2F 04    0138*       ld (ix+sprite_y),hl
+0467E7             0139*   ; return to caller
+0467E7 DD CB 16 FE 0140*       set 7,(ix+sprite_type) ; set just spawned flag
+0467EB DD CB 1D F6 0141*       set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+0467EF 37          0142*       scf ; set carry flag to indicate success
+0467F0 C9          0143*       ret
+0467F1             0144*   ; end spawn_sprite_from_tile
 0467F1             0066        include "tile_pad_small.inc"
 0467F1 FF FF FF FF 0001*       align 256
        FF FF FF FF 
@@ -12288,589 +12287,582 @@ PC     Output      Line
 046965             0045*   
 046965             0046*   ; pointer to top address of current record, initialized to table_base
 046965 00 80 04    0047*   table_pointer: dl table_base
-046968             0048*   ; how many active sprites
-046968 00          0049*   table_active_sprites: db 0x00
-046969             0050*   ; flag indicating collision with screen edge
-046969             0051*   ; uses orientation codes to specify which edge(s)
-046969 00          0052*   sprite_screen_edge: db #00
-04696A             0053*   
-04696A             0054*   ; origin_top: equ 48
-04696A             0055*   origin_top: equ 0
-04696A             0056*   origin_left: equ 128
-04696A             0057*   field_top: equ 0
-04696A             0058*   field_bottom: equ 383-origin_top
-04696A             0059*   field_left: equ 0
-04696A             0060*   field_right: equ 255
-04696A             0061*   sprite_top: equ field_top + 0
-04696A             0062*   sprite_bottom: equ field_bottom-16
-04696A             0063*   sprite_left: equ field_left
-04696A             0064*   sprite_right: equ field_right-16
-04696A             0065*   
-04696A             0066*   tile_bottom: equ 384
-04696A             0067*   
-04696A             0068*   ; ######### COLLISION SPRITE PARAMETERS ##########
-04696A             0069*   ; integer coordinates are all that are needed for collision calculations
-04696A 00          0070*   collision_x: db 0x00
-04696B 00          0071*   collision_y: db 0x00
-04696C 00          0072*   collision_dim_x: db 0x00
-04696D 00          0073*   collision_dim_y: db 0x00
-04696E             0074*   
-04696E             0075*   ; scratch variables
-04696E 00          0076*   x: db 0x00 ; 8-bit signed integer
-04696F 00          0077*   y: db 0x00 ; 8-bit signed integer
-046970 00 00 00    0078*   x0: dl 0x000000 ; 16.8 signed fixed place
-046973 00 00 00    0079*   y0: dl 0x000000 ; 16.8 signed fixed place
-046976 00 00 00    0080*   incx1: dl 0x000000 ; 16.8 signed fixed place
-046979 00 00 00    0081*   incy1: dl 0x000000 ; 16.8 signed fixed place
-04697C 00 00 00    0082*   incx2: dl 0x000000 ; 16.8 signed fixed place
-04697F 00 00 00    0083*   incy2: dl 0x000000 ; 16.8 signed fixed place
-046982             0084*   
-046982             0085*   ; sprite_heading: dl 0x000000 ; signed fixed 16.8
-046982 00 00 00    0086*   radius: dl 0x000000 ; signed fixed 16.8 (but should always be positive)
-046985 00 00 00    0087*   sin_sprite_heading: dl 0x000000 ; signed fixed 16.8
-046988 00 00 00    0088*   cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
-04698B             0089*   
-04698B             0090*   table_init:
-04698B             0091*   ; clear the sprite table
-04698B AF          0092*       xor a ; write zeroes to sprite table
-04698C 21 00 80 04 0093*       ld hl,table_base ; address to copy from
-046990 01 00 03 00 0094*       ld bc,table_end-table_base ; number of bytes to clear
-046994 CD 31 07 04 0095*       call clear_mem
-046998             0096*   ; write sprite ids
-046998 DD 21 00 80 0097*       ld ix,table_base
+046968             0048*   
+046968             0049*   ; flag indicating collision with screen edge
+046968             0050*   ; uses orientation codes to specify which edge(s)
+046968 00          0051*   sprite_screen_edge: db #00
+046969             0052*   
+046969             0053*   ; origin_top: equ 48
+046969             0054*   origin_top: equ 0
+046969             0055*   origin_left: equ 128
+046969             0056*   field_top: equ 0
+046969             0057*   field_bottom: equ 383-origin_top
+046969             0058*   field_left: equ 0
+046969             0059*   field_right: equ 255
+046969             0060*   sprite_top: equ field_top + 0
+046969             0061*   sprite_bottom: equ field_bottom-16
+046969             0062*   sprite_left: equ field_left
+046969             0063*   sprite_right: equ field_right-16
+046969             0064*   
+046969             0065*   tile_bottom: equ 384
+046969             0066*   
+046969             0067*   ; ######### COLLISION SPRITE PARAMETERS ##########
+046969             0068*   ; integer coordinates are all that are needed for collision calculations
+046969 00          0069*   collision_x: db 0x00
+04696A 00          0070*   collision_y: db 0x00
+04696B 00          0071*   collision_dim_x: db 0x00
+04696C 00          0072*   collision_dim_y: db 0x00
+04696D             0073*   
+04696D             0074*   ; scratch variables
+04696D 00          0075*   x: db 0x00 ; 8-bit signed integer
+04696E 00          0076*   y: db 0x00 ; 8-bit signed integer
+04696F 00 00 00    0077*   x0: dl 0x000000 ; 16.8 signed fixed place
+046972 00 00 00    0078*   y0: dl 0x000000 ; 16.8 signed fixed place
+046975 00 00 00    0079*   incx1: dl 0x000000 ; 16.8 signed fixed place
+046978 00 00 00    0080*   incy1: dl 0x000000 ; 16.8 signed fixed place
+04697B 00 00 00    0081*   incx2: dl 0x000000 ; 16.8 signed fixed place
+04697E 00 00 00    0082*   incy2: dl 0x000000 ; 16.8 signed fixed place
+046981             0083*   
+046981             0084*   ; sprite_heading: dl 0x000000 ; signed fixed 16.8
+046981 00 00 00    0085*   radius: dl 0x000000 ; signed fixed 16.8 (but should always be positive)
+046984 00 00 00    0086*   sin_sprite_heading: dl 0x000000 ; signed fixed 16.8
+046987 00 00 00    0087*   cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
+04698A             0088*   
+04698A             0089*   table_init:
+04698A             0090*   ; clear the sprite table
+04698A AF          0091*       xor a ; write zeroes to sprite table
+04698B 21 00 80 04 0092*       ld hl,table_base ; address to copy from
+04698F 01 00 03 00 0093*       ld bc,table_end-table_base ; number of bytes to clear
+046993 CD 31 07 04 0094*       call clear_mem
+046997             0095*   ; write sprite ids
+046997 DD 21 00 80 0096*       ld ix,table_base
        04          
-04699D AF          0098*       xor a ; sprite id
-04699E 0E 00       0099*       ld c,0 ; sprite type
-0469A0 06 0C       0100*       ld b,table_num_records ; loop counter
-0469A2             0101*   @loop:
-0469A2 DD 77 00    0102*       ld (ix+sprite_id),a
-0469A5 DD 71 16    0103*       ld (ix+sprite_type),c
-0469A8 ED 32 40    0104*       lea ix,ix+table_record_size
-0469AB 3C          0105*       inc a
-0469AC 10 F4       0106*       djnz @loop
-0469AE             0107*   
-0469AE             0108*   ; ; DEBUG
-0469AE             0109*   ;     ld a,sprite_type
-0469AE             0110*   ;     call DEBUG_PRINT_FIELDS
-0469AE             0111*   ;     CALL DEBUG_WAITKEYPRESS
-0469AE             0112*   ; ; END DEBUG
-0469AE C9          0113*       ret
-0469AF             0114*   ; deactivate the sprite with the given id
-0469AF             0115*   ; inputs: iy set to sprite record
-0469AF             0116*   ; outputs: nothing
-0469AF             0117*   ; destroys: a,hl
-0469AF             0118*   ; affects: decrements table_active_sprites by one
-0469AF             0119*   table_deactivate_sprite:
-0469AF FD 7E 00    0120*       ld a,(iy+sprite_id) ; get spriteId
-0469B2 CD 00 1F 04 0121*       call vdu_sprite_select ; select sprite
-0469B6 CD 84 1F 04 0122*       call vdu_sprite_hide
-0469BA             0123*       ; xor a
-0469BA             0124*       ; ld (iy+sprite_type),a
-0469BA FD CB 1D B6 0125*       res sprite_alive,(iy+sprite_collisions)
-0469BE FD CB 1D BE 0126*       res sprite_just_died,(iy+sprite_collisions)
-0469C2 21 68 69 04 0127*       ld hl,table_active_sprites
-0469C6 35          0128*       dec (hl)
-0469C7 C9          0129*       ret
-0469C8             0130*   ; end table_deactivate_sprite
-0469C8             0131*   
-0469C8             0132*   sprites_init:
-0469C8             0133*   ; initialize sprites
-0469C8 CD 34 20 04 0134*   	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
-0469CC AF          0135*   	xor a ; loop counter / sprite id
-0469CD             0136*   @sprite_loop:
-0469CD F5          0137*   	push af ; save loop counter / sprite id
-0469CE CD 00 1F 04 0138*   	call vdu_sprite_select
-0469D2 21 00 01 00 0139*   	ld hl,BUF_CRATER ; can be anything, but why not a smoking hole in the ground?
-0469D6 CD 55 20 04 0140*   	call vdu_sprite_add_buff
-0469DA F1          0141*   	pop af ; restore loop counter / sprite id
-0469DB 3C          0142*       inc a
-0469DC FE 0C       0143*       cp table_num_records
-0469DE C2 CD 69 04 0144*       jp nz,@sprite_loop
-0469E2 CD 34 1F 04 0145*   	call vdu_sprite_activate
-0469E6             0146*   
-0469E6             0147*   ; define player sprite
-0469E6 3A 00 81 04 0148*   	ld a,(player_begin+sprite_id)
-0469EA CD 00 1F 04 0149*   	call vdu_sprite_select
-0469EE CD 13 1F 04 0150*   	call vdu_sprite_clear_frames
-0469F2 21 2B 01 00 0151*   	ld hl,BUF_SHIP_0L
-0469F6 01 03 00 00 0152*   	ld bc,3 ; three bitmaps for player ship
-0469FA             0153*   @sprite_player_loop:
-0469FA C5          0154*   	push bc
-0469FB E5          0155*   	push hl
-0469FC CD 55 20 04 0156*   	call vdu_sprite_add_buff
-046A00 E1          0157*   	pop hl
-046A01 23          0158*   	inc hl
-046A02 C1          0159*   	pop bc
-046A03 10 F5       0160*   	djnz @sprite_player_loop
-046A05             0161*   
-046A05             0162*   ; define player weapon sprites
-046A05 CD A5 5C 04 0163*       call init_player_laser
-046A09             0164*   
-046A09             0165*   ; define enemy sprites
-046A09 CD 9D 27 04 0166*       call init_enemy_seekers
-046A0D C9          0167*       ret
-046A0E             0168*   ; end sprites_init
-046A0E             0169*   
-046A0E             0170*   ; gets the next available sprite id for a particular sprite group
-046A0E             0171*   ; inputs; ix = pointer to sprite group, b = number of records in sprite group
-046A0E             0172*   ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
-046A0E             0173*   ;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
-046A0E             0174*   ; destroys: a,b,c,hl,ix
-046A0E             0175*   ; affects: bumps table_active_sprites by one
-046A0E             0176*   table_get_next_id:
-046A0E DD 4E 00    0177*       ld c,(ix+sprite_id) ; sprite id counter
-046A11             0178*   @loop:
-046A11 DD 7E 16    0179*       ld a,(ix+sprite_type)
-046A14 A7          0180*       and a
-046A15 28 08       0181*       jr z,@found
-046A17 ED 32 40    0182*       lea ix,ix+table_record_size
-046A1A 0C          0183*       inc c
-046A1B 10 F4       0184*       djnz @loop
-046A1D             0185*   @notfound:
-046A1D AF          0186*       xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
-046A1E C9          0187*       ret
-046A1F             0188*   @found:
-046A1F             0189*   ; bump number of active sprites
-046A1F 21 68 69 04 0190*       ld hl,table_active_sprites
-046A23 34          0191*       inc (hl)
-046A24             0192*   ; return sprite id
-046A24 79          0193*       ld a,c
-046A25 37          0194*       scf ; sets carry flag indicating we found a free sprite
-046A26 C9          0195*       ret ; done
-046A27             0196*   ; end table_get_next_id
-046A27             0197*   
-046A27             0198*   ; create a new sprite at the same location as an existing sprite
-046A27             0199*   ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
-046A27             0200*   ;         ix = pointer to sprite group, b = number of records in sprite group
-046A27             0201*   ; affects: bumps table_active_sprites by one
-046A27             0202*   spawn_sprite_from_sprite:
-046A27 E5          0203*       push hl ; back up pointer to new sprite defaults
-046A28 CD 0E 6A 04 0204*       call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-046A2C E1          0205*       pop hl ; restore pointer to new sprite defaults
-046A2D D0          0206*       ret nc ; no carry means no free sprite slots, so we go home
-046A2E             0207*   ; copy default settings to new sprite
-046A2E DD E5       0208*       push ix ; back up pointer to new sprite record
-046A30 ED 32 16    0209*       lea ix,ix+sprite_definitions ; bump pointer to copy to
-046A33 DD E5       0210*       push ix ; pointer to default sprite settings
-046A35 D1          0211*       pop de ; address to copy to
-046A36 01 2A 00 00 0212*       ld bc,table_record_size-sprite_definitions ; number of bytes to copy
-046A3A ED B0       0213*       ldir ; copies defaults to new sprite record
-046A3C DD E1       0214*       pop ix ; restore pointer to new sprite record
-046A3E             0215*   ; copy sprite position, velocity and orientation from existing sprite
-046A3E FD 2A 65 69 0216*       ld iy,(table_pointer) ; get existing sprite record
+04699C AF          0097*       xor a ; sprite id
+04699D 0E 00       0098*       ld c,0 ; sprite type
+04699F 06 0C       0099*       ld b,table_num_records ; loop counter
+0469A1             0100*   @loop:
+0469A1 DD 77 00    0101*       ld (ix+sprite_id),a
+0469A4 DD 71 16    0102*       ld (ix+sprite_type),c
+0469A7 ED 32 40    0103*       lea ix,ix+table_record_size
+0469AA 3C          0104*       inc a
+0469AB 10 F4       0105*       djnz @loop
+0469AD             0106*   
+0469AD             0107*   ; ; DEBUG
+0469AD             0108*   ;     ld a,sprite_type
+0469AD             0109*   ;     call DEBUG_PRINT_FIELDS
+0469AD             0110*   ;     CALL DEBUG_WAITKEYPRESS
+0469AD             0111*   ; ; END DEBUG
+0469AD C9          0112*       ret
+0469AE             0113*   ; deactivate the sprite with the given id
+0469AE             0114*   ; inputs: iy set to sprite record
+0469AE             0115*   ; outputs: nothing
+0469AE             0116*   ; destroys: a,hl
+0469AE             0117*   table_deactivate_sprite:
+0469AE FD 7E 00    0118*       ld a,(iy+sprite_id) ; get spriteId
+0469B1 CD 00 1F 04 0119*       call vdu_sprite_select ; select sprite
+0469B5 CD 84 1F 04 0120*       call vdu_sprite_hide
+0469B9             0121*       ; xor a
+0469B9             0122*       ; ld (iy+sprite_type),a
+0469B9 FD CB 1D B6 0123*       res sprite_alive,(iy+sprite_collisions)
+0469BD FD CB 1D BE 0124*       res sprite_just_died,(iy+sprite_collisions)
+0469C1 C9          0125*       ret
+0469C2             0126*   ; end table_deactivate_sprite
+0469C2             0127*   
+0469C2             0128*   sprites_init:
+0469C2             0129*   ; initialize sprites
+0469C2 CD 34 20 04 0130*   	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
+0469C6 AF          0131*   	xor a ; loop counter / sprite id
+0469C7             0132*   @sprite_loop:
+0469C7 F5          0133*   	push af ; save loop counter / sprite id
+0469C8 CD 00 1F 04 0134*   	call vdu_sprite_select
+0469CC 21 00 01 00 0135*   	ld hl,BUF_CRATER ; can be anything, but why not a smoking hole in the ground?
+0469D0 CD 55 20 04 0136*   	call vdu_sprite_add_buff
+0469D4 F1          0137*   	pop af ; restore loop counter / sprite id
+0469D5 3C          0138*       inc a
+0469D6 FE 0C       0139*       cp table_num_records
+0469D8 C2 C7 69 04 0140*       jp nz,@sprite_loop
+0469DC CD 34 1F 04 0141*   	call vdu_sprite_activate
+0469E0             0142*   
+0469E0             0143*   ; define player sprite
+0469E0 3A 00 81 04 0144*   	ld a,(player_begin+sprite_id)
+0469E4 CD 00 1F 04 0145*   	call vdu_sprite_select
+0469E8 CD 13 1F 04 0146*   	call vdu_sprite_clear_frames
+0469EC 21 2B 01 00 0147*   	ld hl,BUF_SHIP_0L
+0469F0 01 03 00 00 0148*   	ld bc,3 ; three bitmaps for player ship
+0469F4             0149*   @sprite_player_loop:
+0469F4 C5          0150*   	push bc
+0469F5 E5          0151*   	push hl
+0469F6 CD 55 20 04 0152*   	call vdu_sprite_add_buff
+0469FA E1          0153*   	pop hl
+0469FB 23          0154*   	inc hl
+0469FC C1          0155*   	pop bc
+0469FD 10 F5       0156*   	djnz @sprite_player_loop
+0469FF             0157*   
+0469FF             0158*   ; define player weapon sprites
+0469FF CD A5 5C 04 0159*       call init_player_laser
+046A03             0160*   
+046A03             0161*   ; define enemy sprites
+046A03 CD 9D 27 04 0162*       call init_enemy_seekers
+046A07 C9          0163*       ret
+046A08             0164*   ; end sprites_init
+046A08             0165*   
+046A08             0166*   ; gets the next available sprite id for a particular sprite group
+046A08             0167*   ; inputs; ix = pointer to sprite group, b = number of records in sprite group
+046A08             0168*   ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
+046A08             0169*   ;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+046A08             0170*   ; destroys: a,b,c,hl,ix
+046A08             0171*   table_get_next_id:
+046A08 DD 4E 00    0172*       ld c,(ix+sprite_id) ; sprite id counter
+046A0B             0173*   @loop:
+046A0B DD 7E 16    0174*       ld a,(ix+sprite_type)
+046A0E A7          0175*       and a
+046A0F 28 08       0176*       jr z,@found
+046A11 ED 32 40    0177*       lea ix,ix+table_record_size
+046A14 0C          0178*       inc c
+046A15 10 F4       0179*       djnz @loop
+046A17             0180*   @notfound:
+046A17 AF          0181*       xor a ; a = 0 and reset carry flag indicating that we didn't find a free sprite
+046A18 C9          0182*       ret
+046A19             0183*   @found:
+046A19             0184*   ; return sprite id
+046A19 79          0185*       ld a,c
+046A1A 37          0186*       scf ; sets carry flag indicating we found a free sprite
+046A1B C9          0187*       ret ; done
+046A1C             0188*   ; end table_get_next_id
+046A1C             0189*   
+046A1C             0190*   ; create a new sprite at the same location as an existing sprite
+046A1C             0191*   ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+046A1C             0192*   ;         ix = pointer to sprite group, b = number of records in sprite group
+046A1C             0193*   spawn_sprite_from_sprite:
+046A1C E5          0194*       push hl ; back up pointer to new sprite defaults
+046A1D CD 08 6A 04 0195*       call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+046A21 E1          0196*       pop hl ; restore pointer to new sprite defaults
+046A22 D0          0197*       ret nc ; no carry means no free sprite slots, so we go home
+046A23             0198*   ; copy default settings to new sprite
+046A23 DD E5       0199*       push ix ; back up pointer to new sprite record
+046A25 ED 32 16    0200*       lea ix,ix+sprite_definitions ; bump pointer to copy to
+046A28 DD E5       0201*       push ix ; pointer to default sprite settings
+046A2A D1          0202*       pop de ; address to copy to
+046A2B 01 2A 00 00 0203*       ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+046A2F ED B0       0204*       ldir ; copies defaults to new sprite record
+046A31 DD E1       0205*       pop ix ; restore pointer to new sprite record
+046A33             0206*   ; copy sprite position, velocity and orientation from existing sprite
+046A33 FD 2A 65 69 0207*       ld iy,(table_pointer) ; get existing sprite record
        04          
-046A43 FD 27 01    0217*       ld hl,(iy+sprite_x)
-046A46 DD 2F 01    0218*       ld (ix+sprite_x),hl
-046A49 FD 27 04    0219*       ld hl,(iy+sprite_y)
-046A4C DD 2F 04    0220*       ld (ix+sprite_y),hl
-046A4F             0221*   ; return to caller
-046A4F DD CB 16 FE 0222*       set 7,(ix+sprite_type) ; set just spawned flag
-046A53 DD CB 1D F6 0223*       set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
-046A57 37          0224*       scf ; set carry flag to indicate success
-046A58 C9          0225*       ret
-046A59             0226*   ; end spawn_sprite_from_sprite
-046A59             0227*   
-046A59             0228*   ; change an existing sprite to a new type, keeping its position and velocity the same
-046A59             0229*   ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
-046A59             0230*   ;         ix = pointer to sprite group, b = number of records in sprite group
-046A59             0231*   alter_sprite:
-046A59 E5          0232*       push hl ; back up pointer to new sprite defaults
-046A5A CD 0E 6A 04 0233*       call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
-046A5E 35          0234*       dec (hl) ; decrement table_active_sprites by one since we're not actually creating a new sprite
-046A5F E1          0235*       pop hl ; restore pointer to new sprite defaults
-046A60 D0          0236*       ret nc ; no carry means no free sprite slots, so we go home
-046A61             0237*   ; copy default settings to new sprite
-046A61 DD E5       0238*       push ix ; back up pointer to new sprite record
-046A63 ED 32 16    0239*       lea ix,ix+sprite_definitions ; bump pointer to copy to
-046A66 DD E5       0240*       push ix ; pointer to default sprite settings
-046A68 D1          0241*       pop de ; address to copy to
-046A69 01 2A 00 00 0242*       ld bc,table_record_size-sprite_definitions ; number of bytes to copy
-046A6D ED B0       0243*       ldir ; copies defaults to new sprite record
-046A6F DD E1       0244*       pop ix ; restore pointer to new sprite record
-046A71             0245*   ; copy sprite position, velocity and orientation from existing sprite
-046A71 FD 2A 65 69 0246*       ld iy,(table_pointer) ; get existing sprite record
+046A38 FD 27 01    0208*       ld hl,(iy+sprite_x)
+046A3B DD 2F 01    0209*       ld (ix+sprite_x),hl
+046A3E FD 27 04    0210*       ld hl,(iy+sprite_y)
+046A41 DD 2F 04    0211*       ld (ix+sprite_y),hl
+046A44             0212*   ; return to caller
+046A44 DD CB 16 FE 0213*       set 7,(ix+sprite_type) ; set just spawned flag
+046A48 DD CB 1D F6 0214*       set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+046A4C 37          0215*       scf ; set carry flag to indicate success
+046A4D C9          0216*       ret
+046A4E             0217*   ; end spawn_sprite_from_sprite
+046A4E             0218*   
+046A4E             0219*   ; change an existing sprite to a new type, keeping its position and velocity the same
+046A4E             0220*   ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
+046A4E             0221*   ;         ix = pointer to sprite group, b = number of records in sprite group
+046A4E             0222*   alter_sprite:
+046A4E E5          0223*       push hl ; back up pointer to new sprite defaults
+046A4F CD 08 6A 04 0224*       call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+046A53 E1          0225*       pop hl ; restore pointer to new sprite defaults
+046A54 D0          0226*       ret nc ; no carry means no free sprite slots, so we go home
+046A55             0227*   ; copy default settings to new sprite
+046A55 DD E5       0228*       push ix ; back up pointer to new sprite record
+046A57 ED 32 16    0229*       lea ix,ix+sprite_definitions ; bump pointer to copy to
+046A5A DD E5       0230*       push ix ; pointer to default sprite settings
+046A5C D1          0231*       pop de ; address to copy to
+046A5D 01 2A 00 00 0232*       ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+046A61 ED B0       0233*       ldir ; copies defaults to new sprite record
+046A63 DD E1       0234*       pop ix ; restore pointer to new sprite record
+046A65             0235*   ; copy sprite position, velocity and orientation from existing sprite
+046A65 FD 2A 65 69 0236*       ld iy,(table_pointer) ; get existing sprite record
        04          
-046A76 FD 27 01    0247*       ld hl,(iy+sprite_x)
-046A79 DD 2F 01    0248*       ld (ix+sprite_x),hl
-046A7C FD 27 04    0249*       ld hl,(iy+sprite_y)
-046A7F DD 2F 04    0250*       ld (ix+sprite_y),hl
-046A82             0251*   ; return to caller
-046A82 37          0252*       scf ; set carry flag to indicate success
-046A83             0253*   ; end alter_sprite
-046A83             0254*   
-046A83             0255*   ; call the behavior subroutines for a specified sprite group
-046A83             0256*   ; inputs: iy = pointer to sprite group, b = number of records in sprite group
-046A83             0257*   move_sprite_group:
-046A83 C5          0258*       push bc ; backup loop counter
-046A84 FD E5       0259*       push iy ; backup table pointer
-046A86             0260*   @move_loop:
-046A86 FD 22 65 69 0261*       ld (table_pointer),iy ; update table pointer
+046A6A FD 27 01    0237*       ld hl,(iy+sprite_x)
+046A6D DD 2F 01    0238*       ld (ix+sprite_x),hl
+046A70 FD 27 04    0239*       ld hl,(iy+sprite_y)
+046A73 DD 2F 04    0240*       ld (ix+sprite_y),hl
+046A76             0241*   ; return to caller
+046A76 37          0242*       scf ; set carry flag to indicate success
+046A77             0243*   ; end alter_sprite
+046A77             0244*   
+046A77             0245*   ; call the behavior subroutines for a specified sprite group
+046A77             0246*   ; inputs: iy = pointer to sprite group, b = number of records in sprite group
+046A77             0247*   move_sprite_group:
+046A77 C5          0248*       push bc ; backup loop counter
+046A78 FD E5       0249*       push iy ; backup table pointer
+046A7A             0250*   @move_loop:
+046A7A FD 22 65 69 0251*       ld (table_pointer),iy ; update table pointer
        04          
-046A8B C5          0262*       push bc ; backup loop counter
-046A8C             0263*   ; check top bit of sprite_type to see if sprite is just spawned
-046A8C FD CB 16 7E 0264*       bit 7,(iy+sprite_type)
-046A90 C2 BE 6A 04 0265*       jp nz,@next_record ; if just spawned, skip to next record
-046A94             0266*   ; check sprite_just_died bit
-046A94 FD CB 1D 7E 0267*       bit sprite_just_died,(iy+sprite_collisions)
-046A98 C2 F5 6A 04 0268*       jp nz,@sprite_died ; if just died, deactivate sprite
-046A9C             0269*   ; check sprite_alive bit to see if sprite is active
-046A9C FD CB 1D 76 0270*       bit sprite_alive,(iy+sprite_collisions)
-046AA0 CA BE 6A 04 0271*       jp z,@next_record ; ... skip to next record
-046AA4             0272*   ; otherwise move the sprite
-046AA4 FD 27 1A    0273*       ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
-046AA7             0274*       CALL_HL ; run the behavior subroutine
-046AA7 01 AD 6A 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
-046AAB C5          0002*M1     push bc ; which constitutes the return address
-046AAC E9          0003*M1     jp (hl) ; Jump to the address in HL
-046AAD             0004*M1 @@:
-046AAD FD 7E 00    0275*       ld a,(iy+sprite_id) ; get spriteId
-046AB0 CD 00 1F 04 0276*       call vdu_sprite_select ; select sprite
-046AB4 FD 07 01    0277*       ld bc,(iy+sprite_x)
-046AB7 FD 17 04    0278*       ld de,(iy+sprite_y)
-046ABA CD CC 1F 04 0279*       call vdu_sprite_move_abs168
-046ABE             0280*   ; fall through to @next_record
-046ABE             0281*   @next_record:
-046ABE ED 33 40    0282*       lea iy,iy+table_record_size
-046AC1 AF          0283*       xor a ; clears carry flag
-046AC2 32 69 69 04 0284*       ld (sprite_screen_edge),a ; clear screen edge collision flag
-046AC6 C1          0285*       pop bc ; get back our loop counter
-046AC7 10 BD       0286*       djnz @move_loop ; loop until we've checked all the records
-046AC9             0287*   ; reset all just spawned flags
-046AC9 FD E1       0288*       pop iy ; get back table pointer
-046ACB C1          0289*       pop bc ; get back loop counter
-046ACC             0290*   @reset_just_spawned:
-046ACC C5          0291*       push bc ; back up loop counter
-046ACD FD CB 16 7E 0292*       bit 7,(iy+sprite_type) ; check if just spawned
-046AD1 CA EE 6A 04 0293*       jp z,@F
-046AD5 FD CB 16 BE 0294*       res 7,(iy+sprite_type) ; clear just spawned flag
-046AD9 FD 7E 00    0295*       ld a,(iy+sprite_id)
-046ADC CD 00 1F 04 0296*       call vdu_sprite_select
-046AE0 FD 07 01    0297*       ld bc,(iy+sprite_x)
-046AE3 FD 17 04    0298*       ld de,(iy+sprite_y)
-046AE6 CD CC 1F 04 0299*       call vdu_sprite_move_abs168
-046AEA CD 76 1F 04 0300*       call vdu_sprite_show
-046AEE             0301*   @@:
-046AEE ED 33 40    0302*       lea iy,iy+table_record_size
-046AF1 C1          0303*       pop bc ; get back loop counter
-046AF2 10 D8       0304*       djnz @reset_just_spawned
-046AF4 C9          0305*       ret
-046AF5             0306*   @sprite_died:
-046AF5 CD AF 69 04 0307*       call table_deactivate_sprite
-046AF9 C3 BE 6A 04 0308*       jp @next_record
-046AFD             0309*   ; end move_sprite_group
-046AFD             0310*   
-046AFD             0311*   ; compute a sprite's new position based on its component x,y velocities
-046AFD             0312*   ; with screen boundary checking and update its sprite table record accordingly
-046AFD             0313*   ; inputs: table_pointer set to sprite record
-046AFD             0314*   ; returns: updated x, y positions and edge collision flags in sprite_screen_edge
-046AFD             0315*   ; destroys: everything
-046AFD             0316*   ; note: actual rendering of sprite must be handled by caller
-046AFD             0317*   move_sprite:
-046AFD FD 2A 65 69 0318*       ld iy,(table_pointer)
+046A7F C5          0252*       push bc ; backup loop counter
+046A80             0253*   ; check top bit of sprite_type to see if sprite is just spawned
+046A80 FD CB 16 7E 0254*       bit 7,(iy+sprite_type)
+046A84 C2 B2 6A 04 0255*       jp nz,@next_record ; if just spawned, skip to next record
+046A88             0256*   ; check sprite_just_died bit
+046A88 FD CB 1D 7E 0257*       bit sprite_just_died,(iy+sprite_collisions)
+046A8C C2 E9 6A 04 0258*       jp nz,@sprite_died ; if just died, deactivate sprite
+046A90             0259*   ; check sprite_alive bit to see if sprite is active
+046A90 FD CB 1D 76 0260*       bit sprite_alive,(iy+sprite_collisions)
+046A94 CA B2 6A 04 0261*       jp z,@next_record ; ... skip to next record
+046A98             0262*   ; otherwise move the sprite
+046A98 FD 27 1A    0263*       ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
+046A9B             0264*       CALL_HL ; run the behavior subroutine
+046A9B 01 A1 6A 04 0001*M1     ld bc,@F ; Address of first instruction after the jump
+046A9F C5          0002*M1     push bc ; which constitutes the return address
+046AA0 E9          0003*M1     jp (hl) ; Jump to the address in HL
+046AA1             0004*M1 @@:
+046AA1 FD 7E 00    0265*       ld a,(iy+sprite_id) ; get spriteId
+046AA4 CD 00 1F 04 0266*       call vdu_sprite_select ; select sprite
+046AA8 FD 07 01    0267*       ld bc,(iy+sprite_x)
+046AAB FD 17 04    0268*       ld de,(iy+sprite_y)
+046AAE CD CC 1F 04 0269*       call vdu_sprite_move_abs168
+046AB2             0270*   ; fall through to @next_record
+046AB2             0271*   @next_record:
+046AB2 ED 33 40    0272*       lea iy,iy+table_record_size
+046AB5 AF          0273*       xor a ; clears carry flag
+046AB6 32 68 69 04 0274*       ld (sprite_screen_edge),a ; clear screen edge collision flag
+046ABA C1          0275*       pop bc ; get back our loop counter
+046ABB 10 BD       0276*       djnz @move_loop ; loop until we've checked all the records
+046ABD             0277*   ; reset all just spawned flags
+046ABD FD E1       0278*       pop iy ; get back table pointer
+046ABF C1          0279*       pop bc ; get back loop counter
+046AC0             0280*   @reset_just_spawned:
+046AC0 C5          0281*       push bc ; back up loop counter
+046AC1 FD CB 16 7E 0282*       bit 7,(iy+sprite_type) ; check if just spawned
+046AC5 CA E2 6A 04 0283*       jp z,@F
+046AC9 FD CB 16 BE 0284*       res 7,(iy+sprite_type) ; clear just spawned flag
+046ACD FD 7E 00    0285*       ld a,(iy+sprite_id)
+046AD0 CD 00 1F 04 0286*       call vdu_sprite_select
+046AD4 FD 07 01    0287*       ld bc,(iy+sprite_x)
+046AD7 FD 17 04    0288*       ld de,(iy+sprite_y)
+046ADA CD CC 1F 04 0289*       call vdu_sprite_move_abs168
+046ADE CD 76 1F 04 0290*       call vdu_sprite_show
+046AE2             0291*   @@:
+046AE2 ED 33 40    0292*       lea iy,iy+table_record_size
+046AE5 C1          0293*       pop bc ; get back loop counter
+046AE6 10 D8       0294*       djnz @reset_just_spawned
+046AE8 C9          0295*       ret
+046AE9             0296*   @sprite_died:
+046AE9 CD AE 69 04 0297*       call table_deactivate_sprite
+046AED C3 B2 6A 04 0298*       jp @next_record
+046AF1             0299*   ; end move_sprite_group
+046AF1             0300*   
+046AF1             0301*   ; compute a sprite's new position based on its component x,y velocities
+046AF1             0302*   ; with screen boundary checking and update its sprite table record accordingly
+046AF1             0303*   ; inputs: table_pointer set to sprite record
+046AF1             0304*   ; returns: updated x, y positions and edge collision flags in sprite_screen_edge
+046AF1             0305*   ; destroys: everything
+046AF1             0306*   ; note: actual rendering of sprite must be handled by caller
+046AF1             0307*   move_sprite:
+046AF1 FD 2A 65 69 0308*       ld iy,(table_pointer)
        04          
-046B02             0319*   ; x-axis movement
-046B02 FD 27 01    0320*       ld hl,(iy+sprite_x)
-046B05 FD 17 07    0321*       ld de,(iy+sprite_xvel)
-046B08 19          0322*       add hl,de
-046B09 FD 2F 01    0323*       ld (iy+sprite_x),hl
-046B0C             0324*   ; y-axis movement
-046B0C FD 27 04    0325*       ld hl,(iy+sprite_y)
-046B0F FD 17 0A    0326*       ld de,(iy+sprite_yvel)
-046B12 19          0327*       add hl,de
-046B13 FD 2F 04    0328*       ld (iy+sprite_y),hl
-046B16             0329*   ; detect screen edge collisions
-046B16 AF          0330*       xor a ; reset screen edge collision flag and clear carry
-046B17 32 69 69 04 0331*       ld (sprite_screen_edge),a
-046B1B             0332*   ; y-axis first since we already have it in hl
-046B1B 11 00 00 00 0333*       ld de,-sprite_top*256
-046B1F ED 5A       0334*       adc hl,de
-046B21 FA 4B 6B 04 0335*       jp m,@top
-046B25 ED 52       0336*       sbc hl,de ; hl back to original value
-046B27 11 00 91 FE 0337*       ld de,-sprite_bottom*256
-046B2B ED 5A       0338*       adc hl,de
-046B2D F2 55 6B 04 0339*       jp p,@bottom
-046B31             0340*   @xaxis:
-046B31 FD 27 01    0341*       ld hl,(iy+sprite_x)
-046B34 11 00 00 00 0342*       ld de,-sprite_left*256
-046B38 ED 5A       0343*       adc hl,de
-046B3A FA 70 6B 04 0344*       jp m,@left
-046B3E ED 52       0345*       sbc hl,de ; hl back to original value
-046B40 11 00 11 FF 0346*       ld de,-sprite_right*256
-046B44 ED 5A       0347*       adc hl,de
-046B46 F2 7E 6B 04 0348*       jp p,@right
-046B4A             0349*   ; no edge collisions so go home
-046B4A C9          0350*       ret
-046B4B             0351*   @top:
-046B4B 3E 08       0352*       ld a,collide_top
-046B4D 21 00 00 00 0353*       ld hl,sprite_top*256
-046B51 C3 5B 6B 04 0354*       jp @collide_y
-046B55             0355*   @bottom:
-046B55 3E 04       0356*       ld a,collide_bottom
-046B57 21 00 6F 01 0357*       ld hl,sprite_bottom*256
-046B5B             0358*   @collide_y:
-046B5B 32 69 69 04 0359*       ld (sprite_screen_edge),a
-046B5F FD 2F 04    0360*       ld (iy+sprite_y),hl
-046B62             0361*   ; reverse y-axis velocity
-046B62 FD 27 0A    0362*       ld hl,(iy+sprite_yvel)
-046B65 CD 16 09 04 0363*       call neg_hlu
-046B69 FD 2F 0A    0364*       ld (iy+sprite_yvel),hl
-046B6C             0365*   ; go check for x-axis collisions
-046B6C C3 31 6B 04 0366*       jp @xaxis
-046B70             0367*   @left:
-046B70 3A 69 69 04 0368*       ld a,(sprite_screen_edge)
-046B74 F6 02       0369*       or a,collide_left
-046B76 21 00 00 00 0370*       ld hl,sprite_left*256
-046B7A C3 88 6B 04 0371*       jp @collide_x
-046B7E             0372*   @right:
-046B7E 3A 69 69 04 0373*       ld a,(sprite_screen_edge)
-046B82 F6 01       0374*       or a,collide_right
-046B84 21 00 EF 00 0375*       ld hl,sprite_right*256
-046B88             0376*   @collide_x:
-046B88 32 69 69 04 0377*       ld (sprite_screen_edge),a
-046B8C FD 2F 01    0378*       ld (iy+sprite_x),hl
-046B8F             0379*   ; reverse x-axis velocity
-046B8F FD 27 07    0380*       ld hl,(iy+sprite_xvel)
-046B92 CD 16 09 04 0381*       call neg_hlu
-046B96 FD 2F 07    0382*       ld (iy+sprite_xvel),hl
-046B99             0383*   ; final collision flag to a and return
-046B99 3A 69 69 04 0384*       ld a,(sprite_screen_edge)
-046B9D C9          0385*       ret
-046B9E             0386*   ; end move_sprite
-046B9E             0387*   
-046B9E             0388*   sprite_compute_velocities:
-046B9E FD 2A 65 69 0389*       ld iy,(table_pointer)
+046AF6             0309*   ; x-axis movement
+046AF6 FD 27 01    0310*       ld hl,(iy+sprite_x)
+046AF9 FD 17 07    0311*       ld de,(iy+sprite_xvel)
+046AFC 19          0312*       add hl,de
+046AFD FD 2F 01    0313*       ld (iy+sprite_x),hl
+046B00             0314*   ; y-axis movement
+046B00 FD 27 04    0315*       ld hl,(iy+sprite_y)
+046B03 FD 17 0A    0316*       ld de,(iy+sprite_yvel)
+046B06 19          0317*       add hl,de
+046B07 FD 2F 04    0318*       ld (iy+sprite_y),hl
+046B0A             0319*   ; detect screen edge collisions
+046B0A AF          0320*       xor a ; reset screen edge collision flag and clear carry
+046B0B 32 68 69 04 0321*       ld (sprite_screen_edge),a
+046B0F             0322*   ; y-axis first since we already have it in hl
+046B0F 11 00 00 00 0323*       ld de,-sprite_top*256
+046B13 ED 5A       0324*       adc hl,de
+046B15 FA 3F 6B 04 0325*       jp m,@top
+046B19 ED 52       0326*       sbc hl,de ; hl back to original value
+046B1B 11 00 91 FE 0327*       ld de,-sprite_bottom*256
+046B1F ED 5A       0328*       adc hl,de
+046B21 F2 49 6B 04 0329*       jp p,@bottom
+046B25             0330*   @xaxis:
+046B25 FD 27 01    0331*       ld hl,(iy+sprite_x)
+046B28 11 00 00 00 0332*       ld de,-sprite_left*256
+046B2C ED 5A       0333*       adc hl,de
+046B2E FA 64 6B 04 0334*       jp m,@left
+046B32 ED 52       0335*       sbc hl,de ; hl back to original value
+046B34 11 00 11 FF 0336*       ld de,-sprite_right*256
+046B38 ED 5A       0337*       adc hl,de
+046B3A F2 72 6B 04 0338*       jp p,@right
+046B3E             0339*   ; no edge collisions so go home
+046B3E C9          0340*       ret
+046B3F             0341*   @top:
+046B3F 3E 08       0342*       ld a,collide_top
+046B41 21 00 00 00 0343*       ld hl,sprite_top*256
+046B45 C3 4F 6B 04 0344*       jp @collide_y
+046B49             0345*   @bottom:
+046B49 3E 04       0346*       ld a,collide_bottom
+046B4B 21 00 6F 01 0347*       ld hl,sprite_bottom*256
+046B4F             0348*   @collide_y:
+046B4F 32 68 69 04 0349*       ld (sprite_screen_edge),a
+046B53 FD 2F 04    0350*       ld (iy+sprite_y),hl
+046B56             0351*   ; reverse y-axis velocity
+046B56 FD 27 0A    0352*       ld hl,(iy+sprite_yvel)
+046B59 CD 16 09 04 0353*       call neg_hlu
+046B5D FD 2F 0A    0354*       ld (iy+sprite_yvel),hl
+046B60             0355*   ; go check for x-axis collisions
+046B60 C3 25 6B 04 0356*       jp @xaxis
+046B64             0357*   @left:
+046B64 3A 68 69 04 0358*       ld a,(sprite_screen_edge)
+046B68 F6 02       0359*       or a,collide_left
+046B6A 21 00 00 00 0360*       ld hl,sprite_left*256
+046B6E C3 7C 6B 04 0361*       jp @collide_x
+046B72             0362*   @right:
+046B72 3A 68 69 04 0363*       ld a,(sprite_screen_edge)
+046B76 F6 01       0364*       or a,collide_right
+046B78 21 00 EF 00 0365*       ld hl,sprite_right*256
+046B7C             0366*   @collide_x:
+046B7C 32 68 69 04 0367*       ld (sprite_screen_edge),a
+046B80 FD 2F 01    0368*       ld (iy+sprite_x),hl
+046B83             0369*   ; reverse x-axis velocity
+046B83 FD 27 07    0370*       ld hl,(iy+sprite_xvel)
+046B86 CD 16 09 04 0371*       call neg_hlu
+046B8A FD 2F 07    0372*       ld (iy+sprite_xvel),hl
+046B8D             0373*   ; final collision flag to a and return
+046B8D 3A 68 69 04 0374*       ld a,(sprite_screen_edge)
+046B91 C9          0375*       ret
+046B92             0376*   ; end move_sprite
+046B92             0377*   
+046B92             0378*   sprite_compute_velocities:
+046B92 FD 2A 65 69 0379*       ld iy,(table_pointer)
        04          
-046BA3 FD 17 0D    0390*       ld de,(iy+sprite_vel)
-046BA6 CD A0 0B 04 0391*       call polar_to_cartesian
-046BAA FD 2A 65 69 0392*       ld iy,(table_pointer)
+046B97 FD 17 0D    0380*       ld de,(iy+sprite_vel)
+046B9A CD A0 0B 04 0381*       call polar_to_cartesian
+046B9E FD 2A 65 69 0382*       ld iy,(table_pointer)
        04          
-046BAF FD 0F 07    0393*       ld (iy+sprite_xvel),bc ; save x-velocity component
-046BB2 FD 1F 0A    0394*       ld (iy+sprite_yvel),de ; save y-velocity component
-046BB5 C9          0395*       ret
-046BB6             0396*   ; end sprite_compute_velocities
-046BB6             0397*   
-046BB6             0398*   ; compute animation frame based on sprite_animation and sprite_heading
-046BB6             0399*   ; inputs: table_pointer set to sprite record
-046BB6             0400*   ; outputs: a, sprite_frame set to animation frame
-046BB6             0401*   ; destroys: a,hl
-046BB6             0402*   sprite_frame_heading_animation:
-046BB6 FD 7E 11    0403*       ld a,(iy+sprite_heading+1) ; we want the integer portion
-046BB9 CB 3F       0404*       srl a ; divide integer portion by 8
-046BBB CB 3F       0405*       srl a
-046BBD CB 3F       0406*       srl a
-046BBF FD 66 22    0407*       ld h,(iy+sprite_animation)
-046BC2 2E 20       0408*       ld l,32 ; 32 orientation frames per animation
-046BC4 ED 6C       0409*       mlt hl ; hl = offset from base animation
-046BC6 85          0410*       add a,l ; modulo256 since sprite_frame is only 1 byte
-046BC7 FD 77 28    0411*       ld (iy+sprite_frame),a
-046BCA C9          0412*       ret
-046BCB             0413*   ; end sprite_frame_heading_animation
-046BCB             0414*   
-046BCB             0415*   ; compute animation frame based on sprite_heading
-046BCB             0416*   ; inputs: table_pointer set to sprite record
-046BCB             0417*   ; outputs: a, sprite_frame set to animation frame
-046BCB             0418*   ; destroys: a,hl
-046BCB             0419*   sprite_frame_heading:
-046BCB FD 7E 11    0420*       ld a,(iy+sprite_heading+1) ; we want the integer portion
-046BCE CB 3F       0421*       srl a ; divide integer portion by 8
-046BD0 CB 3F       0422*       srl a
-046BD2 CB 3F       0423*       srl a
-046BD4 FD 77 28    0424*       ld (iy+sprite_frame),a
-046BD7 C9          0425*       ret
-046BD8             0426*   ; end sprite_frame_heading
-046BD8             0427*   
-046BD8             0428*   ; load a sprite with animation bitmaps
-046BD8             0429*   ; inputs: a = sprite id, hl = base bufferId, bc = number of frames, sprite_select
-046BD8             0430*   sprite_load_frames:
-046BD8             0431*   ; back up input parameters
-046BD8 E5          0432*       push hl ; base bufferId
-046BD9 C5          0433*       push bc ; bc = number of frames
-046BDA CD 13 1F 04 0434*       call vdu_sprite_clear_frames
-046BDE C1          0435*       pop bc ; bc = number of frames
-046BDF E1          0436*       pop hl ; = base bufferId
-046BE0             0437*   @load_frames:
-046BE0 C5          0438*       push bc ; back up loop counter
-046BE1 E5          0439*       push hl ; back up base bufferId
-046BE2 CD 55 20 04 0440*       call vdu_sprite_add_buff
-046BE6 E1          0441*       pop hl ; restore base bufferId
-046BE7 23          0442*       inc hl ; bump it to the next frame
-046BE8             0443*   ; decrement loop counter
-046BE8 C1          0444*       pop bc
-046BE9 0B          0445*       dec bc
-046BEA 79          0446*       ld a,c
-046BEB B7          0447*       or a
-046BEC C2 E0 6B 04 0448*       jp nz,@load_frames
-046BF0 78          0449*       ld a,b
-046BF1 B7          0450*       or a
-046BF2 C2 E0 6B 04 0451*       jp nz,@load_frames
-046BF6 C9          0452*       ret
-046BF7             0453*   ; end sprite_load_frames
-046BF7             0454*   
-046BF7             0455*   
-046BF7             0456*   
-046BF7             0457*   
-046BF7             0458*   dump_sprite_record:
-046BF7             0459*       ; call vdu_home_cursor
-046BF7 CD 00 01 04 0460*       call printInline
-046BFB 69 64 20 20 0461*       asciz "id  : "
+046BA3 FD 0F 07    0383*       ld (iy+sprite_xvel),bc ; save x-velocity component
+046BA6 FD 1F 0A    0384*       ld (iy+sprite_yvel),de ; save y-velocity component
+046BA9 C9          0385*       ret
+046BAA             0386*   ; end sprite_compute_velocities
+046BAA             0387*   
+046BAA             0388*   ; compute animation frame based on sprite_animation and sprite_heading
+046BAA             0389*   ; inputs: table_pointer set to sprite record
+046BAA             0390*   ; outputs: a, sprite_frame set to animation frame
+046BAA             0391*   ; destroys: a,hl
+046BAA             0392*   sprite_frame_heading_animation:
+046BAA FD 7E 11    0393*       ld a,(iy+sprite_heading+1) ; we want the integer portion
+046BAD CB 3F       0394*       srl a ; divide integer portion by 8
+046BAF CB 3F       0395*       srl a
+046BB1 CB 3F       0396*       srl a
+046BB3 FD 66 22    0397*       ld h,(iy+sprite_animation)
+046BB6 2E 20       0398*       ld l,32 ; 32 orientation frames per animation
+046BB8 ED 6C       0399*       mlt hl ; hl = offset from base animation
+046BBA 85          0400*       add a,l ; modulo256 since sprite_frame is only 1 byte
+046BBB FD 77 28    0401*       ld (iy+sprite_frame),a
+046BBE C9          0402*       ret
+046BBF             0403*   ; end sprite_frame_heading_animation
+046BBF             0404*   
+046BBF             0405*   ; compute animation frame based on sprite_heading
+046BBF             0406*   ; inputs: table_pointer set to sprite record
+046BBF             0407*   ; outputs: a, sprite_frame set to animation frame
+046BBF             0408*   ; destroys: a,hl
+046BBF             0409*   sprite_frame_heading:
+046BBF FD 7E 11    0410*       ld a,(iy+sprite_heading+1) ; we want the integer portion
+046BC2 CB 3F       0411*       srl a ; divide integer portion by 8
+046BC4 CB 3F       0412*       srl a
+046BC6 CB 3F       0413*       srl a
+046BC8 FD 77 28    0414*       ld (iy+sprite_frame),a
+046BCB C9          0415*       ret
+046BCC             0416*   ; end sprite_frame_heading
+046BCC             0417*   
+046BCC             0418*   ; load a sprite with animation bitmaps
+046BCC             0419*   ; inputs: a = sprite id, hl = base bufferId, bc = number of frames, sprite_select
+046BCC             0420*   sprite_load_frames:
+046BCC             0421*   ; back up input parameters
+046BCC E5          0422*       push hl ; base bufferId
+046BCD C5          0423*       push bc ; bc = number of frames
+046BCE CD 13 1F 04 0424*       call vdu_sprite_clear_frames
+046BD2 C1          0425*       pop bc ; bc = number of frames
+046BD3 E1          0426*       pop hl ; = base bufferId
+046BD4             0427*   @load_frames:
+046BD4 C5          0428*       push bc ; back up loop counter
+046BD5 E5          0429*       push hl ; back up base bufferId
+046BD6 CD 55 20 04 0430*       call vdu_sprite_add_buff
+046BDA E1          0431*       pop hl ; restore base bufferId
+046BDB 23          0432*       inc hl ; bump it to the next frame
+046BDC             0433*   ; decrement loop counter
+046BDC C1          0434*       pop bc
+046BDD 0B          0435*       dec bc
+046BDE 79          0436*       ld a,c
+046BDF B7          0437*       or a
+046BE0 C2 D4 6B 04 0438*       jp nz,@load_frames
+046BE4 78          0439*       ld a,b
+046BE5 B7          0440*       or a
+046BE6 C2 D4 6B 04 0441*       jp nz,@load_frames
+046BEA C9          0442*       ret
+046BEB             0443*   ; end sprite_load_frames
+046BEB             0444*   
+046BEB             0445*   
+046BEB             0446*   
+046BEB             0447*   
+046BEB             0448*   dump_sprite_record:
+046BEB             0449*       ; call vdu_home_cursor
+046BEB CD 00 01 04 0450*       call printInline
+046BEF 69 64 20 20 0451*       asciz "id  : "
        3A 20 00    
-046C02 DD 7E 00    0462*       ld a,(ix+sprite_id)
-046C05 CD 4A 01 04 0463*       call printHexA
-046C09             0464*   
-046C09 CD 00 01 04 0465*       call printInline
-046C0D 0D 0A 78 20 0466*       asciz "\r\nx   :"
+046BF6 DD 7E 00    0452*       ld a,(ix+sprite_id)
+046BF9 CD 4A 01 04 0453*       call printHexA
+046BFD             0454*   
+046BFD CD 00 01 04 0455*       call printInline
+046C01 0D 0A 78 20 0456*       asciz "\r\nx   :"
        20 20 3A 00 
-046C15 DD 27 01    0467*       ld hl,(ix+sprite_x)
-046C18 CD 2B 03 04 0468*       call print_s168_hl
-046C1C             0469*   
-046C1C CD 00 01 04 0470*       call printInline
-046C20 0D 0A 79 20 0471*       asciz "\r\ny   :"
+046C09 DD 27 01    0457*       ld hl,(ix+sprite_x)
+046C0C CD 2B 03 04 0458*       call print_s168_hl
+046C10             0459*   
+046C10 CD 00 01 04 0460*       call printInline
+046C14 0D 0A 79 20 0461*       asciz "\r\ny   :"
        20 20 3A 00 
-046C28 DD 27 04    0472*       ld hl,(ix+sprite_y)
-046C2B CD 2B 03 04 0473*       call print_s168_hl
-046C2F             0474*   
-046C2F CD 00 01 04 0475*       call printInline
-046C33 0D 0A 78 76 0476*       asciz "\r\nxv  :"
+046C1C DD 27 04    0462*       ld hl,(ix+sprite_y)
+046C1F CD 2B 03 04 0463*       call print_s168_hl
+046C23             0464*   
+046C23 CD 00 01 04 0465*       call printInline
+046C27 0D 0A 78 76 0466*       asciz "\r\nxv  :"
        20 20 3A 00 
-046C3B DD 27 07    0477*       ld hl,(ix+sprite_xvel)
-046C3E CD 2B 03 04 0478*       call print_s168_hl
-046C42             0479*   
-046C42 CD 00 01 04 0480*       call printInline
-046C46 0D 0A 79 76 0481*       asciz "\r\nyv  :"
+046C2F DD 27 07    0467*       ld hl,(ix+sprite_xvel)
+046C32 CD 2B 03 04 0468*       call print_s168_hl
+046C36             0469*   
+046C36 CD 00 01 04 0470*       call printInline
+046C3A 0D 0A 79 76 0471*       asciz "\r\nyv  :"
        20 20 3A 00 
-046C4E DD 27 0A    0482*       ld hl,(ix+sprite_yvel)
-046C51 CD 2B 03 04 0483*       call print_s168_hl
-046C55             0484*   
-046C55 CD 00 01 04 0485*       call printInline
-046C59 0D 0A 76 20 0486*       asciz "\r\nv   :"
+046C42 DD 27 0A    0472*       ld hl,(ix+sprite_yvel)
+046C45 CD 2B 03 04 0473*       call print_s168_hl
+046C49             0474*   
+046C49 CD 00 01 04 0475*       call printInline
+046C4D 0D 0A 76 20 0476*       asciz "\r\nv   :"
        20 20 3A 00 
-046C61 DD 27 0D    0487*       ld hl,(ix+sprite_vel)
-046C64 CD 2B 03 04 0488*       call print_s168_hl
-046C68             0489*   
-046C68 CD 00 01 04 0490*       call printInline
-046C6C 0D 0A 68 64 0491*       asciz "\r\nhdg :"
+046C55 DD 27 0D    0477*       ld hl,(ix+sprite_vel)
+046C58 CD 2B 03 04 0478*       call print_s168_hl
+046C5C             0479*   
+046C5C CD 00 01 04 0480*       call printInline
+046C60 0D 0A 68 64 0481*       asciz "\r\nhdg :"
        67 20 3A 00 
-046C74 DD 27 10    0492*       ld hl,(ix+sprite_heading)
-046C77 CD 2B 03 04 0493*       call print_s168_hl
-046C7B             0494*   
-046C7B CD 00 01 04 0495*       call printInline
-046C7F 0D 0A 6F 72 0496*       asciz "\r\nori :"
+046C68 DD 27 10    0482*       ld hl,(ix+sprite_heading)
+046C6B CD 2B 03 04 0483*       call print_s168_hl
+046C6F             0484*   
+046C6F CD 00 01 04 0485*       call printInline
+046C73 0D 0A 6F 72 0486*       asciz "\r\nori :"
        69 20 3A 00 
-046C87 DD 27 13    0497*       ld hl,(ix+sprite_orientation)
-046C8A CD 2B 03 04 0498*       call print_s168_hl
-046C8E             0499*   
-046C8E CD 00 01 04 0500*       call printInline
-046C92 0D 0A 74 79 0501*       asciz "\r\ntyp : "
+046C7B DD 27 13    0487*       ld hl,(ix+sprite_orientation)
+046C7E CD 2B 03 04 0488*       call print_s168_hl
+046C82             0489*   
+046C82 CD 00 01 04 0490*       call printInline
+046C86 0D 0A 74 79 0491*       asciz "\r\ntyp : "
        70 20 3A 20 
        00          
-046C9B DD 7E 16    0502*       ld a,(ix+sprite_type)
-046C9E CD 4A 01 04 0503*       call printHexA
-046CA2             0504*   
-046CA2 CD 00 01 04 0505*       call printInline
-046CA6 0D 0A 42 49 0506*       asciz "\r\nBId : "
+046C8F DD 7E 16    0492*       ld a,(ix+sprite_type)
+046C92 CD 4A 01 04 0493*       call printHexA
+046C96             0494*   
+046C96 CD 00 01 04 0495*       call printInline
+046C9A 0D 0A 42 49 0496*       asciz "\r\nBId : "
        64 20 3A 20 
        00          
-046CAF DD 27 17    0507*       ld hl,(ix+sprite_base_bufferId)
-046CB2 CD 27 01 04 0508*       call printHex24
-046CB6             0509*   
-046CB6 CD 00 01 04 0510*       call printInline
-046CBA 0D 0A 6D 50 0511*       asciz "\r\nmPg : "
+046CA3 DD 27 17    0497*       ld hl,(ix+sprite_base_bufferId)
+046CA6 CD 27 01 04 0498*       call printHex24
+046CAA             0499*   
+046CAA CD 00 01 04 0500*       call printInline
+046CAE 0D 0A 6D 50 0501*       asciz "\r\nmPg : "
        67 20 3A 20 
        00          
-046CC3 DD 27 1A    0512*       ld hl,(ix+sprite_move_program)
-046CC6 CD 27 01 04 0513*       call printHex24
-046CCA             0514*   
-046CCA CD 00 01 04 0515*       call printInline
-046CCE 0D 0A 63 6F 0516*       asciz "\r\ncol : "
+046CB7 DD 27 1A    0502*       ld hl,(ix+sprite_move_program)
+046CBA CD 27 01 04 0503*       call printHex24
+046CBE             0504*   
+046CBE CD 00 01 04 0505*       call printInline
+046CC2 0D 0A 63 6F 0506*       asciz "\r\ncol : "
        6C 20 3A 20 
        00          
-046CD7 DD 7E 1D    0517*       ld a,(ix+sprite_collisions)
-046CDA CD A8 03 04 0518*       call printBin8
-046CDE             0519*   
-046CDE CD 00 01 04 0520*       call printInline
-046CE2 0D 0A 73 7A 0521*       asciz "\r\nszx : "
+046CCB DD 7E 1D    0507*       ld a,(ix+sprite_collisions)
+046CCE CD A8 03 04 0508*       call printBin8
+046CD2             0509*   
+046CD2 CD 00 01 04 0510*       call printInline
+046CD6 0D 0A 73 7A 0511*       asciz "\r\nszx : "
        78 20 3A 20 
        00          
-046CEB DD 7E 1E    0522*       ld a,(ix+sprite_dim_x)
-046CEE CD 4A 01 04 0523*       call printHexA
-046CF2             0524*   
-046CF2 CD 00 01 04 0525*       call printInline
-046CF6 0D 0A 73 7A 0526*       asciz "\r\nszy : "
+046CDF DD 7E 1E    0512*       ld a,(ix+sprite_dim_x)
+046CE2 CD 4A 01 04 0513*       call printHexA
+046CE6             0514*   
+046CE6 CD 00 01 04 0515*       call printInline
+046CEA 0D 0A 73 7A 0516*       asciz "\r\nszy : "
        79 20 3A 20 
        00          
-046CFF DD 7E 1F    0527*       ld a,(ix+sprite_dim_y)
-046D02 CD 4A 01 04 0528*       call printHexA
-046D06             0529*   
-046D06 CD 00 01 04 0530*       call printInline
-046D0A 0D 0A 23 6F 0531*       asciz "\r\n#ori: "
+046CF3 DD 7E 1F    0517*       ld a,(ix+sprite_dim_y)
+046CF6 CD 4A 01 04 0518*       call printHexA
+046CFA             0519*   
+046CFA CD 00 01 04 0520*       call printInline
+046CFE 0D 0A 23 6F 0521*       asciz "\r\n#ori: "
        72 69 3A 20 
        00          
-046D13 DD 7E 20    0532*       ld a,(ix+sprite_num_orientations)
-046D16 CD 4A 01 04 0533*       call printHexA
-046D1A             0534*   
-046D1A CD 00 01 04 0535*       call printInline
-046D1E 0D 0A 23 61 0536*       asciz "\r\n#ani: "
+046D07 DD 7E 20    0522*       ld a,(ix+sprite_num_orientations)
+046D0A CD 4A 01 04 0523*       call printHexA
+046D0E             0524*   
+046D0E CD 00 01 04 0525*       call printInline
+046D12 0D 0A 23 61 0526*       asciz "\r\n#ani: "
        6E 69 3A 20 
        00          
-046D27 DD 7E 21    0537*       ld a,(ix+sprite_num_animations)
-046D2A CD 4A 01 04 0538*       call printHexA
-046D2E             0539*   
-046D2E CD 00 01 04 0540*       call printInline
-046D32 0D 0A 61 6E 0541*       asciz "\r\nani : "
+046D1B DD 7E 21    0527*       ld a,(ix+sprite_num_animations)
+046D1E CD 4A 01 04 0528*       call printHexA
+046D22             0529*   
+046D22 CD 00 01 04 0530*       call printInline
+046D26 0D 0A 61 6E 0531*       asciz "\r\nani : "
        69 20 3A 20 
        00          
-046D3B DD 7E 22    0542*       ld a,(ix+sprite_animation)
-046D3E CD 4A 01 04 0543*       call printHexA
-046D42             0544*   
-046D42 CD 00 01 04 0545*       call printInline
-046D46 0D 0A 61 6E 0546*       asciz "\r\nanit: "
+046D2F DD 7E 22    0532*       ld a,(ix+sprite_animation)
+046D32 CD 4A 01 04 0533*       call printHexA
+046D36             0534*   
+046D36 CD 00 01 04 0535*       call printInline
+046D3A 0D 0A 61 6E 0536*       asciz "\r\nanit: "
        69 74 3A 20 
        00          
-046D4F DD 7E 23    0547*       ld a,(ix+sprite_animation_timer)
-046D52 CD 4A 01 04 0548*       call printHexA
-046D56             0549*   
-046D56 CD 00 01 04 0550*       call printInline
-046D5A 0D 0A 6D 76 0551*       asciz "\r\nmvt : "
+046D43 DD 7E 23    0537*       ld a,(ix+sprite_animation_timer)
+046D46 CD 4A 01 04 0538*       call printHexA
+046D4A             0539*   
+046D4A CD 00 01 04 0540*       call printInline
+046D4E 0D 0A 6D 76 0541*       asciz "\r\nmvt : "
        74 20 3A 20 
        00          
-046D63 DD 7E 24    0552*       ld a,(ix+sprite_move_timer)
-046D66 CD 4A 01 04 0553*       call printHexA
-046D6A             0554*   
-046D6A CD 00 01 04 0555*       call printInline
-046D6E 0D 0A 6D 76 0556*       asciz "\r\nmvs : "
+046D57 DD 7E 24    0542*       ld a,(ix+sprite_move_timer)
+046D5A CD 4A 01 04 0543*       call printHexA
+046D5E             0544*   
+046D5E CD 00 01 04 0545*       call printInline
+046D62 0D 0A 6D 76 0546*       asciz "\r\nmvs : "
        73 20 3A 20 
        00          
-046D77 DD 7E 25    0557*       ld a,(ix+sprite_move_step)
-046D7A CD 4A 01 04 0558*       call printHexA
-046D7E             0559*   
-046D7E CD 00 01 04 0560*       call printInline
-046D82 0D 0A 70 74 0561*       asciz "\r\npts : "
+046D6B DD 7E 25    0547*       ld a,(ix+sprite_move_step)
+046D6E CD 4A 01 04 0548*       call printHexA
+046D72             0549*   
+046D72 CD 00 01 04 0550*       call printInline
+046D76 0D 0A 70 74 0551*       asciz "\r\npts : "
        73 20 3A 20 
        00          
-046D8B DD 7E 26    0562*       ld a,(ix+sprite_points)
-046D8E CD 4A 01 04 0563*       call printHexA
-046D92             0564*   
-046D92 CD 00 01 04 0565*       call printInline
-046D96 0D 0A 64 6D 0566*       asciz "\r\ndmg : "
+046D7F DD 7E 26    0552*       ld a,(ix+sprite_points)
+046D82 CD 4A 01 04 0553*       call printHexA
+046D86             0554*   
+046D86 CD 00 01 04 0555*       call printInline
+046D8A 0D 0A 64 6D 0556*       asciz "\r\ndmg : "
        67 20 3A 20 
        00          
-046D9F DD 7E 27    0567*       ld a,(ix+sprite_shield_damage)
-046DA2 CD 4A 01 04 0568*       call printHexA
-046DA6             0569*   
-046DA6 CD 00 01 04 0570*       call printInline
-046DAA 0D 0A 66 72 0571*       asciz "\r\nfrm : "
+046D93 DD 7E 27    0557*       ld a,(ix+sprite_shield_damage)
+046D96 CD 4A 01 04 0558*       call printHexA
+046D9A             0559*   
+046D9A CD 00 01 04 0560*       call printInline
+046D9E 0D 0A 66 72 0561*       asciz "\r\nfrm : "
        6D 20 3A 20 
        00          
-046DB3 DD 7E 28    0572*       ld a,(ix+sprite_frame)
-046DB6 CD 4A 01 04 0573*       call printHexA
-046DBA             0574*   
-046DBA             0575*       ; call printNewLine
-046DBA             0576*   
-046DBA             0577*       ; call waitKeypress
-046DBA C9          0578*       ret
-046DBB             0579*   
-046DBB             0069    
-046DBB FF FF FF FF 0070        align 256
+046DA7 DD 7E 28    0562*       ld a,(ix+sprite_frame)
+046DAA CD 4A 01 04 0563*       call printHexA
+046DAE             0564*   
+046DAE             0565*       ; call printNewLine
+046DAE             0566*   
+046DAE             0567*       ; call waitKeypress
+046DAE C9          0568*       ret
+046DAF             0569*   
+046DAF             0069    
+046DAF FF FF FF FF 0070        align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -13247,22 +13239,22 @@ PC     Output      Line
 047014             0274    
 047014 DD 21 00 80 0275        ld ix,player_weapons_begin
        04          
-047019 CD F7 6B 04 0276        call dump_sprite_record
+047019 CD EB 6B 04 0276        call dump_sprite_record
 04701D CD 1C 01 04 0277        call printNewLine
 047021 CD 1C 01 04 0278        call printNewLine
 047025             0279    
 047025 ED 32 40    0280        lea ix,ix+table_record_size
-047028 CD F7 6B 04 0281        call dump_sprite_record
+047028 CD EB 6B 04 0281        call dump_sprite_record
 04702C CD 1C 01 04 0282        call printNewLine
 047030 CD 1C 01 04 0283        call printNewLine
 047034             0284    
 047034 ED 32 40    0285        lea ix,ix+table_record_size
-047037 CD F7 6B 04 0286        call dump_sprite_record
+047037 CD EB 6B 04 0286        call dump_sprite_record
 04703B CD 1C 01 04 0287        call printNewLine
 04703F CD 1C 01 04 0288        call printNewLine
 047043             0289    
 047043 ED 32 40    0290        lea ix,ix+table_record_size
-047046 CD F7 6B 04 0291        call dump_sprite_record
+047046 CD EB 6B 04 0291        call dump_sprite_record
 04704A CD 1C 01 04 0292        call printNewLine
 04704E CD 1C 01 04 0293        call printNewLine
 047052             0294    

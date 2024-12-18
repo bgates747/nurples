@@ -22,8 +22,6 @@ game_main_menu:
 game_initialize:
 ; reset the sprite table
     call table_init
-    xor a
-    ld (table_active_sprites),a
     ld hl,table_base
     ld (table_pointer),hl
 ; initialize sprites and active tiles table

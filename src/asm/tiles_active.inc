@@ -117,7 +117,6 @@ draw_active_tile:
 ; create a new sprite at the same location as the current tile
 ; inputs: hl = pointer to new sprite default settings, tile_table_pointer = current tile
 ;         ix = pointer to sprite group, b = number of records in sprite group
-; affects: bumps table_active_sprites by one
 spawn_sprite_from_tile: 
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
