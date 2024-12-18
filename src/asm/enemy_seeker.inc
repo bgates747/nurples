@@ -23,7 +23,9 @@ seeker_defaults:
 
 enemy_spawn_seeker:
     ld hl,seeker_defaults
-    call spawn_sprite_from_sprite
+    ld ix,seekers_base
+    ld b,seekers_max
+    call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
     ld hl,speed_seeker
@@ -35,9 +37,14 @@ move_enemy_seeker:
 ; run the movement program for the seeker enemy
     call en_nav_seek_zag
     call check_enemy_collision_player
-    ; TODO: handle collision event
+    jp z,enemy_kill
     call check_enemy_collision_laser
-    ; TODO: handle collision event
+    jp z,enemy_kill
+; change the animation frame to match heading
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    call sprite_frame_heading ; a, sprite_frame set to heading-based frame
+    call vdu_sprite_select_frame
     ret
 ; end move_enemy_seeker
 
@@ -62,8 +69,6 @@ en_nav_seek_zag:
 ; fall through to @compute_velocities
 @compute_velocities:
     call sprite_compute_velocities
-; change the animation frame to match heading
-    call sprite_frame_heading ; a, sprite_frame set to heading-based frame
     call move_sprite ; move the sprite
     or a ; a will be non-zero if have collided with screen edge
     jp nz,@zag_switch ; switch direction

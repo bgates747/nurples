@@ -18,9 +18,9 @@ pad_small_defaults:
 
 activate_pad_small:
     ld hl,pad_small_defaults
-; get next available tile id
+; get next available active tile id
     call spawn_active_tile
-    ret nc ; no carry means no free tile slots, so we go home
+    ret nc ; no carry means no free active tile slots, so we go home
 ; other specific initialization
     ld a,64
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
@@ -29,17 +29,22 @@ activate_pad_small:
 
 move_pad_small:
     call move_active_tile 
-    or a ; a will be non-zero if have scrolled off screen
-    jp nz,table_deactivate_tile
+    jp z,table_deactivate_tile
     call check_enemy_collision_laser
-    ; TODO: handle collision event
+    jp z,kill_pad_small
 ; check whether it is time to spawn a seeker
     dec (iy+tile_move_timer)
     ret nz
+; spwan a seeker    
+    call enemy_spawn_seeker
+    ; fall through to reset move timer
 pad_small_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,64 ; range is now 64-127
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
-    call enemy_spawn_seeker
     ret
+
+kill_pad_small:
+    jp tile_kill
+; end move_pad_small

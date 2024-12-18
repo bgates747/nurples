@@ -8,20 +8,30 @@
 ; inputs: iy pointed at sprite record
 ; destroys: everything except iy (sprite record pointer)
 orientation_to_player:
-    push iy ; preserve sprite record pointer
     ld ix,player_begin
-    ld bc,(iy+sprite_x)
+; compute dx
+    ld hl,(ix+sprite_x)
+    ld de,(iy+sprite_x)
+    or a ; clear carry
+    sbc hl,de ; dx
+    push hl ; save dx
+; compute dy
+    ld hl,(ix+sprite_y)
     ld de,(iy+sprite_y)
-    ld ix,(ix+sprite_x)
-    ld iy,(ix+sprite_y)
-    call dxy168
-    push bc ; dx
-    push de ; dy
+    or a ; clear carry
+    sbc hl,de ; dy
+    ex de,hl ; de = dy
+; compute angle to player
+    pop bc ; dx (was hl)
+    push bc ; save dx
+    push de ; save dy
     call atan2_168fast ; uh.l = angle to player
-    ld (Bearing_t),hl
-    pop de ; dy
-    pop bc ; dx
-    pop iy ; restore sprite record pointer
+    ld a,%11100000 
+    and l ; round angle to nearest 32th of a circle
+    ld l,a
+    ld (Bearing_t),hl ; return angle to player
+    pop de ; restore dy
+    pop bc ; restore dx
     ret
 ; end orientation_to_player
 

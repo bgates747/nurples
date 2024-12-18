@@ -347,7 +347,7 @@ move_sprite:
 ; end move_sprite
 
 sprite_compute_velocities:
-    ld iy,(table_pointer) 
+    ld hl,(iy+sprite_heading) 
     ld de,(iy+sprite_vel) 
     call polar_to_cartesian
     ld iy,(table_pointer) 

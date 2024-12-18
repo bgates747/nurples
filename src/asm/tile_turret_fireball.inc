@@ -54,6 +54,6 @@ turret_fireball_reset_move_timer:
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
     ret
 
-kill_turret_fireball: ; TODO: tally score and spawn explosion
+kill_turret_fireball:
     jp tile_kill
 ; end move_turret_fireball
