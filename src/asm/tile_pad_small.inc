@@ -3,7 +3,7 @@ pad_small_defaults:
     db tile_pad_small       ; type
     dl BUF_PAD              ; base_bufferId
     dl move_pad_small       ; move_program
-    db collides_with_laser  ; collisions
+    db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
     db 1                    ; num_orientations
@@ -31,8 +31,8 @@ move_pad_small:
     call move_active_tile 
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_tile
-    call check_enemy_collisions
-    ret m ; was collision so nothing more to do
+    call check_enemy_collision_laser
+    ; TODO: handle collision event
 ; check whether it is time to spawn a seeker
     dec (iy+tile_move_timer)
     ret nz

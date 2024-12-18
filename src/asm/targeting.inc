@@ -49,6 +49,9 @@ tile_orientation_to_player:
 ; compute angle to player
     pop bc ; dx (was hl)
     call atan2_168fast ; uh.l = angle to player
+    ld a,%11100000 
+    and l ; round angle to nearest 32th of a circle
+    ld l,a
     ld (Bearing_t),hl
     ret
 ; end tile_orientation_to_player
@@ -112,6 +115,7 @@ targeting_computer:
     ld de,(Vp) ; Vp should have been set by caller
     call polar_to_cartesian ; ub.c = Vp_x, ud.e = Vp_y
     ld (Vp_x),bc
+    inc d ; account for vertical ground movement
     ld (Vp_y),de
     pop hl ; uh.l = lead angle+target bearing
     ld (Heading_p),hl

@@ -17,13 +17,13 @@ player_ships: db 3 ; integer
 speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
 
 player_weapons_count: db 0
-player_weapons_max: equ 4
+player_lasers_max: equ 4
 
 player_defaults:
     db player               ; type
     dl BUF_SHIP_0L          ; base_bufferId
     dl do_player            ; move_program
-    db 0                    ; collisions
+    db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
     db 1                    ; num_orientations

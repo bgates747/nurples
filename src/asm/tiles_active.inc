@@ -67,11 +67,10 @@ move_tiles:
     ld iy,(iy) ; iy points to the current tile record
     ld (tile_table_pointer),iy ; update table pointer
 ; check top bit of tile_type to see if tile is just spawned
-    ld a,(iy+tile_type)
-    bit 7,a
+    bit 7,(iy+tile_type)
     jp nz,@just_spawned ; if just spawned, skip to next record
-; check tile_type to see if tile is active
-    and a ; if zero, tile is dead 
+; check sprite_alive bit to see if tile is active
+    bit sprite_alive,(iy+sprite_collisions)
     ret z ; end of stack so we're done
 ; otherwise we prepare to move the tile
     ld hl,(iy+tile_move_program) ; load the behavior subroutine address
@@ -85,39 +84,6 @@ move_tiles:
     res 7,(iy+tile_type) ; clear just spawned flag
     jp @next_record
 ; end move_tiles
-
-; TODO: much if this is deprecated by new tile table system and needs to be rewritten
-check_tile_collisions:
-; ; check what we collide with
-;     ld a,(iy+tile_collisions)
-;     push af ; save collision flags
-;     and collides_with_player ; check for collisions with player
-;     call nz,check_tile_collision_player
-;     pop af ; restore collision flags
-;     and collides_with_laser ; check for collisions with laser
-;     call nz,check_tile_collision_laser
-    ret
-check_tile_collision_laser: ; check for collisions with laser
-    ; ld ix,laser_start_variables
-    ; bit tile_alive,(ix+tile_collisions)
-    ; ret z ; laser dead, nothing to do
-    ; call check_collision
-    ; ret p ; no collision
-    ; ld ix,laser_start_variables
-    ; set tile_just_died,(ix+tile_collisions)
-    ; set tile_alive,(ix+tile_collisions)
-    ; call tile_kill
-    ret
-check_tile_collision_player: ; check for collisions with player
-    ; ld ix,player_begin
-    ; bit tile_alive,(ix+tile_collisions)
-    ; ret z ; player dead, no collision
-    ; call check_collision
-    ; ret p ; no collision
-    ; call tile_kill
-    ret
-; end check_tile_collisions
-; END TODO
 
 ; this routine vanquishes the tile tile
 ; and replaces it with an animated explosion
@@ -173,6 +139,7 @@ spawn_sprite_from_tile:
     ld (ix+sprite_y),hl
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 ; end spawn_sprite_from_tile

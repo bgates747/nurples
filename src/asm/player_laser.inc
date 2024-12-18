@@ -9,7 +9,7 @@ laser_defaults:
     db player_air        ; type
     dl BUF_LASER_A	    ; base_bufferId
     dl move_player_laser	; move_program
-    db 0 ; collisions
+    db %01000000            ; collisions bit 6 signals sprite alive
     db 5	                ; dim_x
     db 13                   ; dim_y
     db 1                    ; num_orientations
@@ -29,7 +29,7 @@ player_spawn_laser:
     ret p ; not time to fire
 ; check if at max weapons active
     ld a,(player_weapons_count)
-    cp player_weapons_max
+    cp player_lasers_max
     ret z ; at max weapons active
     inc a
     ld (player_weapons_count),a
@@ -38,7 +38,7 @@ player_spawn_laser:
     call timestamp_tmr_set
 ; fire the laser
     ld ix,player_weapons_begin
-    ld b,player_weapons_max
+    ld b,player_lasers_max
     ld iy,player_begin
     ld (table_pointer),iy
     ld hl,laser_defaults
@@ -88,7 +88,7 @@ init_player_laser:
 ; set pointer to laser sprite table
     ld iy,player_weapons_begin
     ld a,(iy+sprite_id) ; sprite id
-    ld e,player_weapons_max ; sprite loop counter
+    ld e,player_lasers_max ; sprite loop counter
 ; define laser sprites
 @sprites_loop:
     push af

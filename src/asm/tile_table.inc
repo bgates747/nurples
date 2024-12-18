@@ -110,7 +110,7 @@ tile_table_get_next_id:
 ; deactivate the tile with the given id
 ; inputs: tile_stack_pointer set to record to remove
 ; outputs: decrements num_active_tiles by one, tile_stack_pointer set to record above removed record, removes tile pointer from the tile stack, shifts stack records above it down one position
-; destroys: a,hl
+; destroys: a,hl,bc,de
 table_deactivate_tile: 
 ; compute address to copy from
     ld hl,(tile_stack_pointer)
@@ -143,7 +143,6 @@ table_deactivate_tile:
     dec hl
     dec hl
     ld (tile_stack_pointer),hl
-
     ret
 ; end table_deactivate_tile
 
@@ -158,7 +157,8 @@ alter_tile:
     ldir ; copies new defaults existing tile record
 ; return to caller
     ld iy,(tile_table_pointer) ; reset tile_table_pointer
-    set 7,(iy+tile_type) ; set just spawned flag
+    set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 ; end alter_tile
@@ -194,7 +194,8 @@ spawn_active_tile:
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
 ; return to caller
-    set 7,(ix+tile_type) ; set just spawned flag
+    set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 ; end spawn_active_tile

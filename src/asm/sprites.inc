@@ -151,8 +151,10 @@ table_deactivate_sprite:
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     call vdu_sprite_hide
-    xor a
-    ld (iy+sprite_type),a
+    ; xor a
+    ; ld (iy+sprite_type),a
+    res sprite_alive,(iy+sprite_collisions)
+    res sprite_just_died,(iy+sprite_collisions)
     ld hl,table_active_sprites
     dec (hl)
     ret
@@ -295,6 +297,7 @@ alter_sprite:
 ; return to caller
     ld iy,(table_pointer) ; reset table_pointer
     set 7,(iy+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 ; end alter_sprite
@@ -316,6 +319,7 @@ spawn_sprite:
 ; return to caller
     pop ix ; restore pointer to new sprite record
     set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 
@@ -331,6 +335,7 @@ spawn_sprite_from_sprite:
     ld (ix+sprite_y),hl
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 

@@ -4,7 +4,7 @@ turret_fireball_defaults:
     dl BUF_TURRET_000       ; base_bufferId
     ; dl BUF_CRATER       ; base_bufferId DEBUG
     dl move_turret_fireball ; move_program
-    db collides_with_laser  ; collisions
+    db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
     db 32                   ; num_orientations
@@ -24,15 +24,15 @@ activate_turret_fireball:
     ret nc ; no carry means no free active tile slots, so we go home
 ; other specific initialization
     ld a,64
-    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
+    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
     ret
 ; end activate_turret_fireball
 
 move_turret_fireball:
     call move_active_tile 
     jp z,table_deactivate_tile
-    ; call check_enemy_collisions
-    ; ret m ; was collision so nothing more to do
+    call check_enemy_collision_laser
+    jp m,kill_turret_fireball
 ; target player
     call tile_orientation_to_player
     ld hl,speed_fireball
@@ -53,3 +53,7 @@ turret_fireball_reset_move_timer:
     add a,24 ; range is now 24-55
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
     ret
+
+kill_turret_fireball: ; TODO: tally score and spawn explosion
+    jp table_deactivate_tile
+; end move_turret_fireball

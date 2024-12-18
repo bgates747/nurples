@@ -51,6 +51,7 @@ spawn_sprite_from_sprite_new:
     ld (ix+sprite_y),hl
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
 ; end spawn_sprite_from_sprite_new

@@ -6,7 +6,7 @@ fireball_defaults:
     db enemy_projectile        ; type
     dl BUF_FIREBALL_A	    ; base_bufferId
     dl move_enemy_fireball	; move_program
-    db collides_with_player ; collisions
+    db %01000000            ; collisions bit 6 signals sprite alive
     db 7	                ; dim_x
     db 7                    ; dim_y
     db 1                    ; num_orientations
@@ -58,5 +58,7 @@ move_enemy_fireball:
     ld a,(sprite_screen_edge)
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
-    jp check_enemy_collisions
+    call check_enemy_collision_player
+    ret p ; no collision so nothing to do
+    jp enemy_kill
 ; end move_enemy_fireball
