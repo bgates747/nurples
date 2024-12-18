@@ -96,7 +96,7 @@ tile_kill:
     ld c,(iy+tile_points)
     add hl,bc
     ld (player_score),hl
-    jp spawn_explosion
+    jp tile_spawn_explosion
 ; end tile_kill
 
 draw_active_tile:

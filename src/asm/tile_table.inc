@@ -146,23 +146,6 @@ table_deactivate_tile:
     ret
 ; end table_deactivate_tile
 
-; change an existing tile to a new type, keeping its position and velocity the same
-; inputs: hl = pointer to new tile default settings, tile_table_pointer = existing tile
-alter_tile:
-; copy default settings to new tile
-    lea iy,iy+tile_definitions ; bump pointer to copy to
-    push iy ; pointer to default tile settings
-    pop de ; address to copy to
-    ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
-    ldir ; copies new defaults existing tile record
-; return to caller
-    ld iy,(tile_table_pointer) ; reset tile_table_pointer
-    set 7,(ix+sprite_type) ; set just spawned flag
-    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
-    scf ; set carry flag to indicate success
-    ret
-; end alter_tile
-
 ; spawn a new active tile at the prescribed location
 ; inputs: hl = pointer to new tile default settings, tiles_x_plot, tiles_y_plot = x,y position
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set

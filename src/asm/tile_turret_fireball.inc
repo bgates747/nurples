@@ -32,7 +32,7 @@ move_turret_fireball:
     call move_active_tile 
     jp z,table_deactivate_tile
     call check_enemy_collision_laser
-    jp m,kill_turret_fireball
+    jp z,kill_turret_fireball
 ; target player
     call tile_orientation_to_player
     ld hl,speed_fireball
@@ -55,5 +55,5 @@ turret_fireball_reset_move_timer:
     ret
 
 kill_turret_fireball: ; TODO: tally score and spawn explosion
-    jp table_deactivate_tile
+    jp tile_kill
 ; end move_turret_fireball

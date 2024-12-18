@@ -29,15 +29,24 @@ spawn_explosion:
     ld (ix+sprite_xvel),hl
     ld hl,1*256
     ld (ix+sprite_yvel),hl
-
-; DEBUG
-    CALL DEBUG_PRINT
-    CALL DEBUG_PRINT_TABLE
-    ; CALL DEBUG_WAITKEYPRESS
-; END DEBUG
 ; deactivate parent sprite
     jp table_deactivate_sprite
 ; end spawn_explosion
+
+tile_spawn_explosion:
+    ld hl,explosion_defaults
+    ld ix,explosions_base
+    ld b,explosions_max
+    call spawn_sprite_from_tile
+    jp nc,table_deactivate_tile ; no carry means no free sprite slots, so we deactivate parent tile and go home
+; other specific initialization
+    ld hl,0
+    ld (ix+sprite_xvel),hl
+    ld hl,1*256
+    ld (ix+sprite_yvel),hl
+; deactivate parent sprite
+    jp table_deactivate_tile
+; end tile_spawn_explosion
 
 move_explosion:
 ; run the movement program for the explosion
