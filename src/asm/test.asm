@@ -1,29 +1,10 @@
     assume adl=1 
     org 0x040000 
-    include "mos_api.inc"
-    include "macros.inc"
-
     jp start 
     align 64 
     db "MOS" 
     db 00h 
     db 01h 
-
-; ###### tile TABLE VARIABLES ######
-    align 256
-tile_stack: ; stack of pointers to tile records
-    db 0x01, 0x02, 0x03
-    db 0x04, 0x05, 0x06
-    db 0x07, 0x08, 0x09
-    db 0x0A, 0x0B, 0x0C
-    db 0x0D, 0x0E, 0x0F
-    dl 0x000000 ; list terminator
-tile_stack_end:
-tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
-; tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
-num_active_tiles: dl 0 ; how many active tiles
-next_tile_id: db 0 ; next available tile id
-new_tile_table_pointer: dl 0 ; pointer to new tile record
 
 start: 
     push af
@@ -31,58 +12,8 @@ start:
     push de
     push ix
     push iy
-
-; MAIN PROGRAM
-; set up a test case
-    ld a,5
-    ld (num_active_tiles),a
-    ld l,1 ; index into stack
-    ld h,3
-    mlt hl ; offset into stack
-    ld de,tile_stack
-    add hl,de ; address of stack record
-    ld (tile_stack_pointer),hl ; set pointer to stack record
-    call DEBUG_PRINT_TILE_STACK
-
-; compute address to copy from
-    ld hl,(tile_stack_pointer)
-    inc hl
-    inc hl
-    inc hl
-    push hl ; save copy from address
-
-; compute bytes to copy
-    ld a,(num_active_tiles)
-    ld l,a
-    ld h,3
-    mlt hl
-    ld de,tile_stack
-    add hl,de ; hl = bottom of stack address
-    ld de,(tile_stack_pointer)
-    or a ; clear carry
-    sbc hl,de ; hl = bytes to copy
-    push hl
-    pop bc ; bytes to copy
-
-; compute target address
-    ld de,(tile_stack_pointer)
-
-; copy bytes
-    pop hl ; copy from address
-    ldir
-
-; update stack pointer and active tile count
-    ld hl,num_active_tiles
-    dec (hl)
-    ld hl,(tile_stack_pointer)
-    dec hl
-    dec hl
-    dec hl
-    ld (tile_stack_pointer),hl
-
-; output results
-    CALL DEBUG_PRINT_TILE_STACK
-; END MAIN PROGRAM
+    call init
+    call main
 
 exit:
     pop iy
@@ -91,311 +22,243 @@ exit:
     pop bc
     pop af
     ld hl,0
+
     ret
 
-; BASIC DEBUG FUNCTIONS
+; API INCLUDES
+    include "mos_api.inc"
+    include "macros.inc"
+    include "functions.inc"
+    include "arith24.inc"
+    include "maths.inc"
+    include "files.inc"
+    include "fixed168.inc"
+    include "fonts.inc"
+    include "images.inc"
+    include "timer.inc"
+    include "vdu.inc"
+    include "vdu_fonts.inc"
+    include "vdu_plot.inc"
+    include "vdu_sprites.inc"
 
-; Print a zero-terminated string
-; HL: Pointer to string
-printString:
-    PUSH BC
-    LD BC,0
-    LD A,0
-    RST.LIL 18h
-    POP BC
-    RET
-; print a VDU sequence
-; HL: Pointer to VDU sequence - <1 byte length> <data>
-sendVDUsequence:
-    PUSH BC
-    LD BC, 0
-    LD C, (HL)
-    RST.LIL 18h
-    POP BC
-    RET
-; Print Newline sequence to VDP
-; destroys bc
-printNewLine:
-    push af ; for some reason rst.lil 10h sets carry flag
-    LD A, '\r'
-    RST.LIL 10h
-    LD A, '\n'
-    RST.LIL 10h
-    pop af
+; APPLICATION INCLUDES
+    include "ascii.inc"
+    include "collisions.inc"
+    include "enemies.inc"
+    include "enemy_fireball.inc"
+    include "enemy_seeker.inc"
+    include "explosion.inc"
+    include "fonts_list.inc"
+    include "images_tiles_dg.inc"
+    ; include "images_tiles_xevious.inc"
+    include "images_sprites.inc"
+    include "images_ui.inc"
+    include "levels.inc"
+    include "levels_tileset_0.inc"
+    ; include "levels_xevious.inc"
+    include "player.inc"
+    include "player_cockpit.inc"
+    include "player_laser.inc"
+    include "state.inc"
+    include "targeting.inc"
+    include "tile_table.inc"
+    include "tiles.inc"
+    include "tiles_active.inc"
+    include "tile_pad_small.inc"
+    include "tile_turret_fireball.inc"
+    include "sprites.inc"
+
+    align 256
+
+; --- MAIN PROGRAM FILE ---
+hello_world: asciz "Welcome to Purple Nurples!"
+loading_time: asciz "Loading time:"
+loading_complete: asciz "Press any key to continue."
+
+init:
+    ret
+
+main:
+    call printNewLine
+
+    ld iy,tmr_test
+    ld hl,120 ; 1 second
+    call tmr_set
+    ld hl,0 ; counter
+    call vdu_vblank
+@loop:
+    inc hl ; increment counter
+    push hl ; save counter
+
+    ld ix,x_id
+    call rand_8
+    ld (ix+sprite_x+1),a
+    call rand_8
+    ld (ix+sprite_y+1),hl
+
+    ld iy,y_id
+    call rand_8
+    ld (iy+sprite_x),a
+    call rand_8
+    ld (iy+sprite_y),a
+
+    call check_collision_box
+
+    ld iy,tmr_test
+    call tmr_get
+    pop hl ; restore counter
+    jp p,@loop
+
+    call printDec
+    call printNewLine
+
+main_end:
+    call vdu_cursor_on
+    ret
+
+DEBUG_PRINT:
+    PUSH_ALL
+    call printNewLine
+    call printNewLine
+    POP_ALL
+    PUSH_ALL
+    call dumpFlags
+    POP_ALL
+    PUSH_ALL
+    call dumpRegistersHex
+    ; call waitKeypress
+    POP_ALL
+    ret
+
+DEBUG_PRINT_TILE_TABLE:
+    PUSH_ALL
+    call printNewLine
+    ld ix,tile_stack
+    ld ix,(ix)
+    call dump_tile_record
+    call printNewLine
+    POP_ALL
+    ret
+; end DEBUG_PRINT_TILE_TABLE
+
+DEBUG_PRINT_TABLE:
+    PUSH_ALL
+    call printNewLine
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
+
+    push iy
+    pop ix
+    call dump_sprite_record
+    call printNewLine
+    call printNewLine
+    POP_ALL
     RET
 
-; Print a 24-bit HEX number
-; HLU: Number to print
-printHex24:
-    HLU_TO_A
-    CALL printHex8
-; Print a 16-bit HEX number
-; HL: Number to print
-printHex16:
-    LD A,H
-    CALL printHex8
-    LD A,L
-; Print an 8-bit HEX number
-; A: Number to print
-printHex8:
-    LD C,A
-    RRA 
-    RRA 
-    RRA 
-    RRA 
-    CALL @F
-    LD A,C
+DEBUG_WAITKEYPRESS:
+    PUSH_ALL
+    call waitKeypress
+    POP_ALL
+    RET
+
+DEBUG_PRINT_FIELDS:
+    ; PUSH_ALL
+    ld bc,0
+    ld c,a
+    ld ix,table_base
+    add ix,bc
+    ld b,table_num_records
 @@:
-    AND 0Fh
-    ADD A,90h
-    DAA
-    ADC A,40h
-    DAA
-    RST.LIL 10h
-    RET
-
-printHexA:
-    push af
-    push bc
-    call printHex8
-    ld a,' '
-    rst.lil 10h
-    pop bc
-    pop af
-    ret
-
-printHexUHL:
-    push af
-    push bc
-    push hl
-    call printHex24
+    push ix
     pop hl
-    pop bc
-    pop af
+    push bc ; save loop counter
+    ld a,1 ; print one byte
+    call dumpMemoryHex
+    lea ix,ix+table_record_size
+    pop bc ; restore loop counter
+    djnz @b
+    ; POP_ALL
     ret
-
-; print bytes from an address to the screen in hexidecimal format
-; inputs: hl = address of first byte to print, a = number of bytes to print
-; outputs: values of each byte printed to screen separated by spaces
-; destroys: nothing
-dumpMemoryHex:
-; save registers to the stack
-    push bc
-    push hl
-    push af
-
-; print the address and separator
-    call printHex24
-    ld a,':'
-    rst.lil 10h
-    ld a,' '
-    rst.lil 10h
-
-; set b to be our loop counter
-    pop af
-    ld b,a
-    pop hl
-    push hl
-    push af
-@loop:
-; print the byte
-    ld a,(hl)
-    call printHex8
-; print a space
-    ld a,' '
-    rst.lil 10h
-    inc hl
-    djnz @loop
-    call printNewLine
-
-; restore everything
-    pop af
-    pop hl
-    pop bc
-
-; all done
-    ret
-
-
-; print registers to screen in hexidecimal format
-; inputs: none
-; outputs: values of every register printed to screen
-;    values of each register in global scratch memory
-; destroys: nothing
-dumpRegistersHex:
-; store everything in scratch
-    ld (uhl),hl
-    ld (ubc),bc
-    ld (ude),de
-    ld (uix),ix
-    ld (uiy),iy
-    push af ; fml
-    pop hl ; thanks, zilog
-    ld (uaf),hl
-    push af ; dammit
-
-; home the cursor
-    ; call vdu_home_cursor
-    ; call printNewLine
-
-; print each register
-    ld hl,str_afu
-    call printString
-    ld hl,(uaf)
-    call printHex24
-    call printNewLine
-
-    ld hl,str_hlu
-    call printString
-    ld hl,(uhl)
-    call printHex24
-    call printNewLine
-
-    ld hl,str_bcu
-    call printString
-    ld hl,(ubc)
-    call printHex24
-    call printNewLine
-
-    ld hl,str_deu
-    call printString
-    ld hl,(ude)
-    call printHex24
-    call printNewLine
-
-    ld hl,str_ixu
-    call printString
-    ld hl,(uix)
-    call printHex24
-    call printNewLine
-
-    ld hl,str_iyu
-    call printString
-    ld hl,(uiy)
-    call printHex24
-    ; call printNewLine
-
-    ; call vdu_vblank
-
-    ; call printNewLine
-; restore everything
-    ld hl, (uhl)
-    ld bc, (ubc)
-    ld de, (ude)
-    ld ix, (uix)
-    ld iy, (uiy)
-    pop af
-; all done
-    ret
-str_afu: db " af=",0
-str_hlu: db " hl=",0
-str_bcu: db " bc=",0
-str_deu: db " de=",0
-str_ixu: db " ix=",0
-str_iyu: db " iy=",0
-; global scratch memory for registers
-uaf: dl 0
-uhl: dl 0
-ubc: dl 0
-ude: dl 0
-uix: dl 0
-uiy: dl 0
-usp: dl 0
-upc: dl 0
-
-
-; inputs: whatever is in the flags register
-; outputs: binary representation of flags
-;          with a header so we know which is what
-; destroys: nothing
-; preserves: everything
-dumpFlags:
-; first we curse zilog for not giving direct access to flags
-    push af ; this is so we can send it back unharmed
-    push af ; this is so we can pop it to hl
-; store everything in scratch
-    ld (uhl),hl
-    ld (ubc),bc
-    ld (ude),de
-    ld (uix),ix
-    ld (uiy),iy
-; next we print the header 
-    ld hl,@header
-    call printString
-    pop hl ; flags are now in l
-    ld a,l ; flags are now in a
-    call printBin8
-    call printNewLine
-; restore everything
-    ld hl, (uhl)
-    ld bc, (ubc)
-    ld de, (ude)
-    ld ix, (uix)
-    ld iy, (uiy)
-    pop af ; send her home the way she came
-    ret
-; Bit 7 (S): Sign flag
-; Bit 6 (Z): Zero flag
-; Bit 5 (5): Reserved (copy of bit 5 of the result)
-; Bit 4 (H): Half Carry flag
-; Bit 3 (3): Reserved (copy of bit 3 of the result)
-; Bit 2 (PV): Parity/Overflow flag
-; Bit 1 (N): Subtract flag
-; Bit 0 (C): Carry flag
-@header: db "SZxHxPNC\r\n",0 ; cr/lf and 0 terminator
-
-
-; print the binary representation of the 8-bit value in a
-; destroys a, hl, bc
-printBin8:
-    ld b,8 ; loop counter for 8 bits
-    ld hl,@cmd ; set hl to the low byte of the output string
-    ; (which will be the high bit of the value in a)
-@loop:
-    rlca ; put the next highest bit into carry
-    jr c,@one
-    ld (hl),'0'
-    jr @next_bit
-@one:
-    ld (hl),'1'
-@next_bit:
-    inc hl
-    djnz @loop
-; print it
-    ld hl,@cmd 
-    ld bc,@end-@cmd 
-    rst.lil $18 
-    ret
-@cmd: ds 8 ; eight bytes for eight bits
-@end:
 
 DEBUG_PRINT_TILE_STACK:
     PUSH_ALL
     call printNewLine
     call printNewLine
     ld hl,(tile_stack_pointer)
-    ld a,3
-    call dumpMemoryHex
+    call printHexUHL
+    call printNewLine
     ld a,(num_active_tiles)
     call printHexA
     call printNewLine
     ld ix,tile_stack
-    ld b,6
+    ld b,8
 @loop:
     push bc
-    push ix
-    pop hl
-    ld a,3
-    call dumpMemoryHex
+    ld hl,(ix)
+    call printHexUHL
+    call printNewLine
     lea ix,ix+3
     pop bc
     djnz @loop
     POP_ALL
     ret
 
-DEBUG_PRINT:
+DEBUG_DUMP_PLAYER_RECORD:
+    PUSH_ALL
     call printNewLine
-    call dumpFlags
-    call dumpRegistersHex
+    CALL dump_player_record
     call printNewLine
-    ret
+    POP_ALL
+    RET
+
+x_id:                db 0 ; 1 bytes unique spriteId, zero-based
+x_x:                 dl                 0 ; 3 bytes 16.8 fractional x position in pixels
+x_y:                 dl                 0 ; 3 bytes 16.8 fractional y position in pixels
+x_xvel:              dl                 0 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+x_yvel:              dl                 0 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+x_vel:               dl             0 ; 3 bytes velocity px/frame (16.8 fixed)
+x_heading:           dl                 0 ; 3 bytes sprite movement direction deg256 16.8 fixed
+x_orientation:       dl                 0 ; 3 bytes orientation bits
+x_type:              db                 0 ; 1 bytes not currently used
+x_base_bufferId:     dl       0 ; 3 bytes bitmap bufferId
+x_move_program:      dl                 0 ; 3 bytes not currently used
+x_collisions:        db                 0 ; 1 bytes see collisions.inc constants for bit definitions
+x_dim_x:             db                16 ; 1 bytes sprite width in pixels
+x_dim_y:             db                16 ; 1 bytes sprite height in pixels
+x_num_orientations:  db                 0 ; 1 bytes number of orientations for this sprite
+x_num_animations:    db                 0 ; 1 bytes number of animations for this sprite
+x_animation:         db                 0 ; 1 bytes current animation index, zero-based
+x_animation_timer:   db                 0 ; 1 bytes when hits zero, draw next animation
+x_move_timer:        db                 0 ; 1 bytes when zero, go to next move program, or step
+x_move_step:         db                 0 ; 1 bytes stage in a move program sequence, varies
+x_points:            db                 0 ; 1 bytes points awarded for killing this sprite type
+x_shield_damage:     db                 0 ; 1 bytes shield points deducted for collision
+
+
+
+
+y_id:                db 1 ; 1 bytes unique spriteId, zero-based
+y_x:                 dl                   0 ; 3 bytes 16.8 fractional x position in pixels
+y_y:                 dl                   0 ; 3 bytes 16.8 fractional y position in pixels
+y_xvel:              dl                   0 ; 3 bytes x-component velocity, 16.8 fixed, pixels
+y_yvel:              dl              0 ; 3 bytes y-component velocity, 16.8 fixed, pixels
+y_vel:               dl              0 ; 3 bytes velocity px/frame (16.8 fixed)
+y_heading:           dl                   0 ; 3 bytes sprite movement direction deg256 16.8 fixed
+y_orientation:       dl                   0 ; 3 bytes orientation bits
+y_type:              db                   0 ; 1 bytes not currently used
+y_base_bufferId:     dl         0 ; 3 bytes bitmap bufferId
+y_move_program:      dl                   0 ; 3 bytes not currently used
+y_collisions:        db                   0 ; 1 bytes see collisions.inc constants for bit definitions
+y_dim_x:             db                  16 ; 1 bytes sprite width in pixels
+y_dim_y:             db                  16 ; 1 bytes sprite height in pixels
+y_num_orientations:  db                   0 ; 1 bytes number of orientations for this sprite
+y_num_animations:    db                   0 ; 1 bytes number of animations for this sprite
+y_animation:         db                   0 ; 1 bytes current animation index, zero-based
+y_animation_timer:   db                   0 ; 1 bytes when hits zero, draw next animation
+y_move_timer:        db                   0 ; 1 bytes when zero, go to next move program, or step
+y_move_step:         db                   0 ; 1 bytes stage in a move program sequence, varies
+y_points:            db                   0 ; 1 bytes points awarded for killing this sprite type
+y_shield_damage:     db                   0 ; 1 bytes shield points deducted for collision
+
+    include "tables.inc"
