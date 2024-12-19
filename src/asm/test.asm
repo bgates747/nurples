@@ -102,7 +102,7 @@ main:
     call rand_8
     ld (iy+sprite_y),a
 
-    call check_collision_box
+    call check_collision
 
     ld iy,tmr_test
     call tmr_get

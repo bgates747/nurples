@@ -13,7 +13,7 @@ collide_right: equ %00000001
 
 collision_table_pointer: dl 0x000000 ; pointer to the sprite in the group being checked for collision
 
-; check_collision_box:
+; check_collision:
 ; Detects collision using bounding box method.
 ; Inputs:
 ;   IX -> Sprite/Tile table for Collider A
@@ -22,6 +22,7 @@ collision_table_pointer: dl 0x000000 ; pointer to the sprite in the group being 
 ;   a = 0, zero flag set, positive sign, carry reset -> Collision detected
 ;   a = -1, zero flag reset, negative sign, carry set -> No collision detected
 ; Destroys: HL, DE, AF
+; check_collision:
 check_collision_box:
 ; Test 1: (ay + ah) - by < 0
     ld hl,0                     ; Clear hlu
@@ -96,6 +97,12 @@ check_collision_box:
 ;          zero flag set if collision detected
 ;          dx168 and dy168 are also populated with the signed displacements
 ; destroys: everything except indexes
+check_collision:
+; ; DEBUG
+;     xor a
+;     dec a
+;     ret
+; ; END DEBUG
 check_collision_cartesian:
 ; compute dx = x1-x0
     ld hl,(ix+sprite_x)
@@ -138,7 +145,7 @@ check_sprite_group_collisions:
     bit sprite_alive,(ix+sprite_collisions)
     jp z,@next_record ; not alive so skip to next record
 ; sprite alive so check for collision
-    call check_collision_box
+    call check_collision
     jp nz,@next_record ; no collision
 ; set sprite_just_died flag for each entity and return to caller
     pop bc ; dummy pop to balance stack
@@ -164,7 +171,7 @@ check_enemy_collision_laser: ; check for collisions with laser
 
 check_enemy_collision_player: ; check for collisions with player
     ld ix,player_begin
-    call check_collision_box
+    call check_collision
     ret nz ; no collision so nothing to do
     set sprite_just_died,(ix+sprite_collisions)
     set sprite_just_died,(iy+sprite_collisions)

@@ -5951,7 +5951,7 @@ PC     Output      Line
 042600             0013*   
 042600 00 00 00    0014*   collision_table_pointer: dl 0x000000 ; pointer to the sprite in the group being checked for collision
 042603             0015*   
-042603             0016*   ; check_collision_box:
+042603             0016*   ; check_collision:
 042603             0017*   ; Detects collision using bounding box method.
 042603             0018*   ; Inputs:
 042603             0019*   ;   IX -> Sprite/Tile table for Collider A
@@ -5960,171 +5960,178 @@ PC     Output      Line
 042603             0022*   ;   a = 0, zero flag set, positive sign, carry reset -> Collision detected
 042603             0023*   ;   a = -1, zero flag reset, negative sign, carry set -> No collision detected
 042603             0024*   ; Destroys: HL, DE, AF
-042603             0025*   check_collision_box:
-042603             0026*   ; Test 1: (ay + ah) - by < 0
-042603 21 00 00 00 0027*       ld hl,0                     ; Clear hlu
-042607 DD 6E 05    0028*       ld l,(ix+sprite_y+1)        ; Load ay integer part low byte
-04260A DD 66 06    0029*       ld h,(ix+sprite_y+2)        ; Load ay integer part high byte
-04260D 11 00 00 00 0030*       ld de,0                     ; Clear deu and d
-042611 DD 5E 1F    0031*       ld e,(ix+sprite_dim_y)      ; Load ah
-042614 19          0032*       add hl,de                   ; (ay + ah)
-042615 FD 5E 05    0033*       ld e,(iy+sprite_y+1)        ; Load by integer part low byte
-042618 FD 56 06    0034*       ld d,(iy+sprite_y+2)        ; Load by integer part high byte
-04261B AF          0035*       xor a                       ; Clear carry
-04261C ED 52       0036*       sbc hl,de                   ; (ay + ah) - by
-04261E FA 81 26 04 0037*       jp m,@not_collision         ; No collision if negative
-042622             0038*   
-042622             0039*   ; Test 2: ay - (by + bh) < 0
-042622 21 00 00 00 0040*       ld hl,0                     ; Clear hlu
-042626 FD 6E 05    0041*       ld l,(iy+sprite_y+1)        ; Load by integer part low byte
-042629 FD 66 06    0042*       ld h,(iy+sprite_y+2)        ; Load by integer part high byte
-04262C 11 00 00 00 0043*       ld de,0                     ; Clear deu and d
-042630 FD 5E 1F    0044*       ld e,(iy+sprite_dim_y)      ; Load bh
-042633 19          0045*       add hl,de                   ; (by + bh)
-042634 DD 5E 05    0046*       ld e,(ix+sprite_y+1)        ; Load ay integer part low byte
-042637 DD 56 06    0047*       ld d,(ix+sprite_y+2)        ; Load ay integer part high byte
-04263A AF          0048*       xor a                       ; Clear carry
-04263B ED 52       0049*       sbc hl,de                   ; (by + bh) - ay
-04263D FA 81 26 04 0050*       jp m,@not_collision         ; No collision if negative
-042641             0051*   
-042641             0052*   ; Test 3: (ax + aw) - bx < 0
-042641 21 00 00 00 0053*       ld hl,0                     ; Clear hlu
-042645 DD 6E 02    0054*       ld l,(ix+sprite_x+1)        ; Load ax integer part low byte
-042648 DD 66 03    0055*       ld h,(ix+sprite_x+2)        ; Load ax integer part high byte
-04264B 11 00 00 00 0056*       ld de,0                     ; Clear deu and d
-04264F DD 5E 1E    0057*       ld e,(ix+sprite_dim_x)      ; Load aw
-042652 19          0058*       add hl,de                   ; (ax + aw)
-042653 FD 5E 02    0059*       ld e,(iy+sprite_x+1)        ; Load bx integer part low byte
-042656 FD 56 03    0060*       ld d,(iy+sprite_x+2)        ; Load bx integer part high byte
-042659 AF          0061*       xor a                       ; Clear carry
-04265A ED 52       0062*       sbc hl,de                   ; (ax + aw) - bx
-04265C FA 81 26 04 0063*       jp m,@not_collision         ; No collision if negative
-042660             0064*   
-042660             0065*   ; Test 4: ax - (bx + bw) < 0
-042660 21 00 00 00 0066*       ld hl,0                     ; Clear hlu
-042664 FD 6E 02    0067*       ld l,(iy+sprite_x+1)        ; Load bx integer part low byte
-042667 FD 66 03    0068*       ld h,(iy+sprite_x+2)        ; Load bx integer part high byte
-04266A 11 00 00 00 0069*       ld de,0                     ; Clear deu and d
-04266E FD 5E 1E    0070*       ld e,(iy+sprite_dim_x)      ; Load bw
-042671 19          0071*       add hl,de                   ; (bx + bw)
-042672 DD 5E 02    0072*       ld e,(ix+sprite_x+1)        ; Load ax integer part low byte
-042675 DD 56 03    0073*       ld d,(ix+sprite_x+2)        ; Load ax integer part high byte
-042678 AF          0074*       xor a                       ; Clear carry
-042679 ED 52       0075*       sbc hl,de                   ; (bx + bw) - ax
-04267B FA 81 26 04 0076*       jp m,@not_collision         ; No collision if negative
-04267F             0077*   
-04267F             0078*   ; If all tests pass, collision is detected
-04267F             0079*   @is_collision:
-04267F AF          0080*       xor a                       ; Clear accumulator and flags (a = 0)
-042680 C9          0081*       ret                         ; Return with zero flag set
-042681             0082*   
-042681             0083*   ; No collision detected
-042681             0084*   @not_collision:
-042681 3D          0085*       dec a                       ; Set a to -1
-042682 C9          0086*       ret                         ; Return with carry set
-042683             0087*   ; End check_collision_box
-042683             0088*   
+042603             0025*   ; check_collision:
+042603             0026*   check_collision_box:
+042603             0027*   ; Test 1: (ay + ah) - by < 0
+042603 21 00 00 00 0028*       ld hl,0                     ; Clear hlu
+042607 DD 6E 05    0029*       ld l,(ix+sprite_y+1)        ; Load ay integer part low byte
+04260A DD 66 06    0030*       ld h,(ix+sprite_y+2)        ; Load ay integer part high byte
+04260D 11 00 00 00 0031*       ld de,0                     ; Clear deu and d
+042611 DD 5E 1F    0032*       ld e,(ix+sprite_dim_y)      ; Load ah
+042614 19          0033*       add hl,de                   ; (ay + ah)
+042615 FD 5E 05    0034*       ld e,(iy+sprite_y+1)        ; Load by integer part low byte
+042618 FD 56 06    0035*       ld d,(iy+sprite_y+2)        ; Load by integer part high byte
+04261B AF          0036*       xor a                       ; Clear carry
+04261C ED 52       0037*       sbc hl,de                   ; (ay + ah) - by
+04261E FA 81 26 04 0038*       jp m,@not_collision         ; No collision if negative
+042622             0039*   
+042622             0040*   ; Test 2: ay - (by + bh) < 0
+042622 21 00 00 00 0041*       ld hl,0                     ; Clear hlu
+042626 FD 6E 05    0042*       ld l,(iy+sprite_y+1)        ; Load by integer part low byte
+042629 FD 66 06    0043*       ld h,(iy+sprite_y+2)        ; Load by integer part high byte
+04262C 11 00 00 00 0044*       ld de,0                     ; Clear deu and d
+042630 FD 5E 1F    0045*       ld e,(iy+sprite_dim_y)      ; Load bh
+042633 19          0046*       add hl,de                   ; (by + bh)
+042634 DD 5E 05    0047*       ld e,(ix+sprite_y+1)        ; Load ay integer part low byte
+042637 DD 56 06    0048*       ld d,(ix+sprite_y+2)        ; Load ay integer part high byte
+04263A AF          0049*       xor a                       ; Clear carry
+04263B ED 52       0050*       sbc hl,de                   ; (by + bh) - ay
+04263D FA 81 26 04 0051*       jp m,@not_collision         ; No collision if negative
+042641             0052*   
+042641             0053*   ; Test 3: (ax + aw) - bx < 0
+042641 21 00 00 00 0054*       ld hl,0                     ; Clear hlu
+042645 DD 6E 02    0055*       ld l,(ix+sprite_x+1)        ; Load ax integer part low byte
+042648 DD 66 03    0056*       ld h,(ix+sprite_x+2)        ; Load ax integer part high byte
+04264B 11 00 00 00 0057*       ld de,0                     ; Clear deu and d
+04264F DD 5E 1E    0058*       ld e,(ix+sprite_dim_x)      ; Load aw
+042652 19          0059*       add hl,de                   ; (ax + aw)
+042653 FD 5E 02    0060*       ld e,(iy+sprite_x+1)        ; Load bx integer part low byte
+042656 FD 56 03    0061*       ld d,(iy+sprite_x+2)        ; Load bx integer part high byte
+042659 AF          0062*       xor a                       ; Clear carry
+04265A ED 52       0063*       sbc hl,de                   ; (ax + aw) - bx
+04265C FA 81 26 04 0064*       jp m,@not_collision         ; No collision if negative
+042660             0065*   
+042660             0066*   ; Test 4: ax - (bx + bw) < 0
+042660 21 00 00 00 0067*       ld hl,0                     ; Clear hlu
+042664 FD 6E 02    0068*       ld l,(iy+sprite_x+1)        ; Load bx integer part low byte
+042667 FD 66 03    0069*       ld h,(iy+sprite_x+2)        ; Load bx integer part high byte
+04266A 11 00 00 00 0070*       ld de,0                     ; Clear deu and d
+04266E FD 5E 1E    0071*       ld e,(iy+sprite_dim_x)      ; Load bw
+042671 19          0072*       add hl,de                   ; (bx + bw)
+042672 DD 5E 02    0073*       ld e,(ix+sprite_x+1)        ; Load ax integer part low byte
+042675 DD 56 03    0074*       ld d,(ix+sprite_x+2)        ; Load ax integer part high byte
+042678 AF          0075*       xor a                       ; Clear carry
+042679 ED 52       0076*       sbc hl,de                   ; (bx + bw) - ax
+04267B FA 81 26 04 0077*       jp m,@not_collision         ; No collision if negative
+04267F             0078*   
+04267F             0079*   ; If all tests pass, collision is detected
+04267F             0080*   @is_collision:
+04267F AF          0081*       xor a                       ; Clear accumulator and flags (a = 0)
+042680 C9          0082*       ret                         ; Return with zero flag set
+042681             0083*   
+042681             0084*   ; No collision detected
+042681             0085*   @not_collision:
+042681 3D          0086*       dec a                       ; Set a to -1
+042682 C9          0087*       ret                         ; Return with carry set
+042683             0088*   ; End check_collision_box
 042683             0089*   
-042683             0090*   ; this routine detects collisions between two collidable objects,
-042683             0091*   ; which can include sprites, active tiles, or any screen coordinate
-042683             0092*   ; which has been set up with a sprite table structure that includes dim_x
-042683             0093*   ; representing the radius of the collidable object
-042683             0094*   ; inputs: ix and iy point to the colliding objects' sprite/tile table records
-042683             0095*   ; outputs: uh.l = distance - sum of radii
-042683             0096*   ;          zero flag set if collision detected
-042683             0097*   ;          dx168 and dy168 are also populated with the signed displacements
-042683             0098*   ; destroys: everything except indexes
-042683             0099*   check_collision_cartesian:
-042683             0100*   ; compute dx = x1-x0
-042683 DD 27 01    0101*       ld hl,(ix+sprite_x)
-042686 FD 17 01    0102*       ld de,(iy+sprite_x)
-042689 AF          0103*       xor a ; clear carry
-04268A ED 52       0104*       sbc hl,de
-04268C 22 2E 0C 04 0105*       ld (dx168),hl ; dx to scratch
-042690             0106*   ; compute dy = y1-y0
-042690 DD 27 04    0107*       ld hl,(ix+sprite_y)
-042693 FD 17 04    0108*       ld de,(iy+sprite_y)
-042696 AF          0109*       xor a ; clear carry
-042697 ED 52       0110*       sbc hl,de ; hl = dy
-042699 22 34 0C 04 0111*       ld (dy168),hl ; dy to scratch
-04269D             0112*   ; compute euclidean distance between centers
-04269D CD 3A 0C 04 0113*       call distance168 ; uh.l = distance
-0426A1             0114*   ; check for overlap by summing half the radii
-0426A1 DD 7E 1E    0115*       ld a,(ix+sprite_dim_x)
-0426A4 CB 3F       0116*       srl a ; divide by 2
-0426A6 FD 5E 1E    0117*       ld e,(iy+sprite_dim_x)
-0426A9 CB 3B       0118*       srl e ; divide by 2
-0426AB 83          0119*       add a,e
-0426AC 11 00 00 00 0120*       ld de,0 ; clear deu and e
-0426B0 57          0121*       ld d,a ; ud.e = sum of radii
-0426B1 B7          0122*       or a ; clear carry
-0426B2 ED 52       0123*       sbc hl,de ; uh.l = distance - sum of radii
-0426B4 C8          0124*       ret z ; return collision
-0426B5 F0          0125*       ret p ; return no collision
-0426B6 AF          0126*       xor a ; return collision
-0426B7 C9          0127*       ret
-0426B8             0128*   ; end check_collision_cartesian
-0426B8             0129*   
-0426B8             0130*   ; check collisions of a sprite or tile against a sprite group
-0426B8             0131*   ; inputs: iy = pointer to sprite or tile record being checked
-0426B8             0132*   ;         ix = pointer to sprite group, b = number of records in sprite group
-0426B8             0133*   check_sprite_group_collisions:
-0426B8             0134*   @collision_loop:
-0426B8 DD 22 00 26 0135*       ld (collision_table_pointer),ix ; update table pointer
+042683             0090*   
+042683             0091*   ; this routine detects collisions between two collidable objects,
+042683             0092*   ; which can include sprites, active tiles, or any screen coordinate
+042683             0093*   ; which has been set up with a sprite table structure that includes dim_x
+042683             0094*   ; representing the radius of the collidable object
+042683             0095*   ; inputs: ix and iy point to the colliding objects' sprite/tile table records
+042683             0096*   ; outputs: uh.l = distance - sum of radii
+042683             0097*   ;          zero flag set if collision detected
+042683             0098*   ;          dx168 and dy168 are also populated with the signed displacements
+042683             0099*   ; destroys: everything except indexes
+042683             0100*   check_collision:
+042683             0101*   ; ; DEBUG
+042683             0102*   ;     xor a
+042683             0103*   ;     dec a
+042683             0104*   ;     ret
+042683             0105*   ; ; END DEBUG
+042683             0106*   check_collision_cartesian:
+042683             0107*   ; compute dx = x1-x0
+042683 DD 27 01    0108*       ld hl,(ix+sprite_x)
+042686 FD 17 01    0109*       ld de,(iy+sprite_x)
+042689 AF          0110*       xor a ; clear carry
+04268A ED 52       0111*       sbc hl,de
+04268C 22 2E 0C 04 0112*       ld (dx168),hl ; dx to scratch
+042690             0113*   ; compute dy = y1-y0
+042690 DD 27 04    0114*       ld hl,(ix+sprite_y)
+042693 FD 17 04    0115*       ld de,(iy+sprite_y)
+042696 AF          0116*       xor a ; clear carry
+042697 ED 52       0117*       sbc hl,de ; hl = dy
+042699 22 34 0C 04 0118*       ld (dy168),hl ; dy to scratch
+04269D             0119*   ; compute euclidean distance between centers
+04269D CD 3A 0C 04 0120*       call distance168 ; uh.l = distance
+0426A1             0121*   ; check for overlap by summing half the radii
+0426A1 DD 7E 1E    0122*       ld a,(ix+sprite_dim_x)
+0426A4 CB 3F       0123*       srl a ; divide by 2
+0426A6 FD 5E 1E    0124*       ld e,(iy+sprite_dim_x)
+0426A9 CB 3B       0125*       srl e ; divide by 2
+0426AB 83          0126*       add a,e
+0426AC 11 00 00 00 0127*       ld de,0 ; clear deu and e
+0426B0 57          0128*       ld d,a ; ud.e = sum of radii
+0426B1 B7          0129*       or a ; clear carry
+0426B2 ED 52       0130*       sbc hl,de ; uh.l = distance - sum of radii
+0426B4 C8          0131*       ret z ; return collision
+0426B5 F0          0132*       ret p ; return no collision
+0426B6 AF          0133*       xor a ; return collision
+0426B7 C9          0134*       ret
+0426B8             0135*   ; end check_collision_cartesian
+0426B8             0136*   
+0426B8             0137*   ; check collisions of a sprite or tile against a sprite group
+0426B8             0138*   ; inputs: iy = pointer to sprite or tile record being checked
+0426B8             0139*   ;         ix = pointer to sprite group, b = number of records in sprite group
+0426B8             0140*   check_sprite_group_collisions:
+0426B8             0141*   @collision_loop:
+0426B8 DD 22 00 26 0142*       ld (collision_table_pointer),ix ; update table pointer
        04          
-0426BD C5          0136*       push bc ; backup loop counter
-0426BE             0137*   ; check sprite_collisions sprite_alive flag to see if sprite is active
-0426BE DD CB 1D 76 0138*       bit sprite_alive,(ix+sprite_collisions)
-0426C2 CA D8 26 04 0139*       jp z,@next_record ; not alive so skip to next record
-0426C6             0140*   ; sprite alive so check for collision
-0426C6 CD 03 26 04 0141*       call check_collision_box
-0426CA C2 D8 26 04 0142*       jp nz,@next_record ; no collision
-0426CE             0143*   ; set sprite_just_died flag for each entity and return to caller
-0426CE C1          0144*       pop bc ; dummy pop to balance stack
-0426CF DD CB 1D FE 0145*       set sprite_just_died,(ix+sprite_collisions)
-0426D3 FD CB 1D FE 0146*       set sprite_just_died,(iy+sprite_collisions)
-0426D7 C9          0147*       ret
-0426D8             0148*   @next_record:
-0426D8 C1          0149*       pop bc ; get back our loop counter
-0426D9 ED 32 40    0150*       lea ix,ix+table_record_size
-0426DC 10 DA       0151*       djnz @collision_loop ; loop until we've checked all the records
-0426DE             0152*   ; return to caller
-0426DE AF          0153*       xor a
-0426DF 3C          0154*       inc a ; resets sign flag and a to non-zero indicating no collision
-0426E0 C9          0155*       ret
-0426E1             0156*   ; end check_sprite_group_collisions
-0426E1             0157*   
-0426E1             0158*   check_enemy_collision_laser: ; check for collisions with laser
-0426E1 DD 21 00 80 0159*       ld ix,player_lasers_begin
+0426BD C5          0143*       push bc ; backup loop counter
+0426BE             0144*   ; check sprite_collisions sprite_alive flag to see if sprite is active
+0426BE DD CB 1D 76 0145*       bit sprite_alive,(ix+sprite_collisions)
+0426C2 CA D8 26 04 0146*       jp z,@next_record ; not alive so skip to next record
+0426C6             0147*   ; sprite alive so check for collision
+0426C6 CD 83 26 04 0148*       call check_collision
+0426CA C2 D8 26 04 0149*       jp nz,@next_record ; no collision
+0426CE             0150*   ; set sprite_just_died flag for each entity and return to caller
+0426CE C1          0151*       pop bc ; dummy pop to balance stack
+0426CF DD CB 1D FE 0152*       set sprite_just_died,(ix+sprite_collisions)
+0426D3 FD CB 1D FE 0153*       set sprite_just_died,(iy+sprite_collisions)
+0426D7 C9          0154*       ret
+0426D8             0155*   @next_record:
+0426D8 C1          0156*       pop bc ; get back our loop counter
+0426D9 ED 32 40    0157*       lea ix,ix+table_record_size
+0426DC 10 DA       0158*       djnz @collision_loop ; loop until we've checked all the records
+0426DE             0159*   ; return to caller
+0426DE AF          0160*       xor a
+0426DF 3C          0161*       inc a ; resets sign flag and a to non-zero indicating no collision
+0426E0 C9          0162*       ret
+0426E1             0163*   ; end check_sprite_group_collisions
+0426E1             0164*   
+0426E1             0165*   check_enemy_collision_laser: ; check for collisions with laser
+0426E1 DD 21 00 80 0166*       ld ix,player_lasers_begin
        04          
-0426E6 06 04       0160*       ld b,player_lasers_max
-0426E8 CD B8 26 04 0161*       call check_sprite_group_collisions
-0426EC C9          0162*       ret
-0426ED             0163*   ; end check_enemy_collision_laser
-0426ED             0164*   
-0426ED             0165*   check_enemy_collision_player: ; check for collisions with player
-0426ED DD 21 00 81 0166*       ld ix,player_begin
+0426E6 06 04       0167*       ld b,player_lasers_max
+0426E8 CD B8 26 04 0168*       call check_sprite_group_collisions
+0426EC C9          0169*       ret
+0426ED             0170*   ; end check_enemy_collision_laser
+0426ED             0171*   
+0426ED             0172*   check_enemy_collision_player: ; check for collisions with player
+0426ED DD 21 00 81 0173*       ld ix,player_begin
        04          
-0426F2 CD 03 26 04 0167*       call check_collision_box
-0426F6 C0          0168*       ret nz ; no collision so nothing to do
-0426F7 DD CB 1D FE 0169*       set sprite_just_died,(ix+sprite_collisions)
-0426FB FD CB 1D FE 0170*       set sprite_just_died,(iy+sprite_collisions)
-0426FF AF          0171*       xor a ; signal collision detected
-042700 C9          0172*       ret
-042701             0173*   ; end check_enemy_collision_player
-042701             0174*   
-042701             0175*   ; this routine vanquishes the enemy sprite
-042701             0176*   ; and replaces it with an animated explosion
-042701             0177*   ; destroys: everything except index registers
-042701             0178*   ; returns: a=-1 to indicate enemy died, and an incandescent ball of debris and gas
-042701             0179*   enemy_kill:
-042701 2A 00 60 04 0180*       ld hl,(player_score)
-042705 01 00 00 00 0181*       ld bc,0 ; clear bcu
-042709 FD 4E 26    0182*       ld c,(iy+sprite_points)
-04270C 09          0183*       add hl,bc
-04270D 22 00 60 04 0184*       ld (player_score),hl
-042711 C3 13 2A 04 0185*       jp spawn_explosion
-042715             0186*   ; end enemy_kill
+0426F2 CD 83 26 04 0174*       call check_collision
+0426F6 C0          0175*       ret nz ; no collision so nothing to do
+0426F7 DD CB 1D FE 0176*       set sprite_just_died,(ix+sprite_collisions)
+0426FB FD CB 1D FE 0177*       set sprite_just_died,(iy+sprite_collisions)
+0426FF AF          0178*       xor a ; signal collision detected
+042700 C9          0179*       ret
+042701             0180*   ; end check_enemy_collision_player
+042701             0181*   
+042701             0182*   ; this routine vanquishes the enemy sprite
+042701             0183*   ; and replaces it with an animated explosion
+042701             0184*   ; destroys: everything except index registers
+042701             0185*   ; returns: a=-1 to indicate enemy died, and an incandescent ball of debris and gas
+042701             0186*   enemy_kill:
+042701 2A 00 60 04 0187*       ld hl,(player_score)
+042705 01 00 00 00 0188*       ld bc,0 ; clear bcu
+042709 FD 4E 26    0189*       ld c,(iy+sprite_points)
+04270C 09          0190*       add hl,bc
+04270D 22 00 60 04 0191*       ld (player_score),hl
+042711 C3 13 2A 04 0192*       jp spawn_explosion
+042715             0193*   ; end enemy_kill
 042715             0047        include "enemies.inc"
 042715             0001*   move_enemies:
 042715             0002*   ; initialize pointers and loop counter
@@ -13603,41 +13610,55 @@ PC     Output      Line
 047541             0205    ; start a new game
 047541 CD 17 64 04 0206        call game_initialize
 047545             0207    
-047545             0208    main_loop:
-047545             0209    ; update the global timestamp
-047545 CD F9 18 04 0210        call timestamp_tick
-047549             0211    ; do gamestate logic
-047549 CD 03 64 04 0212        call do_game
-04754D             0213    
-04754D             0214    ; ; DEBUG
-04754D             0215    ;     CALL DEBUG_PRINT
-04754D             0216    ;     ; CALL DEBUG_DUMP_PLAYER_RECORD
-04754D             0217    ;     CALL DEBUG_PRINT_TILE_TABLE
-04754D             0218    ;     CALL DEBUG_PRINT_TILE_STACK
-04754D             0219    ;     ; CALL DEBUG_WAITKEYPRESS
-04754D             0220    ; ; END DEBUG
-04754D             0221    
-04754D             0222    ; wait for the next vblank mitigate flicker and for loop timing
-04754D CD BF 1A 04 0223        call vdu_vblank
-047551             0224        ; call vdu_vblank ; DEBUG
-047551             0225        ; call vdu_vblank ; DEBUG
-047551             0226    
-047551             0227    ; poll keyboard for escape keypress
-047551 3E 08       0228        ld a, $08 ; code to send to MOS
-047553 5B CF       0229        rst.lil $08 ; get IX pointer to System Variables
-047555 DD 7E 05    0230        ld a, (ix + $05) ; get ASCII code of key pressed
-047558 FE 1B       0231        cp 27 ; check if 27 (ascii code for ESC)
-04755A CA 62 75 04 0232        jp z, main_end ; if pressed, jump to exit
-04755E             0233    
-04755E             0234    ; escape not pressed so loop
-04755E C3 45 75 04 0235        jp main_loop
-047562             0236    
-047562             0237    main_end:
-047562 CD 05 1A 04 0238        call vdu_cursor_on
-047566 C9          0239        ret
-047567             0240    
-047567             0241    DEBUG_PRINT:
-047567             0242        PUSH_ALL
+047545             0208        ; ld iy,tmr_test
+047545             0209        ; ld hl,2400 ; 20 seconds
+047545             0210        ; call tmr_set
+047545             0211        ; ld hl,0 ; counter
+047545             0212        ; call vdu_vblank
+047545             0213    
+047545             0214    main_loop:
+047545             0215        ; inc hl ; increment counter
+047545             0216        ; push hl ; save counter
+047545             0217    
+047545             0218    ; update the global timestamp
+047545 CD F9 18 04 0219        call timestamp_tick
+047549             0220    ; do gamestate logic
+047549 CD 03 64 04 0221        call do_game
+04754D             0222    
+04754D             0223    ; ; DEBUG
+04754D             0224    ;     CALL DEBUG_PRINT
+04754D             0225    ;     ; CALL DEBUG_DUMP_PLAYER_RECORD
+04754D             0226    ;     CALL DEBUG_PRINT_TILE_TABLE
+04754D             0227    ;     CALL DEBUG_PRINT_TILE_STACK
+04754D             0228    ;     ; CALL DEBUG_WAITKEYPRESS
+04754D             0229    ; ; END DEBUG
+04754D             0230    
+04754D             0231    ; wait for the next vblank mitigate flicker and for loop timing
+04754D CD BF 1A 04 0232        call vdu_vblank
+047551             0233        ; call vdu_vblank ; DEBUG
+047551             0234        ; call vdu_vblank ; DEBUG
+047551             0235    
+047551             0236    ; poll keyboard for escape keypress
+047551 3E 08       0237        ld a, $08 ; code to send to MOS
+047553 5B CF       0238        rst.lil $08 ; get IX pointer to System Variables
+047555 DD 7E 05    0239        ld a, (ix + $05) ; get ASCII code of key pressed
+047558 FE 1B       0240        cp 27 ; check if 27 (ascii code for ESC)
+04755A CA 62 75 04 0241        jp z, main_end ; if pressed, jump to exit
+04755E             0242    
+04755E             0243    ; escape not pressed so loop
+04755E             0244        ; ld iy,tmr_test
+04755E             0245        ; call tmr_get
+04755E             0246        ; pop hl ; restore counter
+04755E             0247        ; jp m,main_end ; if timer expired, jump to exit
+04755E C3 45 75 04 0248        jp main_loop
+047562             0249    
+047562             0250    main_end:
+047562             0251        ; call printDec
+047562 CD 05 1A 04 0252        call vdu_cursor_on
+047566 C9          0253        ret
+047567             0254    
+047567             0255    DEBUG_PRINT:
+047567             0256        PUSH_ALL
 047567 08          0001M1      ex af,af'
 047568 D9          0002M1      exx
 047569 F5          0003M1      push af
@@ -13653,10 +13674,10 @@ PC     Output      Line
 047572 D5          0013M1      push de
 047573 DD E5       0014M1      push ix
 047575 FD E5       0015M1      push iy
-047577 0E 00       0243        ld c,0 ; X
-047579 06 00       0244        ld b,0 ; Y
-04757B CD 37 1A 04 0245        call vdu_move_cursor
-04757F             0246        POP_ALL
+047577 0E 00       0257        ld c,0 ; X
+047579 06 00       0258        ld b,0 ; Y
+04757B CD 37 1A 04 0259        call vdu_move_cursor
+04757F             0260        POP_ALL
 04757F FD E1       0001M1      pop iy
 047581 DD E1       0002M1      pop ix
 047583 D1          0003M1      pop de
@@ -13672,7 +13693,7 @@ PC     Output      Line
 04758C F1          0013M1      pop af
 04758D 08          0014M1      ex af,af'
 04758E D9          0015M1      exx
-04758F             0247        PUSH_ALL
+04758F             0261        PUSH_ALL
 04758F 08          0001M1      ex af,af'
 047590 D9          0002M1      exx
 047591 F5          0003M1      push af
@@ -13688,8 +13709,8 @@ PC     Output      Line
 04759A D5          0013M1      push de
 04759B DD E5       0014M1      push ix
 04759D FD E5       0015M1      push iy
-04759F CD 57 06 04 0248        call dumpFlags
-0475A3             0249        POP_ALL
+04759F CD 57 06 04 0262        call dumpFlags
+0475A3             0263        POP_ALL
 0475A3 FD E1       0001M1      pop iy
 0475A5 DD E1       0002M1      pop ix
 0475A7 D1          0003M1      pop de
@@ -13705,7 +13726,7 @@ PC     Output      Line
 0475B0 F1          0013M1      pop af
 0475B1 08          0014M1      ex af,af'
 0475B2 D9          0015M1      exx
-0475B3             0250        PUSH_ALL
+0475B3             0264        PUSH_ALL
 0475B3 08          0001M1      ex af,af'
 0475B4 D9          0002M1      exx
 0475B5 F5          0003M1      push af
@@ -13721,9 +13742,9 @@ PC     Output      Line
 0475BE D5          0013M1      push de
 0475BF DD E5       0014M1      push ix
 0475C1 FD E5       0015M1      push iy
-0475C3 CD B9 04 04 0251        call dumpRegistersHex
-0475C7             0252        ; call waitKeypress
-0475C7             0253        POP_ALL
+0475C3 CD B9 04 04 0265        call dumpRegistersHex
+0475C7             0266        ; call waitKeypress
+0475C7             0267        POP_ALL
 0475C7 FD E1       0001M1      pop iy
 0475C9 DD E1       0002M1      pop ix
 0475CB D1          0003M1      pop de
@@ -13739,10 +13760,10 @@ PC     Output      Line
 0475D4 F1          0013M1      pop af
 0475D5 08          0014M1      ex af,af'
 0475D6 D9          0015M1      exx
-0475D7 C9          0254        ret
-0475D8             0255    
-0475D8             0256    DEBUG_PRINT_TILE_TABLE:
-0475D8             0257        PUSH_ALL
+0475D7 C9          0268        ret
+0475D8             0269    
+0475D8             0270    DEBUG_PRINT_TILE_TABLE:
+0475D8             0271        PUSH_ALL
 0475D8 08          0001M1      ex af,af'
 0475D9 D9          0002M1      exx
 0475DA F5          0003M1      push af
@@ -13758,13 +13779,13 @@ PC     Output      Line
 0475E3 D5          0013M1      push de
 0475E4 DD E5       0014M1      push ix
 0475E6 FD E5       0015M1      push iy
-0475E8 CD 1C 01 04 0258        call printNewLine
-0475EC DD 21 00 67 0259        ld ix,tile_stack
+0475E8 CD 1C 01 04 0272        call printNewLine
+0475EC DD 21 00 67 0273        ld ix,tile_stack
        04          
-0475F1 DD 37 00    0260        ld ix,(ix)
-0475F4 CD 21 6B 04 0261        call dump_tile_record
-0475F8 CD 1C 01 04 0262        call printNewLine
-0475FC             0263        POP_ALL
+0475F1 DD 37 00    0274        ld ix,(ix)
+0475F4 CD 21 6B 04 0275        call dump_tile_record
+0475F8 CD 1C 01 04 0276        call printNewLine
+0475FC             0277        POP_ALL
 0475FC FD E1       0001M1      pop iy
 0475FE DD E1       0002M1      pop ix
 047600 D1          0003M1      pop de
@@ -13780,11 +13801,11 @@ PC     Output      Line
 047609 F1          0013M1      pop af
 04760A 08          0014M1      ex af,af'
 04760B D9          0015M1      exx
-04760C C9          0264        ret
-04760D             0265    ; end DEBUG_PRINT_TILE_TABLE
-04760D             0266    
-04760D             0267    DEBUG_PRINT_TABLE:
-04760D             0268        PUSH_ALL
+04760C C9          0278        ret
+04760D             0279    ; end DEBUG_PRINT_TILE_TABLE
+04760D             0280    
+04760D             0281    DEBUG_PRINT_TABLE:
+04760D             0282        PUSH_ALL
 04760D 08          0001M1      ex af,af'
 04760E D9          0002M1      exx
 04760F F5          0003M1      push af
@@ -13800,17 +13821,17 @@ PC     Output      Line
 047618 D5          0013M1      push de
 047619 DD E5       0014M1      push ix
 04761B FD E5       0015M1      push iy
-04761D CD 1C 01 04 0269        call printNewLine
-047621 CD CD 72 04 0270        call dump_sprite_record
-047625 CD 1C 01 04 0271        call printNewLine
-047629 CD 1C 01 04 0272        call printNewLine
-04762D             0273    
-04762D FD E5       0274        push iy
-04762F DD E1       0275        pop ix
-047631 CD CD 72 04 0276        call dump_sprite_record
-047635 CD 1C 01 04 0277        call printNewLine
-047639 CD 1C 01 04 0278        call printNewLine
-04763D             0279        POP_ALL
+04761D CD 1C 01 04 0283        call printNewLine
+047621 CD CD 72 04 0284        call dump_sprite_record
+047625 CD 1C 01 04 0285        call printNewLine
+047629 CD 1C 01 04 0286        call printNewLine
+04762D             0287    
+04762D FD E5       0288        push iy
+04762F DD E1       0289        pop ix
+047631 CD CD 72 04 0290        call dump_sprite_record
+047635 CD 1C 01 04 0291        call printNewLine
+047639 CD 1C 01 04 0292        call printNewLine
+04763D             0293        POP_ALL
 04763D FD E1       0001M1      pop iy
 04763F DD E1       0002M1      pop ix
 047641 D1          0003M1      pop de
@@ -13826,10 +13847,10 @@ PC     Output      Line
 04764A F1          0013M1      pop af
 04764B 08          0014M1      ex af,af'
 04764C D9          0015M1      exx
-04764D C9          0280        RET
-04764E             0281    
-04764E             0282    DEBUG_WAITKEYPRESS:
-04764E             0283        PUSH_ALL
+04764D C9          0294        RET
+04764E             0295    
+04764E             0296    DEBUG_WAITKEYPRESS:
+04764E             0297        PUSH_ALL
 04764E 08          0001M1      ex af,af'
 04764F D9          0002M1      exx
 047650 F5          0003M1      push af
@@ -13845,8 +13866,8 @@ PC     Output      Line
 047659 D5          0013M1      push de
 04765A DD E5       0014M1      push ix
 04765C FD E5       0015M1      push iy
-04765E CD B8 06 04 0284        call waitKeypress
-047662             0285        POP_ALL
+04765E CD B8 06 04 0298        call waitKeypress
+047662             0299        POP_ALL
 047662 FD E1       0001M1      pop iy
 047664 DD E1       0002M1      pop ix
 047666 D1          0003M1      pop de
@@ -13862,30 +13883,30 @@ PC     Output      Line
 04766F F1          0013M1      pop af
 047670 08          0014M1      ex af,af'
 047671 D9          0015M1      exx
-047672 C9          0286        RET
-047673             0287    
-047673             0288    DEBUG_PRINT_FIELDS:
-047673             0289        ; PUSH_ALL
-047673 01 00 00 00 0290        ld bc,0
-047677 4F          0291        ld c,a
-047678 DD 21 00 80 0292        ld ix,table_base
+047672 C9          0300        RET
+047673             0301    
+047673             0302    DEBUG_PRINT_FIELDS:
+047673             0303        ; PUSH_ALL
+047673 01 00 00 00 0304        ld bc,0
+047677 4F          0305        ld c,a
+047678 DD 21 00 80 0306        ld ix,table_base
        04          
-04767D DD 09       0293        add ix,bc
-04767F 06 14       0294        ld b,table_num_records
-047681             0295    @@:
-047681 DD E5       0296        push ix
-047683 E1          0297        pop hl
-047684 C5          0298        push bc ; save loop counter
-047685 3E 01       0299        ld a,1 ; print one byte
-047687 CD BD 06 04 0300        call dumpMemoryHex
-04768B ED 32 40    0301        lea ix,ix+table_record_size
-04768E C1          0302        pop bc ; restore loop counter
-04768F 10 F0       0303        djnz @b
-047691             0304        ; POP_ALL
-047691 C9          0305        ret
-047692             0306    
-047692             0307    DEBUG_PRINT_TILE_STACK:
-047692             0308        PUSH_ALL
+04767D DD 09       0307        add ix,bc
+04767F 06 14       0308        ld b,table_num_records
+047681             0309    @@:
+047681 DD E5       0310        push ix
+047683 E1          0311        pop hl
+047684 C5          0312        push bc ; save loop counter
+047685 3E 01       0313        ld a,1 ; print one byte
+047687 CD BD 06 04 0314        call dumpMemoryHex
+04768B ED 32 40    0315        lea ix,ix+table_record_size
+04768E C1          0316        pop bc ; restore loop counter
+04768F 10 F0       0317        djnz @b
+047691             0318        ; POP_ALL
+047691 C9          0319        ret
+047692             0320    
+047692             0321    DEBUG_PRINT_TILE_STACK:
+047692             0322        PUSH_ALL
 047692 08          0001M1      ex af,af'
 047693 D9          0002M1      exx
 047694 F5          0003M1      push af
@@ -13901,26 +13922,26 @@ PC     Output      Line
 04769D D5          0013M1      push de
 04769E DD E5       0014M1      push ix
 0476A0 FD E5       0015M1      push iy
-0476A2 CD 1C 01 04 0309        call printNewLine
-0476A6 CD 1C 01 04 0310        call printNewLine
-0476AA 2A 03 6A 04 0311        ld hl,(tile_stack_pointer)
-0476AE CD 64 01 04 0312        call printHexUHL
-0476B2 CD 1C 01 04 0313        call printNewLine
-0476B6 3A 09 6A 04 0314        ld a,(num_active_tiles)
-0476BA CD 4A 01 04 0315        call printHexA
-0476BE CD 1C 01 04 0316        call printNewLine
-0476C2 DD 21 00 67 0317        ld ix,tile_stack
+0476A2 CD 1C 01 04 0323        call printNewLine
+0476A6 CD 1C 01 04 0324        call printNewLine
+0476AA 2A 03 6A 04 0325        ld hl,(tile_stack_pointer)
+0476AE CD 64 01 04 0326        call printHexUHL
+0476B2 CD 1C 01 04 0327        call printNewLine
+0476B6 3A 09 6A 04 0328        ld a,(num_active_tiles)
+0476BA CD 4A 01 04 0329        call printHexA
+0476BE CD 1C 01 04 0330        call printNewLine
+0476C2 DD 21 00 67 0331        ld ix,tile_stack
        04          
-0476C7 06 08       0318        ld b,8
-0476C9             0319    @loop:
-0476C9 C5          0320        push bc
-0476CA DD 27 00    0321        ld hl,(ix)
-0476CD CD 64 01 04 0322        call printHexUHL
-0476D1 CD 1C 01 04 0323        call printNewLine
-0476D5 ED 32 03    0324        lea ix,ix+3
-0476D8 C1          0325        pop bc
-0476D9 10 EE       0326        djnz @loop
-0476DB             0327        POP_ALL
+0476C7 06 08       0332        ld b,8
+0476C9             0333    @loop:
+0476C9 C5          0334        push bc
+0476CA DD 27 00    0335        ld hl,(ix)
+0476CD CD 64 01 04 0336        call printHexUHL
+0476D1 CD 1C 01 04 0337        call printNewLine
+0476D5 ED 32 03    0338        lea ix,ix+3
+0476D8 C1          0339        pop bc
+0476D9 10 EE       0340        djnz @loop
+0476DB             0341        POP_ALL
 0476DB FD E1       0001M1      pop iy
 0476DD DD E1       0002M1      pop ix
 0476DF D1          0003M1      pop de
@@ -13936,10 +13957,10 @@ PC     Output      Line
 0476E8 F1          0013M1      pop af
 0476E9 08          0014M1      ex af,af'
 0476EA D9          0015M1      exx
-0476EB C9          0328        ret
-0476EC             0329    
-0476EC             0330    DEBUG_DUMP_PLAYER_RECORD:
-0476EC             0331        PUSH_ALL
+0476EB C9          0342        ret
+0476EC             0343    
+0476EC             0344    DEBUG_DUMP_PLAYER_RECORD:
+0476EC             0345        PUSH_ALL
 0476EC 08          0001M1      ex af,af'
 0476ED D9          0002M1      exx
 0476EE F5          0003M1      push af
@@ -13955,10 +13976,10 @@ PC     Output      Line
 0476F7 D5          0013M1      push de
 0476F8 DD E5       0014M1      push ix
 0476FA FD E5       0015M1      push iy
-0476FC CD 1C 01 04 0332        call printNewLine
-047700 CD 2C 61 04 0333        CALL dump_player_record
-047704 CD 1C 01 04 0334        call printNewLine
-047708             0335        POP_ALL
+0476FC CD 1C 01 04 0346        call printNewLine
+047700 CD 2C 61 04 0347        CALL dump_player_record
+047704 CD 1C 01 04 0348        call printNewLine
+047708             0349        POP_ALL
 047708 FD E1       0001M1      pop iy
 04770A DD E1       0002M1      pop ix
 04770C D1          0003M1      pop de
@@ -13974,9 +13995,9 @@ PC     Output      Line
 047715 F1          0013M1      pop af
 047716 08          0014M1      ex af,af'
 047717 D9          0015M1      exx
-047718 C9          0336        RET
-047719             0337    
-047719             0338        include "tables.inc"
+047718 C9          0350        RET
+047719             0351    
+047719             0352        include "tables.inc"
 047719             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
 047719             0002*   ; table_base: equ $
 047719             0003*   table_base: equ 0x048000 ; DEBUG

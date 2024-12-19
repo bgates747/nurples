@@ -205,7 +205,16 @@ main:
 ; start a new game
     call game_initialize
 
+    ; ld iy,tmr_test
+    ; ld hl,2400 ; 20 seconds
+    ; call tmr_set
+    ; ld hl,0 ; counter
+    ; call vdu_vblank
+
 main_loop:
+    ; inc hl ; increment counter
+    ; push hl ; save counter
+
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
@@ -232,9 +241,14 @@ main_loop:
     jp z, main_end ; if pressed, jump to exit
     
 ; escape not pressed so loop
+    ; ld iy,tmr_test
+    ; call tmr_get
+    ; pop hl ; restore counter
+    ; jp m,main_end ; if timer expired, jump to exit
     jp main_loop
 
 main_end:
+    ; call printDec
     call vdu_cursor_on
     ret
 
