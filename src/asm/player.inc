@@ -62,6 +62,16 @@ player_init:
     set sprite_alive,(iy+sprite_collisions)
     ret
 
+; UART ports for reading joystick input
+portC: 	EQU 	$9E ; reads dpad input
+joy_u: equ 1
+joy_d: equ 3
+joy_l: equ 5
+joy_r: equ 7
+portD: 	EQU 	$A2 ; reads buttons 
+btn_b: equ 5
+btn_u: equ 7
+
 ; process player keyboard input, set player bitmap
 ; velocities and draw player bitmap at updated coordinates
 ; Inputs: player_x/y set at desired position
@@ -70,6 +80,20 @@ player_init:
 ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
 ; TODO: requires sprite implementation
 player_input:
+; DEBUG
+    call vdu_home_cursor
+    call printInline
+    asciz "76543210\r\n"
+    xor a ; clear flags
+    IN a,(portC) ; read dpad input
+    call printBin8
+    call printNewLine
+    xor a ; clear flags
+    IN a,(portD) ; read fire button input
+    call printBin8
+    call printNewLine
+; END DEBUG
+
     ld iy,player_begin
     ld (table_pointer),iy
 ; ; did we die last frame?
@@ -96,46 +120,62 @@ player_not_dead: ; yay we didn't die
 ; and allows diagonal movement when a vertical and horizontal key are down
 ; it also allows movement and action keys to be detected simultaneously
 ; so we can walk and chew gum at the same time
+; do player directional input
+    xor a ; clear flags
+    in a,(portC) ; read dpad input
+    ld d,a ; save dpad input
     ld a,1 ; set ship's default animation to center
-        ; if left and right are both down a will net to 
-
-; 99 Space: fire main weapon
-    bit 2,(ix+12)
-    push af ; save flags for after player movement processed
+        ; if left and right are both down a will net to 1
 ; 26 Left: move player left
     bit 1,(ix+3)
+    jp nz,@F
+    bit joy_l,d
     jp z,@F
+    jp @right
+@@:
     ld hl,(iy+sprite_xvel)
     ld bc,-speed_player
     add hl,bc
     ld (iy+sprite_xvel),hl
     dec a ; set ship's animation to left
-@@:
+@right:
 ; 122 Right: move player right
     bit 1,(ix+15)
+    jp nz,@F
+    bit joy_r,d
     jp z,@F
+    jp @up
+@@:
     ld hl,(iy+sprite_xvel)
     ld bc,speed_player
     add hl,bc
     ld (iy+sprite_xvel),hl
     inc a ; set ship's animation to right
-@@:
+@up:
 ; 58 Up: move player up
     bit 1,(ix+7)
+    jp nz,@F
+    bit joy_u,d
     jp z,@F
+    jp @dn
+@@:
     ld hl,(iy+sprite_yvel)
     ld bc,-speed_player
     add hl,bc
     ld (iy+sprite_yvel),hl
-@@:
+@dn:
 ; 42 Down: move player down
     bit 1,(ix+5)
+    jp nz,@F
+    bit joy_d,d
     jp z,@F
+    jp @frame
+@@:
     ld hl,(iy+sprite_yvel)
     ld bc,speed_player
     add hl,bc
     ld (iy+sprite_yvel),hl
-@@:
+@frame:
 ; a should land here loaded with the correct frame
     call vdu_sprite_select_frame
 ; draw player at updated position
@@ -145,10 +185,17 @@ player_not_dead: ; yay we didn't die
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
+
 ; process player laser fire
-    pop af ; restore flags from spacebar check
-    jp nz,player_spawn_laser ; will return to caller from there
-    ret
+; do player fire button input
+; read joystick fire button
+    xor a ; clear flags
+    in a,(portD) ; read fire button input
+    bit btn_b,a
+    jp z,player_spawn_laser
+; 99 Space: fire main weapon
+    bit 2,(ix+12)
+    jp nz,player_spawn_laser
 ; end player_input
 
 score_x: equ 48
