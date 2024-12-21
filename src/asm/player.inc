@@ -63,14 +63,14 @@ player_init:
     ret
 
 ; UART ports for reading joystick input
+; bit tests: 0 means actuated, 1 means not actuated
 portC: 	EQU 	$9E ; reads dpad input
-joy_u: equ 1
-joy_d: equ 3
-joy_l: equ 5
-joy_r: equ 7
+joy1_u: equ 1
+joy1_d: equ 3
+joy1_l: equ 5
+joy1_r: equ 7
 portD: 	EQU 	$A2 ; reads buttons 
-btn_b: equ 5
-btn_u: equ 7
+btn1_a: equ 5
 
 ; process player keyboard input, set player bitmap
 ; velocities and draw player bitmap at updated coordinates
@@ -129,7 +129,8 @@ player_not_dead: ; yay we didn't die
 ; 26 Left: move player left
     bit 1,(ix+3)
     jp nz,@F
-    bit joy_l,d
+; test dpad left
+    bit joy1_l,d
     jp z,@F
     jp @right
 @@:
@@ -142,7 +143,8 @@ player_not_dead: ; yay we didn't die
 ; 122 Right: move player right
     bit 1,(ix+15)
     jp nz,@F
-    bit joy_r,d
+; test dpad right
+    bit joy1_r,d
     jp z,@F
     jp @up
 @@:
@@ -155,7 +157,8 @@ player_not_dead: ; yay we didn't die
 ; 58 Up: move player up
     bit 1,(ix+7)
     jp nz,@F
-    bit joy_u,d
+; test dpad up
+    bit joy1_u,d
     jp z,@F
     jp @dn
 @@:
@@ -167,7 +170,8 @@ player_not_dead: ; yay we didn't die
 ; 42 Down: move player down
     bit 1,(ix+5)
     jp nz,@F
-    bit joy_d,d
+; test dpad down
+    bit joy1_d,d
     jp z,@F
     jp @frame
 @@:
@@ -190,12 +194,14 @@ player_not_dead: ; yay we didn't die
 ; do player fire button input
 ; read joystick fire button
     xor a ; clear flags
-    in a,(portD) ; read fire button input
-    bit btn_b,a
+    in a,(portD) ; read joypad fire button input
+    bit btn1_a,a
     jp z,player_spawn_laser
 ; 99 Space: fire main weapon
     bit 2,(ix+12)
     jp nz,player_spawn_laser
+; no fire button pressed so go home
+    ret
 ; end player_input
 
 score_x: equ 48

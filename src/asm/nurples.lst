@@ -10687,14 +10687,14 @@ PC     Output      Line
 04606C C9          0063*       ret
 04606D             0064*   
 04606D             0065*   ; UART ports for reading joystick input
-04606D             0066*   portC: 	EQU 	$9E ; reads dpad input
-04606D             0067*   joy_u: equ 1
-04606D             0068*   joy_d: equ 3
-04606D             0069*   joy_l: equ 5
-04606D             0070*   joy_r: equ 7
-04606D             0071*   portD: 	EQU 	$A2 ; reads buttons
-04606D             0072*   btn_b: equ 5
-04606D             0073*   btn_u: equ 7
+04606D             0066*   ; bit tests: 0 means actuated, 1 means not actuated
+04606D             0067*   portC: 	EQU 	$9E ; reads dpad input
+04606D             0068*   joy1_u: equ 1
+04606D             0069*   joy1_d: equ 3
+04606D             0070*   joy1_l: equ 5
+04606D             0071*   joy1_r: equ 7
+04606D             0072*   portD: 	EQU 	$A2 ; reads buttons
+04606D             0073*   btn1_a: equ 5
 04606D             0074*   
 04606D             0075*   ; process player keyboard input, set player bitmap
 04606D             0076*   ; velocities and draw player bitmap at updated coordinates
@@ -10759,416 +10759,422 @@ PC     Output      Line
 0460BB             0129*   ; 26 Left: move player left
 0460BB DD CB 03 4E 0130*       bit 1,(ix+3)
 0460BF C2 CD 60 04 0131*       jp nz,@F
-0460C3 CB 6A       0132*       bit joy_l,d
-0460C5 CA CD 60 04 0133*       jp z,@F
-0460C9 C3 D9 60 04 0134*       jp @right
-0460CD             0135*   @@:
-0460CD FD 27 07    0136*       ld hl,(iy+sprite_xvel)
-0460D0 01 00 FD FF 0137*       ld bc,-speed_player
-0460D4 09          0138*       add hl,bc
-0460D5 FD 2F 07    0139*       ld (iy+sprite_xvel),hl
-0460D8 3D          0140*       dec a ; set ship's animation to left
-0460D9             0141*   @right:
-0460D9             0142*   ; 122 Right: move player right
-0460D9 DD CB 0F 4E 0143*       bit 1,(ix+15)
-0460DD C2 EB 60 04 0144*       jp nz,@F
-0460E1 CB 7A       0145*       bit joy_r,d
-0460E3 CA EB 60 04 0146*       jp z,@F
-0460E7 C3 F7 60 04 0147*       jp @up
-0460EB             0148*   @@:
-0460EB FD 27 07    0149*       ld hl,(iy+sprite_xvel)
-0460EE 01 00 03 00 0150*       ld bc,speed_player
-0460F2 09          0151*       add hl,bc
-0460F3 FD 2F 07    0152*       ld (iy+sprite_xvel),hl
-0460F6 3C          0153*       inc a ; set ship's animation to right
-0460F7             0154*   @up:
-0460F7             0155*   ; 58 Up: move player up
-0460F7 DD CB 07 4E 0156*       bit 1,(ix+7)
-0460FB C2 09 61 04 0157*       jp nz,@F
-0460FF CB 4A       0158*       bit joy_u,d
-046101 CA 09 61 04 0159*       jp z,@F
-046105 C3 14 61 04 0160*       jp @dn
-046109             0161*   @@:
-046109 FD 27 0A    0162*       ld hl,(iy+sprite_yvel)
-04610C 01 00 FD FF 0163*       ld bc,-speed_player
-046110 09          0164*       add hl,bc
-046111 FD 2F 0A    0165*       ld (iy+sprite_yvel),hl
-046114             0166*   @dn:
-046114             0167*   ; 42 Down: move player down
-046114 DD CB 05 4E 0168*       bit 1,(ix+5)
-046118 C2 26 61 04 0169*       jp nz,@F
-04611C CB 5A       0170*       bit joy_d,d
-04611E CA 26 61 04 0171*       jp z,@F
-046122 C3 31 61 04 0172*       jp @frame
-046126             0173*   @@:
-046126 FD 27 0A    0174*       ld hl,(iy+sprite_yvel)
-046129 01 00 03 00 0175*       ld bc,speed_player
-04612D 09          0176*       add hl,bc
-04612E FD 2F 0A    0177*       ld (iy+sprite_yvel),hl
-046131             0178*   @frame:
-046131             0179*   ; a should land here loaded with the correct frame
-046131 CD 63 20 04 0180*       call vdu_sprite_select_frame
-046135             0181*   ; draw player at updated position
-046135 FD 21 00 81 0182*       ld iy,player_begin
+0460C3             0132*   ; test dpad left
+0460C3 CB 6A       0133*       bit joy1_l,d
+0460C5 CA CD 60 04 0134*       jp z,@F
+0460C9 C3 D9 60 04 0135*       jp @right
+0460CD             0136*   @@:
+0460CD FD 27 07    0137*       ld hl,(iy+sprite_xvel)
+0460D0 01 00 FD FF 0138*       ld bc,-speed_player
+0460D4 09          0139*       add hl,bc
+0460D5 FD 2F 07    0140*       ld (iy+sprite_xvel),hl
+0460D8 3D          0141*       dec a ; set ship's animation to left
+0460D9             0142*   @right:
+0460D9             0143*   ; 122 Right: move player right
+0460D9 DD CB 0F 4E 0144*       bit 1,(ix+15)
+0460DD C2 EB 60 04 0145*       jp nz,@F
+0460E1             0146*   ; test dpad right
+0460E1 CB 7A       0147*       bit joy1_r,d
+0460E3 CA EB 60 04 0148*       jp z,@F
+0460E7 C3 F7 60 04 0149*       jp @up
+0460EB             0150*   @@:
+0460EB FD 27 07    0151*       ld hl,(iy+sprite_xvel)
+0460EE 01 00 03 00 0152*       ld bc,speed_player
+0460F2 09          0153*       add hl,bc
+0460F3 FD 2F 07    0154*       ld (iy+sprite_xvel),hl
+0460F6 3C          0155*       inc a ; set ship's animation to right
+0460F7             0156*   @up:
+0460F7             0157*   ; 58 Up: move player up
+0460F7 DD CB 07 4E 0158*       bit 1,(ix+7)
+0460FB C2 09 61 04 0159*       jp nz,@F
+0460FF             0160*   ; test dpad up
+0460FF CB 4A       0161*       bit joy1_u,d
+046101 CA 09 61 04 0162*       jp z,@F
+046105 C3 14 61 04 0163*       jp @dn
+046109             0164*   @@:
+046109 FD 27 0A    0165*       ld hl,(iy+sprite_yvel)
+04610C 01 00 FD FF 0166*       ld bc,-speed_player
+046110 09          0167*       add hl,bc
+046111 FD 2F 0A    0168*       ld (iy+sprite_yvel),hl
+046114             0169*   @dn:
+046114             0170*   ; 42 Down: move player down
+046114 DD CB 05 4E 0171*       bit 1,(ix+5)
+046118 C2 26 61 04 0172*       jp nz,@F
+04611C             0173*   ; test dpad down
+04611C CB 5A       0174*       bit joy1_d,d
+04611E CA 26 61 04 0175*       jp z,@F
+046122 C3 31 61 04 0176*       jp @frame
+046126             0177*   @@:
+046126 FD 27 0A    0178*       ld hl,(iy+sprite_yvel)
+046129 01 00 03 00 0179*       ld bc,speed_player
+04612D 09          0180*       add hl,bc
+04612E FD 2F 0A    0181*       ld (iy+sprite_yvel),hl
+046131             0182*   @frame:
+046131             0183*   ; a should land here loaded with the correct frame
+046131 CD 63 20 04 0184*       call vdu_sprite_select_frame
+046135             0185*   ; draw player at updated position
+046135 FD 21 00 81 0186*       ld iy,player_begin
        04          
-04613A FD 22 65 71 0183*       ld (table_pointer),iy
+04613A FD 22 65 71 0187*       ld (table_pointer),iy
        04          
-04613F CD D5 72 04 0184*       call move_sprite
-046143 FD 07 01    0185*       ld bc,(iy+sprite_x)
-046146 FD 17 04    0186*       ld de,(iy+sprite_y)
-046149 CD CC 20 04 0187*       call vdu_sprite_move_abs168
-04614D             0188*   
-04614D             0189*   ; process player laser fire
-04614D             0190*   ; do player fire button input
-04614D             0191*   ; read joystick fire button
-04614D AF          0192*       xor a ; clear flags
-04614E DB A2       0193*       in a,(portD) ; read fire button input
-046150 CB 6F       0194*       bit btn_b,a
-046152 CA 1C 64 04 0195*       jp z,player_spawn_laser
-046156             0196*   ; 99 Space: fire main weapon
-046156 DD CB 0C 56 0197*       bit 2,(ix+12)
-04615A C2 1C 64 04 0198*       jp nz,player_spawn_laser
-04615E             0199*   ; end player_input
-04615E             0200*   
-04615E             0201*   score_x: equ 48
-04615E             0202*   score_y: equ 1
-04615E             0203*   ; prints the player's score
-04615E             0204*   print_score:
-04615E 0E 30       0205*       ld c,score_x
-046160 06 01       0206*       ld b,score_y
-046162 CD 37 1A 04 0207*       call vdu_move_cursor
-046166             0208*   ; TODO: make this part of the UI setup and only print as needed
-046166 CD 00 01 04 0209*       call printInline
-04616A 53 63 6F 72 0210*       asciz "Score:"
+04613F CD D5 72 04 0188*       call move_sprite
+046143 FD 07 01    0189*       ld bc,(iy+sprite_x)
+046146 FD 17 04    0190*       ld de,(iy+sprite_y)
+046149 CD CC 20 04 0191*       call vdu_sprite_move_abs168
+04614D             0192*   
+04614D             0193*   ; process player laser fire
+04614D             0194*   ; do player fire button input
+04614D             0195*   ; read joystick fire button
+04614D AF          0196*       xor a ; clear flags
+04614E DB A2       0197*       in a,(portD) ; read joypad fire button input
+046150 CB 6F       0198*       bit btn1_a,a
+046152 CA 1C 64 04 0199*       jp z,player_spawn_laser
+046156             0200*   ; 99 Space: fire main weapon
+046156 DD CB 0C 56 0201*       bit 2,(ix+12)
+04615A C2 1C 64 04 0202*       jp nz,player_spawn_laser
+04615E             0203*   ; no fire button pressed so go home
+04615E C9          0204*       ret
+04615F             0205*   ; end player_input
+04615F             0206*   
+04615F             0207*   score_x: equ 48
+04615F             0208*   score_y: equ 1
+04615F             0209*   ; prints the player's score
+04615F             0210*   print_score:
+04615F 0E 30       0211*       ld c,score_x
+046161 06 01       0212*       ld b,score_y
+046163 CD 37 1A 04 0213*       call vdu_move_cursor
+046167             0214*   ; TODO: make this part of the UI setup and only print as needed
+046167 CD 00 01 04 0215*       call printInline
+04616B 53 63 6F 72 0216*       asciz "Score:"
        65 3A 00    
-046171             0211*   ; END TODO
-046171 2A 00 60 04 0212*       ld hl,(player_score)
-046175 CD 06 02 04 0213*       call printDec
-046179 C9          0214*       ret
-04617A             0215*   ; end print_score
-04617A             0216*   
-04617A             0217*   player_move_weapons:
-04617A             0218*   ; initialize pointers and loop counter
-04617A FD 21 00 80 0219*       ld iy,player_weapons_begin ; set iy to first record in table
+046172             0217*   ; END TODO
+046172 2A 00 60 04 0218*       ld hl,(player_score)
+046176 CD 06 02 04 0219*       call printDec
+04617A C9          0220*       ret
+04617B             0221*   ; end print_score
+04617B             0222*   
+04617B             0223*   player_move_weapons:
+04617B             0224*   ; initialize pointers and loop counter
+04617B FD 21 00 80 0225*       ld iy,player_weapons_begin ; set iy to first record in table
        04          
-04617F 06 04       0220*       ld b,player_lasers_max ; loop counter
-046181 CD 54 72 04 0221*       call move_sprite_group
-046185 C9          0222*       ret
-046186             0223*   ; end player_move_weapons
-046186             0224*   
-046186             0225*   ; ###################################################################
-046186             0226*   ; TODO: the below is all stuff from the original code we need to port
-046186             0227*   ; ###################################################################
-046186             0228*   
-046186             0229*   kill_player:
-046186             0230*   ; ; set player status to dead
-046186             0231*   ;     xor a; sets all player flags to zero
-046186             0232*   ;     ld (player_collisions),a
-046186             0233*   ; ; deduct a ship from the inventory
-046186             0234*   ;     ld a,(player_ships)
-046186             0235*   ;     dec a
-046186             0236*   ;     ld (player_ships),a
-046186             0237*   ; ; are we out of ships?
-046186             0238*   ;     jp z,game_over
-046186             0239*   ; ; wait a few ticks
-046186             0240*   ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
-046186             0241*   ;     ld (player_move_timer),a
-046186             0242*   ; kill_player_loop:
-046186             0243*   ;     call vdu_vblank
-046186             0244*   ;     ld a,(player_move_timer)
-046186             0245*   ;     dec a
-046186             0246*   ;     ld (player_move_timer),a
-046186             0247*   ;     jr nz,kill_player_loop
-046186             0248*   ;     call player_init ; player respawn if timer zero
-046186 C9          0249*       ret ; and out
-046187             0250*   
-046187             0251*   ; draws the player's shields level
-046187             0252*   ; draw_shields:
-046187             0253*   ; TODO: Agonize this routine
-046187             0254*   ; ; prep the loop to draw the bars
-046187             0255*   ;     ld a,(player_shields) ; snag shields
-046187             0256*   ;     and a
-046187             0257*   ;     ret z ; don't draw if zero shields
-046187             0258*   ; ; set loop counter and drawing position
-046187             0259*   ;     ld b,a ; loop counter
-046187             0260*   ;     ld hl,#5300+48+12
-046187             0261*   ; ; set color based on bars remaining
-046187             0262*   ;     ld c,103 ; bright green 28fe0a
-046187             0263*   ;     cp 9
-046187             0264*   ;     jp p,draw_shields_loop
-046187             0265*   ;     ld c,74 ; bright yellow eafe5b
-046187             0266*   ;     cp 3
-046187             0267*   ;     jp p,draw_shields_loop
-046187             0268*   ;     ld c,28 ; bright red fe0a0a
-046187             0269*   ; draw_shields_loop:
-046187             0270*   ;     push bc ; yup,outta
-046187             0271*   ;     push hl ; registers again
-046187             0272*   ;     ; ld a,#A8 ; ▀,168
-046187             0273*   ;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
-046187             0274*   ;     ; call draw_char
-046187             0275*   ;     call draw_num ; we nuked draw_char for the time being
-046187             0276*   ;     pop hl
-046187             0277*   ;     ld a,8
-046187             0278*   ;     add a,l
-046187             0279*   ;     ld l,a
-046187             0280*   ;     pop bc
-046187             0281*   ;     djnz draw_shields_loop
-046187             0282*       ; ret
-046187             0283*   
-046187             0284*   
-046187             0285*   ; draw_lives:
-046187             0286*   ;     ld hl,player_small ; make small yellow ship the active sprite
-046187             0287*   ;     ld (sprite_base_bufferId),hl
-046187             0288*   ;     ; ld a,#80 ; northern orientation
-046187             0289*   ;     ; ld (sprite_orientation),a
-046187             0290*   ;     ld hl,0 ; north
-046187             0291*   ;     ld (sprite_heading),hl
-046187             0292*   ;     xor a
-046187             0293*   ;     ld (sprite_frame),a
-046187             0294*   ;     ld a,#56 ; top of visible screen
-046187             0295*   ;     ld (sprite_y+1),a
-046187             0296*   ;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-046187             0297*   ;     ld a,(player_ships)
-046187             0298*   ;     dec a ; we draw one fewer ships than lives
-046187             0299*   ;     ret z ; nothing to draw here, move along
-046187             0300*   ;     ld b,a ; loop counter
-046187             0301*   ;     ld a,256-16 ; initial x position
-046187             0302*   ; draw_lives_loop:
-046187             0303*   ;     ld (sprite_x+1),a
-046187             0304*   ;     push af
-046187             0305*   ;     push bc
-046187             0306*   ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-046187             0307*   ;     pop bc
-046187             0308*   ;     pop af
-046187             0309*   ;     sub 10
-046187             0310*   ;     djnz draw_lives_loop
-046187             0311*   ;     ret
-046187             0312*   
-046187             0313*   
-046187             0314*   dump_player_record:
-046187 DD 21 00 81 0315*       ld ix,player_begin
+046180 06 04       0226*       ld b,player_lasers_max ; loop counter
+046182 CD 54 72 04 0227*       call move_sprite_group
+046186 C9          0228*       ret
+046187             0229*   ; end player_move_weapons
+046187             0230*   
+046187             0231*   ; ###################################################################
+046187             0232*   ; TODO: the below is all stuff from the original code we need to port
+046187             0233*   ; ###################################################################
+046187             0234*   
+046187             0235*   kill_player:
+046187             0236*   ; ; set player status to dead
+046187             0237*   ;     xor a; sets all player flags to zero
+046187             0238*   ;     ld (player_collisions),a
+046187             0239*   ; ; deduct a ship from the inventory
+046187             0240*   ;     ld a,(player_ships)
+046187             0241*   ;     dec a
+046187             0242*   ;     ld (player_ships),a
+046187             0243*   ; ; are we out of ships?
+046187             0244*   ;     jp z,game_over
+046187             0245*   ; ; wait a few ticks
+046187             0246*   ;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
+046187             0247*   ;     ld (player_move_timer),a
+046187             0248*   ; kill_player_loop:
+046187             0249*   ;     call vdu_vblank
+046187             0250*   ;     ld a,(player_move_timer)
+046187             0251*   ;     dec a
+046187             0252*   ;     ld (player_move_timer),a
+046187             0253*   ;     jr nz,kill_player_loop
+046187             0254*   ;     call player_init ; player respawn if timer zero
+046187 C9          0255*       ret ; and out
+046188             0256*   
+046188             0257*   ; draws the player's shields level
+046188             0258*   ; draw_shields:
+046188             0259*   ; TODO: Agonize this routine
+046188             0260*   ; ; prep the loop to draw the bars
+046188             0261*   ;     ld a,(player_shields) ; snag shields
+046188             0262*   ;     and a
+046188             0263*   ;     ret z ; don't draw if zero shields
+046188             0264*   ; ; set loop counter and drawing position
+046188             0265*   ;     ld b,a ; loop counter
+046188             0266*   ;     ld hl,#5300+48+12
+046188             0267*   ; ; set color based on bars remaining
+046188             0268*   ;     ld c,103 ; bright green 28fe0a
+046188             0269*   ;     cp 9
+046188             0270*   ;     jp p,draw_shields_loop
+046188             0271*   ;     ld c,74 ; bright yellow eafe5b
+046188             0272*   ;     cp 3
+046188             0273*   ;     jp p,draw_shields_loop
+046188             0274*   ;     ld c,28 ; bright red fe0a0a
+046188             0275*   ; draw_shields_loop:
+046188             0276*   ;     push bc ; yup,outta
+046188             0277*   ;     push hl ; registers again
+046188             0278*   ;     ; ld a,#A8 ; ▀,168
+046188             0279*   ;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
+046188             0280*   ;     ; call draw_char
+046188             0281*   ;     call draw_num ; we nuked draw_char for the time being
+046188             0282*   ;     pop hl
+046188             0283*   ;     ld a,8
+046188             0284*   ;     add a,l
+046188             0285*   ;     ld l,a
+046188             0286*   ;     pop bc
+046188             0287*   ;     djnz draw_shields_loop
+046188             0288*       ; ret
+046188             0289*   
+046188             0290*   
+046188             0291*   ; draw_lives:
+046188             0292*   ;     ld hl,player_small ; make small yellow ship the active sprite
+046188             0293*   ;     ld (sprite_base_bufferId),hl
+046188             0294*   ;     ; ld a,#80 ; northern orientation
+046188             0295*   ;     ; ld (sprite_orientation),a
+046188             0296*   ;     ld hl,0 ; north
+046188             0297*   ;     ld (sprite_heading),hl
+046188             0298*   ;     xor a
+046188             0299*   ;     ld (sprite_frame),a
+046188             0300*   ;     ld a,#56 ; top of visible screen
+046188             0301*   ;     ld (sprite_y+1),a
+046188             0302*   ;     call vdu_buff_select ; TODO: convert to vdu_buff_select
+046188             0303*   ;     ld a,(player_ships)
+046188             0304*   ;     dec a ; we draw one fewer ships than lives
+046188             0305*   ;     ret z ; nothing to draw here, move along
+046188             0306*   ;     ld b,a ; loop counter
+046188             0307*   ;     ld a,256-16 ; initial x position
+046188             0308*   ; draw_lives_loop:
+046188             0309*   ;     ld (sprite_x+1),a
+046188             0310*   ;     push af
+046188             0311*   ;     push bc
+046188             0312*   ;     call vdu_bmp_draw ; convert to vdu_bmp_plot
+046188             0313*   ;     pop bc
+046188             0314*   ;     pop af
+046188             0315*   ;     sub 10
+046188             0316*   ;     djnz draw_lives_loop
+046188             0317*   ;     ret
+046188             0318*   
+046188             0319*   
+046188             0320*   dump_player_record:
+046188 DD 21 00 81 0321*       ld ix,player_begin
        04          
-04618C             0316*   
-04618C CD 00 01 04 0317*       call printInline
-046190 69 64 20 20 0318*       asciz "id  : "
+04618D             0322*   
+04618D CD 00 01 04 0323*       call printInline
+046191 69 64 20 20 0324*       asciz "id  : "
        3A 20 00    
-046197 DD 7E 00    0319*       ld a,(ix+sprite_id)
-04619A CD 4A 01 04 0320*       call printHexA
-04619E             0321*   
-04619E CD 00 01 04 0322*       call printInline
-0461A2 0D 0A 78 20 0323*       asciz "\r\nx   :"
+046198 DD 7E 00    0325*       ld a,(ix+sprite_id)
+04619B CD 4A 01 04 0326*       call printHexA
+04619F             0327*   
+04619F CD 00 01 04 0328*       call printInline
+0461A3 0D 0A 78 20 0329*       asciz "\r\nx   :"
        20 20 3A 00 
-0461AA DD 27 01    0324*       ld hl,(ix+sprite_x)
-0461AD CD 2B 03 04 0325*       call print_s168_hl
-0461B1             0326*   
-0461B1 CD 00 01 04 0327*       call printInline
-0461B5 0D 0A 79 20 0328*       asciz "\r\ny   :"
+0461AB DD 27 01    0330*       ld hl,(ix+sprite_x)
+0461AE CD 2B 03 04 0331*       call print_s168_hl
+0461B2             0332*   
+0461B2 CD 00 01 04 0333*       call printInline
+0461B6 0D 0A 79 20 0334*       asciz "\r\ny   :"
        20 20 3A 00 
-0461BD DD 27 04    0329*       ld hl,(ix+sprite_y)
-0461C0 CD 2B 03 04 0330*       call print_s168_hl
-0461C4             0331*   
-0461C4 CD 00 01 04 0332*       call printInline
-0461C8 0D 0A 78 76 0333*       asciz "\r\nxv  :"
+0461BE DD 27 04    0335*       ld hl,(ix+sprite_y)
+0461C1 CD 2B 03 04 0336*       call print_s168_hl
+0461C5             0337*   
+0461C5 CD 00 01 04 0338*       call printInline
+0461C9 0D 0A 78 76 0339*       asciz "\r\nxv  :"
        20 20 3A 00 
-0461D0 DD 27 07    0334*       ld hl,(ix+sprite_xvel)
-0461D3 CD 2B 03 04 0335*       call print_s168_hl
-0461D7             0336*   
-0461D7 CD 00 01 04 0337*       call printInline
-0461DB 0D 0A 79 76 0338*       asciz "\r\nyv  :"
+0461D1 DD 27 07    0340*       ld hl,(ix+sprite_xvel)
+0461D4 CD 2B 03 04 0341*       call print_s168_hl
+0461D8             0342*   
+0461D8 CD 00 01 04 0343*       call printInline
+0461DC 0D 0A 79 76 0344*       asciz "\r\nyv  :"
        20 20 3A 00 
-0461E3 DD 27 0A    0339*       ld hl,(ix+sprite_yvel)
-0461E6 CD 2B 03 04 0340*       call print_s168_hl
-0461EA             0341*   
-0461EA CD 00 01 04 0342*       call printInline
-0461EE 0D 0A 76 20 0343*       asciz "\r\nv   :"
+0461E4 DD 27 0A    0345*       ld hl,(ix+sprite_yvel)
+0461E7 CD 2B 03 04 0346*       call print_s168_hl
+0461EB             0347*   
+0461EB CD 00 01 04 0348*       call printInline
+0461EF 0D 0A 76 20 0349*       asciz "\r\nv   :"
        20 20 3A 00 
-0461F6 DD 27 0D    0344*       ld hl,(ix+sprite_vel)
-0461F9 CD 2B 03 04 0345*       call print_s168_hl
-0461FD             0346*   
-0461FD CD 00 01 04 0347*       call printInline
-046201 0D 0A 68 64 0348*       asciz "\r\nhdg :"
+0461F7 DD 27 0D    0350*       ld hl,(ix+sprite_vel)
+0461FA CD 2B 03 04 0351*       call print_s168_hl
+0461FE             0352*   
+0461FE CD 00 01 04 0353*       call printInline
+046202 0D 0A 68 64 0354*       asciz "\r\nhdg :"
        67 20 3A 00 
-046209 DD 27 10    0349*       ld hl,(ix+sprite_heading)
-04620C CD 2B 03 04 0350*       call print_s168_hl
-046210             0351*   
-046210 CD 00 01 04 0352*       call printInline
-046214 0D 0A 6F 72 0353*       asciz "\r\nori :"
+04620A DD 27 10    0355*       ld hl,(ix+sprite_heading)
+04620D CD 2B 03 04 0356*       call print_s168_hl
+046211             0357*   
+046211 CD 00 01 04 0358*       call printInline
+046215 0D 0A 6F 72 0359*       asciz "\r\nori :"
        69 20 3A 00 
-04621C DD 27 13    0354*       ld hl,(ix+sprite_orientation)
-04621F CD 2B 03 04 0355*       call print_s168_hl
-046223             0356*   
-046223 CD 00 01 04 0357*       call printInline
-046227 0D 0A 74 79 0358*       asciz "\r\ntyp : "
+04621D DD 27 13    0360*       ld hl,(ix+sprite_orientation)
+046220 CD 2B 03 04 0361*       call print_s168_hl
+046224             0362*   
+046224 CD 00 01 04 0363*       call printInline
+046228 0D 0A 74 79 0364*       asciz "\r\ntyp : "
        70 20 3A 20 
        00          
-046230 DD 7E 16    0359*       ld a,(ix+sprite_type)
-046233 CD 4A 01 04 0360*       call printHexA
-046237             0361*   
-046237 CD 00 01 04 0362*       call printInline
-04623B 0D 0A 42 49 0363*       asciz "\r\nBId : "
+046231 DD 7E 16    0365*       ld a,(ix+sprite_type)
+046234 CD 4A 01 04 0366*       call printHexA
+046238             0367*   
+046238 CD 00 01 04 0368*       call printInline
+04623C 0D 0A 42 49 0369*       asciz "\r\nBId : "
        64 20 3A 20 
        00          
-046244 DD 27 17    0364*       ld hl,(ix+sprite_base_bufferId)
-046247 CD 27 01 04 0365*       call printHex24
-04624B             0366*   
-04624B CD 00 01 04 0367*       call printInline
-04624F 0D 0A 6D 50 0368*       asciz "\r\nmPg : "
+046245 DD 27 17    0370*       ld hl,(ix+sprite_base_bufferId)
+046248 CD 27 01 04 0371*       call printHex24
+04624C             0372*   
+04624C CD 00 01 04 0373*       call printInline
+046250 0D 0A 6D 50 0374*       asciz "\r\nmPg : "
        67 20 3A 20 
        00          
-046258 DD 27 1A    0369*       ld hl,(ix+sprite_move_program)
-04625B CD 27 01 04 0370*       call printHex24
-04625F             0371*   
-04625F CD 00 01 04 0372*       call printInline
-046263 0D 0A 63 6F 0373*       asciz "\r\ncol : "
+046259 DD 27 1A    0375*       ld hl,(ix+sprite_move_program)
+04625C CD 27 01 04 0376*       call printHex24
+046260             0377*   
+046260 CD 00 01 04 0378*       call printInline
+046264 0D 0A 63 6F 0379*       asciz "\r\ncol : "
        6C 20 3A 20 
        00          
-04626C DD 7E 1D    0374*       ld a,(ix+sprite_collisions)
-04626F CD A8 03 04 0375*       call printBin8
-046273             0376*   
-046273             0377*       ; call printInline
-046273             0378*       ; asciz "\r\nszx : "
-046273             0379*       ; ld a,(ix+sprite_dim_x)
-046273             0380*       ; call printHexA
-046273             0381*   
-046273             0382*       ; call printInline
-046273             0383*       ; asciz "\r\nszy : "
-046273             0384*       ; ld a,(ix+sprite_dim_y)
-046273             0385*       ; call printHexA
-046273             0386*   
-046273             0387*       ; call printInline
-046273             0388*       ; asciz "\r\n#ori: "
-046273             0389*       ; ld a,(ix+sprite_num_orientations)
-046273             0390*       ; call printHexA
-046273             0391*   
-046273             0392*       ; call printInline
-046273             0393*       ; asciz "\r\n#ani: "
-046273             0394*       ; ld a,(ix+sprite_num_animations)
-046273             0395*       ; call printHexA
-046273             0396*   
-046273             0397*       ; call printInline
-046273             0398*       ; asciz "\r\nani : "
-046273             0399*       ; ld a,(ix+sprite_animation)
-046273             0400*       ; call printHexA
-046273             0401*   
-046273             0402*       ; call printInline
-046273             0403*       ; asciz "\r\nanit: "
-046273             0404*       ; ld a,(ix+sprite_animation_timer)
-046273             0405*       ; call printHexA
-046273             0406*   
-046273             0407*       ; call printInline
-046273             0408*       ; asciz "\r\nmvt : "
-046273             0409*       ; ld a,(ix+sprite_move_timer)
-046273             0410*       ; call printHexA
-046273             0411*   
-046273             0412*       ; call printInline
-046273             0413*       ; asciz "\r\nmvs : "
-046273             0414*       ; ld a,(ix+sprite_move_step)
-046273             0415*       ; call printHexA
-046273             0416*   
-046273             0417*       ; call printInline
-046273             0418*       ; asciz "\r\npts : "
-046273             0419*       ; ld a,(ix+sprite_points)
-046273             0420*       ; call printHexA
-046273             0421*   
-046273             0422*       ; call printInline
-046273             0423*       ; asciz "\r\ndmg : "
-046273             0424*       ; ld a,(ix+sprite_shield_damage)
-046273             0425*       ; call printHexA
-046273             0426*   
-046273             0427*       ; call printInline
-046273             0428*       ; asciz "\r\nfrm : "
-046273             0429*       ; ld a,(ix+sprite_frame)
-046273             0430*       ; call printHexA
-046273             0431*   
-046273             0432*       ; call printNewLine
-046273             0433*       ; call printNewLine
-046273             0434*   
-046273             0435*       ; call waitKeypress
-046273 C9          0436*       ret
-046274             0060        include "player_cockpit.inc"
-046274             0001*   panel_bufferId: equ 0
-046274             0002*   panel_x0: equ 3
-046274             0003*   panel_y0: equ 6
-046274             0004*   panel_x1: equ 9
-046274             0005*   panel_y1: equ 12
-046274             0006*   
-046274             0007*   ctl_panel_l:
-046274 02 00 00    0008*       dl BUF_CTL_PANEL_L ; bufferId
-046277 00 00 00    0009*       dl 0 ; x0
-04627A 40 01 00    0010*       dl 320 ; y0
-04627D 80 00 00    0011*       dl 0+128 ; x1
-046280 80 01 00    0012*       dl 320+64 ; y1
-046283             0013*   
-046283             0014*   ctl_panel_r:
-046283 03 00 00    0015*       dl BUF_CTL_PANEL_R ; bufferId
-046286 80 01 00    0016*       dl 384 ; x0
-046289 40 01 00    0017*       dl 320 ; y0
-04628C 00 02 00    0018*       dl 384+128 ; x1
-04628F 80 01 00    0019*       dl 320+64 ; y1
-046292             0020*   
-046292             0021*   mfd_bezel_l:
-046292 05 00 00    0022*       dl BUF_MFD_BEZEL ; bufferId
-046295 40 00 00    0023*       dl 64 ; x0
-046298 46 01 00    0024*       dl 326 ; y0
-04629B 7B 00 00    0025*       dl 64+59 ; x1
-04629E 7A 01 00    0026*       dl 326+52 ; y1
-0462A1             0027*   
-0462A1             0028*   mfd_bezel_r:
-0462A1 05 00 00    0029*       dl BUF_MFD_BEZEL ; bufferId
-0462A4 85 01 00    0030*       dl 389 ; x0
-0462A7 46 01 00    0031*       dl 326 ; y0
-0462AA C0 01 00    0032*       dl 389+59 ; x1
-0462AD 7A 01 00    0033*       dl 326+52 ; y1
-0462B0             0034*   
-0462B0             0035*   draw_player_cockpit:
-0462B0 DD 21 74 62 0036*       ld ix,ctl_panel_l
+04626D DD 7E 1D    0380*       ld a,(ix+sprite_collisions)
+046270 CD A8 03 04 0381*       call printBin8
+046274             0382*   
+046274             0383*       ; call printInline
+046274             0384*       ; asciz "\r\nszx : "
+046274             0385*       ; ld a,(ix+sprite_dim_x)
+046274             0386*       ; call printHexA
+046274             0387*   
+046274             0388*       ; call printInline
+046274             0389*       ; asciz "\r\nszy : "
+046274             0390*       ; ld a,(ix+sprite_dim_y)
+046274             0391*       ; call printHexA
+046274             0392*   
+046274             0393*       ; call printInline
+046274             0394*       ; asciz "\r\n#ori: "
+046274             0395*       ; ld a,(ix+sprite_num_orientations)
+046274             0396*       ; call printHexA
+046274             0397*   
+046274             0398*       ; call printInline
+046274             0399*       ; asciz "\r\n#ani: "
+046274             0400*       ; ld a,(ix+sprite_num_animations)
+046274             0401*       ; call printHexA
+046274             0402*   
+046274             0403*       ; call printInline
+046274             0404*       ; asciz "\r\nani : "
+046274             0405*       ; ld a,(ix+sprite_animation)
+046274             0406*       ; call printHexA
+046274             0407*   
+046274             0408*       ; call printInline
+046274             0409*       ; asciz "\r\nanit: "
+046274             0410*       ; ld a,(ix+sprite_animation_timer)
+046274             0411*       ; call printHexA
+046274             0412*   
+046274             0413*       ; call printInline
+046274             0414*       ; asciz "\r\nmvt : "
+046274             0415*       ; ld a,(ix+sprite_move_timer)
+046274             0416*       ; call printHexA
+046274             0417*   
+046274             0418*       ; call printInline
+046274             0419*       ; asciz "\r\nmvs : "
+046274             0420*       ; ld a,(ix+sprite_move_step)
+046274             0421*       ; call printHexA
+046274             0422*   
+046274             0423*       ; call printInline
+046274             0424*       ; asciz "\r\npts : "
+046274             0425*       ; ld a,(ix+sprite_points)
+046274             0426*       ; call printHexA
+046274             0427*   
+046274             0428*       ; call printInline
+046274             0429*       ; asciz "\r\ndmg : "
+046274             0430*       ; ld a,(ix+sprite_shield_damage)
+046274             0431*       ; call printHexA
+046274             0432*   
+046274             0433*       ; call printInline
+046274             0434*       ; asciz "\r\nfrm : "
+046274             0435*       ; ld a,(ix+sprite_frame)
+046274             0436*       ; call printHexA
+046274             0437*   
+046274             0438*       ; call printNewLine
+046274             0439*       ; call printNewLine
+046274             0440*   
+046274             0441*       ; call waitKeypress
+046274 C9          0442*       ret
+046275             0060        include "player_cockpit.inc"
+046275             0001*   panel_bufferId: equ 0
+046275             0002*   panel_x0: equ 3
+046275             0003*   panel_y0: equ 6
+046275             0004*   panel_x1: equ 9
+046275             0005*   panel_y1: equ 12
+046275             0006*   
+046275             0007*   ctl_panel_l:
+046275 02 00 00    0008*       dl BUF_CTL_PANEL_L ; bufferId
+046278 00 00 00    0009*       dl 0 ; x0
+04627B 40 01 00    0010*       dl 320 ; y0
+04627E 80 00 00    0011*       dl 0+128 ; x1
+046281 80 01 00    0012*       dl 320+64 ; y1
+046284             0013*   
+046284             0014*   ctl_panel_r:
+046284 03 00 00    0015*       dl BUF_CTL_PANEL_R ; bufferId
+046287 80 01 00    0016*       dl 384 ; x0
+04628A 40 01 00    0017*       dl 320 ; y0
+04628D 00 02 00    0018*       dl 384+128 ; x1
+046290 80 01 00    0019*       dl 320+64 ; y1
+046293             0020*   
+046293             0021*   mfd_bezel_l:
+046293 05 00 00    0022*       dl BUF_MFD_BEZEL ; bufferId
+046296 40 00 00    0023*       dl 64 ; x0
+046299 46 01 00    0024*       dl 326 ; y0
+04629C 7B 00 00    0025*       dl 64+59 ; x1
+04629F 7A 01 00    0026*       dl 326+52 ; y1
+0462A2             0027*   
+0462A2             0028*   mfd_bezel_r:
+0462A2 05 00 00    0029*       dl BUF_MFD_BEZEL ; bufferId
+0462A5 85 01 00    0030*       dl 389 ; x0
+0462A8 46 01 00    0031*       dl 326 ; y0
+0462AB C0 01 00    0032*       dl 389+59 ; x1
+0462AE 7A 01 00    0033*       dl 326+52 ; y1
+0462B1             0034*   
+0462B1             0035*   draw_player_cockpit:
+0462B1 DD 21 75 62 0036*       ld ix,ctl_panel_l
        04          
-0462B5 CD D5 62 04 0037*       call draw_player_ctl_panel
-0462B9 DD 21 83 62 0038*       ld ix,ctl_panel_r
+0462B6 CD D6 62 04 0037*       call draw_player_ctl_panel
+0462BA DD 21 84 62 0038*       ld ix,ctl_panel_r
        04          
-0462BE CD D5 62 04 0039*       call draw_player_ctl_panel
-0462C2 DD 21 92 62 0040*       ld ix,mfd_bezel_l
+0462BF CD D6 62 04 0039*       call draw_player_ctl_panel
+0462C3 DD 21 93 62 0040*       ld ix,mfd_bezel_l
        04          
-0462C7 CD D5 62 04 0041*       call draw_player_ctl_panel
-0462CB DD 21 A1 62 0042*       ld ix,mfd_bezel_r
+0462C8 CD D6 62 04 0041*       call draw_player_ctl_panel
+0462CC DD 21 A2 62 0042*       ld ix,mfd_bezel_r
        04          
-0462D0 CD D5 62 04 0043*       call draw_player_ctl_panel
-0462D4 C9          0044*       ret
-0462D5             0045*   ; end draw_player_cockpit
-0462D5             0046*   
-0462D5             0047*   draw_player_ctl_panel:
-0462D5 DD 27 00    0048*       ld hl,(ix+panel_bufferId)
-0462D8 CD 38 1B 04 0049*       call vdu_buff_select
-0462DC DD 07 03    0050*       ld bc,(ix+panel_x0)
-0462DF DD 17 06    0051*       ld de,(ix+panel_y0)
-0462E2 CD 20 1F 04 0052*       call vdu_plot_bmp
-0462E6 C9          0053*       ret
-0462E7             0054*   ; end draw_player_ctl_panel
-0462E7             0055*   
-0462E7             0056*   mfd_display_l:
-0462E7 04 00 00    0057*       dl BUF_MFD_ARMS ; bufferId
-0462EA 48 00 00    0058*       dl 72 ; x0
-0462ED 4D 01 00    0059*       dl 333 ; y0
-0462F0 73 00 00    0060*       dl 72+43 ; x1
-0462F3 73 01 00    0061*       dl 333+38 ; y1
-0462F6             0062*   
-0462F6             0063*   mfd_activate:
-0462F6 DD 07 03    0064*       ld bc,(ix+panel_x0)
-0462F9 DD 17 06    0065*       ld de,(ix+panel_y0)
-0462FC CD D0 1A 04 0066*       call vdu_set_gfx_origin
-046300 C9          0067*       ret
-046301             0068*   ; end mfd_activate
-046301             0069*   
-046301             0070*   mfd_init:
-046301 DD 27 00    0071*       ld hl,(ix+panel_bufferId)
-046304 CD 38 1B 04 0072*       call vdu_buff_select
-046308 01 00 00 00 0073*       ld bc,0
-04630C 11 00 00 00 0074*       ld de,0
-046310 CD 20 1F 04 0075*       call vdu_plot_bmp
-046314 C9          0076*       ret
-046315             0077*   ; end mfd_init
-046315             0061        include "player_laser.inc"
-046315 FF FF FF FF 0001*       align 256
+0462D1 CD D6 62 04 0043*       call draw_player_ctl_panel
+0462D5 C9          0044*       ret
+0462D6             0045*   ; end draw_player_cockpit
+0462D6             0046*   
+0462D6             0047*   draw_player_ctl_panel:
+0462D6 DD 27 00    0048*       ld hl,(ix+panel_bufferId)
+0462D9 CD 38 1B 04 0049*       call vdu_buff_select
+0462DD DD 07 03    0050*       ld bc,(ix+panel_x0)
+0462E0 DD 17 06    0051*       ld de,(ix+panel_y0)
+0462E3 CD 20 1F 04 0052*       call vdu_plot_bmp
+0462E7 C9          0053*       ret
+0462E8             0054*   ; end draw_player_ctl_panel
+0462E8             0055*   
+0462E8             0056*   mfd_display_l:
+0462E8 04 00 00    0057*       dl BUF_MFD_ARMS ; bufferId
+0462EB 48 00 00    0058*       dl 72 ; x0
+0462EE 4D 01 00    0059*       dl 333 ; y0
+0462F1 73 00 00    0060*       dl 72+43 ; x1
+0462F4 73 01 00    0061*       dl 333+38 ; y1
+0462F7             0062*   
+0462F7             0063*   mfd_activate:
+0462F7 DD 07 03    0064*       ld bc,(ix+panel_x0)
+0462FA DD 17 06    0065*       ld de,(ix+panel_y0)
+0462FD CD D0 1A 04 0066*       call vdu_set_gfx_origin
+046301 C9          0067*       ret
+046302             0068*   ; end mfd_activate
+046302             0069*   
+046302             0070*   mfd_init:
+046302 DD 27 00    0071*       ld hl,(ix+panel_bufferId)
+046305 CD 38 1B 04 0072*       call vdu_buff_select
+046309 01 00 00 00 0073*       ld bc,0
+04630D 11 00 00 00 0074*       ld de,0
+046311 CD 20 1F 04 0075*       call vdu_plot_bmp
+046315 C9          0076*       ret
+046316             0077*   ; end mfd_init
+046316             0061        include "player_laser.inc"
+046316 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11226,7 +11232,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF    
+       FF FF       
 046400             0002*   speed_laser: equ 4*256 ; 6 pixels per frame 16.8 fixed
 046400             0003*   tmr_laser: ds 6 ; rate timer for firing laser
        FF FF FF FF 
@@ -11432,7 +11438,7 @@ PC     Output      Line
 046586 CD 90 2A 04 0068*       call move_explosions
 04658A CD 4A 6F 04 0069*       call move_tiles
 04658E             0070*   ; update UI: TODO make this a standalone function
-04658E CD 5E 61 04 0071*       call print_score
+04658E CD 5F 61 04 0071*       call print_score
 046592 C9          0072*       ret
 046593             0073*   
 046593             0074*   game_paused:
@@ -11512,11 +11518,11 @@ PC     Output      Line
 0465FE             0145*   
 0465FE             0146*   player_alive:
 0465FE CD 6D 60 04 0147*       call player_input     ; Handle player input
-046602 CD 7A 61 04 0148*       call player_move_weapons    ; Handle laser movement and collision detection
+046602 CD 7B 61 04 0148*       call player_move_weapons    ; Handle laser movement and collision detection
 046606 C9          0149*       ret
 046607             0150*   
 046607             0151*   player_dead:
-046607 CD 7A 61 04 0152*       call player_move_weapons    ; Handle laser movement and collision detection
+046607 CD 7B 61 04 0152*       call player_move_weapons    ; Handle laser movement and collision detection
 04660B C9          0153*       ret
 04660C             0154*   
 04660C             0155*   do_enemies:
@@ -13654,11 +13660,11 @@ PC     Output      Line
 0475EB 11 00 00 00 0171        ld de,0
 0475EF CD 20 1F 04 0172        call vdu_plot_bmp
 0475F3             0173    ; draw player cockpit
-0475F3 CD B0 62 04 0174        call draw_player_cockpit
-0475F7 DD 21 E7 62 0175        ld ix,mfd_display_l
+0475F3 CD B1 62 04 0174        call draw_player_cockpit
+0475F7 DD 21 E8 62 0175        ld ix,mfd_display_l
        04          
-0475FC CD F6 62 04 0176        call mfd_activate
-047600 CD 01 63 04 0177        call mfd_init
+0475FC CD F7 62 04 0176        call mfd_activate
+047600 CD 02 63 04 0177        call mfd_init
 047604             0178    ; set gfx origin and viewport to playing field window
 047604 01 80 00 00 0179        ld bc,origin_left
 047608 11 00 00 00 0180        ld de,origin_top
@@ -14058,7 +14064,7 @@ PC     Output      Line
 0477F8 DD E5       0014M1      push ix
 0477FA FD E5       0015M1      push iy
 0477FC CD 1C 01 04 0346        call printNewLine
-047800 CD 87 61 04 0347        CALL dump_player_record
+047800 CD 88 61 04 0347        CALL dump_player_record
 047804 CD 1C 01 04 0348        call printNewLine
 047808             0349        POP_ALL
 047808 FD E1       0001M1      pop iy
