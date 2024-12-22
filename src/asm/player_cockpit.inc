@@ -7,30 +7,30 @@ panel_y1: equ 12
 ctl_panel_l:
     dl BUF_CTL_PANEL_L ; bufferId
     dl 0 ; x0
-    dl 320 ; y0
+    dl 256 ; y0
     dl 0+128 ; x1
-    dl 320+64 ; y1
+    dl 256+128 ; y1
 
 ctl_panel_r:
     dl BUF_CTL_PANEL_R ; bufferId
     dl 384 ; x0
-    dl 320 ; y0
+    dl 256 ; y0
     dl 384+128 ; x1
-    dl 320+64 ; y1
+    dl 256+128 ; y1
 
 mfd_bezel_l:
     dl BUF_MFD_BEZEL ; bufferId
-    dl 64 ; x0
-    dl 326 ; y0
-    dl 64+59 ; x1
-    dl 326+52 ; y1
+    dl 24 ; x0
+    dl 280 ; y0
+    dl 24+96 ; x1
+    dl 280+96 ; y1
 
 mfd_bezel_r:
     dl BUF_MFD_BEZEL ; bufferId
-    dl 389 ; x0
-    dl 326 ; y0
-    dl 389+59 ; x1
-    dl 326+52 ; y1
+    dl 392 ; x0
+    dl 280 ; y0
+    dl 392+96 ; x1
+    dl 280+96 ; y1
 
 draw_player_cockpit:
     ld ix,ctl_panel_l

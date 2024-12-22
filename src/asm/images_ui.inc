@@ -39,10 +39,10 @@ BUF_SPLASH_LOGO: equ 31
 ui_image_list: ; type; width; height; size; filename; bufferId:
 	dl 1, 128, 384, 49152, fn_bezel_l, 0
 	dl 1, 128, 384, 49152, fn_bezel_r, 1
-	dl 1, 128, 64, 8192, fn_ctl_panel_l, 2
-	dl 1, 128, 64, 8192, fn_ctl_panel_r, 3
-	dl 1, 43, 38, 1634, fn_mfd_arms, 4
-	dl 1, 59, 52, 3068, fn_mfd_bezel, 5
+	dl 1, 128, 128, 16384, fn_ctl_panel_l, 2
+	dl 1, 128, 128, 16384, fn_ctl_panel_r, 3
+	dl 1, 36, 18, 648, fn_mfd_arms, 4
+	dl 1, 96, 96, 9216, fn_mfd_bezel, 5
 	dl 1, 1, 6, 6, fn_mfd_gun_0, 6
 	dl 1, 1, 6, 6, fn_mfd_gun_1, 7
 	dl 1, 1, 6, 6, fn_mfd_gun_2, 8
