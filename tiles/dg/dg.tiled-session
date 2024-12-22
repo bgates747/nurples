@@ -14,11 +14,11 @@
             "scaleInEditor": 1
         },
         "dg0_00.tmx": {
-            "scale": 2,
+            "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 88,
-                "y": 326.75
+                "x": 87.33333333333331,
+                "y": 261.6666666666667
             }
         },
         "dg0_01.tmx": {
