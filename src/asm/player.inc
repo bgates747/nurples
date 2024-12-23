@@ -80,19 +80,19 @@ btn1_a: equ 5
 ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
 ; TODO: requires sprite implementation
 player_input:
-; DEBUG
-    call vdu_home_cursor
-    call printInline
-    asciz "76543210\r\n"
-    xor a ; clear flags
-    IN a,(portC) ; read dpad input
-    call printBin8
-    call printNewLine
-    xor a ; clear flags
-    IN a,(portD) ; read fire button input
-    call printBin8
-    call printNewLine
-; END DEBUG
+; ; DEBUG
+;     call vdu_home_cursor
+;     call printInline
+;     asciz "76543210\r\n"
+;     xor a ; clear flags
+;     IN a,(portC) ; read dpad input
+;     call printBin8
+;     call printNewLine
+;     xor a ; clear flags
+;     IN a,(portD) ; read fire button input
+;     call printBin8
+;     call printNewLine
+; ; END DEBUG
 
     ld iy,player_begin
     ld (table_pointer),iy

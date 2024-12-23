@@ -67,6 +67,7 @@ exit:
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
+    include "debug.inc" ; DEBUG
 
     align 256
 
@@ -204,149 +205,24 @@ init:
 main:
 ; start a new game
     call game_initialize
-
-    ; ld iy,tmr_test
-    ; ld hl,2400 ; 20 seconds
-    ; call tmr_set
-    ; ld hl,0 ; counter
-    ; call vdu_vblank
-
 main_loop:
-    ; inc hl ; increment counter
-    ; push hl ; save counter
-
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
     call do_game
-
-; ; DEBUG
-;     CALL DEBUG_PRINT
-;     ; CALL DEBUG_DUMP_PLAYER_RECORD
-;     CALL DEBUG_PRINT_TILE_TABLE
-;     CALL DEBUG_PRINT_TILE_STACK
-;     ; CALL DEBUG_WAITKEYPRESS
-; ; END DEBUG
-
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
-    ; call vdu_vblank ; DEBUG
-    ; call vdu_vblank ; DEBUG
-
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
     rst.lil $08 ; get IX pointer to System Variables
     ld a, (ix + $05) ; get ASCII code of key pressed
     cp 27 ; check if 27 (ascii code for ESC)   
     jp z, main_end ; if pressed, jump to exit
-    
 ; escape not pressed so loop
-    ; ld iy,tmr_test
-    ; call tmr_get
-    ; pop hl ; restore counter
-    ; jp m,main_end ; if timer expired, jump to exit
     jp main_loop
 
 main_end:
-    ; call printDec
     call vdu_cursor_on
     ret
-
-DEBUG_PRINT:
-    PUSH_ALL
-    ld c,0 ; X
-    ld b,0 ; Y
-    call vdu_move_cursor
-    POP_ALL
-    PUSH_ALL
-    call dumpFlags
-    POP_ALL
-    PUSH_ALL
-    call dumpRegistersHex
-    ; call waitKeypress
-    POP_ALL
-    ret
-
-DEBUG_PRINT_TILE_TABLE:
-    PUSH_ALL
-    call printNewLine
-    ld ix,tile_stack
-    ld ix,(ix)
-    call dump_tile_record
-    call printNewLine
-    POP_ALL
-    ret
-; end DEBUG_PRINT_TILE_TABLE
-
-DEBUG_PRINT_TABLE:
-    PUSH_ALL
-    call printNewLine
-    call dump_sprite_record
-    call printNewLine
-    call printNewLine
-
-    push iy
-    pop ix
-    call dump_sprite_record
-    call printNewLine
-    call printNewLine
-    POP_ALL
-    RET
-
-DEBUG_WAITKEYPRESS:
-    PUSH_ALL
-    call waitKeypress
-    POP_ALL
-    RET
-
-DEBUG_PRINT_FIELDS:
-    ; PUSH_ALL
-    ld bc,0
-    ld c,a
-    ld ix,table_base
-    add ix,bc
-    ld b,table_num_records
-@@:
-    push ix
-    pop hl
-    push bc ; save loop counter
-    ld a,1 ; print one byte
-    call dumpMemoryHex
-    lea ix,ix+table_record_size
-    pop bc ; restore loop counter
-    djnz @b
-    ; POP_ALL
-    ret
-
-DEBUG_PRINT_TILE_STACK:
-    PUSH_ALL
-    call printNewLine
-    call printNewLine
-    ld hl,(tile_stack_pointer)
-    call printHexUHL
-    call printNewLine
-    ld a,(num_active_tiles)
-    call printHexA
-    call printNewLine
-    ld ix,tile_stack
-    ld b,8
-@loop:
-    push bc
-    ld hl,(ix)
-    call printHexUHL
-    call printNewLine
-    lea ix,ix+3
-    pop bc
-    djnz @loop
-    POP_ALL
-    ret
-
-DEBUG_DUMP_PLAYER_RECORD:
-    PUSH_ALL
-    call printNewLine
-    CALL dump_player_record
-    call printNewLine
-    POP_ALL
-    RET
 
     include "tables.inc"

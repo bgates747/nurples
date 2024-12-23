@@ -62,6 +62,20 @@ draw_player_cockpit:
     call draw_player_ctl_panel
     ld ix,mfd_bezel_r
     call draw_player_ctl_panel
+; initialize shields bar display
+    ld ix,bar_shields
+    ld hl,(player_max_shields)
+    ld (ix+bar_val),hl
+    call hlu_div2
+    ex de,hl ; de = 50% of max shields
+    push de
+    pop hl
+    call hlu_div2
+    push hl
+    pop bc ; bc = 25% of max shields
+    ld iy,0 ; min shields
+    call bar_init
+    call bar_update_v
     ret
 ; end draw_player_cockpit
 
@@ -98,6 +112,10 @@ mfd_init:
 ; end mfd_init
 
 bar_val: equ 0 ; current value
+bar_x0: equ panel_x0
+bar_y0: equ panel_y0
+bar_x1: equ panel_x1
+bar_y1: equ panel_y1
 bar_max: equ 15 ; max value displayed
 bar_yellow: equ 18 ; level at which bar turns yellow
 bar_red: equ 21 ; level at which bar turns red
@@ -124,35 +142,55 @@ bar_init:
     ld de,64*256 ; 64 pixels
     call udiv168
     ld (ix+bar_pix),de
+    ret
+; end bar_init
 
 ; update a vertical bar display
 ; inputs: ix points to bar structure
 ;         bar_val set by caller
 ; prerequisite: bar_init called before first use
 bar_update_v:
+; write x-plot position
+    ld hl,(ix+bar_x0)
+    ld (@x2),hl
+; compute y-plot position
     ld hl,(ix+bar_val)
     ld de,(ix+bar_min)
     xor a ; clear carry
-    ld (@x2+0),a
-    ld (@x2+1),a
     sbc hl,de
     ld de,(ix+bar_pix)
     call umul168
-    ld de,-64*256 ; 64 pixels
+    call hlu_udiv256
+    ld de,-64 ; 64 pixels
     add hl,de
-    ld (@y2-1),hl
+    ld de,(ix+bar_y0)
+    add hl,de
+    ld (@y2),hl
 ; set gfx viewport
-    ld hl,(ix+panel_x0)
+    ld hl,(ix+bar_x0)
     ld (@x0),hl
-    ld hl,(ix+panel_y1)
+    ld hl,(ix+bar_y1)
     ld (@y1),hl
-    ld hl,(ix+panel_x1)
+    ld hl,(ix+bar_x1)
 	ld (@x1),hl
-    ld hl,(ix+panel_y0)
+    ld hl,(ix+bar_y0)
 	ld (@y0),hl
+; restore bytes that got stomped
+    ld a,25 ; plot command
+    ld (@cmd1),a
+; select the buffer
+    ld hl,BUF_BAR_V_3
+    call vdu_buff_select
 ; send the vdu command string
 	ld hl,@cmd0
 	ld bc,@end-@cmd0
+; ; DEBUG
+;     PUSH_ALL
+;     ld a,c ; number of bytes
+;     call dumpMemoryHex
+;     call waitKeypress
+;     POP_ALL
+; ; END DEBUG
 	rst.lil $18
 	ret
 ; set graphics viewport command
@@ -167,7 +205,7 @@ bar_update_v:
 @x2: 	dw 0x0000
 @y2: 	dw 0x0000
 @end:  ; no padding required
-
+; end bar_update_v
 
 bar_shields:
     dl 0 ; value
