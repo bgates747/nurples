@@ -62,6 +62,11 @@ draw_player_cockpit:
     call draw_player_ctl_panel
     ld ix,mfd_bezel_r
     call draw_player_ctl_panel
+    ld hl,BUF_SHIELD
+    call vdu_buff_select
+    ld bc,492
+    ld de,368
+    call vdu_plot_bmp
     call init_bar_shields
     ret
 ; end draw_player_cockpit
