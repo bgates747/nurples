@@ -9942,14 +9942,14 @@ PC     Output      Line
 0457C4             0003*   ui_num_images: equ 38
 0457C4             0004*   
 0457C4             0005*   ; buffer_ids:
-0457C4             0006*   BUF_BEZEL_L: equ 0
-0457C4             0007*   BUF_BEZEL_R: equ 1
-0457C4             0008*   BUF_CTL_PANEL_BAR_G_H: equ 2
-0457C4             0009*   BUF_CTL_PANEL_BAR_G_V: equ 3
-0457C4             0010*   BUF_CTL_PANEL_BAR_H_V: equ 4
-0457C4             0011*   BUF_CTL_PANEL_BAR_R_H: equ 5
-0457C4             0012*   BUF_CTL_PANEL_BAR_R_V: equ 6
-0457C4             0013*   BUF_CTL_PANEL_BAR_Y_H: equ 7
+0457C4             0006*   BUF_BAR_H_0: equ 0
+0457C4             0007*   BUF_BAR_H_1: equ 1
+0457C4             0008*   BUF_BAR_H_3: equ 2
+0457C4             0009*   BUF_BAR_V_1: equ 3
+0457C4             0010*   BUF_BAR_V_2: equ 4
+0457C4             0011*   BUF_BAR_V_3: equ 5
+0457C4             0012*   BUF_BEZEL_L: equ 6
+0457C4             0013*   BUF_BEZEL_R: equ 7
 0457C4             0014*   BUF_CTL_PANEL_L: equ 8
 0457C4             0015*   BUF_CTL_PANEL_R: equ 9
 0457C4             0016*   BUF_MFD_ARMS: equ 10
@@ -9982,429 +9982,432 @@ PC     Output      Line
 0457C4             0043*   BUF_SPLASH_LOGO: equ 37
 0457C4             0044*   
 0457C4             0045*   ui_image_list: ; type; width; height; size; filename; bufferId:
-0457C4 01 00 00 80 0046*   	dl 1, 128, 384, 49152, fn_bezel_l, 0
-       00 00 80 01 
-       00 00 C0 00 
+0457C4 01 00 00 80 0046*   	dl 1, 128, 8, 1024, fn_bar_h_0, 0
+       00 00 08 00 
+       00 00 04 00 
        70 5A 04 00 
        00 00       
-0457D6 01 00 00 80 0047*   	dl 1, 128, 384, 49152, fn_bezel_r, 1
-       00 00 80 01 
-       00 00 C0 00 
+0457D6 01 00 00 80 0047*   	dl 1, 128, 8, 1024, fn_bar_h_1, 1
+       00 00 08 00 
+       00 00 04 00 
        81 5A 04 01 
        00 00       
-0457E8 01 00 00 80 0048*   	dl 1, 128, 8, 1024, fn_ctl_panel_bar_g_h, 2
+0457E8 01 00 00 80 0048*   	dl 1, 128, 8, 1024, fn_bar_h_3, 2
        00 00 08 00 
        00 00 04 00 
        92 5A 04 02 
        00 00       
-0457FA 01 00 00 08 0049*   	dl 1, 8, 128, 1024, fn_ctl_panel_bar_g_v, 3
+0457FA 01 00 00 08 0049*   	dl 1, 8, 128, 1024, fn_bar_v_1, 3
        00 00 80 00 
        00 00 04 00 
-       AD 5A 04 03 
+       A3 5A 04 03 
        00 00       
-04580C 01 00 00 08 0050*   	dl 1, 8, 128, 1024, fn_ctl_panel_bar_h_v, 4
+04580C 01 00 00 08 0050*   	dl 1, 8, 128, 1024, fn_bar_v_2, 4
        00 00 80 00 
        00 00 04 00 
-       C8 5A 04 04 
+       B4 5A 04 04 
        00 00       
-04581E 01 00 00 80 0051*   	dl 1, 128, 8, 1024, fn_ctl_panel_bar_r_h, 5
-       00 00 08 00 
-       00 00 04 00 
-       E3 5A 04 05 
-       00 00       
-045830 01 00 00 08 0052*   	dl 1, 8, 128, 1024, fn_ctl_panel_bar_r_v, 6
+04581E 01 00 00 08 0051*   	dl 1, 8, 128, 1024, fn_bar_v_3, 5
        00 00 80 00 
        00 00 04 00 
-       FE 5A 04 06 
+       C5 5A 04 05 
        00 00       
-045842 01 00 00 80 0053*   	dl 1, 128, 8, 1024, fn_ctl_panel_bar_y_h, 7
-       00 00 08 00 
-       00 00 04 00 
-       19 5B 04 07 
+045830 01 00 00 80 0052*   	dl 1, 128, 384, 49152, fn_bezel_l, 6
+       00 00 80 01 
+       00 00 C0 00 
+       D6 5A 04 06 
+       00 00       
+045842 01 00 00 80 0053*   	dl 1, 128, 384, 49152, fn_bezel_r, 7
+       00 00 80 01 
+       00 00 C0 00 
+       E7 5A 04 07 
        00 00       
 045854 01 00 00 80 0054*   	dl 1, 128, 128, 16384, fn_ctl_panel_l, 8
        00 00 80 00 
        00 00 40 00 
-       34 5B 04 08 
+       F8 5A 04 08 
        00 00       
 045866 01 00 00 80 0055*   	dl 1, 128, 128, 16384, fn_ctl_panel_r, 9
        00 00 80 00 
        00 00 40 00 
-       49 5B 04 09 
+       0D 5B 04 09 
        00 00       
 045878 01 00 00 24 0056*   	dl 1, 36, 18, 648, fn_mfd_arms, 10
        00 00 12 00 
        00 88 02 00 
-       5E 5B 04 0A 
+       22 5B 04 0A 
        00 00       
 04588A 01 00 00 60 0057*   	dl 1, 96, 96, 9216, fn_mfd_bezel, 11
        00 00 60 00 
        00 00 24 00 
-       70 5B 04 0B 
+       34 5B 04 0B 
        00 00       
 04589C 01 00 00 01 0058*   	dl 1, 1, 6, 6, fn_mfd_gun_0, 12
        00 00 06 00 
        00 06 00 00 
-       83 5B 04 0C 
+       47 5B 04 0C 
        00 00       
 0458AE 01 00 00 01 0059*   	dl 1, 1, 6, 6, fn_mfd_gun_1, 13
        00 00 06 00 
        00 06 00 00 
-       96 5B 04 0D 
+       5A 5B 04 0D 
        00 00       
 0458C0 01 00 00 01 0060*   	dl 1, 1, 6, 6, fn_mfd_gun_2, 14
        00 00 06 00 
        00 06 00 00 
-       A9 5B 04 0E 
+       6D 5B 04 0E 
        00 00       
 0458D2 01 00 00 01 0061*   	dl 1, 1, 6, 6, fn_mfd_gun_3, 15
        00 00 06 00 
        00 06 00 00 
-       BC 5B 04 0F 
+       80 5B 04 0F 
        00 00       
 0458E4 01 00 00 01 0062*   	dl 1, 1, 6, 6, fn_mfd_gun_4, 16
        00 00 06 00 
        00 06 00 00 
-       CF 5B 04 10 
+       93 5B 04 10 
        00 00       
 0458F6 01 00 00 01 0063*   	dl 1, 1, 6, 6, fn_mfd_gun_5, 17
        00 00 06 00 
        00 06 00 00 
-       E2 5B 04 11 
+       A6 5B 04 11 
        00 00       
 045908 01 00 00 04 0064*   	dl 1, 4, 6, 24, fn_mfd_maverick_0, 18
        00 00 06 00 
        00 18 00 00 
-       F5 5B 04 12 
+       B9 5B 04 12 
        00 00       
 04591A 01 00 00 04 0065*   	dl 1, 4, 6, 24, fn_mfd_maverick_1, 19
        00 00 06 00 
        00 18 00 00 
-       0D 5C 04 13 
+       D1 5B 04 13 
        00 00       
 04592C 01 00 00 04 0066*   	dl 1, 4, 6, 24, fn_mfd_maverick_2, 20
        00 00 06 00 
        00 18 00 00 
-       25 5C 04 14 
+       E9 5B 04 14 
        00 00       
 04593E 01 00 00 04 0067*   	dl 1, 4, 6, 24, fn_mfd_maverick_3, 21
        00 00 06 00 
        00 18 00 00 
-       3D 5C 04 15 
+       01 5C 04 15 
        00 00       
 045950 01 00 00 04 0068*   	dl 1, 4, 6, 24, fn_mfd_maverick_4, 22
        00 00 06 00 
        00 18 00 00 
-       55 5C 04 16 
+       19 5C 04 16 
        00 00       
 045962 01 00 00 04 0069*   	dl 1, 4, 6, 24, fn_mfd_maverick_5, 23
        00 00 06 00 
        00 18 00 00 
-       6D 5C 04 17 
+       31 5C 04 17 
        00 00       
 045974 01 00 00 03 0070*   	dl 1, 3, 6, 18, fn_mfd_sidewinder_0, 24
        00 00 06 00 
        00 12 00 00 
-       85 5C 04 18 
+       49 5C 04 18 
        00 00       
 045986 01 00 00 03 0071*   	dl 1, 3, 6, 18, fn_mfd_sidewinder_1, 25
        00 00 06 00 
        00 12 00 00 
-       9F 5C 04 19 
+       63 5C 04 19 
        00 00       
 045998 01 00 00 03 0072*   	dl 1, 3, 6, 18, fn_mfd_sidewinder_2, 26
        00 00 06 00 
        00 12 00 00 
-       B9 5C 04 1A 
+       7D 5C 04 1A 
        00 00       
 0459AA 01 00 00 03 0073*   	dl 1, 3, 6, 18, fn_mfd_sidewinder_3, 27
        00 00 06 00 
        00 12 00 00 
-       D3 5C 04 1B 
+       97 5C 04 1B 
        00 00       
 0459BC 01 00 00 03 0074*   	dl 1, 3, 6, 18, fn_mfd_sidewinder_4, 28
        00 00 06 00 
        00 12 00 00 
-       ED 5C 04 1C 
+       B1 5C 04 1C 
        00 00       
 0459CE 01 00 00 03 0075*   	dl 1, 3, 6, 18, fn_mfd_sidewinder_5, 29
        00 00 06 00 
        00 12 00 00 
-       07 5D 04 1D 
+       CB 5C 04 1D 
        00 00       
 0459E0 01 00 00 03 0076*   	dl 1, 3, 7, 21, fn_mfd_sparrow_0, 30
        00 00 07 00 
        00 15 00 00 
-       21 5D 04 1E 
+       E5 5C 04 1E 
        00 00       
 0459F2 01 00 00 03 0077*   	dl 1, 3, 7, 21, fn_mfd_sparrow_1, 31
        00 00 07 00 
        00 15 00 00 
-       38 5D 04 1F 
+       FC 5C 04 1F 
        00 00       
 045A04 01 00 00 03 0078*   	dl 1, 3, 7, 21, fn_mfd_sparrow_2, 32
        00 00 07 00 
        00 15 00 00 
-       4F 5D 04 20 
+       13 5D 04 20 
        00 00       
 045A16 01 00 00 03 0079*   	dl 1, 3, 7, 21, fn_mfd_sparrow_3, 33
        00 00 07 00 
        00 15 00 00 
-       66 5D 04 21 
+       2A 5D 04 21 
        00 00       
 045A28 01 00 00 03 0080*   	dl 1, 3, 7, 21, fn_mfd_sparrow_4, 34
        00 00 07 00 
        00 15 00 00 
-       7D 5D 04 22 
+       41 5D 04 22 
        00 00       
 045A3A 01 00 00 03 0081*   	dl 1, 3, 7, 21, fn_mfd_sparrow_5, 35
        00 00 07 00 
        00 15 00 00 
-       94 5D 04 23 
+       58 5D 04 23 
        00 00       
 045A4C 01 00 00 40 0082*   	dl 1, 320, 240, 76800, fn_splash_bg, 36
        01 00 F0 00 
        00 00 2C 01 
-       AB 5D 04 24 
+       6F 5D 04 24 
        00 00       
 045A5E 01 00 00 A0 0083*   	dl 1, 160, 106, 16960, fn_splash_logo, 37
        00 00 6A 00 
        00 40 42 00 
-       BE 5D 04 25 
+       82 5D 04 25 
        00 00       
 045A70             0084*   
 045A70             0085*   ; files_list: ; filename:
-045A70 75 69 2F 62 0086*   fn_bezel_l: db "ui/bezel_l.rgba2",0
+045A70 75 69 2F 62 0086*   fn_bar_h_0: db "ui/bar_h_0.rgba2",0
+       61 72 5F 68 
+       5F 30 2E 72 
+       67 62 61 32 
+       00          
+045A81 75 69 2F 62 0087*   fn_bar_h_1: db "ui/bar_h_1.rgba2",0
+       61 72 5F 68 
+       5F 31 2E 72 
+       67 62 61 32 
+       00          
+045A92 75 69 2F 62 0088*   fn_bar_h_3: db "ui/bar_h_3.rgba2",0
+       61 72 5F 68 
+       5F 33 2E 72 
+       67 62 61 32 
+       00          
+045AA3 75 69 2F 62 0089*   fn_bar_v_1: db "ui/bar_v_1.rgba2",0
+       61 72 5F 76 
+       5F 31 2E 72 
+       67 62 61 32 
+       00          
+045AB4 75 69 2F 62 0090*   fn_bar_v_2: db "ui/bar_v_2.rgba2",0
+       61 72 5F 76 
+       5F 32 2E 72 
+       67 62 61 32 
+       00          
+045AC5 75 69 2F 62 0091*   fn_bar_v_3: db "ui/bar_v_3.rgba2",0
+       61 72 5F 76 
+       5F 33 2E 72 
+       67 62 61 32 
+       00          
+045AD6 75 69 2F 62 0092*   fn_bezel_l: db "ui/bezel_l.rgba2",0
        65 7A 65 6C 
        5F 6C 2E 72 
        67 62 61 32 
        00          
-045A81 75 69 2F 62 0087*   fn_bezel_r: db "ui/bezel_r.rgba2",0
+045AE7 75 69 2F 62 0093*   fn_bezel_r: db "ui/bezel_r.rgba2",0
        65 7A 65 6C 
        5F 72 2E 72 
        67 62 61 32 
        00          
-045A92 75 69 2F 63 0088*   fn_ctl_panel_bar_g_h: db "ui/ctl_panel_bar_g_h.rgba2",0
-       74 6C 5F 70 
-       61 6E 65 6C 
-       5F 62 61 72 
-       5F 67 5F 68 
-       2E 72 67 62 
-       61 32 00    
-045AAD 75 69 2F 63 0089*   fn_ctl_panel_bar_g_v: db "ui/ctl_panel_bar_g_v.rgba2",0
-       74 6C 5F 70 
-       61 6E 65 6C 
-       5F 62 61 72 
-       5F 67 5F 76 
-       2E 72 67 62 
-       61 32 00    
-045AC8 75 69 2F 63 0090*   fn_ctl_panel_bar_h_v: db "ui/ctl_panel_bar_h_v.rgba2",0
-       74 6C 5F 70 
-       61 6E 65 6C 
-       5F 62 61 72 
-       5F 68 5F 76 
-       2E 72 67 62 
-       61 32 00    
-045AE3 75 69 2F 63 0091*   fn_ctl_panel_bar_r_h: db "ui/ctl_panel_bar_r_h.rgba2",0
-       74 6C 5F 70 
-       61 6E 65 6C 
-       5F 62 61 72 
-       5F 72 5F 68 
-       2E 72 67 62 
-       61 32 00    
-045AFE 75 69 2F 63 0092*   fn_ctl_panel_bar_r_v: db "ui/ctl_panel_bar_r_v.rgba2",0
-       74 6C 5F 70 
-       61 6E 65 6C 
-       5F 62 61 72 
-       5F 72 5F 76 
-       2E 72 67 62 
-       61 32 00    
-045B19 75 69 2F 63 0093*   fn_ctl_panel_bar_y_h: db "ui/ctl_panel_bar_y_h.rgba2",0
-       74 6C 5F 70 
-       61 6E 65 6C 
-       5F 62 61 72 
-       5F 79 5F 68 
-       2E 72 67 62 
-       61 32 00    
-045B34 75 69 2F 63 0094*   fn_ctl_panel_l: db "ui/ctl_panel_l.rgba2",0
+045AF8 75 69 2F 63 0094*   fn_ctl_panel_l: db "ui/ctl_panel_l.rgba2",0
        74 6C 5F 70 
        61 6E 65 6C 
        5F 6C 2E 72 
        67 62 61 32 
        00          
-045B49 75 69 2F 63 0095*   fn_ctl_panel_r: db "ui/ctl_panel_r.rgba2",0
+045B0D 75 69 2F 63 0095*   fn_ctl_panel_r: db "ui/ctl_panel_r.rgba2",0
        74 6C 5F 70 
        61 6E 65 6C 
        5F 72 2E 72 
        67 62 61 32 
        00          
-045B5E 75 69 2F 6D 0096*   fn_mfd_arms: db "ui/mfd_arms.rgba2",0
+045B22 75 69 2F 6D 0096*   fn_mfd_arms: db "ui/mfd_arms.rgba2",0
        66 64 5F 61 
        72 6D 73 2E 
        72 67 62 61 
        32 00       
-045B70 75 69 2F 6D 0097*   fn_mfd_bezel: db "ui/mfd_bezel.rgba2",0
+045B34 75 69 2F 6D 0097*   fn_mfd_bezel: db "ui/mfd_bezel.rgba2",0
        66 64 5F 62 
        65 7A 65 6C 
        2E 72 67 62 
        61 32 00    
-045B83 75 69 2F 6D 0098*   fn_mfd_gun_0: db "ui/mfd_gun_0.rgba2",0
+045B47 75 69 2F 6D 0098*   fn_mfd_gun_0: db "ui/mfd_gun_0.rgba2",0
        66 64 5F 67 
        75 6E 5F 30 
        2E 72 67 62 
        61 32 00    
-045B96 75 69 2F 6D 0099*   fn_mfd_gun_1: db "ui/mfd_gun_1.rgba2",0
+045B5A 75 69 2F 6D 0099*   fn_mfd_gun_1: db "ui/mfd_gun_1.rgba2",0
        66 64 5F 67 
        75 6E 5F 31 
        2E 72 67 62 
        61 32 00    
-045BA9 75 69 2F 6D 0100*   fn_mfd_gun_2: db "ui/mfd_gun_2.rgba2",0
+045B6D 75 69 2F 6D 0100*   fn_mfd_gun_2: db "ui/mfd_gun_2.rgba2",0
        66 64 5F 67 
        75 6E 5F 32 
        2E 72 67 62 
        61 32 00    
-045BBC 75 69 2F 6D 0101*   fn_mfd_gun_3: db "ui/mfd_gun_3.rgba2",0
+045B80 75 69 2F 6D 0101*   fn_mfd_gun_3: db "ui/mfd_gun_3.rgba2",0
        66 64 5F 67 
        75 6E 5F 33 
        2E 72 67 62 
        61 32 00    
-045BCF 75 69 2F 6D 0102*   fn_mfd_gun_4: db "ui/mfd_gun_4.rgba2",0
+045B93 75 69 2F 6D 0102*   fn_mfd_gun_4: db "ui/mfd_gun_4.rgba2",0
        66 64 5F 67 
        75 6E 5F 34 
        2E 72 67 62 
        61 32 00    
-045BE2 75 69 2F 6D 0103*   fn_mfd_gun_5: db "ui/mfd_gun_5.rgba2",0
+045BA6 75 69 2F 6D 0103*   fn_mfd_gun_5: db "ui/mfd_gun_5.rgba2",0
        66 64 5F 67 
        75 6E 5F 35 
        2E 72 67 62 
        61 32 00    
-045BF5 75 69 2F 6D 0104*   fn_mfd_maverick_0: db "ui/mfd_maverick_0.rgba2",0
+045BB9 75 69 2F 6D 0104*   fn_mfd_maverick_0: db "ui/mfd_maverick_0.rgba2",0
        66 64 5F 6D 
        61 76 65 72 
        69 63 6B 5F 
        30 2E 72 67 
        62 61 32 00 
-045C0D 75 69 2F 6D 0105*   fn_mfd_maverick_1: db "ui/mfd_maverick_1.rgba2",0
+045BD1 75 69 2F 6D 0105*   fn_mfd_maverick_1: db "ui/mfd_maverick_1.rgba2",0
        66 64 5F 6D 
        61 76 65 72 
        69 63 6B 5F 
        31 2E 72 67 
        62 61 32 00 
-045C25 75 69 2F 6D 0106*   fn_mfd_maverick_2: db "ui/mfd_maverick_2.rgba2",0
+045BE9 75 69 2F 6D 0106*   fn_mfd_maverick_2: db "ui/mfd_maverick_2.rgba2",0
        66 64 5F 6D 
        61 76 65 72 
        69 63 6B 5F 
        32 2E 72 67 
        62 61 32 00 
-045C3D 75 69 2F 6D 0107*   fn_mfd_maverick_3: db "ui/mfd_maverick_3.rgba2",0
+045C01 75 69 2F 6D 0107*   fn_mfd_maverick_3: db "ui/mfd_maverick_3.rgba2",0
        66 64 5F 6D 
        61 76 65 72 
        69 63 6B 5F 
        33 2E 72 67 
        62 61 32 00 
-045C55 75 69 2F 6D 0108*   fn_mfd_maverick_4: db "ui/mfd_maverick_4.rgba2",0
+045C19 75 69 2F 6D 0108*   fn_mfd_maverick_4: db "ui/mfd_maverick_4.rgba2",0
        66 64 5F 6D 
        61 76 65 72 
        69 63 6B 5F 
        34 2E 72 67 
        62 61 32 00 
-045C6D 75 69 2F 6D 0109*   fn_mfd_maverick_5: db "ui/mfd_maverick_5.rgba2",0
+045C31 75 69 2F 6D 0109*   fn_mfd_maverick_5: db "ui/mfd_maverick_5.rgba2",0
        66 64 5F 6D 
        61 76 65 72 
        69 63 6B 5F 
        35 2E 72 67 
        62 61 32 00 
-045C85 75 69 2F 6D 0110*   fn_mfd_sidewinder_0: db "ui/mfd_sidewinder_0.rgba2",0
+045C49 75 69 2F 6D 0110*   fn_mfd_sidewinder_0: db "ui/mfd_sidewinder_0.rgba2",0
        66 64 5F 73 
        69 64 65 77 
        69 6E 64 65 
        72 5F 30 2E 
        72 67 62 61 
        32 00       
-045C9F 75 69 2F 6D 0111*   fn_mfd_sidewinder_1: db "ui/mfd_sidewinder_1.rgba2",0
+045C63 75 69 2F 6D 0111*   fn_mfd_sidewinder_1: db "ui/mfd_sidewinder_1.rgba2",0
        66 64 5F 73 
        69 64 65 77 
        69 6E 64 65 
        72 5F 31 2E 
        72 67 62 61 
        32 00       
-045CB9 75 69 2F 6D 0112*   fn_mfd_sidewinder_2: db "ui/mfd_sidewinder_2.rgba2",0
+045C7D 75 69 2F 6D 0112*   fn_mfd_sidewinder_2: db "ui/mfd_sidewinder_2.rgba2",0
        66 64 5F 73 
        69 64 65 77 
        69 6E 64 65 
        72 5F 32 2E 
        72 67 62 61 
        32 00       
-045CD3 75 69 2F 6D 0113*   fn_mfd_sidewinder_3: db "ui/mfd_sidewinder_3.rgba2",0
+045C97 75 69 2F 6D 0113*   fn_mfd_sidewinder_3: db "ui/mfd_sidewinder_3.rgba2",0
        66 64 5F 73 
        69 64 65 77 
        69 6E 64 65 
        72 5F 33 2E 
        72 67 62 61 
        32 00       
-045CED 75 69 2F 6D 0114*   fn_mfd_sidewinder_4: db "ui/mfd_sidewinder_4.rgba2",0
+045CB1 75 69 2F 6D 0114*   fn_mfd_sidewinder_4: db "ui/mfd_sidewinder_4.rgba2",0
        66 64 5F 73 
        69 64 65 77 
        69 6E 64 65 
        72 5F 34 2E 
        72 67 62 61 
        32 00       
-045D07 75 69 2F 6D 0115*   fn_mfd_sidewinder_5: db "ui/mfd_sidewinder_5.rgba2",0
+045CCB 75 69 2F 6D 0115*   fn_mfd_sidewinder_5: db "ui/mfd_sidewinder_5.rgba2",0
        66 64 5F 73 
        69 64 65 77 
        69 6E 64 65 
        72 5F 35 2E 
        72 67 62 61 
        32 00       
-045D21 75 69 2F 6D 0116*   fn_mfd_sparrow_0: db "ui/mfd_sparrow_0.rgba2",0
+045CE5 75 69 2F 6D 0116*   fn_mfd_sparrow_0: db "ui/mfd_sparrow_0.rgba2",0
        66 64 5F 73 
        70 61 72 72 
        6F 77 5F 30 
        2E 72 67 62 
        61 32 00    
-045D38 75 69 2F 6D 0117*   fn_mfd_sparrow_1: db "ui/mfd_sparrow_1.rgba2",0
+045CFC 75 69 2F 6D 0117*   fn_mfd_sparrow_1: db "ui/mfd_sparrow_1.rgba2",0
        66 64 5F 73 
        70 61 72 72 
        6F 77 5F 31 
        2E 72 67 62 
        61 32 00    
-045D4F 75 69 2F 6D 0118*   fn_mfd_sparrow_2: db "ui/mfd_sparrow_2.rgba2",0
+045D13 75 69 2F 6D 0118*   fn_mfd_sparrow_2: db "ui/mfd_sparrow_2.rgba2",0
        66 64 5F 73 
        70 61 72 72 
        6F 77 5F 32 
        2E 72 67 62 
        61 32 00    
-045D66 75 69 2F 6D 0119*   fn_mfd_sparrow_3: db "ui/mfd_sparrow_3.rgba2",0
+045D2A 75 69 2F 6D 0119*   fn_mfd_sparrow_3: db "ui/mfd_sparrow_3.rgba2",0
        66 64 5F 73 
        70 61 72 72 
        6F 77 5F 33 
        2E 72 67 62 
        61 32 00    
-045D7D 75 69 2F 6D 0120*   fn_mfd_sparrow_4: db "ui/mfd_sparrow_4.rgba2",0
+045D41 75 69 2F 6D 0120*   fn_mfd_sparrow_4: db "ui/mfd_sparrow_4.rgba2",0
        66 64 5F 73 
        70 61 72 72 
        6F 77 5F 34 
        2E 72 67 62 
        61 32 00    
-045D94 75 69 2F 6D 0121*   fn_mfd_sparrow_5: db "ui/mfd_sparrow_5.rgba2",0
+045D58 75 69 2F 6D 0121*   fn_mfd_sparrow_5: db "ui/mfd_sparrow_5.rgba2",0
        66 64 5F 73 
        70 61 72 72 
        6F 77 5F 35 
        2E 72 67 62 
        61 32 00    
-045DAB 75 69 2F 73 0122*   fn_splash_bg: db "ui/splash_bg.rgba2",0
+045D6F 75 69 2F 73 0122*   fn_splash_bg: db "ui/splash_bg.rgba2",0
        70 6C 61 73 
        68 5F 62 67 
        2E 72 67 62 
        61 32 00    
-045DBE 75 69 2F 73 0123*   fn_splash_logo: db "ui/splash_logo.rgba2",0
+045D82 75 69 2F 73 0123*   fn_splash_logo: db "ui/splash_logo.rgba2",0
        70 6C 61 73 
        68 5F 6C 6F 
        67 6F 2E 72 
        67 62 61 32 
        00          
-045DD3             0056        include "levels.inc"
-045DD3 FF FF FF FF 0001*       align 256
+045D97             0056        include "levels.inc"
+045D97 FF FF FF FF 0001*       align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11268,8 +11271,93 @@ PC     Output      Line
 04641B CD 20 1E 04 0096*       call vdu_plot_bmp
 04641F C9          0097*       ret
 046420             0098*   ; end mfd_init
-046420             0061        include "player_laser.inc"
-046420 FF FF FF FF 0001*       align 256
+046420             0099*   
+046420             0100*   bar_val: equ 0 ; current value
+046420             0101*   bar_max: equ 15 ; max value displayed
+046420             0102*   bar_yellow: equ 18 ; level at which bar turns yellow
+046420             0103*   bar_red: equ 21 ; level at which bar turns red
+046420             0104*   bar_min: equ 24 ; minimum value displayed
+046420             0105*   bar_rng: equ 27 ; bar_max - bar_min
+046420             0106*   bar_pix: equ 30 ; pixels per unit level
+046420             0107*   
+046420             0108*   ; initialize a bar display
+046420             0109*   ; inputs: ix points to bar structure
+046420             0110*   ;         hl = max value
+046420             0111*   ;         de = yellow value
+046420             0112*   ;         bc = red value
+046420             0113*   ;         iy = min value
+046420             0114*   bar_init:
+046420 DD 2F 0F    0115*       ld (ix+bar_max),hl
+046423 DD 1F 12    0116*       ld (ix+bar_yellow),de
+046426 DD 0F 15    0117*       ld (ix+bar_red),bc
+046429 DD 3E 18    0118*       ld (ix+bar_min),iy
+04642C DD 27 0F    0119*       ld hl,(ix+bar_max)
+04642F DD 17 18    0120*       ld de,(ix+bar_min)
+046432 AF          0121*       xor a ; clear carry
+046433 ED 52       0122*       sbc hl,de
+046435 DD 2F 1B    0123*       ld (ix+bar_rng),hl
+046438 11 00 40 00 0124*       ld de,64*256 ; 64 pixels
+04643C CD E4 0A 04 0125*       call udiv168
+046440 DD 1F 1E    0126*       ld (ix+bar_pix),de
+046443             0127*   
+046443             0128*   ; update a vertical bar display
+046443             0129*   ; inputs: ix points to bar structure
+046443             0130*   ;         bar_val set by caller
+046443             0131*   ; prerequisite: bar_init called before first use
+046443             0132*   bar_update_v:
+046443 DD 27 00    0133*       ld hl,(ix+bar_val)
+046446 DD 17 18    0134*       ld de,(ix+bar_min)
+046449 AF          0135*       xor a ; clear carry
+04644A 32 96 64 04 0136*       ld (@x2+0),a
+04644E 32 97 64 04 0137*       ld (@x2+1),a
+046452 ED 52       0138*       sbc hl,de
+046454 DD 17 1E    0139*       ld de,(ix+bar_pix)
+046457 CD B8 0A 04 0140*       call umul168
+04645B 11 00 C0 FF 0141*       ld de,-64*256 ; 64 pixels
+04645F 19          0142*       add hl,de
+046460 22 97 64 04 0143*       ld (@y2-1),hl
+046464             0144*   ; set gfx viewport
+046464 DD 27 03    0145*       ld hl,(ix+panel_x0)
+046467 22 8C 64 04 0146*       ld (@x0),hl
+04646B DD 27 0C    0147*       ld hl,(ix+panel_y1)
+04646E 22 8E 64 04 0148*       ld (@y1),hl
+046472 DD 27 09    0149*       ld hl,(ix+panel_x1)
+046475 22 90 64 04 0150*   	ld (@x1),hl
+046479 DD 27 06    0151*       ld hl,(ix+panel_y0)
+04647C 22 92 64 04 0152*   	ld (@y0),hl
+046480             0153*   ; send the vdu command string
+046480 21 8B 64 04 0154*   	ld hl,@cmd0
+046484 01 0F 00 00 0155*   	ld bc,@end-@cmd0
+046488 5B DF       0156*   	rst.lil $18
+04648A C9          0157*   	ret
+04648B             0158*   ; set graphics viewport command
+04648B 18          0159*   @cmd0:   db 24
+04648C 00 00       0160*   @x0: 	dw 0x0000
+04648E 00 00       0161*   @y1: 	dw 0x0000
+046490 00 00       0162*   @x1: 	dw 0x0000
+046492 00 00       0163*   @y0: 	dw 0x0000
+046494             0164*   ; plot bitmap command
+046494 19          0165*   @cmd1:   db 25 ; stomped on by @y0 load
+046495 ED          0166*   @mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
+046496 00 00       0167*   @x2: 	dw 0x0000
+046498 00 00       0168*   @y2: 	dw 0x0000
+04649A             0169*   @end:  ; no padding required
+04649A             0170*   
+04649A             0171*   
+04649A             0172*   bar_shields:
+04649A 00 00 00    0173*       dl 0 ; value
+04649D F0 01 00    0174*       dl 496 ; x0
+0464A0 30 01 00    0175*       dl 304 ; y0
+0464A3 F8 01 00    0176*       dl 496+8 ; x1
+0464A6 70 01 00    0177*       dl 304+64 ; y1
+0464A9 00 00 00    0178*       dl 0 ; max level
+0464AC 00 00 00    0179*       dl 0 ; yellow level
+0464AF 00 00 00    0180*       dl 0 ; red level
+0464B2 00 00 00    0181*       dl 0 ; min level
+0464B5 00 00 00    0182*       dl 0 ; range
+0464B8 00 00 00    0183*       dl 0 ; pixels
+0464BB             0061        include "player_laser.inc"
+0464BB FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11286,45 +11374,7 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
+       FF          
 046500             0002*   speed_laser: equ 4*256 ; 6 pixels per frame 16.8 fixed
 046500             0003*   tmr_laser: ds 6 ; rate timer for firing laser
        FF FF FF FF 
@@ -13737,12 +13787,12 @@ PC     Output      Line
 0476C5 3E 01       0160        ld a,1 ; flags
 0476C7 CD 00 1D 04 0161        call vdu_font_select
 0476CB             0162    ; plot bezel art
-0476CB 21 00 00 00 0163        ld hl,BUF_BEZEL_L
+0476CB 21 06 00 00 0163        ld hl,BUF_BEZEL_L
 0476CF CD 38 1A 04 0164        call vdu_buff_select
 0476D3 01 00 00 00 0165        ld bc,0
 0476D7 11 00 00 00 0166        ld de,0
 0476DB CD 20 1E 04 0167        call vdu_plot_bmp
-0476DF 21 01 00 00 0168        ld hl,BUF_BEZEL_R
+0476DF 21 07 00 00 0168        ld hl,BUF_BEZEL_R
 0476E3 CD 38 1A 04 0169        call vdu_buff_select
 0476E7 01 80 01 00 0170        ld bc,384
 0476EB 11 00 00 00 0171        ld de,0

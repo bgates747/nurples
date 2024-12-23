@@ -96,3 +96,88 @@ mfd_init:
     call vdu_plot_bmp
     ret
 ; end mfd_init
+
+bar_val: equ 0 ; current value
+bar_max: equ 15 ; max value displayed
+bar_yellow: equ 18 ; level at which bar turns yellow
+bar_red: equ 21 ; level at which bar turns red
+bar_min: equ 24 ; minimum value displayed
+bar_rng: equ 27 ; bar_max - bar_min
+bar_pix: equ 30 ; pixels per unit level
+
+; initialize a bar display
+; inputs: ix points to bar structure
+;         hl = max value
+;         de = yellow value
+;         bc = red value
+;         iy = min value
+bar_init:
+    ld (ix+bar_max),hl
+    ld (ix+bar_yellow),de
+    ld (ix+bar_red),bc
+    ld (ix+bar_min),iy
+    ld hl,(ix+bar_max)
+    ld de,(ix+bar_min)
+    xor a ; clear carry
+    sbc hl,de
+    ld (ix+bar_rng),hl
+    ld de,64*256 ; 64 pixels
+    call udiv168
+    ld (ix+bar_pix),de
+
+; update a vertical bar display
+; inputs: ix points to bar structure
+;         bar_val set by caller
+; prerequisite: bar_init called before first use
+bar_update_v:
+    ld hl,(ix+bar_val)
+    ld de,(ix+bar_min)
+    xor a ; clear carry
+    ld (@x2+0),a
+    ld (@x2+1),a
+    sbc hl,de
+    ld de,(ix+bar_pix)
+    call umul168
+    ld de,-64*256 ; 64 pixels
+    add hl,de
+    ld (@y2-1),hl
+; set gfx viewport
+    ld hl,(ix+panel_x0)
+    ld (@x0),hl
+    ld hl,(ix+panel_y1)
+    ld (@y1),hl
+    ld hl,(ix+panel_x1)
+	ld (@x1),hl
+    ld hl,(ix+panel_y0)
+	ld (@y0),hl
+; send the vdu command string
+	ld hl,@cmd0
+	ld bc,@end-@cmd0
+	rst.lil $18
+	ret
+; set graphics viewport command
+@cmd0:   db 24 
+@x0: 	dw 0x0000 
+@y1: 	dw 0x0000 
+@x1: 	dw 0x0000 
+@y0: 	dw 0x0000 
+; plot bitmap command
+@cmd1:   db 25 ; stomped on by @y0 load
+@mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
+@x2: 	dw 0x0000
+@y2: 	dw 0x0000
+@end:  ; no padding required
+
+
+bar_shields:
+    dl 0 ; value
+    dl 496 ; x0
+    dl 304 ; y0
+    dl 496+8 ; x1
+    dl 304+64 ; y1
+    dl 0 ; max level
+    dl 0 ; yellow level
+    dl 0 ; red level
+    dl 0 ; min level
+    dl 0 ; range
+    dl 0 ; pixels
