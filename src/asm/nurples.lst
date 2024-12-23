@@ -27,8 +27,8 @@ PC     Output      Line
 040047 D5          0012        push de
 040048 DD E5       0013        push ix
 04004A FD E5       0014        push iy
-04004C CD 44 78 04 0015        call init
-040050 CD 41 79 04 0016        call main
+04004C CD 44 79 04 0015        call init
+040050 CD 41 7A 04 0016        call main
 040054             0017    
 040054             0018    exit:
 040054 FD E1       0019        pop iy
@@ -10718,10 +10718,10 @@ PC     Output      Line
 046103             0006*   ; player current shields,binary
 046103             0007*   ; when < 0 player splodes
 046103             0008*   ; restores to player_max_shields when new ship spawns
-046103 10 00 00    0009*   player_shields: dl 16 ; integer
+046103 40 00 00    0009*   player_shields: dl 64 ; integer
 046106             0010*   ; max player shields,binary
 046106             0011*   ; can increase with power-ups (todo)
-046106 10 00 00    0012*   player_max_shields: dl 16 ; integer
+046106 40 00 00    0012*   player_max_shields: dl 64 ; integer
 046109             0013*   ; when reaches zero,game ends
 046109             0014*   ; can increase based on TODO
 046109 03          0015*   player_ships: db 3 ; integer
@@ -11225,177 +11225,144 @@ PC     Output      Line
 046392             0056*   draw_player_cockpit:
 046392 DD 21 56 63 0057*       ld ix,ctl_panel_l
        04          
-046397 CD DD 63 04 0058*       call draw_player_ctl_panel
+046397 CD CC 63 04 0058*       call draw_player_ctl_panel
 04639B DD 21 65 63 0059*       ld ix,ctl_panel_r
        04          
-0463A0 CD DD 63 04 0060*       call draw_player_ctl_panel
+0463A0 CD CC 63 04 0060*       call draw_player_ctl_panel
 0463A4 DD 21 74 63 0061*       ld ix,mfd_bezel_l
        04          
-0463A9 CD DD 63 04 0062*       call draw_player_ctl_panel
+0463A9 CD CC 63 04 0062*       call draw_player_ctl_panel
 0463AD DD 21 83 63 0063*       ld ix,mfd_bezel_r
        04          
-0463B2 CD DD 63 04 0064*       call draw_player_ctl_panel
-0463B6             0065*   ; initialize shields bar display
-0463B6 DD 21 AD 64 0066*       ld ix,bar_shields
+0463B2 CD CC 63 04 0064*       call draw_player_ctl_panel
+0463B6 CD BB 63 04 0065*       call init_bar_shields
+0463BA C9          0066*       ret
+0463BB             0067*   ; end draw_player_cockpit
+0463BB             0068*   
+0463BB             0069*   init_bar_shields:
+0463BB DD 21 93 64 0070*       ld ix,bar_shields
        04          
-0463BB 2A 06 61 04 0067*       ld hl,(player_max_shields)
-0463BF DD 2F 00    0068*       ld (ix+bar_val),hl
-0463C2 CD 21 09 04 0069*       call hlu_div2
-0463C6 EB          0070*       ex de,hl ; de = 50% of max shields
-0463C7 D5          0071*       push de
-0463C8 E1          0072*       pop hl
-0463C9 CD 21 09 04 0073*       call hlu_div2
-0463CD E5          0074*       push hl
-0463CE C1          0075*       pop bc ; bc = 25% of max shields
-0463CF FD 21 00 00 0076*       ld iy,0 ; min shields
-       00          
-0463D4 CD 1D 64 04 0077*       call bar_init
-0463D8 CD 41 64 04 0078*       call bar_update_v
-0463DC C9          0079*       ret
-0463DD             0080*   ; end draw_player_cockpit
-0463DD             0081*   
-0463DD             0082*   draw_player_ctl_panel:
-0463DD DD 27 00    0083*       ld hl,(ix+panel_bufferId)
-0463E0 CD 38 1A 04 0084*       call vdu_buff_select
-0463E4 DD 07 03    0085*       ld bc,(ix+panel_x0)
-0463E7 DD 17 06    0086*       ld de,(ix+panel_y0)
-0463EA CD 20 1E 04 0087*       call vdu_plot_bmp
-0463EE C9          0088*       ret
-0463EF             0089*   ; end draw_player_ctl_panel
-0463EF             0090*   
-0463EF             0091*   mfd_display_l:
-0463EF 0A 00 00    0092*       dl BUF_MFD_ARMS ; bufferId
-0463F2 36 00 00    0093*       dl 54 ; x0
-0463F5 40 01 00    0094*       dl 320 ; y0
-0463F8 5A 00 00    0095*       dl 54+36 ; x1
-0463FB 52 01 00    0096*       dl 320+18 ; y1
-0463FE             0097*   
-0463FE             0098*   mfd_activate:
-0463FE DD 07 03    0099*       ld bc,(ix+panel_x0)
-046401 DD 17 06    0100*       ld de,(ix+panel_y0)
-046404 CD D0 19 04 0101*       call vdu_set_gfx_origin
-046408 C9          0102*       ret
-046409             0103*   ; end mfd_activate
-046409             0104*   
-046409             0105*   mfd_init:
-046409 DD 27 00    0106*       ld hl,(ix+panel_bufferId)
-04640C CD 38 1A 04 0107*       call vdu_buff_select
-046410 01 00 00 00 0108*       ld bc,0
-046414 11 00 00 00 0109*       ld de,0
-046418 CD 20 1E 04 0110*       call vdu_plot_bmp
-04641C C9          0111*       ret
-04641D             0112*   ; end mfd_init
-04641D             0113*   
-04641D             0114*   bar_val: equ 0 ; current value
-04641D             0115*   bar_x0: equ panel_x0
-04641D             0116*   bar_y0: equ panel_y0
-04641D             0117*   bar_x1: equ panel_x1
-04641D             0118*   bar_y1: equ panel_y1
-04641D             0119*   bar_max: equ 15 ; max value displayed
-04641D             0120*   bar_yellow: equ 18 ; level at which bar turns yellow
-04641D             0121*   bar_red: equ 21 ; level at which bar turns red
-04641D             0122*   bar_min: equ 24 ; minimum value displayed
-04641D             0123*   bar_rng: equ 27 ; bar_max - bar_min
-04641D             0124*   bar_pix: equ 30 ; pixels per unit level
-04641D             0125*   
-04641D             0126*   ; initialize a bar display
-04641D             0127*   ; inputs: ix points to bar structure
-04641D             0128*   ;         hl = max value
-04641D             0129*   ;         de = yellow value
-04641D             0130*   ;         bc = red value
-04641D             0131*   ;         iy = min value
-04641D             0132*   bar_init:
-04641D DD 2F 0F    0133*       ld (ix+bar_max),hl
-046420 DD 1F 12    0134*       ld (ix+bar_yellow),de
-046423 DD 0F 15    0135*       ld (ix+bar_red),bc
-046426 DD 3E 18    0136*       ld (ix+bar_min),iy
-046429 DD 27 0F    0137*       ld hl,(ix+bar_max)
-04642C DD 17 18    0138*       ld de,(ix+bar_min)
-04642F AF          0139*       xor a ; clear carry
-046430 ED 52       0140*       sbc hl,de
-046432 DD 2F 1B    0141*       ld (ix+bar_rng),hl
-046435 11 00 40 00 0142*       ld de,64*256 ; 64 pixels
-046439 CD E4 0A 04 0143*       call udiv168
-04643D DD 1F 1E    0144*       ld (ix+bar_pix),de
-046440 C9          0145*       ret
-046441             0146*   ; end bar_init
-046441             0147*   
-046441             0148*   ; update a vertical bar display
-046441             0149*   ; inputs: ix points to bar structure
-046441             0150*   ;         bar_val set by caller
-046441             0151*   ; prerequisite: bar_init called before first use
-046441             0152*   bar_update_v:
-046441             0153*   ; write x-plot position
-046441 DD 27 03    0154*       ld hl,(ix+bar_x0)
-046444 22 A9 64 04 0155*       ld (@x2),hl
-046448             0156*   ; compute y-plot position
-046448 DD 27 00    0157*       ld hl,(ix+bar_val)
-04644B DD 17 18    0158*       ld de,(ix+bar_min)
-04644E AF          0159*       xor a ; clear carry
-04644F ED 52       0160*       sbc hl,de
-046451 DD 17 1E    0161*       ld de,(ix+bar_pix)
-046454 CD B8 0A 04 0162*       call umul168
-046458 CD 6D 09 04 0163*       call hlu_udiv256
-04645C 11 C0 FF FF 0164*       ld de,-64 ; 64 pixels
-046460 19          0165*       add hl,de
-046461 DD 17 06    0166*       ld de,(ix+bar_y0)
-046464 19          0167*       add hl,de
-046465 22 AB 64 04 0168*       ld (@y2),hl
-046469             0169*   ; set gfx viewport
-046469 DD 27 03    0170*       ld hl,(ix+bar_x0)
-04646C 22 9F 64 04 0171*       ld (@x0),hl
-046470 DD 27 0C    0172*       ld hl,(ix+bar_y1)
-046473 22 A1 64 04 0173*       ld (@y1),hl
-046477 DD 27 09    0174*       ld hl,(ix+bar_x1)
-04647A 22 A3 64 04 0175*   	ld (@x1),hl
-04647E DD 27 06    0176*       ld hl,(ix+bar_y0)
-046481 22 A5 64 04 0177*   	ld (@y0),hl
-046485             0178*   ; restore bytes that got stomped
-046485 3E 19       0179*       ld a,25 ; plot command
-046487 32 A7 64 04 0180*       ld (@cmd1),a
-04648B             0181*   ; select the buffer
-04648B 21 05 00 00 0182*       ld hl,BUF_BAR_V_2
-04648F CD 38 1A 04 0183*       call vdu_buff_select
-046493             0184*   ; send the vdu command string
-046493 21 9E 64 04 0185*   	ld hl,@cmd0
-046497 01 0F 00 00 0186*   	ld bc,@end-@cmd0
-04649B             0187*   ; ; DEBUG
-04649B             0188*   ;     PUSH_ALL
-04649B             0189*   ;     ld a,c ; number of bytes
-04649B             0190*   ;     call dumpMemoryHex
-04649B             0191*   ;     call waitKeypress
-04649B             0192*   ;     POP_ALL
-04649B             0193*   ; ; END DEBUG
-04649B 5B DF       0194*   	rst.lil $18
-04649D C9          0195*   	ret
-04649E             0196*   ; set graphics viewport command
-04649E 18          0197*   @cmd0:   db 24
-04649F 00 00       0198*   @x0: 	dw 0x0000
-0464A1 00 00       0199*   @y1: 	dw 0x0000
-0464A3 00 00       0200*   @x1: 	dw 0x0000
-0464A5 00 00       0201*   @y0: 	dw 0x0000
-0464A7             0202*   ; plot bitmap command
-0464A7 19          0203*   @cmd1:   db 25 ; stomped on by @y0 load
-0464A8 ED          0204*   @mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
-0464A9 00 00       0205*   @x2: 	dw 0x0000
-0464AB 00 00       0206*   @y2: 	dw 0x0000
-0464AD             0207*   @end:  ; no padding required
-0464AD             0208*   ; end bar_update_v
-0464AD             0209*   
-0464AD             0210*   bar_shields:
-0464AD 00 00 00    0211*       dl 0 ; value
-0464B0 F0 01 00    0212*       dl 496 ; x0
-0464B3 30 01 00    0213*       dl 304 ; y0
-0464B6 F8 01 00    0214*       dl 496+8 ; x1
-0464B9 70 01 00    0215*       dl 304+64 ; y1
-0464BC 00 00 00    0216*       dl 0 ; max level
-0464BF 00 00 00    0217*       dl 0 ; yellow level
-0464C2 00 00 00    0218*       dl 0 ; red level
-0464C5 00 00 00    0219*       dl 0 ; min level
-0464C8 00 00 00    0220*       dl 0 ; range
-0464CB 00 00 00    0221*       dl 0 ; pixels
-0464CE             0061        include "player_laser.inc"
-0464CE FF FF FF FF 0001*       align 256
+0463C0 2A 06 61 04 0071*       ld hl,(player_max_shields)
+0463C4 DD 2F 00    0072*       ld (ix+bar_val),hl
+0463C7 CD 0C 64 04 0073*       call bar_update_v
+0463CB C9          0074*       ret
+0463CC             0075*   ; end init_bar_shields
+0463CC             0076*   
+0463CC             0077*   draw_player_ctl_panel:
+0463CC DD 27 00    0078*       ld hl,(ix+panel_bufferId)
+0463CF CD 38 1A 04 0079*       call vdu_buff_select
+0463D3 DD 07 03    0080*       ld bc,(ix+panel_x0)
+0463D6 DD 17 06    0081*       ld de,(ix+panel_y0)
+0463D9 CD 20 1E 04 0082*       call vdu_plot_bmp
+0463DD C9          0083*       ret
+0463DE             0084*   ; end draw_player_ctl_panel
+0463DE             0085*   
+0463DE             0086*   mfd_display_l:
+0463DE 0A 00 00    0087*       dl BUF_MFD_ARMS ; bufferId
+0463E1 36 00 00    0088*       dl 54 ; x0
+0463E4 40 01 00    0089*       dl 320 ; y0
+0463E7 5A 00 00    0090*       dl 54+36 ; x1
+0463EA 52 01 00    0091*       dl 320+18 ; y1
+0463ED             0092*   
+0463ED             0093*   mfd_activate:
+0463ED DD 07 03    0094*       ld bc,(ix+panel_x0)
+0463F0 DD 17 06    0095*       ld de,(ix+panel_y0)
+0463F3 CD D0 19 04 0096*       call vdu_set_gfx_origin
+0463F7 C9          0097*       ret
+0463F8             0098*   ; end mfd_activate
+0463F8             0099*   
+0463F8             0100*   mfd_init:
+0463F8 DD 27 00    0101*       ld hl,(ix+panel_bufferId)
+0463FB CD 38 1A 04 0102*       call vdu_buff_select
+0463FF 01 00 00 00 0103*       ld bc,0
+046403 11 00 00 00 0104*       ld de,0
+046407 CD 20 1E 04 0105*       call vdu_plot_bmp
+04640B C9          0106*       ret
+04640C             0107*   ; end mfd_init
+04640C             0108*   
+04640C             0109*   bar_val: equ 0 ; current value
+04640C             0110*   bar_x0: equ panel_x0
+04640C             0111*   bar_y0: equ panel_y0
+04640C             0112*   bar_x1: equ panel_x1
+04640C             0113*   bar_y1: equ panel_y1
+04640C             0114*   bar_y: equ 15 ; y-plot coordinate
+04640C             0115*   
+04640C             0116*   ; update a vertical bar display
+04640C             0117*   ; inputs: ix points to bar structure
+04640C             0118*   ;         bar_val set by caller
+04640C             0119*   ; prerequisite: bar_init called before first use
+04640C             0120*   bar_update_v:
+04640C             0121*   ; write x-plot position
+04640C DD 27 03    0122*       ld hl,(ix+bar_x0)
+04640F 22 8E 64 04 0123*       ld (@x2),hl
+046413             0124*   ; compute y-plot position
+046413 DD 17 00    0125*       ld de,(ix+bar_val)
+046416 21 40 00 00 0126*       ld hl,64
+04641A AF          0127*       xor a ; clear carry
+04641B ED 52       0128*       sbc hl,de
+04641D DD 17 0F    0129*       ld de,(ix+bar_y)
+046420 19          0130*       add hl,de
+046421 7D          0131*       ld a,l
+046422 E6 FC       0132*       and %11111100 ; round to nearest 4 pixels
+046424 6F          0133*       ld l,a
+046425 22 90 64 04 0134*       ld (@y2),hl
+046429             0135*   ; select the color based on the value thresholds
+046429 DD 17 00    0136*       ld de,(ix+bar_val)
+04642C 21 F0 FF FF 0137*       ld hl,-16
+046430 19          0138*       add hl,de
+046431 D2 4E 64 04 0139*       jp nc,@red
+046435 21 E0 FF FF 0140*       ld hl,-32
+046439 19          0141*       add hl,de
+04643A D2 46 64 04 0142*       jp nc,@yellow
+04643E 21 05 00 00 0143*       ld hl,BUF_BAR_V_2 ; green
+046442 C3 52 64 04 0144*       jp @select
+046446             0145*   @yellow:
+046446 21 04 00 00 0146*       ld hl,BUF_BAR_V_1 ; yellow
+04644A C3 52 64 04 0147*       jp @select
+04644E             0148*   @red:
+04644E 21 03 00 00 0149*       ld hl,BUF_BAR_V_0 ; red
+046452             0150*   @select:
+046452 CD 38 1A 04 0151*       call vdu_buff_select
+046456             0152*   ; set gfx viewport
+046456 DD 27 03    0153*       ld hl,(ix+bar_x0)
+046459 22 84 64 04 0154*       ld (@x0),hl
+04645D DD 27 0C    0155*       ld hl,(ix+bar_y1)
+046460 22 86 64 04 0156*       ld (@y1),hl
+046464 DD 27 09    0157*       ld hl,(ix+bar_x1)
+046467 22 88 64 04 0158*   	ld (@x1),hl
+04646B DD 27 06    0159*       ld hl,(ix+bar_y0)
+04646E 22 8A 64 04 0160*   	ld (@y0),hl
+046472             0161*   ; restore bytes that got stomped
+046472 3E 19       0162*       ld a,25 ; plot command
+046474 32 8C 64 04 0163*       ld (@cmd1),a
+046478             0164*   ; send the vdu command string
+046478 21 83 64 04 0165*   	ld hl,@cmd0
+04647C 01 0F 00 00 0166*   	ld bc,@end-@cmd0
+046480 5B DF       0167*   	rst.lil $18
+046482 C9          0168*   	ret
+046483             0169*   ; set graphics viewport command
+046483 18          0170*   @cmd0:   db 24
+046484 00 00       0171*   @x0: 	dw 0x0000
+046486 00 00       0172*   @y1: 	dw 0x0000
+046488 00 00       0173*   @x1: 	dw 0x0000
+04648A 00 00       0174*   @y0: 	dw 0x0000
+04648C             0175*   ; plot bitmap command
+04648C 19          0176*   @cmd1:   db 25 ; stomped on by @y0 load
+04648D ED          0177*   @mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
+04648E 00 00       0178*   @x2: 	dw 0x0000
+046490 00 00       0179*   @y2: 	dw 0x0000
+046492 00          0180*   @end: db 0x00 ; padding
+046493             0181*   ; end bar_update_v
+046493             0182*   
+046493             0183*   bar_shields:
+046493 00 00 00    0184*       dl 0 ; value
+046496 F0 01 00    0185*       dl 496 ; x0
+046499 30 01 00    0186*       dl 304 ; y0
+04649C F8 01 00    0187*       dl 496+8 ; x1
+04649F 70 01 00    0188*       dl 304+64 ; y1
+0464A2 F0 00 00    0189*       dl 304-64 ; y-plot coordinate
+0464A5             0061        include "player_laser.inc"
+0464A5 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -11407,7 +11374,17 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
-       FF FF       
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF    
 046500             0002*   speed_laser: equ 4*256 ; 6 pixels per frame 16.8 fixed
 046500             0003*   tmr_laser: ds 6 ; rate timer for firing laser
        FF FF FF FF 
@@ -14054,223 +14031,332 @@ PC     Output      Line
 0477AF 08          0014*M1     ex af,af'
 0477B0 D9          0015*M1     exx
 0477B1 C9          0098*       RET
-0477B2             0071    
-0477B2 FF FF FF FF 0072        align 256
+0477B2             0099*   
+0477B2             0100*   DEBUG_PRINT_SHIELDS:
+0477B2 0E 00       0101*       ld c,0 ; X
+0477B4 06 00       0102*       ld b,0 ; Y
+0477B6 CD 37 19 04 0103*       call vdu_move_cursor
+0477BA             0104*   
+0477BA DD 21 93 64 0105*       ld ix,bar_shields
+       04          
+0477BF             0106*   
+0477BF CD 00 01 04 0107*       call printInline
+0477C3 76 61 6C 3A 0108*       asciz "val:"
+       00          
+0477C8 DD 27 00    0109*       ld hl,(ix+bar_val)
+0477CB CD 06 02 04 0110*       call printDec
+0477CF CD 1C 01 04 0111*       call printNewLine
+0477D3             0112*   
+0477D3 CD 00 01 04 0113*       call printInline
+0477D7 78 30 20 3A 0114*       asciz "x0 :"
+       00          
+0477DC DD 27 03    0115*       ld hl,(ix+bar_x0)
+0477DF CD 06 02 04 0116*       call printDec
+0477E3 CD 1C 01 04 0117*       call printNewLine
+0477E7             0118*   
+0477E7 CD 00 01 04 0119*       call printInline
+0477EB 79 30 20 3A 0120*       asciz "y0 :"
+       00          
+0477F0 DD 27 06    0121*       ld hl,(ix+bar_y0)
+0477F3 CD 06 02 04 0122*       call printDec
+0477F7 CD 1C 01 04 0123*       call printNewLine
+0477FB             0124*   
+0477FB CD 00 01 04 0125*       call printInline
+0477FF 78 31 20 3A 0126*       asciz "x1 :"
+       00          
+047804 DD 27 09    0127*       ld hl,(ix+bar_x1)
+047807 CD 06 02 04 0128*       call printDec
+04780B CD 1C 01 04 0129*       call printNewLine
+04780F             0130*   
+04780F CD 00 01 04 0131*       call printInline
+047813 79 31 20 3A 0132*       asciz "y1 :"
+       00          
+047818 DD 27 0C    0133*       ld hl,(ix+bar_y1)
+04781B CD 06 02 04 0134*       call printDec
+04781F CD 1C 01 04 0135*       call printNewLine
+047823             0136*   
+047823 CD 00 01 04 0137*       call printInline
+047827 79 20 20 3A 0138*       asciz "y  :"
+       00          
+04782C DD 27 0F    0139*       ld hl,(ix+bar_y)
+04782F CD 06 02 04 0140*       call printDec
+047833 CD 1C 01 04 0141*       call printNewLine
+047837             0142*   
+047837             0143*       ; call waitKeypress
+047837 C9          0144*       ret
+047838             0145*   ; end DEBUG_PRINT_SHIELDS
+047838             0146*   
+047838             0147*   DEBUG_PRINT_BAR_UPDATE:
+047838 0E 00       0148*       ld c,0 ; X
+04783A 06 00       0149*       ld b,0 ; Y
+04783C CD 37 19 04 0150*       call vdu_move_cursor
+047840             0151*   
+047840 CD 00 01 04 0152*       call printInline
+047844 78 30 20 20 0153*       asciz "x0  :"
+       3A 00       
+04784A 21 00 00 00 0154*       ld hl,0 ; clear hlu
+04784E DD 6E 01    0155*       ld l,(ix+@x0-@cmd0+0)
+047851 DD 66 02    0156*       ld h,(ix+@x0-@cmd0+1)
+047854 CD 06 02 04 0157*       call printDec
+047858 CD 1C 01 04 0158*       call printNewLine
+04785C             0159*   
+04785C CD 00 01 04 0160*       call printInline
+047860 79 30 20 20 0161*       asciz "y0  :"
+       3A 00       
+047866 21 00 00 00 0162*       ld hl,0 ; clear hlu
+04786A DD 6E 07    0163*       ld l,(ix+@y0-@cmd0+0)
+04786D DD 66 08    0164*       ld h,(ix+@y0-@cmd0+1)
+047870 CD 06 02 04 0165*       call printDec
+047874 CD 1C 01 04 0166*       call printNewLine
+047878             0167*   
+047878 CD 00 01 04 0168*       call printInline
+04787C 78 31 20 20 0169*       asciz "x1  :"
+       3A 00       
+047882 21 00 00 00 0170*       ld hl,0 ; clear hlu
+047886 DD 6E 05    0171*       ld l,(ix+@x1-@cmd0+0)
+047889 DD 66 06    0172*       ld h,(ix+@x1-@cmd0+1)
+04788C CD 06 02 04 0173*       call printDec
+047890 CD 1C 01 04 0174*       call printNewLine
+047894             0175*   
+047894 CD 00 01 04 0176*       call printInline
+047898 79 31 20 20 0177*       asciz "y1  :"
+       3A 00       
+04789E 21 00 00 00 0178*       ld hl,0 ; clear hlu
+0478A2 DD 6E 03    0179*       ld l,(ix+@y1-@cmd0+0)
+0478A5 DD 66 04    0180*       ld h,(ix+@y1-@cmd0+1)
+0478A8 CD 06 02 04 0181*       call printDec
+0478AC CD 1C 01 04 0182*       call printNewLine
+0478B0             0183*   
+0478B0 CD 00 01 04 0184*       call printInline
+0478B4 78 32 20 20 0185*       asciz "x2  :"
+       3A 00       
+0478BA 21 00 00 00 0186*       ld hl,0 ; clear hlu
+0478BE DD 6E 0B    0187*       ld l,(ix+@x2-@cmd0+0)
+0478C1 DD 66 0C    0188*       ld h,(ix+@x2-@cmd0+1)
+0478C4 CD 06 02 04 0189*       call printDec
+0478C8 CD 1C 01 04 0190*       call printNewLine
+0478CC             0191*   
+0478CC CD 00 01 04 0192*       call printInline
+0478D0 79 32 20 20 0193*       asciz "y2  :"
+       3A 00       
+0478D6 21 00 00 00 0194*       ld hl,0 ; clear hlu
+0478DA DD 6E 0D    0195*       ld l,(ix+@y2-@cmd0+0)
+0478DD DD 66 0E    0196*       ld h,(ix+@y2-@cmd0+1)
+0478E0 CD 06 02 04 0197*       call printDec
+0478E4 C9          0198*       ret
+0478E5 18          0199*   @cmd0:   db 24
+0478E6 00 00       0200*   @x0: 	dw 0x0000
+0478E8 00 00       0201*   @y1: 	dw 0x0000
+0478EA 00 00       0202*   @x1: 	dw 0x0000
+0478EC 00 00       0203*   @y0: 	dw 0x0000
+0478EE             0204*   ; plot bitmap command
+0478EE 19          0205*   @cmd1:   db 25 ; stomped on by @y0 load
+0478EF ED          0206*   @mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
+0478F0 00 00       0207*   @x2: 	dw 0x0000
+0478F2 00 00       0208*   @y2: 	dw 0x0000
+0478F4             0209*   @end:  ; no padding required
+0478F4             0210*   ; end DEBUG_PRINT_BAR_UPDATE
+0478F4             0071    
+0478F4 FF FF FF FF 0072        align 256
        FF FF FF FF 
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF       
-047800             0073    
-047800             0074    ; --- MAIN PROGRAM FILE ---
-047800 57 65 6C 63 0075    hello_world: asciz "Welcome to Purple Nurples!"
+047900             0073    
+047900             0074    ; --- MAIN PROGRAM FILE ---
+047900 57 65 6C 63 0075    hello_world: asciz "Welcome to Purple Nurples!"
        6F 6D 65 20 
        74 6F 20 50 
        75 72 70 6C 
        65 20 4E 75 
        72 70 6C 65 
        73 21 00    
-04781B 4C 6F 61 64 0076    loading_time: asciz "Loading time:"
+04791B 4C 6F 61 64 0076    loading_time: asciz "Loading time:"
        69 6E 67 20 
        74 69 6D 65 
        3A 00       
-047829 50 72 65 73 0077    loading_complete: asciz "Press any key to continue."
+047929 50 72 65 73 0077    loading_complete: asciz "Press any key to continue."
        73 20 61 6E 
        79 20 6B 65 
        79 20 74 6F 
        20 63 6F 6E 
        74 69 6E 75 
        65 2E 00    
-047844             0078    
-047844             0079    init:
-047844             0080    ; clear all buffers
-047844 CD 2A 1B 04 0081        call vdu_clear_all_buffers
-047848             0082    
-047848             0083    ; print loading ui message
-047848 CD 4B 19 04 0084        call vdu_cls
-04784C 21 6A 20 04 0085        ld hl,loading_ui
-047850 CD 07 01 04 0086        call printString
-047854 CD 50 19 04 0087        call vdu_flip
-047858             0088    ; load UI images
-047858 CD CA 16 04 0089        call load_ui_images
-04785C             0090    
-04785C             0091    ; set up the display
-04785C 3E 08       0092        ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-04785E             0093        ; ld a,20 ;  512   384   64    60hz single-buffered
-04785E CD 14 1A 04 0094        call vdu_set_screen_mode
-047862 AF          0095        xor a
-047863 CD 25 1A 04 0096        call vdu_set_scaling
-047867             0097    
-047867             0098    ; ; enable additional audio channels
-047867             0099    ; 	call vdu_enable_channels
-047867             0100    
-047867             0101    ; set text background color
-047867 3E 9A       0102        ld a,26+128 ; violet
-047869 CD 7C 19 04 0103        call vdu_colour_text
-04786D             0104    
-04786D             0105    ; set text foreground color
-04786D 3E 2F       0106        ld a,47 ; aaaaff lavenderish
-04786F CD 7C 19 04 0107        call vdu_colour_text
-047873             0108    
-047873             0109    ; set gfx bg color
-047873 AF          0110        xor a ; plotting mode 0
-047874 3E 9A       0111        ld a,26+128 ; violet
-047876 CD 8D 19 04 0112        call vdu_gcol
-04787A CD 4B 19 04 0113        call vdu_cls
-04787E             0114    
-04787E             0115    ; set the cursor off
-04787E CD 13 19 04 0116        call vdu_cursor_off
-047882             0117    
-047882             0118    ; VDU 28, left, bottom, right, top: Set text viewport **
-047882             0119    ; MIND THE LITTLE-ENDIANESS
-047882             0120    ; inputs: c=left,b=bottom,e=right,d=top
-047882 0E 00       0121        ld c,0 ; left
-047884 16 00       0122        ld d,0 ; top
-047886 1E 27       0123        ld e,39 ; right
-047888 06 00       0124        ld b,0; bottom
-04788A CD A4 19 04 0125        call vdu_set_txt_viewport
-04788E             0126    
-04788E             0127    ; load sprites
-04788E CD 09 16 04 0128        call img_load_init ; sets up the animated load screen
-047892 CD DD 16 04 0129        call load_sprite_images
-047896             0130    
-047896             0131    ; load tileset_ptrs
-047896 CD EE 16 04 0132        call load_tilesets
-04789A             0133    
-04789A             0134    ; ; load sound effects ; TODO
-04789A             0135    ; 	ld bc,SFX_num_buffers
-04789A             0136    ; 	ld hl,SFX_buffer_id_lut
-04789A             0137    ; 	ld (cur_buffer_id_lut),hl
-04789A             0138    ; 	ld hl,SFX_load_routines_table
-04789A             0139    ; 	ld (cur_load_jump_table),hl
-04789A             0140    ; 	call sfx_load_main
-04789A             0141    
-04789A             0142    ; print loading complete message and wait for user keypress
-04789A CD 4B 19 04 0143        call vdu_cls
-04789E 21 29 78 04 0144        ld hl,loading_complete
-0478A2 CD 07 01 04 0145        call printString
-0478A6 CD 50 19 04 0146        call vdu_flip
-0478AA CD B8 06 04 0147        call waitKeypress
-0478AE             0148    
-0478AE             0149    ; set up display for gameplay
-0478AE             0150        ; ld a,8
-0478AE 3E 14       0151        ld a,20
-0478B0 CD 14 1A 04 0152        call vdu_set_screen_mode
-0478B4 AF          0153        xor a
-0478B5 CD 25 1A 04 0154        call vdu_set_scaling
-0478B9 CD 13 19 04 0155        call vdu_cursor_off
-0478BD             0156    ; load fonts
-0478BD CD 00 15 04 0157    	call fonts_load
-0478C1             0158    ; select font
-0478C1             0159        ; ld hl,computer_pixel_7_8x16
-0478C1 21 02 FA 00 0160        ld hl,amiga_forever_8x8 ; DEBUG
-0478C5 3E 01       0161        ld a,1 ; flags
-0478C7 CD 00 1D 04 0162        call vdu_font_select
-0478CB             0163    ; plot bezel art
-0478CB 21 06 00 00 0164        ld hl,BUF_BEZEL_L
-0478CF CD 38 1A 04 0165        call vdu_buff_select
-0478D3 01 00 00 00 0166        ld bc,0
-0478D7 11 00 00 00 0167        ld de,0
-0478DB CD 20 1E 04 0168        call vdu_plot_bmp
-0478DF 21 07 00 00 0169        ld hl,BUF_BEZEL_R
-0478E3 CD 38 1A 04 0170        call vdu_buff_select
-0478E7 01 80 01 00 0171        ld bc,384
-0478EB 11 00 00 00 0172        ld de,0
-0478EF CD 20 1E 04 0173        call vdu_plot_bmp
-0478F3             0174    ; draw player cockpit
-0478F3 CD 92 63 04 0175        call draw_player_cockpit
-0478F7 DD 21 EF 63 0176        ld ix,mfd_display_l
+047944             0078    
+047944             0079    init:
+047944             0080    ; clear all buffers
+047944 CD 2A 1B 04 0081        call vdu_clear_all_buffers
+047948             0082    
+047948             0083    ; print loading ui message
+047948 CD 4B 19 04 0084        call vdu_cls
+04794C 21 6A 20 04 0085        ld hl,loading_ui
+047950 CD 07 01 04 0086        call printString
+047954 CD 50 19 04 0087        call vdu_flip
+047958             0088    ; load UI images
+047958 CD CA 16 04 0089        call load_ui_images
+04795C             0090    
+04795C             0091    ; set up the display
+04795C 3E 08       0092        ld a,8;+128 ; 136   320   240   64    60hz double-buffered
+04795E             0093        ; ld a,20 ;  512   384   64    60hz single-buffered
+04795E CD 14 1A 04 0094        call vdu_set_screen_mode
+047962 AF          0095        xor a
+047963 CD 25 1A 04 0096        call vdu_set_scaling
+047967             0097    
+047967             0098    ; ; enable additional audio channels
+047967             0099    ; 	call vdu_enable_channels
+047967             0100    
+047967             0101    ; set text background color
+047967 3E 9A       0102        ld a,26+128 ; violet
+047969 CD 7C 19 04 0103        call vdu_colour_text
+04796D             0104    
+04796D             0105    ; set text foreground color
+04796D 3E 2F       0106        ld a,47 ; aaaaff lavenderish
+04796F CD 7C 19 04 0107        call vdu_colour_text
+047973             0108    
+047973             0109    ; set gfx bg color
+047973 AF          0110        xor a ; plotting mode 0
+047974 3E 9A       0111        ld a,26+128 ; violet
+047976 CD 8D 19 04 0112        call vdu_gcol
+04797A CD 4B 19 04 0113        call vdu_cls
+04797E             0114    
+04797E             0115    ; set the cursor off
+04797E CD 13 19 04 0116        call vdu_cursor_off
+047982             0117    
+047982             0118    ; VDU 28, left, bottom, right, top: Set text viewport **
+047982             0119    ; MIND THE LITTLE-ENDIANESS
+047982             0120    ; inputs: c=left,b=bottom,e=right,d=top
+047982 0E 00       0121        ld c,0 ; left
+047984 16 00       0122        ld d,0 ; top
+047986 1E 27       0123        ld e,39 ; right
+047988 06 00       0124        ld b,0; bottom
+04798A CD A4 19 04 0125        call vdu_set_txt_viewport
+04798E             0126    
+04798E             0127    ; load sprites
+04798E CD 09 16 04 0128        call img_load_init ; sets up the animated load screen
+047992 CD DD 16 04 0129        call load_sprite_images
+047996             0130    
+047996             0131    ; load tileset_ptrs
+047996 CD EE 16 04 0132        call load_tilesets
+04799A             0133    
+04799A             0134    ; ; load sound effects ; TODO
+04799A             0135    ; 	ld bc,SFX_num_buffers
+04799A             0136    ; 	ld hl,SFX_buffer_id_lut
+04799A             0137    ; 	ld (cur_buffer_id_lut),hl
+04799A             0138    ; 	ld hl,SFX_load_routines_table
+04799A             0139    ; 	ld (cur_load_jump_table),hl
+04799A             0140    ; 	call sfx_load_main
+04799A             0141    
+04799A             0142    ; print loading complete message and wait for user keypress
+04799A CD 4B 19 04 0143        call vdu_cls
+04799E 21 29 79 04 0144        ld hl,loading_complete
+0479A2 CD 07 01 04 0145        call printString
+0479A6 CD 50 19 04 0146        call vdu_flip
+0479AA CD B8 06 04 0147        call waitKeypress
+0479AE             0148    
+0479AE             0149    ; set up display for gameplay
+0479AE             0150        ; ld a,8
+0479AE 3E 14       0151        ld a,20
+0479B0 CD 14 1A 04 0152        call vdu_set_screen_mode
+0479B4 AF          0153        xor a
+0479B5 CD 25 1A 04 0154        call vdu_set_scaling
+0479B9 CD 13 19 04 0155        call vdu_cursor_off
+0479BD             0156    ; load fonts
+0479BD CD 00 15 04 0157    	call fonts_load
+0479C1             0158    ; select font
+0479C1             0159        ; ld hl,computer_pixel_7_8x16
+0479C1 21 02 FA 00 0160        ld hl,amiga_forever_8x8 ; DEBUG
+0479C5 3E 01       0161        ld a,1 ; flags
+0479C7 CD 00 1D 04 0162        call vdu_font_select
+0479CB             0163    ; plot bezel art
+0479CB 21 06 00 00 0164        ld hl,BUF_BEZEL_L
+0479CF CD 38 1A 04 0165        call vdu_buff_select
+0479D3 01 00 00 00 0166        ld bc,0
+0479D7 11 00 00 00 0167        ld de,0
+0479DB CD 20 1E 04 0168        call vdu_plot_bmp
+0479DF 21 07 00 00 0169        ld hl,BUF_BEZEL_R
+0479E3 CD 38 1A 04 0170        call vdu_buff_select
+0479E7 01 80 01 00 0171        ld bc,384
+0479EB 11 00 00 00 0172        ld de,0
+0479EF CD 20 1E 04 0173        call vdu_plot_bmp
+0479F3             0174    ; draw player cockpit
+0479F3 CD 92 63 04 0175        call draw_player_cockpit
+0479F7 DD 21 DE 63 0176        ld ix,mfd_display_l
        04          
-0478FC CD FE 63 04 0177        call mfd_activate
-047900 CD 09 64 04 0178        call mfd_init
-047904             0179    ; set gfx origin and viewport to playing field window
-047904 01 80 00 00 0180        ld bc,origin_left
-047908 11 00 00 00 0181        ld de,origin_top
-04790C CD D0 19 04 0182        call vdu_set_gfx_origin
-047910 01 00 00 00 0183        ld bc,field_left
-047914 11 00 00 00 0184        ld de,field_top
-047918 DD 21 FF 00 0185        ld ix,field_right
+0479FC CD ED 63 04 0177        call mfd_activate
+047A00 CD F8 63 04 0178        call mfd_init
+047A04             0179    ; set gfx origin and viewport to playing field window
+047A04 01 80 00 00 0180        ld bc,origin_left
+047A08 11 00 00 00 0181        ld de,origin_top
+047A0C CD D0 19 04 0182        call vdu_set_gfx_origin
+047A10 01 00 00 00 0183        ld bc,field_left
+047A14 11 00 00 00 0184        ld de,field_top
+047A18 DD 21 FF 00 0185        ld ix,field_right
        00          
-04791D FD 21 7F 01 0186        ld iy,field_bottom
+047A1D FD 21 7F 01 0186        ld iy,field_bottom
        00          
-047922 CD EB 19 04 0187        call vdu_set_gfx_viewport
-047926             0188    ; set background color
-047926 3E 9A       0189        ld a,26+128 ; violet
-047928 CD 8D 19 04 0190        call vdu_gcol
-04792C CD 5E 19 04 0191        call vdu_clg
-047930             0192    ; VDU 28, left, bottom, right, top: Set text viewport **
-047930 0E 00       0193        ld c,0 ; left
-047932 16 00       0194        ld d,0 ; top
-047934 1E 3E       0195        ld e,62 ; right
-047936 06 30       0196        ld b,48; bottom
-047938 CD A4 19 04 0197        call vdu_set_txt_viewport
-04793C             0198    
-04793C             0199    ; initialize the global timestamp
-04793C CD F9 17 04 0200        call timestamp_tick
-047940             0201    
-047940             0202    ; done with init
-047940 C9          0203        ret
-047941             0204    
-047941             0205    main:
-047941             0206    ; start a new game
-047941 CD 17 66 04 0207        call game_initialize
-047945             0208    main_loop:
-047945             0209    ; update the global timestamp
-047945 CD F9 17 04 0210        call timestamp_tick
-047949             0211    ; do gamestate logic
-047949 CD 03 66 04 0212        call do_game
-04794D             0213    ; wait for the next vblank mitigate flicker and for loop timing
-04794D CD BF 19 04 0214        call vdu_vblank
-047951             0215    ; poll keyboard for escape keypress
-047951 3E 08       0216        ld a, $08 ; code to send to MOS
-047953 5B CF       0217        rst.lil $08 ; get IX pointer to System Variables
-047955 DD 7E 05    0218        ld a, (ix + $05) ; get ASCII code of key pressed
-047958 FE 1B       0219        cp 27 ; check if 27 (ascii code for ESC)
-04795A CA 62 79 04 0220        jp z, main_end ; if pressed, jump to exit
-04795E             0221    ; escape not pressed so loop
-04795E C3 45 79 04 0222        jp main_loop
-047962             0223    
-047962             0224    main_end:
-047962 CD 05 19 04 0225        call vdu_cursor_on
-047966 C9          0226        ret
-047967             0227    
-047967             0228        include "tables.inc"
-047967             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
-047967             0002*   ; table_base: equ $
-047967             0003*   table_base: equ 0x048000 ; DEBUG
-047967             0004*   player_weapons_begin: equ table_base
-047967             0005*   player_lasers_begin: equ player_weapons_begin
-047967             0006*   player_lasers_end: equ table_record_size*player_lasers_max+player_lasers_begin
-047967             0007*   player_weapons_end: equ table_record_size*player_lasers_max+player_weapons_begin
-047967             0008*   player_begin: equ player_weapons_end
-047967             0009*   player_end: equ table_record_size+player_begin
-047967             0010*   enemy_sprites_begin: equ player_end
-047967             0011*   seekers_base: equ enemy_sprites_begin
-047967             0012*   seekers_end: equ table_record_size*seekers_max+seekers_base
-047967             0013*   fireballs_base: equ seekers_end
-047967             0014*   fireballs_end: equ table_record_size*fireballs_max+fireballs_base
-047967             0015*   enemy_sprites_end: equ fireballs_end
-047967             0016*   explosions_base: equ enemy_sprites_end
-047967             0017*   explosions_end: equ table_record_size*explosions_max+explosions_base
-047967             0018*   table_end: equ explosions_end
-047967             0019*   
-047967             0020*   table_num_records: equ table_end-table_base/table_record_size
-047967             0021*   table_num_enemy_records: equ enemy_sprites_end-enemy_sprites_begin/table_record_size
-047967             0022*   ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
-047967             0023*   ; tile_table_base: equ table_end
-047967             0024*   tile_table_base: equ 0x050000 ; DEBUG
-047967             0025*   tile_table_end: equ 256*tile_table_record_size+tile_table_base
+047A22 CD EB 19 04 0187        call vdu_set_gfx_viewport
+047A26             0188    ; set background color
+047A26 3E 9A       0189        ld a,26+128 ; violet
+047A28 CD 8D 19 04 0190        call vdu_gcol
+047A2C CD 5E 19 04 0191        call vdu_clg
+047A30             0192    ; VDU 28, left, bottom, right, top: Set text viewport **
+047A30 0E 00       0193        ld c,0 ; left
+047A32 16 00       0194        ld d,0 ; top
+047A34 1E 3E       0195        ld e,62 ; right
+047A36 06 30       0196        ld b,48; bottom
+047A38 CD A4 19 04 0197        call vdu_set_txt_viewport
+047A3C             0198    
+047A3C             0199    ; initialize the global timestamp
+047A3C CD F9 17 04 0200        call timestamp_tick
+047A40             0201    
+047A40             0202    ; done with init
+047A40 C9          0203        ret
+047A41             0204    
+047A41             0205    main:
+047A41             0206    ; start a new game
+047A41 CD 17 66 04 0207        call game_initialize
+047A45             0208    main_loop:
+047A45             0209        ; CALL DEBUG_PRINT_SHIELDS ; DEBUG
+047A45             0210    ; update the global timestamp
+047A45 CD F9 17 04 0211        call timestamp_tick
+047A49             0212    ; do gamestate logic
+047A49 CD 03 66 04 0213        call do_game
+047A4D             0214    ; wait for the next vblank mitigate flicker and for loop timing
+047A4D CD BF 19 04 0215        call vdu_vblank
+047A51             0216    ; poll keyboard for escape keypress
+047A51 3E 08       0217        ld a, $08 ; code to send to MOS
+047A53 5B CF       0218        rst.lil $08 ; get IX pointer to System Variables
+047A55 DD 7E 05    0219        ld a, (ix + $05) ; get ASCII code of key pressed
+047A58 FE 1B       0220        cp 27 ; check if 27 (ascii code for ESC)
+047A5A CA 62 7A 04 0221        jp z, main_end ; if pressed, jump to exit
+047A5E             0222    ; escape not pressed so loop
+047A5E C3 45 7A 04 0223        jp main_loop
+047A62             0224    
+047A62             0225    main_end:
+047A62 CD 05 19 04 0226        call vdu_cursor_on
+047A66 C9          0227        ret
+047A67             0228    
+047A67             0229        include "tables.inc"
+047A67             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
+047A67             0002*   ; table_base: equ $
+047A67             0003*   table_base: equ 0x048000 ; DEBUG
+047A67             0004*   player_weapons_begin: equ table_base
+047A67             0005*   player_lasers_begin: equ player_weapons_begin
+047A67             0006*   player_lasers_end: equ table_record_size*player_lasers_max+player_lasers_begin
+047A67             0007*   player_weapons_end: equ table_record_size*player_lasers_max+player_weapons_begin
+047A67             0008*   player_begin: equ player_weapons_end
+047A67             0009*   player_end: equ table_record_size+player_begin
+047A67             0010*   enemy_sprites_begin: equ player_end
+047A67             0011*   seekers_base: equ enemy_sprites_begin
+047A67             0012*   seekers_end: equ table_record_size*seekers_max+seekers_base
+047A67             0013*   fireballs_base: equ seekers_end
+047A67             0014*   fireballs_end: equ table_record_size*fireballs_max+fireballs_base
+047A67             0015*   enemy_sprites_end: equ fireballs_end
+047A67             0016*   explosions_base: equ enemy_sprites_end
+047A67             0017*   explosions_end: equ table_record_size*explosions_max+explosions_base
+047A67             0018*   table_end: equ explosions_end
+047A67             0019*   
+047A67             0020*   table_num_records: equ table_end-table_base/table_record_size
+047A67             0021*   table_num_enemy_records: equ enemy_sprites_end-enemy_sprites_begin/table_record_size
+047A67             0022*   ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
+047A67             0023*   ; tile_table_base: equ table_end
+047A67             0024*   tile_table_base: equ 0x050000 ; DEBUG
+047A67             0025*   tile_table_end: equ 256*tile_table_record_size+tile_table_base

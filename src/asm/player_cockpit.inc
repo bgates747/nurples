@@ -62,22 +62,17 @@ draw_player_cockpit:
     call draw_player_ctl_panel
     ld ix,mfd_bezel_r
     call draw_player_ctl_panel
-; initialize shields bar display
+    call init_bar_shields
+    ret
+; end draw_player_cockpit
+
+init_bar_shields:
     ld ix,bar_shields
     ld hl,(player_max_shields)
     ld (ix+bar_val),hl
-    call hlu_div2
-    ex de,hl ; de = 50% of max shields
-    push de
-    pop hl
-    call hlu_div2
-    push hl
-    pop bc ; bc = 25% of max shields
-    ld iy,0 ; min shields
-    call bar_init
     call bar_update_v
     ret
-; end draw_player_cockpit
+; end init_bar_shields
 
 draw_player_ctl_panel:
     ld hl,(ix+panel_bufferId)
@@ -116,34 +111,7 @@ bar_x0: equ panel_x0
 bar_y0: equ panel_y0
 bar_x1: equ panel_x1
 bar_y1: equ panel_y1
-bar_max: equ 15 ; max value displayed
-bar_yellow: equ 18 ; level at which bar turns yellow
-bar_red: equ 21 ; level at which bar turns red
-bar_min: equ 24 ; minimum value displayed
-bar_rng: equ 27 ; bar_max - bar_min
-bar_pix: equ 30 ; pixels per unit level
-
-; initialize a bar display
-; inputs: ix points to bar structure
-;         hl = max value
-;         de = yellow value
-;         bc = red value
-;         iy = min value
-bar_init:
-    ld (ix+bar_max),hl
-    ld (ix+bar_yellow),de
-    ld (ix+bar_red),bc
-    ld (ix+bar_min),iy
-    ld hl,(ix+bar_max)
-    ld de,(ix+bar_min)
-    xor a ; clear carry
-    sbc hl,de
-    ld (ix+bar_rng),hl
-    ld de,64*256 ; 64 pixels
-    call udiv168
-    ld (ix+bar_pix),de
-    ret
-; end bar_init
+bar_y: equ 15 ; y-plot coordinate
 
 ; update a vertical bar display
 ; inputs: ix points to bar structure
@@ -154,18 +122,33 @@ bar_update_v:
     ld hl,(ix+bar_x0)
     ld (@x2),hl
 ; compute y-plot position
-    ld hl,(ix+bar_val)
-    ld de,(ix+bar_min)
+    ld de,(ix+bar_val)
+    ld hl,64
     xor a ; clear carry
     sbc hl,de
-    ld de,(ix+bar_pix)
-    call umul168
-    call hlu_udiv256
-    ld de,-64 ; 64 pixels
+    ld de,(ix+bar_y)
     add hl,de
-    ld de,(ix+bar_y0)
-    add hl,de
+    ld a,l
+    and %11111100 ; round to nearest 4 pixels
+    ld l,a
     ld (@y2),hl
+; select the color based on the value thresholds
+    ld de,(ix+bar_val)
+    ld hl,-16
+    add hl,de
+    jp nc,@red
+    ld hl,-32
+    add hl,de
+    jp nc,@yellow
+    ld hl,BUF_BAR_V_2 ; green
+    jp @select
+@yellow:
+    ld hl,BUF_BAR_V_1 ; yellow
+    jp @select
+@red:
+    ld hl,BUF_BAR_V_0 ; red
+@select:
+    call vdu_buff_select
 ; set gfx viewport
     ld hl,(ix+bar_x0)
     ld (@x0),hl
@@ -178,19 +161,9 @@ bar_update_v:
 ; restore bytes that got stomped
     ld a,25 ; plot command
     ld (@cmd1),a
-; select the buffer
-    ld hl,BUF_BAR_V_2
-    call vdu_buff_select
 ; send the vdu command string
 	ld hl,@cmd0
 	ld bc,@end-@cmd0
-; ; DEBUG
-;     PUSH_ALL
-;     ld a,c ; number of bytes
-;     call dumpMemoryHex
-;     call waitKeypress
-;     POP_ALL
-; ; END DEBUG
 	rst.lil $18
 	ret
 ; set graphics viewport command
@@ -204,7 +177,7 @@ bar_update_v:
 @mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
 @x2: 	dw 0x0000
 @y2: 	dw 0x0000
-@end:  ; no padding required
+@end: db 0x00 ; padding
 ; end bar_update_v
 
 bar_shields:
@@ -213,9 +186,4 @@ bar_shields:
     dl 304 ; y0
     dl 496+8 ; x1
     dl 304+64 ; y1
-    dl 0 ; max level
-    dl 0 ; yellow level
-    dl 0 ; red level
-    dl 0 ; min level
-    dl 0 ; range
-    dl 0 ; pixels
+    dl 304-64 ; y-plot coordinate
