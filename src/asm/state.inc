@@ -32,17 +32,14 @@ game_initialize:
     ld a,tiles_dg
     call init_tileset
 ; initialize player
-    ld hl,0
-    ld (player_score),hl
     ld hl,(player_max_shields)
     ld (player_shields),hl
+    ld (player_score_last),hl ; anything but zero so print_score will update
+    ld hl,0
+    ld (player_score),hl
     ld a,3
     ld (player_ships),a
     call player_init
-; ; TODO: TEMPORARY UNTIL MAP LOGIC IMPLEMENTED
-;     ld hl,enemies_dead
-;     ld (enemies_state),hl
-; ; END TODO
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl

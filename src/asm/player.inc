@@ -204,21 +204,7 @@ player_not_dead: ; yay we didn't die
     ret
 ; end player_input
 
-score_x: equ 49
-score_y: equ 33
-; prints the player's score
-print_score:
-    ld c,score_x
-    ld b,score_y
-    call vdu_move_cursor
-; ; TODO: make this part of the UI setup and only print as needed
-;     call printInline
-;     asciz "Score:"
-; END TODO
-    ld hl,(player_score)
-    call printDec
-    ret
-; end print_score
+
 
 player_move_weapons:
 ; initialize pointers and loop counter

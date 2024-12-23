@@ -1,3 +1,24 @@
+score_x: equ 50
+score_y: equ 33
+; prints the player's score
+player_score_last: dl 0
+print_score:
+    ld hl,(player_score_last)
+    ld de,(player_score)
+    ld (player_score_last),de
+    xor a ; clear carry
+    sbc hl,de
+    ret z ; no change to update
+    ld c,score_x
+    ld b,score_y
+    call vdu_move_cursor
+    ld hl,(player_score)
+    call printDec
+    ret
+; end print_score
+
+
+; offsets into control panel element definitions
 panel_bufferId: equ 0
 panel_x0: equ 3
 panel_y0: equ 6
@@ -55,10 +76,10 @@ draw_player_ctl_panel:
 
 mfd_display_l:
     dl BUF_MFD_ARMS ; bufferId
-    dl 72 ; x0
-    dl 333 ; y0
-    dl 72+43 ; x1
-    dl 333+38 ; y1
+    dl 54 ; x0
+    dl 320 ; y0
+    dl 54+36 ; x1
+    dl 320+18 ; y1
 
 mfd_activate:
     ld bc,(ix+panel_x0)
