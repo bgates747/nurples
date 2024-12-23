@@ -5,10 +5,10 @@ ui_num_images: equ 38
 ; buffer_ids:
 BUF_BAR_H_0: equ 0
 BUF_BAR_H_1: equ 1
-BUF_BAR_H_3: equ 2
-BUF_BAR_V_1: equ 3
-BUF_BAR_V_2: equ 4
-BUF_BAR_V_3: equ 5
+BUF_BAR_H_2: equ 2
+BUF_BAR_V_0: equ 3
+BUF_BAR_V_1: equ 4
+BUF_BAR_V_2: equ 5
 BUF_BEZEL_L: equ 6
 BUF_BEZEL_R: equ 7
 BUF_CTL_PANEL_L: equ 8
@@ -45,10 +45,10 @@ BUF_SPLASH_LOGO: equ 37
 ui_image_list: ; type; width; height; size; filename; bufferId:
 	dl 1, 128, 8, 1024, fn_bar_h_0, 0
 	dl 1, 128, 8, 1024, fn_bar_h_1, 1
-	dl 1, 128, 8, 1024, fn_bar_h_3, 2
-	dl 1, 8, 128, 1024, fn_bar_v_1, 3
-	dl 1, 8, 128, 1024, fn_bar_v_2, 4
-	dl 1, 8, 128, 1024, fn_bar_v_3, 5
+	dl 1, 128, 8, 1024, fn_bar_h_2, 2
+	dl 1, 8, 128, 1024, fn_bar_v_0, 3
+	dl 1, 8, 128, 1024, fn_bar_v_1, 4
+	dl 1, 8, 128, 1024, fn_bar_v_2, 5
 	dl 1, 128, 384, 49152, fn_bezel_l, 6
 	dl 1, 128, 384, 49152, fn_bezel_r, 7
 	dl 1, 128, 128, 16384, fn_ctl_panel_l, 8
@@ -85,10 +85,10 @@ ui_image_list: ; type; width; height; size; filename; bufferId:
 ; files_list: ; filename:
 fn_bar_h_0: db "ui/bar_h_0.rgba2",0 
 fn_bar_h_1: db "ui/bar_h_1.rgba2",0 
-fn_bar_h_3: db "ui/bar_h_3.rgba2",0 
+fn_bar_h_2: db "ui/bar_h_2.rgba2",0 
+fn_bar_v_0: db "ui/bar_v_0.rgba2",0 
 fn_bar_v_1: db "ui/bar_v_1.rgba2",0 
 fn_bar_v_2: db "ui/bar_v_2.rgba2",0 
-fn_bar_v_3: db "ui/bar_v_3.rgba2",0 
 fn_bezel_l: db "ui/bezel_l.rgba2",0 
 fn_bezel_r: db "ui/bezel_r.rgba2",0 
 fn_ctl_panel_l: db "ui/ctl_panel_l.rgba2",0 

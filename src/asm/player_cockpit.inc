@@ -179,7 +179,7 @@ bar_update_v:
     ld a,25 ; plot command
     ld (@cmd1),a
 ; select the buffer
-    ld hl,BUF_BAR_V_3
+    ld hl,BUF_BAR_V_2
     call vdu_buff_select
 ; send the vdu command string
 	ld hl,@cmd0

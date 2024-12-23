@@ -9944,10 +9944,10 @@ PC     Output      Line
 0457C4             0005*   ; buffer_ids:
 0457C4             0006*   BUF_BAR_H_0: equ 0
 0457C4             0007*   BUF_BAR_H_1: equ 1
-0457C4             0008*   BUF_BAR_H_3: equ 2
-0457C4             0009*   BUF_BAR_V_1: equ 3
-0457C4             0010*   BUF_BAR_V_2: equ 4
-0457C4             0011*   BUF_BAR_V_3: equ 5
+0457C4             0008*   BUF_BAR_H_2: equ 2
+0457C4             0009*   BUF_BAR_V_0: equ 3
+0457C4             0010*   BUF_BAR_V_1: equ 4
+0457C4             0011*   BUF_BAR_V_2: equ 5
 0457C4             0012*   BUF_BEZEL_L: equ 6
 0457C4             0013*   BUF_BEZEL_R: equ 7
 0457C4             0014*   BUF_CTL_PANEL_L: equ 8
@@ -9992,22 +9992,22 @@ PC     Output      Line
        00 00 04 00 
        81 5A 04 01 
        00 00       
-0457E8 01 00 00 80 0048*   	dl 1, 128, 8, 1024, fn_bar_h_3, 2
+0457E8 01 00 00 80 0048*   	dl 1, 128, 8, 1024, fn_bar_h_2, 2
        00 00 08 00 
        00 00 04 00 
        92 5A 04 02 
        00 00       
-0457FA 01 00 00 08 0049*   	dl 1, 8, 128, 1024, fn_bar_v_1, 3
+0457FA 01 00 00 08 0049*   	dl 1, 8, 128, 1024, fn_bar_v_0, 3
        00 00 80 00 
        00 00 04 00 
        A3 5A 04 03 
        00 00       
-04580C 01 00 00 08 0050*   	dl 1, 8, 128, 1024, fn_bar_v_2, 4
+04580C 01 00 00 08 0050*   	dl 1, 8, 128, 1024, fn_bar_v_1, 4
        00 00 80 00 
        00 00 04 00 
        B4 5A 04 04 
        00 00       
-04581E 01 00 00 08 0051*   	dl 1, 8, 128, 1024, fn_bar_v_3, 5
+04581E 01 00 00 08 0051*   	dl 1, 8, 128, 1024, fn_bar_v_2, 5
        00 00 80 00 
        00 00 04 00 
        C5 5A 04 05 
@@ -10184,24 +10184,24 @@ PC     Output      Line
        5F 31 2E 72 
        67 62 61 32 
        00          
-045A92 75 69 2F 62 0088*   fn_bar_h_3: db "ui/bar_h_3.rgba2",0
+045A92 75 69 2F 62 0088*   fn_bar_h_2: db "ui/bar_h_2.rgba2",0
        61 72 5F 68 
-       5F 33 2E 72 
+       5F 32 2E 72 
        67 62 61 32 
        00          
-045AA3 75 69 2F 62 0089*   fn_bar_v_1: db "ui/bar_v_1.rgba2",0
+045AA3 75 69 2F 62 0089*   fn_bar_v_0: db "ui/bar_v_0.rgba2",0
+       61 72 5F 76 
+       5F 30 2E 72 
+       67 62 61 32 
+       00          
+045AB4 75 69 2F 62 0090*   fn_bar_v_1: db "ui/bar_v_1.rgba2",0
        61 72 5F 76 
        5F 31 2E 72 
        67 62 61 32 
        00          
-045AB4 75 69 2F 62 0090*   fn_bar_v_2: db "ui/bar_v_2.rgba2",0
+045AC5 75 69 2F 62 0091*   fn_bar_v_2: db "ui/bar_v_2.rgba2",0
        61 72 5F 76 
        5F 32 2E 72 
-       67 62 61 32 
-       00          
-045AC5 75 69 2F 62 0091*   fn_bar_v_3: db "ui/bar_v_3.rgba2",0
-       61 72 5F 76 
-       5F 33 2E 72 
        67 62 61 32 
        00          
 045AD6 75 69 2F 62 0092*   fn_bezel_l: db "ui/bezel_l.rgba2",0
@@ -11354,7 +11354,7 @@ PC     Output      Line
 046485 3E 19       0179*       ld a,25 ; plot command
 046487 32 A7 64 04 0180*       ld (@cmd1),a
 04648B             0181*   ; select the buffer
-04648B 21 05 00 00 0182*       ld hl,BUF_BAR_V_3
+04648B 21 05 00 00 0182*       ld hl,BUF_BAR_V_2
 04648F CD 38 1A 04 0183*       call vdu_buff_select
 046493             0184*   ; send the vdu command string
 046493 21 9E 64 04 0185*   	ld hl,@cmd0
