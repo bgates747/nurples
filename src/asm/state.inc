@@ -32,7 +32,7 @@ game_initialize:
     ld a,tiles_dg
     call init_tileset
 ; initialize player
-    ld hl,(player_max_shields)
+    ld hl,(player_shields_max)
     ld (player_shields),hl
     ld (player_score_last),hl ; anything but zero so print_score will update
     ld hl,0

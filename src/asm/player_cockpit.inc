@@ -3,6 +3,7 @@ score_y: equ 33
 ; prints the player's score
 player_score_last: dl 0 ; integer
 player_shields_last: dl 0 ; integer
+player_power_last: dl 0 ; integer
 
 
 ; inputs: a = value to add to player_score
@@ -91,24 +92,44 @@ draw_player_cockpit:
     call draw_player_ctl_panel
     ld ix,mfd_bezel_l
     call draw_player_ctl_panel
+    ld ix,mfd_bg_l
+    call draw_player_ctl_panel
+    ld ix,mfd_arms_l
+    call draw_player_ctl_panel
     ld ix,mfd_bezel_r
+    call draw_player_ctl_panel
+    ld ix,mfd_bg_r
     call draw_player_ctl_panel
     ld hl,BUF_SHIELD
     call vdu_buff_select
     ld bc,492
     ld de,368
     call vdu_plot_bmp
+    ld hl,BUF_POWER
+    call vdu_buff_select
+    ld bc,4
+    ld de,368
+    call vdu_plot_bmp
     call init_bar_shields
+    call init_bar_power
     ret
 ; end draw_player_cockpit
 
 init_bar_shields:
     ld ix,bar_shields
-    ld hl,(player_max_shields)
+    ld hl,(player_shields_max)
     ld (ix+bar_val),hl
     call bar_update_v
     ret
 ; end init_bar_shields
+
+init_bar_power:
+    ld ix,bar_power
+    ld hl,(player_power_max)
+    ld (ix+bar_val),hl
+    call bar_update_v
+    ret
+; end init_bar_power
 
 draw_player_ctl_panel:
     ld hl,(ix+panel_bufferId)
@@ -119,12 +140,26 @@ draw_player_ctl_panel:
     ret
 ; end draw_player_ctl_panel
 
-mfd_display_l:
+mfd_bg_l:
+    dl BUF_MFD_BG ; bufferId
+    dl 40 ; x0
+    dl 296 ; y0
+    dl 40+63 ; x1
+    dl 296+63 ; y1
+
+mfd_arms_l:
     dl BUF_MFD_ARMS ; bufferId
     dl 54 ; x0
     dl 320 ; y0
-    dl 54+36 ; x1
-    dl 320+18 ; y1
+    dl 54+35 ; x1
+    dl 320+17 ; y1
+
+mfd_bg_r:
+    dl BUF_MFD_BG ; bufferId
+    dl 408 ; x0
+    dl 296 ; y0
+    dl 408+63 ; x1
+    dl 296+63 ; y1
 
 mfd_activate:
     ld bc,(ix+panel_x0)
@@ -201,5 +236,13 @@ bar_shields:
     dl 496 ; x0
     dl 304 ; y0
     dl 496+7 ; x1
+    dl 304+63 ; y1
+    dl 304-64 ; y-plot coordinate
+
+bar_power:
+    dl 0 ; value
+    dl 8 ; x0
+    dl 304 ; y0
+    dl 8+7 ; x1
     dl 304+63 ; y1
     dl 304-64 ; y-plot coordinate

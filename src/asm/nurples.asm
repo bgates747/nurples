@@ -172,9 +172,6 @@ init:
     call vdu_plot_bmp
 ; draw player cockpit
     call draw_player_cockpit
-    ld ix,mfd_display_l
-    call mfd_activate
-    call mfd_init
 ; set gfx origin and viewport to playing field window
     ld bc,origin_left
     ld de,origin_top
