@@ -128,6 +128,11 @@ draw_player_cockpit:
     ld bc,387
     ld de,260
     call vdu_plot_bmp
+    ld hl,BUF_JERRY_CAN
+    call vdu_buff_select
+    ld bc,113
+    ld de,258
+    call vdu_plot_bmp
 
     call init_bar_shields
     call init_bar_power
