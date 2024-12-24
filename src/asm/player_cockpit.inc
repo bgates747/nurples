@@ -6,6 +6,8 @@ player_shields_last: dl 0 ; integer
 player_power_last: dl 0 ; integer
 laser_power_last: dl 0 ; integer
 
+fuel_last: dl 0 ; integer
+
 ; inputs: a = value to add to player_score
 update_score:
     ld de,0 ; clear deu and d
@@ -31,36 +33,6 @@ print_score:
     call printDec
     ret
 ; end print_score
-
-; inputs: a = value to add to player_shields
-update_shields:
-    ld hl,player_shields
-    add a,(hl)
-    ld (hl),a
-    ret
-
-draw_shields:
-    ld hl,player_shields_last
-    ld a,(player_shields)
-    cp (hl)
-    ret z ; no change to update
-    ld (hl),a
-    ld ix,bar_shields
-    ld (ix+bar_val),a ; TODO: this is redundant
-    call bar_update_v
-    ret
-
-draw_power:
-    call charge_laser
-    ld hl,player_power_last
-    ld a,(laser_power)
-    cp (hl)
-    ret z ; no change to update
-    ld (hl),a
-    ld ix,bar_power
-    ld (ix+bar_val),a ; TODO: this is redundant
-    call bar_update_v
-    ret
 
 ; offsets into control panel element definitions
 panel_bufferId: equ 0
@@ -135,27 +107,10 @@ draw_player_cockpit:
     call vdu_plot_bmp
 
     call init_bar_shields
-    call init_bar_power
+    call init_bar_laser
+    call init_bar_fuel
     ret
 ; end draw_player_cockpit
-
-init_bar_shields:
-    ld ix,bar_shields
-    ld hl,(player_shields_max)
-    ld (ix+bar_val),hl
-    call bar_update_v
-    ret
-; end init_bar_shields
-
-init_bar_power:
-    ld a,(charge_laser_timer_max)
-    ld (charge_laser_timer),a
-    ld ix,bar_power
-    ld hl,(laser_power_max)
-    ld (ix+bar_val),hl
-    call bar_update_v
-    ret
-; end init_bar_power
 
 draw_player_ctl_panel:
     ld hl,(ix+panel_bufferId)
@@ -257,6 +212,55 @@ bar_update_v:
     ret
 ; end bar_update_v
 
+
+; update a horizontal bar display
+; inputs: ix points to bar structure
+;         bar_val set by caller
+; prerequisite: bar_init called before first use
+bar_update_h:
+; set gfx viewport
+    push ix ; preserve pointer
+    ld bc,(ix+bar_x0)
+    ld de,(ix+bar_y0)
+    ld iy,(ix+bar_y1)
+    ld ix,(ix+bar_x1)
+    call vdu_set_gfx_viewport
+    pop ix ; restore pointer
+; select the color based on the value thresholds
+    ld de,(ix+bar_val)
+    ld hl,-16
+    add hl,de
+    jp nc,@red
+    ld hl,-32
+    add hl,de
+    jp nc,@yellow
+    ld hl,BUF_BAR_V_2 ; green
+    jp @select
+@yellow:
+    ld hl,BUF_BAR_V_1 ; yellow
+    jp @select
+@red:
+    ld hl,BUF_BAR_V_0 ; red
+@select:
+    call vdu_buff_select
+; compute x-plot position
+    ld de,(ix+bar_val)
+    ld hl,64
+    xor a ; clear carry
+    sbc hl,de
+    ld de,(ix+bar_y)
+    add hl,de
+    ld a,l
+    and %11111100 ; round to nearest 4 pixels
+    ld l,a
+    push hl
+    pop bc
+; get y-plot position
+    ld de,(ix+bar_x0)
+    call vdu_plot_bmp
+    ret
+; end bar_update_h
+
 bar_shields:
     dl 0 ; value
     dl 496 ; x0
@@ -265,10 +269,122 @@ bar_shields:
     dl 304+63 ; y1
     dl 304-64 ; y-plot coordinate
 
-bar_power:
+init_bar_shields:
+    ld ix,bar_shields
+    ld hl,(player_shields_max)
+    ld (ix+bar_val),hl
+    call bar_update_v
+    ret
+; end init_bar_shields
+
+; inputs: a = value to add to player_shields
+update_shields:
+    ld hl,player_shields
+    add a,(hl)
+    ld (hl),a
+    ret
+
+draw_shields:
+    ld hl,player_shields_last
+    ld a,(player_shields)
+    cp (hl)
+    ret z ; no change to update
+    ld (hl),a
+    ld ix,bar_shields
+    ld (ix+bar_val),a ; TODO: this is redundant
+    call bar_update_v
+    ret
+
+bar_laser:
     dl 0 ; value
     dl 8 ; x0
     dl 304 ; y0
     dl 8+7 ; x1
     dl 304+63 ; y1
     dl 304-64 ; y-plot coordinate
+
+init_bar_laser:
+    ld a,(charge_laser_timer_max)
+    ld (charge_laser_timer),a
+    ld ix,bar_laser
+    ld hl,(laser_power_max)
+    ld (ix+bar_val),hl
+    call bar_update_v
+    ret
+; end init_bar_laser
+charge_laser_timer: db 0
+charge_laser_timer_max: db 6
+charge_laser:
+; check laser timer
+    ld hl,charge_laser_timer
+    dec (hl)
+    ret nz
+    ld a,(charge_laser_timer_max)
+    ld (hl),a
+    ld hl,laser_power
+    inc (hl)
+    ld a,64
+    cp (hl)
+    ret nc
+    ld (hl),a
+    ret
+; end charge_laser
+draw_laser:
+    call charge_laser
+    ld hl,player_power_last
+    ld a,(laser_power)
+    cp (hl)
+    ret z ; no change to update
+    ld (hl),a
+    ld ix,bar_laser
+    ld (ix+bar_val),a ; TODO: this is redundant
+    call bar_update_v
+    ret
+
+bar_fuel:
+    dl 0 ; value
+    dl 48 ; x0
+    dl 264 ; y0
+    dl 48+63 ; x1
+    dl 264+7 ; y1
+    dl 48-64 ; x-plot coordinate
+
+init_bar_fuel:
+    ld a,(discharge_fuel_timer_max)
+    ld (discharge_fuel_timer),a
+    ld ix,bar_fuel
+    ld hl,(player_fuel_max)
+    ld (ix+bar_val),hl
+    call bar_update_h
+    ret
+; end init_bar_fuel
+
+discharge_fuel_timer: db 0
+discharge_fuel_timer_max: db 6
+discharge_fuel:
+; check fuel timer
+    ld hl,discharge_fuel_timer
+    dec (hl)
+    ret nz
+    ld a,(discharge_fuel_timer_max)
+    ld (hl),a
+    ld hl,player_fuel
+    dec (hl)
+    ld a,0
+    cp (hl)
+    ret nc
+    ld (hl),a
+    ret
+; end discharge_fuel
+
+draw_fuel:
+    call discharge_fuel
+    ld hl,player_power_last
+    ld a,(player_fuel)
+    cp (hl)
+    ret z ; no change to update
+    ld (hl),a
+    ld ix,bar_fuel
+    ld (ix+bar_val),a ; TODO: this is redundant
+    call bar_update_h
+    ret

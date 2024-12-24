@@ -37,10 +37,13 @@ game_initialize:
     ld (player_score_last),hl ; anything but zero so print_score will update
     ld hl,(laser_power_max)
     ld (laser_power),hl
+    ld hl,(player_fuel_max)
+    ld hl,(player_fuel)
     ld hl,0
     ld (player_score),hl
     ld (player_shields_last),hl ; set to zero so draw_shields will update
-    ld (laser_power_last),hl ; set to zero so draw_power will update
+    ld (laser_power_last),hl ; set to zero so draw_laser will update
+    ld (fuel_last),hl ; set to zero so draw_fuel will update    
     ld a,3
     ld (player_ships),a
     call player_init
@@ -75,7 +78,8 @@ game_playing:
     call vdu_set_gfx_origin
     call print_score
     call draw_shields
-    call draw_power
+    call draw_laser
+    call draw_fuel
     ret
 
 game_paused:

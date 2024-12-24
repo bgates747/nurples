@@ -121,21 +121,3 @@ init_player_laser:
     call timestamp_tmr_set
     ret
 ; end init_player_laser
-
-charge_laser_timer: db 0
-charge_laser_timer_max: db 6
-charge_laser:
-; check laser timer
-    ld hl,charge_laser_timer
-    dec (hl)
-    ret nz
-    ld a,(charge_laser_timer_max)
-    ld (hl),a
-    ld hl,laser_power
-    inc (hl)
-    ld a,64
-    cp (hl)
-    ret nc
-    ld (hl),a
-    ret
-; end charge_laser
