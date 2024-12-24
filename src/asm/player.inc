@@ -10,8 +10,6 @@ player_shields: dl 64 ; integer
 ; max player shields,binary
 ; can increase with power-ups (todo)
 player_shields_max: dl 64 ; integer
-player_power: dl 64 ; integer
-player_power_max: dl 64 ; integer
 ; when reaches zero,game ends
 ; can increase based on TODO
 player_ships: db 3 ; integer

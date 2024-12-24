@@ -4,6 +4,8 @@ tmr_laser: ds 6 ; rate timer for firing laser
 tmr_laser_reset: dl 120/3
 laser_animation_timer_reset: equ 2 ; animate every two frames
 
+laser_power: dl 64 ; integer
+laser_power_max: dl 64 ; integer
 
 laser_defaults:
     db player_air        ; type
@@ -23,10 +25,21 @@ laser_defaults:
     db 0                    ; frame
 
 player_spawn_laser:
-; check laser spawn timer
+; check laser power
+    ld a,(laser_power)
+    sub a,8 ; 8 units of power per laser shot
+    jp nc,@F ; enough power to fire so check timer
+    xor a ; set power to zero
+    ld (laser_power),a
+    ret
+@@: ; check laser spawn timer
     ld iy,tmr_laser
     call timestamp_tmr_get
     ret p ; not time to fire
+; update power to reflect firing
+    ld a,(laser_power)
+    sub a,8 ; 8 units of power per laser shot
+    ld (laser_power),a
 ; reset timer
     ld hl,(tmr_laser_reset)
     call timestamp_tmr_set
@@ -107,3 +120,22 @@ init_player_laser:
     ld hl,0
     call timestamp_tmr_set
     ret
+; end init_player_laser
+
+charge_laser_timer: db 0
+charge_laser_timer_max: db 6
+charge_laser:
+; check laser timer
+    ld hl,charge_laser_timer
+    dec (hl)
+    ret nz
+    ld a,(charge_laser_timer_max)
+    ld (hl),a
+    ld hl,laser_power
+    inc (hl)
+    ld a,64
+    cp (hl)
+    ret nc
+    ld (hl),a
+    ret
+; end charge_laser

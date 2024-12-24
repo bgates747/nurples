@@ -11,6 +11,16 @@ tiles_x_plot: dl 0
 tiles_y_plot: dl -15
 
 tiles_plot:
+; set gfx origin to playing field window
+    ld bc,origin_left
+    ld de,origin_top
+    call vdu_set_gfx_origin
+; set gfx viewport to playing field window
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
 ; move the background down one pixel
     ld a,2 ; current gfx viewport
     ld l,2 ; direction=down

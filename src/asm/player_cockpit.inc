@@ -4,7 +4,7 @@ score_y: equ 33
 player_score_last: dl 0 ; integer
 player_shields_last: dl 0 ; integer
 player_power_last: dl 0 ; integer
-
+laser_power_last: dl 0 ; integer
 
 ; inputs: a = value to add to player_score
 update_score:
@@ -46,6 +46,18 @@ draw_shields:
     ret z ; no change to update
     ld (hl),a
     ld ix,bar_shields
+    ld (ix+bar_val),a ; TODO: this is redundant
+    call bar_update_v
+    ret
+
+draw_power:
+    call charge_laser
+    ld hl,player_power_last
+    ld a,(laser_power)
+    cp (hl)
+    ret z ; no change to update
+    ld (hl),a
+    ld ix,bar_power
     ld (ix+bar_val),a ; TODO: this is redundant
     call bar_update_v
     ret
@@ -131,8 +143,10 @@ init_bar_shields:
 ; end init_bar_shields
 
 init_bar_power:
+    ld a,(charge_laser_timer_max)
+    ld (charge_laser_timer),a
     ld ix,bar_power
-    ld hl,(player_power_max)
+    ld hl,(laser_power_max)
     ld (ix+bar_val),hl
     call bar_update_v
     ret

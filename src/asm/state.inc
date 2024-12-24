@@ -35,9 +35,12 @@ game_initialize:
     ld hl,(player_shields_max)
     ld (player_shields),hl
     ld (player_score_last),hl ; anything but zero so print_score will update
+    ld hl,(laser_power_max)
+    ld (laser_power),hl
     ld hl,0
     ld (player_score),hl
     ld (player_shields_last),hl ; set to zero so draw_shields will update
+    ld (laser_power_last),hl ; set to zero so draw_power will update
     ld a,3
     ld (player_ships),a
     call player_init
@@ -50,10 +53,7 @@ game_initialize:
 game_playing:
 ; Main gameplay loop
 
-; set gfx origin to playing field window
-    ld bc,origin_left
-    ld de,origin_top
-    call vdu_set_gfx_origin
+; plot tiles
     call tiles_plot
 
 ; set gfx viewport to playing field window
@@ -75,6 +75,7 @@ game_playing:
     call vdu_set_gfx_origin
     call print_score
     call draw_shields
+    call draw_power
     ret
 
 game_paused:
