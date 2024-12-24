@@ -98,11 +98,6 @@ check_collision_box:
 ;          dx168 and dy168 are also populated with the signed displacements
 ; destroys: everything except indexes
 check_collision:
-; ; DEBUG
-;     xor a
-;     dec a
-;     ret
-; ; END DEBUG
 check_collision_cartesian:
 ; compute dx = x1-x0
     ld hl,(ix+sprite_x)
@@ -178,16 +173,3 @@ check_enemy_collision_player: ; check for collisions with player
     xor a ; signal collision detected
     ret
 ; end check_enemy_collision_player
-
-; this routine vanquishes the enemy sprite
-; and replaces it with an animated explosion
-; destroys: everything except index registers
-; returns: a=-1 to indicate enemy died, and an incandescent ball of debris and gas
-enemy_kill:
-    ld hl,(player_score)
-    ld bc,0 ; clear bcu
-    ld c,(iy+sprite_points)
-    add hl,bc
-    ld (player_score),hl
-    jp spawn_explosion
-; end enemy_kill

@@ -18,7 +18,7 @@ seeker_defaults:
     db 1                    ; move_timer
     db 0                    ; move_step
     db 10                   ; points
-    db 2                    ; shield_damage
+    db -4                   ; shield_damage
     db 0                    ; frame
 
 enemy_spawn_seeker:
@@ -37,15 +37,23 @@ move_enemy_seeker:
 ; run the movement program for the seeker enemy
     call en_nav_seek_zag
     call check_enemy_collision_player
-    jp z,enemy_kill
+    jp z,@player
     call check_enemy_collision_laser
-    jp z,enemy_kill
+    jp z,@laser
 ; change the animation frame to match heading
     ld a,(iy+sprite_id)
     call vdu_sprite_select
     call sprite_frame_heading ; a, sprite_frame set to heading-based frame
     call vdu_sprite_select_frame
     ret
+@laser:
+    ld a,(iy+sprite_points)
+    call update_score
+    jp spawn_explosion
+@player:
+    ld a,(iy+sprite_shield_damage)
+    call update_shields
+    jp spawn_explosion
 ; end move_enemy_seeker
 
 ; contains the logic for how to move the enemy

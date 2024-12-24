@@ -15,7 +15,7 @@ explosion_defaults:
     db 0	                ; move_timer
     db 0	                ; move_step
     db 0	                ; points
-    db 5	                ; shield_damage
+    db 0	                ; shield_damage
     db 0                    ; frame
 
 spawn_explosion:

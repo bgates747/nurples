@@ -16,7 +16,7 @@ fireball_defaults:
     db 0                    ; move_timer
     db 0                    ; move_step
     db 0                    ; points
-    db 5                    ; shield_damage
+    db -2                   ; shield_damage
     db 0                    ; frame
 
 enemy_spawn_fireball:
@@ -60,7 +60,9 @@ move_enemy_fireball:
     jp nz,table_deactivate_sprite
     call check_enemy_collision_player
     ret nz ; no collision so nothing to do
-    jp enemy_kill
+    ld a,(iy+sprite_shield_damage)
+    call update_shields
+    jp spawn_explosion
 ; end move_enemy_fireball
 
 init_enemy_fireballs:

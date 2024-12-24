@@ -2,7 +2,6 @@
 turret_fireball_defaults:
     db enemy_ground         ; type
     dl BUF_TURRET_000       ; base_bufferId
-    ; dl BUF_CRATER       ; base_bufferId DEBUG
     dl move_turret_fireball ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x

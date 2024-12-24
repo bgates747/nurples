@@ -206,5 +206,5 @@ DEBUG_PRINT_BAR_UPDATE:
 @mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
 @x2: 	dw 0x0000
 @y2: 	dw 0x0000
-@end:  ; no padding required
+@end:  db 0x00 ; padding
 ; end DEBUG_PRINT_BAR_UPDATE

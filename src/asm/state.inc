@@ -37,6 +37,7 @@ game_initialize:
     ld (player_score_last),hl ; anything but zero so print_score will update
     ld hl,0
     ld (player_score),hl
+    ld (player_shields_last),hl ; set to zero so draw_shields will update
     ld a,3
     ld (player_ships),a
     call player_init
@@ -48,24 +49,32 @@ game_initialize:
 
 game_playing:
 ; Main gameplay loop
-    call tiles_plot
 
-; set gfx origin and viewport to playing field window
+; set gfx origin to playing field window
     ld bc,origin_left
     ld de,origin_top
     call vdu_set_gfx_origin
+    call tiles_plot
+
+; set gfx viewport to playing field window
     ld bc,field_left
     ld de,field_top
     ld ix,field_right
     ld iy,field_bottom
     call vdu_set_gfx_viewport
 
+; process movement and collisions
     call do_player
     call do_enemies
     call move_explosions
     call move_tiles
-; update UI: TODO make this a standalone function
+
+; update UI
+    ld bc,0
+    ld de,0
+    call vdu_set_gfx_origin
     call print_score
+    call draw_shields
     ret
 
 game_paused:

@@ -80,30 +80,9 @@ btn1_a: equ 5
 ; NOTE: in mode 9 we draw the ship as a sprite, not a bitmap
 ; TODO: requires sprite implementation
 player_input:
-; ; DEBUG
-;     call vdu_home_cursor
-;     call printInline
-;     asciz "76543210\r\n"
-;     xor a ; clear flags
-;     IN a,(portC) ; read dpad input
-;     call printBin8
-;     call printNewLine
-;     xor a ; clear flags
-;     IN a,(portD) ; read fire button input
-;     call printBin8
-;     call printNewLine
-; ; END DEBUG
-
+; point to player sprite record
     ld iy,player_begin
     ld (table_pointer),iy
-; ; did we die last frame?
-;     ld a,(player_collisions)
-;     and %00000010 ; zero flag will be set if not dead
-;     jr z,player_not_dead
-; ; yes we died
-;     call kill_player  
-;     ret ; done
-player_not_dead: ; yay we didn't die
 ; reset player component velocities to zero as the default
     ld hl,0
     ld (iy+sprite_xvel),hl
@@ -112,20 +91,12 @@ player_not_dead: ; yay we didn't die
     ld a,(iy+sprite_id)
     call vdu_sprite_select
 ; check for keypresses and branch accordingly
-; for how this works,see: https://github.com/breakintoprogram/agon-docs/wiki/MOS-API-%E2%80%90-Virtual-Keyboard
     MOSCALL    mos_getkbmap ;ix = pointer to MOS virtual keys table
-; we test all four arrow keys and add/subract velocities accordingly
-; this handles the case where two opposing movement keys
-; are down simultaneously (velocities will net to zero)
-; and allows diagonal movement when a vertical and horizontal key are down
-; it also allows movement and action keys to be detected simultaneously
-; so we can walk and chew gum at the same time
 ; do player directional input
     xor a ; clear flags
     in a,(portC) ; read dpad input
     ld d,a ; save dpad input
     ld a,1 ; set ship's default animation to center
-        ; if left and right are both down a will net to 1
 ; 26 Left: move player left
     bit 1,(ix+3)
     jp nz,@F

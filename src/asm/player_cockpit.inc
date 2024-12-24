@@ -1,7 +1,21 @@
 score_x: equ 50
 score_y: equ 33
 ; prints the player's score
-player_score_last: dl 0
+player_score_last: dl 0 ; integer
+player_shields_last: dl 0 ; integer
+
+
+; inputs: a = value to add to player_score
+update_score:
+    ld de,0 ; clear deu and d
+    ld e,a
+    ld hl,(player_score)
+    add hl,de
+    ld (player_score),hl
+    ret
+; end update_score
+
+; inputs: none
 print_score:
     ld hl,(player_score_last)
     ld de,(player_score)
@@ -17,6 +31,23 @@ print_score:
     ret
 ; end print_score
 
+; inputs: a = value to add to player_shields
+update_shields:
+    ld hl,player_shields
+    add a,(hl)
+    ld (hl),a
+    ret
+
+draw_shields:
+    ld hl,player_shields_last
+    ld a,(player_shields)
+    cp (hl)
+    ret z ; no change to update
+    ld (hl),a
+    ld ix,bar_shields
+    ld (ix+bar_val),a ; TODO: this is redundant
+    call bar_update_v
+    ret
 
 ; offsets into control panel element definitions
 panel_bufferId: equ 0
@@ -123,20 +154,14 @@ bar_y: equ 15 ; y-plot coordinate
 ;         bar_val set by caller
 ; prerequisite: bar_init called before first use
 bar_update_v:
-; write x-plot position
-    ld hl,(ix+bar_x0)
-    ld (@x2),hl
-; compute y-plot position
-    ld de,(ix+bar_val)
-    ld hl,64
-    xor a ; clear carry
-    sbc hl,de
-    ld de,(ix+bar_y)
-    add hl,de
-    ld a,l
-    and %11111100 ; round to nearest 4 pixels
-    ld l,a
-    ld (@y2),hl
+; set gfx viewport
+    push ix ; preserve pointer
+    ld bc,(ix+bar_x0)
+    ld de,(ix+bar_y0)
+    ld iy,(ix+bar_y1)
+    ld ix,(ix+bar_x1)
+    call vdu_set_gfx_viewport
+    pop ix ; restore pointer
 ; select the color based on the value thresholds
     ld de,(ix+bar_val)
     ld hl,-16
@@ -154,41 +179,27 @@ bar_update_v:
     ld hl,BUF_BAR_V_0 ; red
 @select:
     call vdu_buff_select
-; set gfx viewport
-    ld hl,(ix+bar_x0)
-    ld (@x0),hl
-    ld hl,(ix+bar_y1)
-    ld (@y1),hl
-    ld hl,(ix+bar_x1)
-	ld (@x1),hl
-    ld hl,(ix+bar_y0)
-	ld (@y0),hl
-; restore bytes that got stomped
-    ld a,25 ; plot command
-    ld (@cmd1),a
-; send the vdu command string
-	ld hl,@cmd0
-	ld bc,@end-@cmd0
-	rst.lil $18
-	ret
-; set graphics viewport command
-@cmd0:   db 24 
-@x0: 	dw 0x0000 
-@y1: 	dw 0x0000 
-@x1: 	dw 0x0000 
-@y0: 	dw 0x0000 
-; plot bitmap command
-@cmd1:   db 25 ; stomped on by @y0 load
-@mode:  db plot_bmp+dr_abs_fg ; 0xED stomped on by @x2 load
-@x2: 	dw 0x0000
-@y2: 	dw 0x0000
-@end: db 0x00 ; padding
+; get x-plot position
+    ld bc,(ix+bar_x0)
+; compute y-plot position
+    ld de,(ix+bar_val)
+    ld hl,64
+    xor a ; clear carry
+    sbc hl,de
+    ld de,(ix+bar_y)
+    add hl,de
+    ld a,l
+    and %11111100 ; round to nearest 4 pixels
+    ld l,a
+    ex de,hl
+    call vdu_plot_bmp
+    ret
 ; end bar_update_v
 
 bar_shields:
     dl 0 ; value
     dl 496 ; x0
     dl 304 ; y0
-    dl 496+8 ; x1
-    dl 304+64 ; y1
+    dl 496+7 ; x1
+    dl 304+63 ; y1
     dl 304-64 ; y-plot coordinate

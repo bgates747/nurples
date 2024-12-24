@@ -67,7 +67,7 @@ exit:
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
-    include "debug.inc" ; DEBUG
+    include "debug.inc"
 
     align 256
 
@@ -156,8 +156,7 @@ init:
 ; load fonts
 	call fonts_load
 ; select font
-    ; ld hl,computer_pixel_7_8x16
-    ld hl,amiga_forever_8x8 ; DEBUG
+    ld hl,amiga_forever_8x8
     ld a,1 ; flags
     call vdu_font_select
 ; plot bezel art
@@ -206,7 +205,6 @@ main:
 ; start a new game
     call game_initialize
 main_loop:
-    ; CALL DEBUG_PRINT_SHIELDS ; DEBUG
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
