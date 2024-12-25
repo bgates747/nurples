@@ -2,11 +2,6 @@ score_x: equ 50
 score_y: equ 33
 ; prints the player's score
 player_score_last: dl 0 ; integer
-player_shields_last: dl 0 ; integer
-player_power_last: dl 0 ; integer
-laser_power_last: dl 0 ; integer
-
-fuel_last: dl 0 ; integer
 
 ; inputs: a = value to add to player_score
 update_score:
@@ -164,6 +159,10 @@ bar_y0: equ panel_y0
 bar_x1: equ panel_x1
 bar_y1: equ panel_y1
 bar_y: equ 15 ; y-plot coordinate
+bar_x: equ 15 ; x-plot coordinate
+
+bar_yellow: equ 33
+bar_red: equ 17
 
 ; update a vertical bar display
 ; inputs: ix points to bar structure
@@ -180,10 +179,10 @@ bar_update_v:
     pop ix ; restore pointer
 ; select the color based on the value thresholds
     ld de,(ix+bar_val)
-    ld hl,-16
+    ld hl,-bar_red
     add hl,de
     jp nc,@red
-    ld hl,-32
+    ld hl,-bar_yellow
     add hl,de
     jp nc,@yellow
     ld hl,BUF_BAR_V_2 ; green
@@ -212,55 +211,11 @@ bar_update_v:
     ret
 ; end bar_update_v
 
-
-; update a horizontal bar display
-; inputs: ix points to bar structure
-;         bar_val set by caller
-; prerequisite: bar_init called before first use
-bar_update_h:
-; set gfx viewport
-    push ix ; preserve pointer
-    ld bc,(ix+bar_x0)
-    ld de,(ix+bar_y0)
-    ld iy,(ix+bar_y1)
-    ld ix,(ix+bar_x1)
-    call vdu_set_gfx_viewport
-    pop ix ; restore pointer
-; select the color based on the value thresholds
-    ld de,(ix+bar_val)
-    ld hl,-16
-    add hl,de
-    jp nc,@red
-    ld hl,-32
-    add hl,de
-    jp nc,@yellow
-    ld hl,BUF_BAR_V_2 ; green
-    jp @select
-@yellow:
-    ld hl,BUF_BAR_V_1 ; yellow
-    jp @select
-@red:
-    ld hl,BUF_BAR_V_0 ; red
-@select:
-    call vdu_buff_select
-; compute x-plot position
-    ld de,(ix+bar_val)
-    ld hl,64
-    xor a ; clear carry
-    sbc hl,de
-    ld de,(ix+bar_y)
-    add hl,de
-    ld a,l
-    and %11111100 ; round to nearest 4 pixels
-    ld l,a
-    push hl
-    pop bc
-; get y-plot position
-    ld de,(ix+bar_x0)
-    call vdu_plot_bmp
-    ret
-; end bar_update_h
-
+player_shields: dl 64 ; integer
+; max player shields,binary
+; can increase with power-ups (todo)
+player_shields_max: dl 64 ; integer
+player_shields_last: dl 0 ; integer
 bar_shields:
     dl 0 ; value
     dl 496 ; x0
@@ -312,8 +267,12 @@ init_bar_laser:
     call bar_update_v
     ret
 ; end init_bar_laser
+
+laser_power: dl 64 ; integer
+laser_power_max: dl 64 ; integer
 charge_laser_timer: db 0
 charge_laser_timer_max: db 6
+laser_power_last: dl 0 ; integer
 charge_laser:
 ; check laser timer
     ld hl,charge_laser_timer
@@ -331,7 +290,7 @@ charge_laser:
 ; end charge_laser
 draw_laser:
     call charge_laser
-    ld hl,player_power_last
+    ld hl,laser_power_last
     ld a,(laser_power)
     cp (hl)
     ret z ; no change to update
@@ -340,6 +299,73 @@ draw_laser:
     ld (ix+bar_val),a ; TODO: this is redundant
     call bar_update_v
     ret
+
+
+; update a horizontal bar display
+; inputs: ix points to bar structure
+;         bar_val set by caller
+; prerequisite: bar_init called before first use
+bar_update_h:
+; set gfx viewport
+    push ix ; preserve pointer
+    ld bc,(ix+bar_x0)
+    ld de,(ix+bar_y0)
+    ld iy,(ix+bar_y1)
+    ld ix,(ix+bar_x1)
+    call vdu_set_gfx_viewport
+    pop ix ; restore pointer
+; select the color based on the value thresholds
+    ld de,(ix+bar_val)
+    ld hl,-bar_red
+    add hl,de
+    jp nc,@red
+    ld hl,-bar_yellow
+    add hl,de
+    jp nc,@yellow
+    ld hl,BUF_BAR_H_2 ; green
+    jp @select
+@yellow:
+    ld hl,BUF_BAR_H_1 ; yellow
+    jp @select
+@red:
+    ld hl,BUF_BAR_H_0 ; red
+@select:
+    call vdu_buff_select
+; compute x-plot position
+    ld hl,(ix+bar_val)
+    ld bc,(ix+bar_x)
+    add hl,bc
+    ld a,l
+    and %11111100 ; round to nearest 4 pixels
+    ld l,a
+    push hl
+    pop bc
+; get y-plot position
+    ld de,(ix+bar_y0)
+
+; ; DEBUG
+;     PUSH_ALL
+;     call vdu_home_cursor
+;     ld hl,(ix+bar_val)
+;     call printDec
+;     call printNewLine
+;     POP_ALL
+;     PUSH_ALL
+;     push bc
+;     pop hl
+;     call printDec
+;     call printNewLine
+;     POP_ALL
+;     PUSH_ALL
+;     ex de,hl
+;     call printDec
+;     call printNewLine
+;     POP_ALL
+; ; END DEBUG
+
+    call vdu_plot_bmp
+    ret
+; end bar_update_h
 
 bar_fuel:
     dl 0 ; value
@@ -353,33 +379,39 @@ init_bar_fuel:
     ld a,(discharge_fuel_timer_max)
     ld (discharge_fuel_timer),a
     ld ix,bar_fuel
-    ld hl,(player_fuel_max)
-    ld (ix+bar_val),hl
+    ld a,(player_fuel_max)
+    ld (ix+bar_val),a
     call bar_update_h
     ret
 ; end init_bar_fuel
 
+player_fuel: db 64 ; integer
+player_fuel_last: db 0 ; integer
+player_fuel_max: db 64 ; integer
 discharge_fuel_timer: db 0
-discharge_fuel_timer_max: db 6
+discharge_fuel_timer_max: db 64 ; 
 discharge_fuel:
 ; check fuel timer
     ld hl,discharge_fuel_timer
     dec (hl)
-    ret nz
+    ret nz ; not time to discharge fuel so return
+; reset fuel discharge timer
     ld a,(discharge_fuel_timer_max)
     ld (hl),a
+; discharge fuel
     ld hl,player_fuel
     dec (hl)
-    ld a,0
-    cp (hl)
-    ret nc
-    ld (hl),a
+    jp z,@no_fuel
+    jp m,@no_fuel
+    ret ; fuel not zero so return
+@no_fuel:
+    ld (hl),0 ; TODO: implement out-of-fuel handler
     ret
 ; end discharge_fuel
 
 draw_fuel:
     call discharge_fuel
-    ld hl,player_power_last
+    ld hl,player_fuel_last
     ld a,(player_fuel)
     cp (hl)
     ret z ; no change to update
@@ -388,3 +420,4 @@ draw_fuel:
     ld (ix+bar_val),a ; TODO: this is redundant
     call bar_update_h
     ret
+; end draw_fuel

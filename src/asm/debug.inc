@@ -190,7 +190,7 @@ DEBUG_PRINT_BAR_UPDATE:
     call printNewLine
 
     call printInline
-    asciz "y2  :"
+    asciz "X2 y2:"
     ld hl,0 ; clear hlu
     ld l,(ix+@y2-@cmd0+0)
     ld h,(ix+@y2-@cmd0+1)

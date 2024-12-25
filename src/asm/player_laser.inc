@@ -4,9 +4,6 @@ tmr_laser: ds 6 ; rate timer for firing laser
 tmr_laser_reset: dl 120/3
 laser_animation_timer_reset: equ 2 ; animate every two frames
 
-laser_power: dl 64 ; integer
-laser_power_max: dl 64 ; integer
-
 laser_defaults:
     db player_air        ; type
     dl BUF_LASER_A	    ; base_bufferId

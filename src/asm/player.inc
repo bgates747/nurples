@@ -6,12 +6,7 @@ player_score: dl 0 ; integer
 ; player current shields,binary
 ; when < 0 player splodes
 ; restores to player_shields_max when new ship spawns
-player_shields: dl 64 ; integer
-; max player shields,binary
-; can increase with power-ups (todo)
-player_shields_max: dl 64 ; integer
-player_fuel: dl 64 ; integer
-player_fuel_max: dl 64 ; integer
+
 ; when reaches zero,game ends
 ; can increase based on TODO
 player_ships: db 3 ; integer
