@@ -49,6 +49,7 @@ exit:
     include "enemy_seeker.inc"
     include "explosion.inc"
     include "fonts_list.inc"
+    include "images_bg.inc"
     include "images_tiles_dg.inc"
     ; include "images_tiles_xevious.inc"
     include "images_sprites.inc"
@@ -130,6 +131,9 @@ init:
 
 ; load tileset_ptrs
     call load_tilesets
+
+; load backgorund images
+    call load_backgrounds
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers

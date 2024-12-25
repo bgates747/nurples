@@ -54,8 +54,8 @@ ui_image_list: ; type; width; height; size; filename; bufferId:
 	dl 1, 8, 128, 1024, fn_bar_v_0, 3
 	dl 1, 8, 128, 1024, fn_bar_v_1, 4
 	dl 1, 8, 128, 1024, fn_bar_v_2, 5
-	dl 1, 128, 384, 49152, fn_bezel_l, 6
-	dl 1, 128, 384, 49152, fn_bezel_r, 7
+	dl 1, 128, 304, 38912, fn_bezel_l, 6
+	dl 1, 128, 304, 38912, fn_bezel_r, 7
 	dl 1, 16, 16, 256, fn_credits, 8
 	dl 1, 128, 128, 16384, fn_ctl_panel_l, 9
 	dl 1, 128, 128, 16384, fn_ctl_panel_r, 10

@@ -123,6 +123,7 @@ load_ui_images:
     pop bc
     djnz @loop
     ret
+; end load_ui_images
 
 load_sprite_images:
 ; initialize image loading variables
@@ -132,6 +133,7 @@ load_sprite_images:
 ; load images
     call img_load_main
     ret
+; end load_sprite_images
 
 load_tilesets:
 ; initialize image loading variables
@@ -140,6 +142,18 @@ load_tilesets:
     ld bc,tiles_dg_num_images
 ; load images
     call img_load_main
+    ret
+; end load_tilesets
+
+load_backgrounds:
+; initialize image loading variables
+    ld hl,bg_image_list
+    ld (cur_image_list),hl
+    ld bc,bg_num_images
+; load images
+    call img_load_main
+    ret
+; end load_backgrounds
 
 ; ; initialize image loading variables
 ;     ld hl,tiles_xevious_image_list

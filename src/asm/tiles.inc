@@ -32,8 +32,8 @@ tiles_plot:
     ld ix,255 ; rightmost x-coord
     ld iy,0 ; bottommost y-coord
     call vdu_set_gfx_viewport
-; ; plot the background
-;     call bg_plot
+; plot the background
+    call bg_plot
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -129,32 +129,32 @@ do_active_tiles:
     ret ; done
 ; end do_active_tiles
 
-; bg_y_plot: dl -1
-; bg_bufferId: dl BUF_STATION_BG_00 ; default bufferId for background tiles
+bg_y_plot: dl -1
+bg_bufferId: dl BUF_BG_STARS_0 ; default bufferId for background tiles
 
 bg_plot: ; TODO: implement this
-; ; load current bg tile bufferId as default
-;     ld hl,(bg_bufferId)
-; ; check whether it is time for a new background tile
-;     ld a,(bg_y_plot)
-;     inc a
-;     ld (bg_y_plot),a
-;     jp nz,@F ; not time for a new tile so draw current one
-; ; load the next background tile
-;     ld hl,BUF_STATION_BG_00
-;     call rand_8
-;     and %0000011
-;     add a,l
-;     ld l,a
-;     ld a,0
-;     adc a,h
-;     ld h,a
-;     ld (bg_bufferId),hl
-; @@:
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,(bg_y_plot)
-;     inc de
-;     call vdu_plot_bmp
-; all done
+; load current bg tile bufferId as default
+    ld hl,(bg_bufferId)
+; check whether it is time for a new background tile
+    ld a,(bg_y_plot)
+    inc a
+    ld (bg_y_plot),a
+    jp nz,@F ; not time for a new tile so draw current one
+; load the next background tile
+    ld hl,BUF_BG_STARS_0
+    call rand_8
+    and %0000111
+    add a,l
+    ld l,a
+    ld a,0
+    adc a,h
+    ld h,a
+    ld (bg_bufferId),hl
+@@:
+    call vdu_buff_select
+    ld bc,0
+    ld de,(bg_y_plot)
+    inc de
+    call vdu_plot_bmp
     ret
+; end bg_plot

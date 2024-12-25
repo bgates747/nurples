@@ -111,19 +111,18 @@ level_y: equ 0
     ; ld hl,(cur_baseBufferId)
     ; call printDec
 
-; ; draw initial background tiles 
-; ; TODO: make this a stars background
-;     ld hl,BUF_STATION_BG_00
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,field_top
-;     call vdu_plot_bmp
+; draw initial background tiles 
+    ld hl,BUF_BG_STARS_0
+    call vdu_buff_select
+    ld bc,0
+    ld de,field_top
+    call vdu_plot_bmp
 
-;     ld hl,BUF_STATION_BG_01
-;     call vdu_buff_select
-;     ld bc,0
-;     ld de,field_top+256
-;     call vdu_plot_bmp
+    ld hl,BUF_BG_STARS_4
+    call vdu_buff_select
+    ld bc,0
+    ld de,field_top+256
+    call vdu_plot_bmp
 
     ret
 ; end init_level
