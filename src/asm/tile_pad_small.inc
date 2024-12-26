@@ -1,7 +1,7 @@
     align 256
 pad_small_defaults:
     db tile_pad_small       ; type
-    dl BUF_PAD              ; base_bufferId
+    dl BUF_TILE_PAD_0       ; base_bufferId
     dl move_pad_small       ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
@@ -9,7 +9,7 @@ pad_small_defaults:
     db 1                    ; num_orientations
     db 1                    ; num_animations
     db 0                    ; animation
-    db 0                    ; animation_timer
+    db 16                   ; animation_timer
     db 24                   ; move_timer
     db 0                    ; move_step
     db 5                    ; points
@@ -32,7 +32,18 @@ move_pad_small:
     jp z,table_deactivate_tile
     call check_enemy_collision_laser
     jp z,kill_pad_small
-; check whether it is time to spawn a seeker
+; do animation
+    dec (iy+tile_animation_timer)
+    jp nz,@F
+    ld a,16
+    ld (iy+tile_animation_timer),a
+
+    ld a,(iy+tile_frame)
+    inc a
+    and %00000011 ; modulo 3
+    ld (iy+tile_frame),a
+    call draw_active_tile
+@@: ; check whether it is time to spawn a seeker
     dec (iy+tile_move_timer)
     ret nz
 ; spwan a seeker    
