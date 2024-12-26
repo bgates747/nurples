@@ -92,12 +92,12 @@ draw_player_cockpit:
     call vdu_plot_bmp
     ld hl,BUF_CREDITS
     call vdu_buff_select
-    ld bc,387
-    ld de,260
+    ld bc,384
+    ld de,261
     call vdu_plot_bmp
     ld hl,BUF_JERRY_CAN
     call vdu_buff_select
-    ld bc,113
+    ld bc,110
     ld de,258
     call vdu_plot_bmp
 

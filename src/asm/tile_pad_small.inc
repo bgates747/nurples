@@ -37,10 +37,9 @@ move_pad_small:
     jp nz,@F
     ld a,16
     ld (iy+tile_animation_timer),a
-
     ld a,(iy+tile_frame)
     inc a
-    and %00000011 ; modulo 3
+    and %00000111 ; modulo 8
     ld (iy+tile_frame),a
     call draw_active_tile
 @@: ; check whether it is time to spawn a seeker
