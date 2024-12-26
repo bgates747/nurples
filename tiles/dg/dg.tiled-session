@@ -3,14 +3,14 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "dg0_00.tmx",
+    "activeFile": "dg0_03.tmx",
     "expandedProjectPaths": [
         "."
     ],
     "file.lastUsedOpenFilter": "Tiled Projects (*.tiled-project)",
     "fileStates": {
         "dg0.tsx": {
-            "scaleInDock": 2,
+            "scaleInDock": 5.5,
             "scaleInEditor": 1
         },
         "dg0_00.tmx": {
@@ -30,11 +30,11 @@
             }
         },
         "dg0_03.tmx": {
-            "scale": 1.5,
+            "scale": 2,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 200.33333333333337,
-                "y": 3813
+                "x": 169.25,
+                "y": 3751.75
             }
         },
         "dg0_bg_green_plates.tmx": {
@@ -53,13 +53,15 @@
     "map.tileWidth": 16,
     "map.width": 16,
     "openFiles": [
-        "dg0_00.tmx"
+        "dg0_00.tmx",
+        "dg0_03.tmx"
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
+        "dg0_00.tmx",
+        "dg0_03.tmx",
         "dg0_01.tmx",
         "dg0_bg_green_plates.tmx",
-        "dg0_00.tmx",
         "dg0.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",

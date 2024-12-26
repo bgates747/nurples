@@ -3,39 +3,38 @@
 tile_pad_small: equ 1
 tile_pad_med: equ 2
 tile_pad_large: equ 3
-tile_pad_huge: equ 4
+tile_charge_shields: equ 4
 tile_turret_fireball: equ 5
 tile_laser_turret: equ 6
 tile_twin_laser_turret: equ 7
-tile_gatling_turret: equ 8
-tile_electrode_r: equ 9
-tile_electrode_u: equ 10
-tile_piston_r: equ 11
-tile_piston_u: equ 12
-tile_spark_r: equ 13
-tile_spark_u: equ 14
-tile_flame_r: equ 15
-tile_flame_u: equ 16
+tile_charge_fuel: equ 8
+tile_electrode_l: equ 9
+tile_lightning: equ 10
+tile_electrode_r: equ 11
+tile_12: equ 12
+tile_13: equ 13
+tile_14: equ 14
+tile_15: equ 15
+tile_16: equ 16
 
 active_tile_timer: equ 24 ; 2/10ths of a second
 tile_activation_routines:
     dl activate_null_tile ; dummy spacer since tiled is 1-based
     dl activate_pad_small
-    dl activate_null_tile  ;  activate_pad_med
-    dl activate_null_tile  ;  activate_pad_large
-    dl activate_null_tile  ;  activate_pad_huge
-    dl activate_turret_fireball  
-    dl activate_null_tile  ;  activate_laser_turret
-    dl activate_null_tile  ;  activate_twin_laser_turret
-    dl activate_null_tile  ;  activate_gatling_turret
-    dl activate_null_tile  ;  activate_electrode_r
-    dl activate_null_tile  ;  activate_electrode_u
-    dl activate_null_tile  ;  activate_piston_r
-    dl activate_null_tile  ;  activate_piston_u
-    dl activate_null_tile  ;  activate_spark_r
-    dl activate_null_tile  ;  activate_spark_u
-    dl activate_null_tile  ;  activate_flame_r
-    dl activate_null_tile  ;  activate_flame_u
+    dl activate_null_tile
+    dl activate_null_tile
+    dl activate_null_tile
+    dl activate_turret_fireball
+    dl activate_null_tile
+    dl activate_null_tile
+    dl activate_null_tile
+    dl activate_electrode_l
+    dl activate_lightning
+    dl activate_electrode_r
+    dl activate_null_tile
+    dl activate_null_tile
+    dl activate_null_tile
+    dl activate_null_tile
 ; end tile_activation_routines
 
 activate_null_tile:

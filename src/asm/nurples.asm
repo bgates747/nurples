@@ -65,6 +65,9 @@ exit:
     include "tile_table.inc"
     include "tiles.inc"
     include "tiles_active.inc"
+    include "tile_electrode_l.inc"
+    include "tile_electrode_r.inc"
+    include "tile_lightning.inc"
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "sprites.inc"
@@ -125,15 +128,13 @@ init:
     ld b,0; bottom
     call vdu_set_txt_viewport
 
-; load sprites
-    call img_load_init ; sets up the animated load screen
+; load background and sprite images
+    call img_load_init
+    call load_backgrounds
     call load_sprite_images
 
 ; load tileset_ptrs
     call load_tilesets
-
-; load backgorund images
-    call load_backgrounds
 
 ; ; load sound effects ; TODO
 ; 	ld bc,SFX_num_buffers

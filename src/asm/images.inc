@@ -23,7 +23,7 @@ img_load_init:
     ex de,hl
     ld hl,-240+24*256
     ; ld de,-256*[sprites_num_images+tiles_dg_num_images+ui_num_images]
-    ld de,sprites_num_images+tiles_dg_num_images+ui_num_images*256
+    ld de,[sprites_num_images+tiles_dg_num_images+ui_num_images]*256
     call sdiv168 ; ud.e = distance / num images = y velocity
     ld (logo_yvel),de
 ; all done
