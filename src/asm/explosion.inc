@@ -62,12 +62,15 @@ move_explosion:
     ld a,8 ; reset animation timer
     ld (iy+sprite_animation_timer),a
     ret
-@make_crater: ; deactivate sprite and draw a crater in its place
-    ld hl,BUF_CRATER
-    call vdu_buff_select
-    ld bc,(iy+sprite_x)
-    ld de,(iy+sprite_y)
-    call vdu_plot_bmp168
+@make_crater: ; deactivate sprite and spawn a crater tile in its place
+    ; ld hl,BUF_CRATER
+    ; call vdu_buff_select
+    ; ld bc,(iy+sprite_x)
+    ; ld de,(iy+sprite_y)
+    ; call vdu_plot_bmp168
+    
+    call activate_crater
+
     jp table_deactivate_sprite
 ; end move_explosion
 

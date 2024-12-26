@@ -68,6 +68,16 @@ DEBUG_PRINT_FIELDS:
 
 DEBUG_PRINT_TILE_STACK:
     PUSH_ALL
+    ld bc,0
+    ld de,0
+    call vdu_set_gfx_origin
+    ld bc,0
+    ld de,0
+    ld ix,127
+    ld iy,240
+    call vdu_set_gfx_viewport
+    call vdu_clg
+    call vdu_home_cursor
     call printNewLine
     call printNewLine
     ld hl,(tile_stack_pointer)
@@ -76,16 +86,25 @@ DEBUG_PRINT_TILE_STACK:
     ld a,(num_active_tiles)
     call printHexA
     call printNewLine
+    and a 
+    jp z,@done
     ld ix,tile_stack
-    ld b,8
+    ld a,(num_active_tiles)
+    ld b,a
 @loop:
     push bc
-    ld hl,(ix)
-    call printHexUHL
+    push ix
+    ld ix,(ix)
+    ld a,(ix+tile_id)
+    call printHexA
+    ld a,(ix+tile_type)
+    call printHexA
     call printNewLine
+    pop ix
     lea ix,ix+3
     pop bc
     djnz @loop
+@done:
     POP_ALL
     ret
 
@@ -208,3 +227,248 @@ DEBUG_PRINT_BAR_UPDATE:
 @y2: 	dw 0x0000
 @end:  db 0x00 ; padding
 ; end DEBUG_PRINT_BAR_UPDATE
+
+
+dump_sprite_record:
+    ; call vdu_home_cursor
+    call printInline
+    asciz "id  : "
+    ld a,(ix+sprite_id)
+    call printHexA
+
+    call printInline
+    asciz "\r\nx   :"
+    ld hl,(ix+sprite_x)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\ny   :"
+    ld hl,(ix+sprite_y)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nxv  :"
+    ld hl,(ix+sprite_xvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nyv  :"
+    ld hl,(ix+sprite_yvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nv   :"
+    ld hl,(ix+sprite_vel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nhdg :"
+    ld hl,(ix+sprite_heading)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nori :"
+    ld hl,(ix+sprite_orientation)
+    call print_s168_hl
+    
+    call printInline
+    asciz "\r\ntyp : "
+    ld a,(ix+sprite_type)
+    call printHexA
+    
+    call printInline
+    asciz "\r\nBId : "
+    ld hl,(ix+sprite_base_bufferId)
+    call printHex24
+
+    call printInline
+    asciz "\r\nmPg : "
+    ld hl,(ix+sprite_move_program)
+    call printHex24
+
+    call printInline
+    asciz "\r\ncol : "
+    ld a,(ix+sprite_collisions)
+    call printBin8
+
+    call printInline
+    asciz "\r\nszx : "
+    ld a,(ix+sprite_dim_x)
+    call printHexA
+    
+    call printInline
+    asciz "\r\nszy : "
+    ld a,(ix+sprite_dim_y)
+    call printHexA
+
+    ; call printInline
+    ; asciz "\r\n#ori: "
+    ; ld a,(ix+sprite_num_orientations)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\n#ani: "
+    ; ld a,(ix+sprite_num_animations)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nani : "
+    ; ld a,(ix+sprite_animation)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nanit: "
+    ; ld a,(ix+sprite_animation_timer)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nmvt : "
+    ; ld a,(ix+sprite_move_timer)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nmvs : "
+    ; ld a,(ix+sprite_move_step)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\npts : "
+    ; ld a,(ix+sprite_points)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\ndmg : "
+    ; ld a,(ix+sprite_shield_damage)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nfrm : "
+    ; ld a,(ix+sprite_frame)
+    ; call printHexA
+
+    ; call printNewLine
+
+    ; call waitKeypress
+    ret
+
+dump_tile_record:
+    call printInline
+    asciz "id  : "
+    ld a,(ix+tile_id)
+    call printHexA
+
+    call printInline
+    asciz "\r\nx   :"
+    ld hl,(ix+tile_x)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\ny   :"
+    ld hl,(ix+tile_y)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nxv  :"
+    ld hl,(ix+tile_xvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nyv  :"
+    ld hl,(ix+tile_yvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nv   :"
+    ld hl,(ix+tile_vel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nhdg :"
+    ld hl,(ix+tile_heading)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nori :"
+    ld hl,(ix+tile_orientation)
+    call print_s168_hl
+    
+    call printInline
+    asciz "\r\ntyp : "
+    ld a,(ix+tile_type)
+    call printHexA
+    
+    call printInline
+    asciz "\r\nBId : "
+    ld hl,(ix+tile_base_bufferId)
+    call printHex24
+
+    call printInline
+    asciz "\r\nmPg : "
+    ld hl,(ix+tile_move_program)
+    call printHex24
+
+    call printInline
+    asciz "\r\ncol : "
+    ld a,(ix+tile_collisions)
+    call printBin8
+
+    ; call printInline
+    ; asciz "\r\nszx : "
+    ; ld a,(ix+tile_dim_x)
+    ; call printHexA
+    
+    ; call printInline
+    ; asciz "\r\nszy : "
+    ; ld a,(ix+tile_dim_y)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\n#ori: "
+    ; ld a,(ix+tile_num_orientations)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\n#ani: "
+    ; ld a,(ix+tile_num_animations)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nani : "
+    ; ld a,(ix+tile_animation)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nanit: "
+    ; ld a,(ix+tile_animation_timer)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nmvt : "
+    ; ld a,(ix+tile_move_timer)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nmvs : "
+    ; ld a,(ix+tile_move_step)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\npts : "
+    ; ld a,(ix+tile_points)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\ndmg : "
+    ; ld a,(ix+tile_shield_damage)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nfrm : "
+    ; ld a,(ix+tile_frame)
+    ; call printHexA
+
+    ; call printNewLine
+    ; call printNewLine
+
+    ; call waitKeypress
+    ret

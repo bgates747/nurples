@@ -150,8 +150,7 @@ table_deactivate_tile:
 ; inputs: hl = pointer to new tile default settings, tiles_x_plot, tiles_y_plot = x,y position
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
 ;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
-; destroys: a,hl,ix
-; preserves: bc,de (x,y position)
+; destroys: a,hl,bc,de,ix
 ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 spawn_active_tile:
     push hl ; back up pointer to new tile defaults
@@ -183,6 +182,43 @@ spawn_active_tile:
     ret
 ; end spawn_active_tile
 
+; spawn a new active tile at the prescribed location
+; inputs: iy pointer to current hl = pointer to new tile default settings
+; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
+;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
+; destroys: a,hl,bc,de,ix
+; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
+spawn_active_tile_from_sprite:
+    push hl ; back up pointer to new tile defaults
+    call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
+    pop hl ; restore pointer to new tile defaults
+    ret nc ; no carry means no free tile slots, so we go home
+; copy default settings to new tile
+    ld (new_tile_table_pointer),ix ; save pointer to new tile record
+    lea ix,ix+tile_definitions ; bump pointer to copy to
+    push ix ; pointer to default tile settings
+    pop de ; address to copy to
+    ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+    ldir ; copies defaults to new tile record
+; copy tile position from existing sprite
+    ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
+    ld iy,(table_pointer) ; get existing sprite record
+    ld hl,(iy+sprite_x)
+    ld (ix+tile_x),hl
+    ld hl,(iy+sprite_y)
+    ld (ix+tile_y),hl
+; set default tile velocities
+    ld hl,0
+    ld (ix+tile_xvel),hl
+    ld hl,1*256 ; 1 pixel per frame
+    ld (ix+tile_yvel),hl
+; return to caller
+    set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+    scf ; set carry flag to indicate success
+    ret
+; end spawn_active_tile_from_sprite
+
 ; compute animation frame based on tile_animation and tile_heading
 ; inputs: iy set to tile record
 ; outputs: a, tile_frame set to animation frame
@@ -212,125 +248,3 @@ tile_frame_heading:
     ld (iy+tile_frame),a
     ret
 ; end tile_frame_heading
-
-dump_tile_record:
-    call printInline
-    asciz "id  : "
-    ld a,(ix+tile_id)
-    call printHexA
-
-    call printInline
-    asciz "\r\nx   :"
-    ld hl,(ix+tile_x)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\ny   :"
-    ld hl,(ix+tile_y)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nxv  :"
-    ld hl,(ix+tile_xvel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nyv  :"
-    ld hl,(ix+tile_yvel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nv   :"
-    ld hl,(ix+tile_vel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nhdg :"
-    ld hl,(ix+tile_heading)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nori :"
-    ld hl,(ix+tile_orientation)
-    call print_s168_hl
-    
-    call printInline
-    asciz "\r\ntyp : "
-    ld a,(ix+tile_type)
-    call printHexA
-    
-    call printInline
-    asciz "\r\nBId : "
-    ld hl,(ix+tile_base_bufferId)
-    call printHex24
-
-    call printInline
-    asciz "\r\nmPg : "
-    ld hl,(ix+tile_move_program)
-    call printHex24
-
-    call printInline
-    asciz "\r\ncol : "
-    ld a,(ix+tile_collisions)
-    call printBin8
-
-    ; call printInline
-    ; asciz "\r\nszx : "
-    ; ld a,(ix+tile_dim_x)
-    ; call printHexA
-    
-    ; call printInline
-    ; asciz "\r\nszy : "
-    ; ld a,(ix+tile_dim_y)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\n#ori: "
-    ; ld a,(ix+tile_num_orientations)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\n#ani: "
-    ; ld a,(ix+tile_num_animations)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nani : "
-    ; ld a,(ix+tile_animation)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nanit: "
-    ; ld a,(ix+tile_animation_timer)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nmvt : "
-    ; ld a,(ix+tile_move_timer)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nmvs : "
-    ; ld a,(ix+tile_move_step)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\npts : "
-    ; ld a,(ix+tile_points)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\ndmg : "
-    ; ld a,(ix+tile_shield_damage)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nfrm : "
-    ; ld a,(ix+tile_frame)
-    ; call printHexA
-
-    ; call printNewLine
-    ; call printNewLine
-
-    ; call waitKeypress
-    ret

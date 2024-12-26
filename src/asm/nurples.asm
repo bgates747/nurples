@@ -65,6 +65,7 @@ exit:
     include "tile_table.inc"
     include "tiles.inc"
     include "tiles_active.inc"
+    include "tile_crater.inc"
     include "tile_electrode_l.inc"
     include "tile_electrode_r.inc"
     include "tile_lightning.inc"

@@ -15,7 +15,7 @@ tile_12: equ 12
 tile_13: equ 13
 tile_14: equ 14
 tile_15: equ 15
-tile_16: equ 16
+tile_crater: equ 16
 
 active_tile_timer: equ 24 ; 2/10ths of a second
 tile_activation_routines:
@@ -34,7 +34,7 @@ tile_activation_routines:
     dl activate_null_tile
     dl activate_null_tile
     dl activate_null_tile
-    dl activate_null_tile
+    dl activate_crater
 ; end tile_activation_routines
 
 activate_null_tile:
