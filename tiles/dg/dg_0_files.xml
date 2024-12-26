@@ -16,7 +16,7 @@
   <SetNum>0</SetNum>
   <MapFile>tiles/dg/dg_0_map.csv</MapFile>
   <TilesFile>tiles/dg/dg_0_files.xml</TilesFile>
-  <FileCount>191</FileCount>
+  <FileCount>186</FileCount>
   <BaseBufferId>512</BaseBufferId>
   <Tiles>
     <Tile index="0">tiles/dg/0/000.png</Tile>
@@ -31,19 +31,6 @@
     <Tile index="9">tiles/dg/0/009.png</Tile>
     <Tile index="10">tiles/dg/0/010.png</Tile>
     <Tile index="11">tiles/dg/0/011.png</Tile>
-    <Tile index="12">tiles/dg/0/012.png</Tile>
-    <Tile index="13">tiles/dg/0/013.png</Tile>
-    <Tile index="14">tiles/dg/0/014.png</Tile>
-    <Tile index="15">tiles/dg/0/015.png</Tile>
-    <Tile index="16">tiles/dg/0/016.png</Tile>
-    <Tile index="25">tiles/dg/0/025.png</Tile>
-    <Tile index="26">tiles/dg/0/026.png</Tile>
-    <Tile index="27">tiles/dg/0/027.png</Tile>
-    <Tile index="28">tiles/dg/0/028.png</Tile>
-    <Tile index="29">tiles/dg/0/029.png</Tile>
-    <Tile index="30">tiles/dg/0/030.png</Tile>
-    <Tile index="31">tiles/dg/0/031.png</Tile>
-    <Tile index="32">tiles/dg/0/032.png</Tile>
     <Tile index="33">tiles/dg/0/033.png</Tile>
     <Tile index="34">tiles/dg/0/034.png</Tile>
     <Tile index="35">tiles/dg/0/035.png</Tile>
@@ -52,6 +39,10 @@
     <Tile index="38">tiles/dg/0/038.png</Tile>
     <Tile index="39">tiles/dg/0/039.png</Tile>
     <Tile index="40">tiles/dg/0/040.png</Tile>
+    <Tile index="45">tiles/dg/0/045.png</Tile>
+    <Tile index="46">tiles/dg/0/046.png</Tile>
+    <Tile index="47">tiles/dg/0/047.png</Tile>
+    <Tile index="48">tiles/dg/0/048.png</Tile>
     <Tile index="49">tiles/dg/0/049.png</Tile>
     <Tile index="50">tiles/dg/0/050.png</Tile>
     <Tile index="51">tiles/dg/0/051.png</Tile>
@@ -63,6 +54,10 @@
     <Tile index="57">tiles/dg/0/057.png</Tile>
     <Tile index="58">tiles/dg/0/058.png</Tile>
     <Tile index="59">tiles/dg/0/059.png</Tile>
+    <Tile index="61">tiles/dg/0/061.png</Tile>
+    <Tile index="62">tiles/dg/0/062.png</Tile>
+    <Tile index="63">tiles/dg/0/063.png</Tile>
+    <Tile index="64">tiles/dg/0/064.png</Tile>
     <Tile index="65">tiles/dg/0/065.png</Tile>
     <Tile index="66">tiles/dg/0/066.png</Tile>
     <Tile index="67">tiles/dg/0/067.png</Tile>
