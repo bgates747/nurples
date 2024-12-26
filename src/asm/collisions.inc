@@ -22,7 +22,7 @@ collision_table_pointer: dl 0x000000 ; pointer to the sprite in the group being 
 ;   a = 0, zero flag set, positive sign, carry reset -> Collision detected
 ;   a = -1, zero flag reset, negative sign, carry set -> No collision detected
 ; Destroys: HL, DE, AF
-; check_collision:
+check_collision:
 check_collision_box:
 ; Test 1: (ay + ah) - by < 0
     ld hl,0                     ; Clear hlu
@@ -97,7 +97,7 @@ check_collision_box:
 ;          zero flag set if collision detected
 ;          dx168 and dy168 are also populated with the signed displacements
 ; destroys: everything except indexes
-check_collision:
+; check_collision:
 check_collision_cartesian:
 ; compute dx = x1-x0
     ld hl,(ix+sprite_x)

@@ -5967,7 +5967,7 @@ PC     Output      Line
 042603             0022*   ;   a = 0, zero flag set, positive sign, carry reset -> Collision detected
 042603             0023*   ;   a = -1, zero flag reset, negative sign, carry set -> No collision detected
 042603             0024*   ; Destroys: HL, DE, AF
-042603             0025*   ; check_collision:
+042603             0025*   check_collision:
 042603             0026*   check_collision_box:
 042603             0027*   ; Test 1: (ay + ah) - by < 0
 042603 21 00 00 00 0028*       ld hl,0                     ; Clear hlu
@@ -6042,7 +6042,7 @@ PC     Output      Line
 042683             0097*   ;          zero flag set if collision detected
 042683             0098*   ;          dx168 and dy168 are also populated with the signed displacements
 042683             0099*   ; destroys: everything except indexes
-042683             0100*   check_collision:
+042683             0100*   ; check_collision:
 042683             0101*   check_collision_cartesian:
 042683             0102*   ; compute dx = x1-x0
 042683 DD 27 01    0103*       ld hl,(ix+sprite_x)
@@ -6086,7 +6086,7 @@ PC     Output      Line
 0426BE DD CB 1D 76 0140*       bit sprite_alive,(ix+sprite_collisions)
 0426C2 CA D8 26 04 0141*       jp z,@next_record ; not alive so skip to next record
 0426C6             0142*   ; sprite alive so check for collision
-0426C6 CD 83 26 04 0143*       call check_collision
+0426C6 CD 03 26 04 0143*       call check_collision
 0426CA C2 D8 26 04 0144*       jp nz,@next_record ; no collision
 0426CE             0145*   ; set sprite_just_died flag for each entity and return to caller
 0426CE C1          0146*       pop bc ; dummy pop to balance stack
@@ -6114,7 +6114,7 @@ PC     Output      Line
 0426ED             0167*   check_enemy_collision_player: ; check for collisions with player
 0426ED DD 21 5E 92 0168*       ld ix,player_begin
        04          
-0426F2 CD 83 26 04 0169*       call check_collision
+0426F2 CD 03 26 04 0169*       call check_collision
 0426F6 C0          0170*       ret nz ; no collision so nothing to do
 0426F7 DD CB 1D FE 0171*       set sprite_just_died,(ix+sprite_collisions)
 0426FB FD CB 1D FE 0172*       set sprite_just_died,(iy+sprite_collisions)
