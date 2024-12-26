@@ -139,7 +139,7 @@ def make_images(buffer_id, img_width, img_height, images_type, asm_images_filepa
             output_image_path = os.path.join(output_dir_png, input_image_filename)
             shutil.copy(input_image_path, output_image_path)
 
-    rot_images_list = ['seeker.png','turret.png']
+    rot_images_list = ['seeker.png','turret.png','fireball_2.png','fireball_3.png']
     for input_image_filename in rot_images_list:
         input_image_path = os.path.join(output_dir_png, input_image_filename)
         if not os.path.exists(input_image_path):
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     do_crop =               False
     do_scale =              False
     do_palette =            False
-    make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
+    # make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
 
     img_width =             256
     img_height =            256

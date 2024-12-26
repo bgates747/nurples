@@ -129,7 +129,7 @@ spawn_sprite_from_tile:
     ld bc,table_record_size-sprite_definitions ; number of bytes to copy
     ldir ; copies defaults to new sprite record
     pop ix ; restore pointer to new sprite record
-; copy sprite position, velocity and orientation from existing tile
+; copy sprite position from existing tile
     ld iy,(tile_table_pointer) ; get existing tile record
     ld hl,(iy+tile_x)
     ld (ix+sprite_x),hl

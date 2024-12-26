@@ -71,7 +71,7 @@ move_player_laser:
 ; run the movement program for the laser
     call move_sprite
     ld a,(sprite_screen_edge)
-    or a ; a will be non-zero if have scrolled off screen
+    and a,collide_top ; check collision with top of screen
     jp z,@F ; still on screen
     jp table_deactivate_sprite
 @@: ; check animation timer
