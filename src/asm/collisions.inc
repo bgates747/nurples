@@ -13,6 +13,61 @@ collide_right: equ %00000001
 
 collision_table_pointer: dl 0x000000 ; pointer to the sprite in the group being checked for collision
 
+collision_draw_hitboxes:
+; draw hitbox for ix collider
+    push ix
+    push iy
+    xor a ; color mode 0
+    ld c,c_red
+    call vdu_gcol
+    ld bc,0
+    ld c,(ix+sprite_x+1)
+    ld b,(ix+sprite_x+2)
+    ld de,0
+    ld e,(ix+sprite_y+1)
+    ld d,(ix+sprite_y+2)
+    ld hl,0 ; clear hlu and h
+    ld l,(ix+sprite_dim_x)
+    add hl,bc ; hl = x1
+    push hl ; save x1
+    ld hl,0 ; clear hlu and h
+    ld l,(ix+sprite_dim_y)
+    add hl,de ; hl = y1
+    pop ix ; ix = x1 (was hl)
+    push hl
+    pop iy ; iy = y1
+    call vdu_plot_rf
+    pop iy
+    pop ix
+
+; draw hitbox for iy collider
+    push ix
+    push iy
+    xor a ; color mode 0
+    ld c,c_green
+    call vdu_gcol
+    ld bc,0
+    ld c,(iy+sprite_x+1)
+    ld b,(iy+sprite_x+2)
+    ld de,0
+    ld e,(iy+sprite_y+1)
+    ld d,(iy+sprite_y+2)
+    ld hl,0 ; clear hlu and h
+    ld l,(iy+sprite_dim_x)
+    add hl,bc ; hl = x1
+    push hl ; save x1
+    ld hl,0 ; clear hlu and h
+    ld l,(iy+sprite_dim_y)
+    add hl,de ; hl = y1
+    pop ix ; ix = x1 (was hl)
+    push hl
+    pop iy ; iy = y1
+    call vdu_plot_rf
+    pop iy
+    pop ix
+    ret
+; end collision_draw_hitboxes
+
 ; check_collision:
 ; Detects collision using bounding box method.
 ; Inputs:

@@ -182,9 +182,46 @@ table_get_next_id:
     ret ; done
 ; end table_get_next_id
 
+; create a new sprite at the prescribed coordinates
+; inputs: hl = pointer to new sprite default settings, ub.c, ud.e = x,y position 
+;         ix = pointer to sprite group, a = number of records in sprite group
+; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
+;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+spawn_sprite_from_coords:
+    ld (@sprite_x),bc ; store x-coordinate
+    ld (@sprite_y),de ; store y-coordinate
+    ld b,a ; number of records in sprite group
+    push hl ; back up pointer to new sprite defaults
+    call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
+    pop hl ; restore pointer to new sprite defaults
+    ret nc ; no carry means no free sprite slots, so we go home
+; copy default settings to new sprite
+    push ix ; back up pointer to new sprite record
+    lea ix,ix+sprite_definitions ; bump pointer to copy to
+    push ix ; pointer to default sprite settings
+    pop de ; address to copy to
+    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ldir ; copies defaults to new sprite record
+    pop ix ; restore pointer to new sprite record
+; copy sprite position from existing sprite
+    ld hl,(@sprite_x)
+    ld (ix+sprite_x),hl
+    ld hl,(@sprite_y)
+    ld (ix+sprite_y),hl
+; return to caller
+    set 7,(ix+sprite_type) ; set just spawned flag
+    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+    scf ; set carry flag to indicate success
+    ret
+@sprite_x: dl 0 ; new sprite x-coordinate
+@sprite_y: dl 0 ; new sprite y-coordinate
+; end spawn_sprite_from_coords
+
 ; create a new sprite at the same location as an existing sprite
 ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
 ;         ix = pointer to sprite group, b = number of records in sprite group
+; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
+;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
 spawn_sprite_from_sprite: 
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars

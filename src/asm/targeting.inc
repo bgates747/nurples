@@ -112,12 +112,12 @@ targeting_computer:
 ; ; answer is in radians, convert to degrees256
 ;     ld de,0x0028BE ; 40.74 = 57.29578*256/360
 ;     call smul168 ; uh.l = angle in degrees256 
-;     ld (lead_angle),hl ; DEBUG
+;     ld (lead_angle),hl ; TODO: fix this
 ; ; add lead angle to target bearing
 ;     ld de,(Bearing_t)
 ;     add hl,de ; h.l = lead angle+target bearing
 
-    ld hl,(Bearing_t) ; DEBUG
+    ld hl,(Bearing_t) ; TODO: fix this
 
     push hl
 

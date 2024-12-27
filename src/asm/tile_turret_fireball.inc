@@ -40,10 +40,7 @@ move_turret_fireball:
     ld (iy+tile_heading),hl ; save active tile heading
     call tile_frame_heading
     call draw_active_tile
-; check whether it is time to spawn a fireball  
-
-    RET ; DEBUG
-    
+; check whether it is time to spawn a fireball      
     dec (iy+tile_move_timer)
     ret nz
 ; spwan a fireball    

@@ -37,9 +37,18 @@ player_defaults:
 ; outputs: player_x/y set to bottom-left corner of screen
 ; destroys: a
 player_init:
-    ld iy,player_begin
-    ld (table_pointer),iy
-    ld a,(iy+sprite_id)
+; set player sprite record with defaults
+    ld ix,player_begin
+    ld hl,player_defaults
+    ld bc,0*256
+    ld de,sprite_bottom*256
+    ld a,1
+    call spawn_sprite_from_coords
+    jp nc,@draw ; player sprite record already exists so skip to draw
+    res 7,(ix+sprite_type) ; clear just spawned flag
+
+; load sprite frames
+    ld a,(ix+sprite_id)
     call vdu_sprite_select
     call vdu_sprite_clear_frames
     ld hl,BUF_SHIP_0L
@@ -48,16 +57,17 @@ player_init:
     call vdu_sprite_add_buff
     ld hl,BUF_SHIP_2R
     call vdu_sprite_add_buff
-    ld bc,0
-    ld (iy+sprite_x),bc
-    ld de,sprite_bottom*256 ; max sprite y-coordinate
-    ld (iy+sprite_y),de
+
+@draw:
+    ld bc,0*256
+    ld de,sprite_bottom*256
     call vdu_sprite_move_abs168
     call vdu_sprite_show
     ld hl,player_alive
     ld (player_state),hl
-    set sprite_alive,(iy+sprite_collisions)
+    set sprite_alive,(ix+sprite_collisions)
     ret
+; end player_init
 
 ; UART ports for reading joystick input
 ; bit tests: 0 means actuated, 1 means not actuated

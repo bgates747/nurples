@@ -17,8 +17,8 @@
             "scale": 1.5,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 128,
-                "y": 255.66666666666666
+                "x": 128.33333333333331,
+                "y": 255.66666666666669
             }
         },
         "dg0_01.tmx": {
@@ -34,7 +34,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 250.5,
-                "y": 3795.5
+                "y": 312.5
             }
         },
         "dg0_bg_green_plates.tmx": {

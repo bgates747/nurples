@@ -29,7 +29,7 @@ move_electrode:
     call move_active_tile 
     jp z,table_deactivate_tile
     call check_enemy_collision_player
-    jp nz,@laser ; no collision so check laser collision
+    jp nz,@laser ; no collision so check laser collision    
     call update_shields
     jp kill_electrode
 @laser:
@@ -37,7 +37,7 @@ move_electrode:
     ret nz ; no collision so we're done
     call update_score
     jp kill_electrode
-    ret
+; end move_electrode
 
 kill_electrode:
 ; activate blank tile bitmap

@@ -349,27 +349,6 @@ bar_update_h:
     pop bc
 ; get y-plot position
     ld de,(ix+bar_y0)
-
-; ; DEBUG
-;     PUSH_ALL
-;     call vdu_home_cursor
-;     ld hl,(ix+bar_val)
-;     call printDec
-;     call printNewLine
-;     POP_ALL
-;     PUSH_ALL
-;     push bc
-;     pop hl
-;     call printDec
-;     call printNewLine
-;     POP_ALL
-;     PUSH_ALL
-;     ex de,hl
-;     call printDec
-;     call printNewLine
-;     POP_ALL
-; ; END DEBUG
-
     call vdu_plot_bmp
     ret
 ; end bar_update_h

@@ -199,15 +199,13 @@ init:
 
 ; initialize the global timestamp
     call timestamp_tick
-
-; done with init
     ret
+; end init
 
 main:
 ; start a new game
     call game_initialize
 main_loop:
-    ; CALL DEBUG_PRINT_TILE_STACK ; DEBUG
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
@@ -226,5 +224,6 @@ main_loop:
 main_end:
     call vdu_cursor_on
     ret
+; end main
 
     include "tables.inc"

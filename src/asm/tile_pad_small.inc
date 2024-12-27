@@ -42,10 +42,7 @@ move_pad_small:
     and %00000111 ; modulo 8
     ld (iy+tile_frame),a
     call draw_active_tile
-@@: ; check whether it is time to spawn a seeker
-
-    RET ; DEBUG
-    
+@@: ; check whether it is time to spawn a seeker    
     dec (iy+tile_move_timer)
     ret nz
 ; spwan a seeker    
