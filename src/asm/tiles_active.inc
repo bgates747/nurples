@@ -95,7 +95,7 @@ tile_kill:
     ld c,(iy+tile_points)
     add hl,bc
     ld (player_score),hl
-    jp tile_spawn_explosion
+    jp activate_crater
 ; end tile_kill
 
 draw_active_tile:
@@ -141,3 +141,17 @@ spawn_sprite_from_tile:
     scf ; set carry flag to indicate success
     ret
 ; end spawn_sprite_from_tile
+
+; create a new tile at the same location as the current tile
+; inputs: tile_table_pointer = current tile
+spawn_active_tile_from_tile:
+; copy default settings to new tile
+    ld ix,(tile_table_pointer) ; get existing tile record
+    lea ix,ix+tile_definitions ; bump pointer to copy to
+    push ix ; pointer to default tile settings
+    pop de ; address to copy to
+    ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+    ldir ; copies defaults to new tile record
+    ld ix,(tile_table_pointer) ; restore pointer to new tile record
+    ret
+; end spawn_active_tile_from_tile

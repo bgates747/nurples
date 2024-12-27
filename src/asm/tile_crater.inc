@@ -1,14 +1,14 @@
     align 256
 crater_defaults:
     db tile_crater          ; type
-    dl BUF_CRATER_0         ; base_bufferId
+    dl BUF_EXPLOSION_A      ; base_bufferId
     dl move_crater          ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
     db 1                    ; num_orientations
     db 4                    ; num_animations
-    db 0                    ; animation
+    db 5	                ; animation
     db 8                    ; animation_timer
     db 0                    ; move_timer
     db 0                    ; move_step
@@ -17,10 +17,8 @@ crater_defaults:
     db 0                    ; frame
 
 activate_crater:
-; get next available active tile id
     ld hl,crater_defaults
-    call spawn_active_tile_from_sprite
-    ret nc ; no carry means no free active tile slots, so we go home
+    call spawn_active_tile_from_tile
 ; other specific initialization
     ret
 ; end activate_crater
@@ -31,6 +29,8 @@ move_crater:
 ; do animation
     dec (iy+tile_animation_timer)
     ret nz ; not time to animate
+    dec (iy+sprite_animation) ; check whether time to transition to crater
+    call z,@make_crater
     ld a,8
     ld (iy+tile_animation_timer),a
     ld a,(iy+tile_frame)
@@ -38,4 +38,10 @@ move_crater:
     and %00000011 ; modulo 4
     ld (iy+tile_frame),a
     jp draw_active_tile
+@make_crater:
+    ld hl,BUF_CRATER_0
+    ld (iy+tile_base_bufferId),hl
+    ld a,-1 ; will wrap to zero on return
+    ld (iy+tile_frame),a
+    ret
 ; end move_crater

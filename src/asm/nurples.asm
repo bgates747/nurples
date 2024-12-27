@@ -208,6 +208,7 @@ main:
 ; start a new game
     call game_initialize
 main_loop:
+    ; CALL DEBUG_PRINT_TILE_STACK ; DEBUG
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic

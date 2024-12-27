@@ -52,26 +52,16 @@ move_explosion:
 ; run the movement program for the explosion
     call move_sprite
     or a ; a will be non-zero if have scrolled off screen
-    jp nz,@make_crater
+    jp nz,table_deactivate_sprite
 ; do the animations
     dec (iy+sprite_animation_timer)
     ret nz ; not time to bump animation frame
     inc (iy+sprite_frame)
     dec (iy+sprite_animation)
-    jp z,@make_crater ; reached the end of the animations
+    jp z,table_deactivate_sprite ; reached the end of the animations
     ld a,8 ; reset animation timer
     ld (iy+sprite_animation_timer),a
     ret
-@make_crater: ; deactivate sprite and spawn a crater tile in its place
-    ; ld hl,BUF_CRATER
-    ; call vdu_buff_select
-    ; ld bc,(iy+sprite_x)
-    ; ld de,(iy+sprite_y)
-    ; call vdu_plot_bmp168
-    
-    call activate_crater
-
-    jp table_deactivate_sprite
 ; end move_explosion
 
 move_explosions:
