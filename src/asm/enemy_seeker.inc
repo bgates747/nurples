@@ -47,11 +47,9 @@ move_enemy_seeker:
     call vdu_sprite_select_frame
     ret
 @laser:
-    ld a,(iy+sprite_points)
     call update_score
     jp spawn_explosion
 @player:
-    ld a,(iy+sprite_shield_damage)
     call update_shields
     jp spawn_explosion
 ; end move_enemy_seeker

@@ -3,10 +3,12 @@ score_y: equ 33
 ; prints the player's score
 player_score_last: dl 0 ; integer
 
-; inputs: a = value to add to player_score
+; inputs: iy set to sprite/tile record being tallied
+; outputs: hl,player_score = updated score
+; destroys: hl,de
 update_score:
     ld de,0 ; clear deu and d
-    ld e,a
+    ld e,(iy+sprite_points)
     ld hl,(player_score)
     add hl,de
     ld (player_score),hl
@@ -232,12 +234,17 @@ init_bar_shields:
     ret
 ; end init_bar_shields
 
-; inputs: a = value to add to player_shields
+; inputs: iy set to sprite/tile record being tallied
+; outputs: hl,player_shields = updated shields
+; destroys: hl,de
 update_shields:
-    ld hl,player_shields
-    add a,(hl)
-    ld (hl),a
+    ld de,0 ; clear deu and d
+    ld e,(iy+sprite_shield_damage)
+    ld hl,(player_shields)
+    add hl,de
+    ld (player_shields),hl
     ret
+; end update_shields
 
 draw_shields:
     ld hl,player_shields_last

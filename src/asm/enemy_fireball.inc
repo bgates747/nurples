@@ -7,8 +7,8 @@ fireball_defaults:
     dl BUF_FIREBALL_2_000   ; base_bufferId
     dl move_enemy_fireball  ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
-    db 7                    ; dim_x
-    db 7                    ; dim_y
+    db 16                   ; dim_x
+    db 16                   ; dim_y
     db 32                   ; num_orientations
     db 2                    ; num_animations
     db 0                    ; animation
@@ -56,7 +56,6 @@ move_enemy_fireball:
     jp nz,table_deactivate_sprite
     call check_enemy_collision_player
     jp nz,@animate ; no collision so do animation
-    ld a,(iy+sprite_shield_damage)
     call update_shields
     jp spawn_explosion
 @animate:

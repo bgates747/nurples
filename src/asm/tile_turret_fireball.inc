@@ -54,5 +54,6 @@ turret_fireball_reset_move_timer:
     ret
 
 kill_turret_fireball:
-    jp tile_kill
+    call update_score
+    jp activate_crater
 ; end move_turret_fireball

@@ -8,16 +8,15 @@ tile_turret_fireball: equ 5
 tile_laser_turret: equ 6
 tile_twin_laser_turret: equ 7
 tile_charge_fuel: equ 8
-tile_electrode_l: equ 9
+tile_electrode: equ 9
 tile_lightning: equ 10
-tile_electrode_r: equ 11
+; tile_electrode_r: equ 11 ; same as tile_electrode
 tile_12: equ 12
 tile_13: equ 13
 tile_14: equ 14
 tile_15: equ 15
 tile_crater: equ 16
 
-active_tile_timer: equ 24 ; 2/10ths of a second
 tile_activation_routines:
     dl activate_null_tile ; dummy spacer since tiled is 1-based
     dl activate_pad_small
@@ -28,9 +27,9 @@ tile_activation_routines:
     dl activate_null_tile
     dl activate_null_tile
     dl activate_null_tile
-    dl activate_electrode_l
+    dl activate_electrode
     dl activate_lightning
-    dl activate_electrode_r
+    dl activate_electrode
     dl activate_null_tile
     dl activate_null_tile
     dl activate_null_tile
@@ -83,20 +82,6 @@ move_tiles:
     res 7,(iy+tile_type) ; clear just spawned flag
     jp @next_record
 ; end move_tiles
-
-; this routine vanquishes the tile tile
-; and replaces it with an animated explosion
-; destroys: everything except index registers
-; returns: a=-1 to indicate tile died, and an incandescent ball of debris and gas
-tile_kill:
-    ld iy,(tile_stack_pointer)
-    ld hl,(player_score)
-    ld bc,0 ; clear bcu
-    ld c,(iy+tile_points)
-    add hl,bc
-    ld (player_score),hl
-    jp activate_crater
-; end tile_kill
 
 draw_active_tile:
     ld hl,(iy+tile_base_bufferId)

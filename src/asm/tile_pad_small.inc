@@ -56,5 +56,6 @@ pad_small_reset_move_timer:
     ret
 
 kill_pad_small:
-    jp tile_kill
+    call update_score
+    jp activate_crater
 ; end move_pad_small
