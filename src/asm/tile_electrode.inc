@@ -43,6 +43,9 @@ kill_electrode:
 ; activate blank tile bitmap
     ld hl,BUF_TILE_BLANK
     call vdu_buff_select
+; save y-coordinate of collision tile
+    ld hl,(iy+tile_y)
+    ld (@tile_y),hl
 ; initialize pointers
     ld hl,(tile_stack_pointer)
     ld hl,(hl) ; pointer to this tile table record
@@ -71,11 +74,18 @@ kill_electrode:
     ld iy,(iy) ; pointer to tile record to kill
     ld (tile_table_pointer),iy
     ld hl,(ix+tile_y)
-    ld de,(iy+tile_y)
+    ld de,(@tile_y)
     or a ; clear carry
-    sbc hl,de ; if not at the same position, skip to next record
+    push hl
+    sbc hl,de
+    pop hl
+    jp z,@kill_it
+    ld bc,1*256
+    add hl,bc
+    or a
+    sbc hl,de
     jp nz,@next_record
-; deactivate tile and replace with inactive blank tile
+@kill_it: ; deactivate tile and replace with inactive blank tile
     ld bc,(iy+tile_x) ; get x position (ud.e already has y-position)
     call vdu_plot_bmp168 ; plot blank tile (bitmap was activated at beginning of proc)
     call table_deactivate_tile
@@ -102,4 +112,5 @@ kill_electrode:
     ld (tile_table_pointer),iy ; set pointer to this tile record
     jp activate_crater
 @tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
+@tile_y: dl 0 ; y position of tiles to kill
 ; end move_electrode

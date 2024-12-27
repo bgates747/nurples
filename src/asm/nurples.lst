@@ -14784,84 +14784,90 @@ PC     Output      Line
 048E41             0043*   ; activate blank tile bitmap
 048E41 21 74 01 00 0044*       ld hl,BUF_TILE_BLANK
 048E45 CD 38 17 04 0045*       call vdu_buff_select
-048E49             0046*   ; initialize pointers
-048E49 2A 03 88 04 0047*       ld hl,(tile_stack_pointer)
-048E4D ED 27       0048*       ld hl,(hl) ; pointer to this tile table record
-048E4F E5          0049*       push hl ; save pointer to this tile table record
-048E50 DD 21 00 85 0050*       ld ix,tile_stack ; set ix to first record in table
+048E49             0046*   ; save y-coordinate of collision tile
+048E49 FD 27 04    0047*       ld hl,(iy+tile_y)
+048E4C 22 FB 8E 04 0048*       ld (@tile_y),hl
+048E50             0049*   ; initialize pointers
+048E50 2A 03 88 04 0050*       ld hl,(tile_stack_pointer)
+048E54 ED 27       0051*       ld hl,(hl) ; pointer to this tile table record
+048E56 E5          0052*       push hl ; save pointer to this tile table record
+048E57 DD 21 00 85 0053*       ld ix,tile_stack ; set ix to first record in table
        04          
-048E55             0051*   @check_loop:
-048E55 DD 22 E1 8E 0052*       ld (@tile_stack_pointer),ix ; update stack pointer
+048E5C             0054*   @check_loop:
+048E5C DD 22 F8 8E 0055*       ld (@tile_stack_pointer),ix ; update stack pointer
        04          
-048E5A DD 7E 02    0053*       ld a,(ix+2)
-048E5D B7          0054*       or a ; will be zero if at end of stack
-048E5E CA BA 8E 04 0055*       jp z,@done ; end of stack so we're done
-048E62             0056*   ; point ix to tile record
-048E62 DD 37 00    0057*       ld ix,(ix) ; ix points to the tile record being checked
-048E65             0058*   ; check top bit of tile_type to see if tile is just spawned
-048E65 DD CB 16 7E 0059*       bit 7,(ix+tile_type)
-048E69 C2 AE 8E 04 0060*       jp nz,@next_record ; if just spawned, skip to next record
-048E6D             0061*   ; check sprite_alive bit to see if tile is active
-048E6D DD CB 1D 76 0062*       bit sprite_alive,(ix+sprite_collisions)
-048E71 C8          0063*       ret z ; end of stack so we're done
-048E72             0064*   ; check tile type
-048E72 DD 7E 16    0065*       ld a,(ix+tile_type)
-048E75 FE 0A       0066*       cp tile_lightning ; check if tile is lightning
-048E77 C2 AE 8E 04 0067*       jp nz,@next_record ; if not an electrode, skip to next record
-048E7B             0068*   ; check tile position
-048E7B FD 2A E1 8E 0069*       ld iy,(@tile_stack_pointer)
+048E61 DD 7E 02    0056*       ld a,(ix+2)
+048E64 B7          0057*       or a ; will be zero if at end of stack
+048E65 CA D1 8E 04 0058*       jp z,@done ; end of stack so we're done
+048E69             0059*   ; point ix to tile record
+048E69 DD 37 00    0060*       ld ix,(ix) ; ix points to the tile record being checked
+048E6C             0061*   ; check top bit of tile_type to see if tile is just spawned
+048E6C DD CB 16 7E 0062*       bit 7,(ix+tile_type)
+048E70 C2 C5 8E 04 0063*       jp nz,@next_record ; if just spawned, skip to next record
+048E74             0064*   ; check sprite_alive bit to see if tile is active
+048E74 DD CB 1D 76 0065*       bit sprite_alive,(ix+sprite_collisions)
+048E78 C8          0066*       ret z ; end of stack so we're done
+048E79             0067*   ; check tile type
+048E79 DD 7E 16    0068*       ld a,(ix+tile_type)
+048E7C FE 0A       0069*       cp tile_lightning ; check if tile is lightning
+048E7E C2 C5 8E 04 0070*       jp nz,@next_record ; if not an electrode, skip to next record
+048E82             0071*   ; check tile position
+048E82 FD 2A F8 8E 0072*       ld iy,(@tile_stack_pointer)
        04          
-048E80 FD 22 03 88 0070*       ld (tile_stack_pointer),iy
+048E87 FD 22 03 88 0073*       ld (tile_stack_pointer),iy
        04          
-048E85 FD 37 00    0071*       ld iy,(iy) ; pointer to tile record to kill
-048E88 FD 22 06 88 0072*       ld (tile_table_pointer),iy
+048E8C FD 37 00    0074*       ld iy,(iy) ; pointer to tile record to kill
+048E8F FD 22 06 88 0075*       ld (tile_table_pointer),iy
        04          
-048E8D DD 27 04    0073*       ld hl,(ix+tile_y)
-048E90 FD 17 04    0074*       ld de,(iy+tile_y)
-048E93 B7          0075*       or a ; clear carry
-048E94 ED 52       0076*       sbc hl,de ; if not at the same position, skip to next record
-048E96 C2 AE 8E 04 0077*       jp nz,@next_record
-048E9A             0078*   ; deactivate tile and replace with inactive blank tile
-048E9A FD 07 01    0079*       ld bc,(iy+tile_x) ; get x position (ud.e already has y-position)
-048E9D CD 3C 1B 04 0080*       call vdu_plot_bmp168 ; plot blank tile (bitmap was activated at beginning of proc)
-048EA1 CD 83 88 04 0081*       call table_deactivate_tile
-048EA5 DD 2A E1 8E 0082*       ld ix,(@tile_stack_pointer) ; get back stack pointer
+048E94 DD 27 04    0076*       ld hl,(ix+tile_y)
+048E97 ED 5B FB 8E 0077*       ld de,(@tile_y)
        04          
-048EAA C3 55 8E 04 0083*       jp @check_loop ; deactivate tile naturally advances to next record
-048EAE             0084*    ; get back stack pointer and loop
-048EAE             0085*   @next_record:
-048EAE DD 2A E1 8E 0086*       ld ix,(@tile_stack_pointer)
+048E9C B7          0078*       or a ; clear carry
+048E9D E5          0079*       push hl
+048E9E ED 52       0080*       sbc hl,de
+048EA0 E1          0081*       pop hl
+048EA1 CA B1 8E 04 0082*       jp z,@kill_it
+048EA5 01 00 01 00 0083*       ld bc,1*256
+048EA9 09          0084*       add hl,bc
+048EAA B7          0085*       or a
+048EAB ED 52       0086*       sbc hl,de
+048EAD C2 C5 8E 04 0087*       jp nz,@next_record
+048EB1             0088*   @kill_it: ; deactivate tile and replace with inactive blank tile
+048EB1 FD 07 01    0089*       ld bc,(iy+tile_x) ; get x position (ud.e already has y-position)
+048EB4 CD 3C 1B 04 0090*       call vdu_plot_bmp168 ; plot blank tile (bitmap was activated at beginning of proc)
+048EB8 CD 83 88 04 0091*       call table_deactivate_tile
+048EBC DD 2A F8 8E 0092*       ld ix,(@tile_stack_pointer) ; get back stack pointer
        04          
-048EB3 ED 32 03    0087*       lea ix,ix+3 ; next tile stack record
-048EB6 C3 55 8E 04 0088*       jp @check_loop ; loop until we've checked all the records
-048EBA             0089*   @done:
-048EBA             0090*   ; find this tile record in the tile stack
-048EBA D1          0091*       pop de ; restore pointer to this tile table record (was hl)
-048EBB FD 21 00 85 0092*       ld iy,tile_stack ; set ix to first record in table
+048EC1 C3 5C 8E 04 0093*       jp @check_loop ; deactivate tile naturally advances to next record
+048EC5             0094*    ; get back stack pointer and loop
+048EC5             0095*   @next_record:
+048EC5 DD 2A F8 8E 0096*       ld ix,(@tile_stack_pointer)
        04          
-048EC0             0093*   @find_loop:
-048EC0 FD 27 00    0094*       ld hl,(iy)
-048EC3 ED 33 03    0095*       lea iy,iy+3 ; next tile stack record
-048EC6 B7          0096*       or a ; clear carry
-048EC7 ED 52       0097*       sbc hl,de ; if not the same address, loop
-048EC9 C2 C0 8E 04 0098*       jp nz,@find_loop
-048ECD ED 33 FD    0099*       lea iy,iy-3 ; back up to the record we want
-048ED0 FD 22 03 88 0100*       ld (tile_stack_pointer),iy ; update stack pointer
+048ECA ED 32 03    0097*       lea ix,ix+3 ; next tile stack record
+048ECD C3 5C 8E 04 0098*       jp @check_loop ; loop until we've checked all the records
+048ED1             0099*   @done:
+048ED1             0100*   ; find this tile record in the tile stack
+048ED1 D1          0101*       pop de ; restore pointer to this tile table record (was hl)
+048ED2 FD 21 00 85 0102*       ld iy,tile_stack ; set ix to first record in table
        04          
-048ED5 FD 37 00    0101*       ld iy,(iy) ; iy points to the tile stack record
-048ED8 FD 22 06 88 0102*       ld (tile_table_pointer),iy ; set pointer to this tile record
+048ED7             0103*   @find_loop:
+048ED7 FD 27 00    0104*       ld hl,(iy)
+048EDA ED 33 03    0105*       lea iy,iy+3 ; next tile stack record
+048EDD B7          0106*       or a ; clear carry
+048EDE ED 52       0107*       sbc hl,de ; if not the same address, loop
+048EE0 C2 D7 8E 04 0108*       jp nz,@find_loop
+048EE4 ED 33 FD    0109*       lea iy,iy-3 ; back up to the record we want
+048EE7 FD 22 03 88 0110*       ld (tile_stack_pointer),iy ; update stack pointer
        04          
-048EDD C3 13 8D 04 0103*       jp activate_crater
-048EE1 00 85 04    0104*   @tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
-048EE4             0105*   ; end move_electrode
-048EE4             0070        include "tile_lightning.inc"
-048EE4 FF FF FF FF 0001*       align 256
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
+048EEC FD 37 00    0111*       ld iy,(iy) ; iy points to the tile stack record
+048EEF FD 22 06 88 0112*       ld (tile_table_pointer),iy ; set pointer to this tile record
+       04          
+048EF4 C3 13 8D 04 0113*       jp activate_crater
+048EF8 00 85 04    0114*   @tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
+048EFB 00 00 00    0115*   @tile_y: dl 0 ; y position of tiles to kill
+048EFE             0116*   ; end move_electrode
+048EFE             0070        include "tile_lightning.inc"
+048EFE FF FF       0001*       align 256
 048F00             0002*   lightning_defaults:
 048F00 0A          0003*       db tile_lightning       ; type
 048F01 4C 01 00    0004*       dl BUF_LIGHTNING_H_0    ; base_bufferId

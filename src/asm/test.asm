@@ -118,8 +118,7 @@ main_end:
 
 DEBUG_PRINT:
     PUSH_ALL
-    call printNewLine
-    call printNewLine
+    call vdu_home_cursor
     POP_ALL
     PUSH_ALL
     call dumpFlags

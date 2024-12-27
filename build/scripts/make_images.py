@@ -256,7 +256,7 @@ if __name__ == '__main__':
     do_crop =               False
     do_scale =              False
     do_palette =            False
-    # make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
+    make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
 
     img_width =             16
     img_height =            16
@@ -292,4 +292,4 @@ if __name__ == '__main__':
     do_crop =               False
     do_scale =              False
     do_palette =            False
-    # make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
+    make_images(buffer_id, img_width, img_height, images_type, asm_images_filepath, originals_dir, output_dir_png, output_dir_rgba, palette_name, palette_dir, palette_conv_type, transparent_rgb, del_non_png, do_crop, do_scale, do_palette)
