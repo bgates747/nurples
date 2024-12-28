@@ -12,7 +12,7 @@ start:
     push de
     push ix
     push iy
-    call init
+
     call main
 
 exit:
@@ -79,82 +79,6 @@ exit:
     align 256
 
 ; --- MAIN PROGRAM FILE ---
-hello_world: asciz "Welcome to Purple Nurples!"
-loading_time: asciz "Loading time:"
-loading_complete: asciz "Press any key to continue."
-
-init:
-; clear all buffers
-    call vdu_clear_all_buffers
-
-; print loading ui message
-    call vdu_cls
-    ld hl,loading_ui
-    call printString
-    call vdu_flip
-; load UI images
-    call load_ui_images
-
-; set up the display
-    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-    ; ld a,20 ;  512   384   64    60hz single-buffered
-    call vdu_set_screen_mode
-    xor a
-    call vdu_set_scaling
-
-; ; enable additional audio channels
-; 	call vdu_enable_channels
-
-; set text background color
-    ld a,26+128 ; violet
-    call vdu_colour_text
-
-; set text foreground color
-    ld a,47 ; aaaaff lavenderish
-    call vdu_colour_text
-
-; set gfx bg color
-    xor a ; plotting mode 0
-    ld a,26+128 ; violet
-    call vdu_gcol
-    call vdu_cls
-
-; set the cursor off
-    call vdu_cursor_off
-
-; VDU 28, left, bottom, right, top: Set text viewport **
-; MIND THE LITTLE-ENDIANESS
-; inputs: c=left,b=bottom,e=right,d=top
-    ld c,0 ; left
-    ld d,0 ; top
-    ld e,39 ; right
-    ld b,0; bottom
-    call vdu_set_txt_viewport
-
-; load background and sprite images
-    call img_load_init
-    call load_backgrounds
-    call load_sprite_images
-
-; load tileset_ptrs
-    call load_tilesets
-
-; ; load sound effects ; TODO
-; 	ld bc,SFX_num_buffers
-; 	ld hl,SFX_buffer_id_lut
-; 	ld (cur_buffer_id_lut),hl
-; 	ld hl,SFX_load_routines_table
-; 	ld (cur_load_jump_table),hl
-; 	call sfx_load_main
-
-; print loading complete message and wait for user keypress
-    call vdu_cls
-    ld hl,loading_complete
-    call printString
-    call vdu_flip 
-    call waitKeypress
-
-
 main:
 ; start a new game
     ld hl,game_init
