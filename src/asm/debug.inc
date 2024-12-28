@@ -987,3 +987,127 @@ dump_tile_record:
 
     ; call waitKeypress
     ret
+
+dump_player_record:
+    ld ix,player_begin
+
+    call printInline
+    asciz "id  : "
+    ld a,(ix+sprite_id)
+    call printHexA
+
+    call printInline
+    asciz "\r\nx   :"
+    ld hl,(ix+sprite_x)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\ny   :"
+    ld hl,(ix+sprite_y)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nxv  :"
+    ld hl,(ix+sprite_xvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nyv  :"
+    ld hl,(ix+sprite_yvel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nv   :"
+    ld hl,(ix+sprite_vel)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nhdg :"
+    ld hl,(ix+sprite_heading)
+    call print_s168_hl
+
+    call printInline
+    asciz "\r\nori :"
+    ld hl,(ix+sprite_orientation)
+    call print_s168_hl
+    
+    call printInline
+    asciz "\r\ntyp : "
+    ld a,(ix+sprite_type)
+    call printHexA
+    
+    call printInline
+    asciz "\r\nBId : "
+    ld hl,(ix+sprite_base_bufferId)
+    call printHex24
+
+    call printInline
+    asciz "\r\nmPg : "
+    ld hl,(ix+sprite_move_program)
+    call printHex24
+
+    call printInline
+    asciz "\r\ncol : "
+    ld a,(ix+sprite_collisions)
+    call printBin8
+
+    ; call printInline
+    ; asciz "\r\nszx : "
+    ; ld a,(ix+sprite_dim_x)
+    ; call printHexA
+    
+    ; call printInline
+    ; asciz "\r\nszy : "
+    ; ld a,(ix+sprite_dim_y)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\n#ori: "
+    ; ld a,(ix+sprite_num_orientations)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\n#ani: "
+    ; ld a,(ix+sprite_num_animations)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nani : "
+    ; ld a,(ix+sprite_animation)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nanit: "
+    ; ld a,(ix+sprite_animation_timer)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nmvt : "
+    ; ld a,(ix+sprite_move_timer)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nmvs : "
+    ; ld a,(ix+sprite_move_step)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\npts : "
+    ; ld a,(ix+sprite_points)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\ndmg : "
+    ; ld a,(ix+sprite_shield_damage)
+    ; call printHexA
+
+    ; call printInline
+    ; asciz "\r\nfrm : "
+    ; ld a,(ix+sprite_frame)
+    ; call printHexA
+
+    ; call printNewLine
+    ; call printNewLine
+
+    ; call waitKeypress
+    ret

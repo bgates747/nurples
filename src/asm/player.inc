@@ -1,18 +1,25 @@
     align 256
 
 ; ######## GAME STATE VARIABLES #######
-; THESE MUST BE IN THIS ORDER FOR game_initialize TO WORK PROPERLY
+player_state:  dl player_alive ; Player state variable
 player_score: dl 0 ; integer
-; player current shields,binary
-; when < 0 player splodes
-; restores to player_shields_max when new ship spawns
-
-; when reaches zero,game ends
-; can increase based on TODO
 player_ships: db 3 ; integer
-
 speed_player: equ 3*256 ; 3 pixels per frame 16.8 fixed
 player_lasers_max: equ 4
+
+do_player:
+    ld hl,(player_state)
+    CALL_HL                ; Call the corresponding player state
+    ret
+
+player_alive:
+    call player_input     ; Handle player input
+    call player_move_weapons    ; Handle laser movement and collision detection
+    ret
+
+player_dead:
+    call player_move_weapons    ; Handle laser movement and collision detection
+    ret
 
 player_defaults:
     db player               ; type
@@ -37,6 +44,21 @@ player_defaults:
 ; outputs: player_x/y set to bottom-left corner of screen
 ; destroys: a
 player_init:
+    ld a,(player_shields_max)
+    ld (player_shields),a
+    ld a,(laser_power_max)
+    ld (laser_power),a
+    ld a,(player_fuel_max)
+    ld (player_fuel),a
+    ld hl,0
+    ld (player_score),hl
+    xor a
+    ld (laser_power_last),a ; set to zero so draw_laser will update
+    ld (player_shields_last),a ; set to zero so draw_shields will update
+    ld (player_fuel_last),a ; set to zero so draw_fuel will update    
+    ld a,3
+    ld (player_ships),a
+
 ; set player sprite record with defaults
     ld ix,player_begin
     ld hl,player_defaults
@@ -182,8 +204,6 @@ player_input:
     ret
 ; end player_input
 
-
-
 player_move_weapons:
 ; initialize pointers and loop counter
     ld iy,player_weapons_begin ; set iy to first record in table
@@ -192,215 +212,21 @@ player_move_weapons:
     ret
 ; end player_move_weapons
 
-; ###################################################################
-; TODO: the below is all stuff from the original code we need to port
-; ###################################################################
-
 kill_player:
-; ; set player status to dead
-;     xor a; sets all player flags to zero
-;     ld (player_collisions),a
-; ; deduct a ship from the inventory
-;     ld a,(player_ships)
-;     dec a
-;     ld (player_ships),a
-; ; are we out of ships?
-;     jp z,game_over
-; ; wait a few ticks
-;     ld a,32 ; 32-cycle timer ~1/2 second at 60fps
-;     ld (player_move_timer),a
-; kill_player_loop:
-;     call vdu_vblank
-;     ld a,(player_move_timer)
-;     dec a
-;     ld (player_move_timer),a
-;     jr nz,kill_player_loop 
-;     call player_init ; player respawn if timer zero
-    ret ; and out
-
-; draws the player's shields level
-; draw_shields:
-; TODO: Agonize this routine
-; ; prep the loop to draw the bars
-;     ld a,(player_shields) ; snag shields
-;     and a 
-;     ret z ; don't draw if zero shields
-; ; set loop counter and drawing position
-;     ld b,a ; loop counter
-;     ld hl,#5300+48+12
-; ; set color based on bars remaining
-;     ld c,103 ; bright green 28fe0a
-;     cp 9
-;     jp p,draw_shields_loop
-;     ld c,74 ; bright yellow eafe5b 
-;     cp 3
-;     jp p,draw_shields_loop
-;     ld c,28 ; bright red fe0a0a 
-; draw_shields_loop:
-;     push bc ; yup,outta
-;     push hl ; registers again
-;     ; ld a,#A8 ; ▀,168 
-;     ld a,10 ; ▀,168 ; we renumber because we don't use the full charset
-;     ; call draw_char
-;     call draw_num ; we nuked draw_char for the time being
-;     pop hl
-;     ld a,8
-;     add a,l
-;     ld l,a
-;     pop bc
-;     djnz draw_shields_loop
-    ; ret
-
-
-; draw_lives:
-;     ld hl,player_small ; make small yellow ship the active sprite
-;     ld (sprite_base_bufferId),hl
-;     ; ld a,#80 ; northern orientation
-;     ; ld (sprite_orientation),a
-;     ld hl,0 ; north
-;     ld (sprite_heading),hl
-;     xor a
-;     ld (sprite_frame),a
-;     ld a,#56 ; top of visible screen
-;     ld (sprite_y+1),a
-;     call vdu_buff_select ; TODO: convert to vdu_buff_select
-;     ld a,(player_ships)
-;     dec a ; we draw one fewer ships than lives
-;     ret z ; nothing to draw here, move along
-;     ld b,a ; loop counter
-;     ld a,256-16 ; initial x position
-; draw_lives_loop:
-;     ld (sprite_x+1),a
-;     push af
-;     push bc
-;     call vdu_bmp_draw ; convert to vdu_bmp_plot
-;     pop bc
-;     pop af
-;     sub 10
-;     djnz draw_lives_loop
-;     ret 
-
-
-dump_player_record:
-    ld ix,player_begin
-
-    call printInline
-    asciz "id  : "
-    ld a,(ix+sprite_id)
-    call printHexA
-
-    call printInline
-    asciz "\r\nx   :"
-    ld hl,(ix+sprite_x)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\ny   :"
-    ld hl,(ix+sprite_y)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nxv  :"
-    ld hl,(ix+sprite_xvel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nyv  :"
-    ld hl,(ix+sprite_yvel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nv   :"
-    ld hl,(ix+sprite_vel)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nhdg :"
-    ld hl,(ix+sprite_heading)
-    call print_s168_hl
-
-    call printInline
-    asciz "\r\nori :"
-    ld hl,(ix+sprite_orientation)
-    call print_s168_hl
-    
-    call printInline
-    asciz "\r\ntyp : "
-    ld a,(ix+sprite_type)
-    call printHexA
-    
-    call printInline
-    asciz "\r\nBId : "
-    ld hl,(ix+sprite_base_bufferId)
-    call printHex24
-
-    call printInline
-    asciz "\r\nmPg : "
-    ld hl,(ix+sprite_move_program)
-    call printHex24
-
-    call printInline
-    asciz "\r\ncol : "
-    ld a,(ix+sprite_collisions)
-    call printBin8
-
-    ; call printInline
-    ; asciz "\r\nszx : "
-    ; ld a,(ix+sprite_dim_x)
-    ; call printHexA
-    
-    ; call printInline
-    ; asciz "\r\nszy : "
-    ; ld a,(ix+sprite_dim_y)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\n#ori: "
-    ; ld a,(ix+sprite_num_orientations)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\n#ani: "
-    ; ld a,(ix+sprite_num_animations)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nani : "
-    ; ld a,(ix+sprite_animation)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nanit: "
-    ; ld a,(ix+sprite_animation_timer)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nmvt : "
-    ; ld a,(ix+sprite_move_timer)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nmvs : "
-    ; ld a,(ix+sprite_move_step)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\npts : "
-    ; ld a,(ix+sprite_points)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\ndmg : "
-    ; ld a,(ix+sprite_shield_damage)
-    ; call printHexA
-
-    ; call printInline
-    ; asciz "\r\nfrm : "
-    ; ld a,(ix+sprite_frame)
-    ; call printHexA
-
-    ; call printNewLine
-    ; call printNewLine
-
-    ; call waitKeypress
+; DEBUG
+    ld hl,game_init
+    ld (game_state),hl
     ret
+; END DEBUG
+
+    ld hl,enemies_despawning
+    ld (enemies_state),hl
+    ld hl,player_dying
+    ld (player_state),hl
+    ret 
+; end kill_player
+
+player_dying:
+
+    ret
+; end player_dying

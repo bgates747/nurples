@@ -121,7 +121,7 @@ table_deactivate_sprite:
 
 sprites_init:
 ; initialize sprites
-	call vdu_sprite_reset ; out of an abundance of caution (copilot: and paranoia)
+	call vdu_sprite_reset ; clear sprite data in vdp
 	xor a ; loop counter / sprite id
 @sprite_loop:
 	push af ; save loop counter / sprite id

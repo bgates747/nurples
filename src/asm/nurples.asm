@@ -60,7 +60,10 @@ exit:
     include "player.inc"
     include "player_cockpit.inc"
     include "player_laser.inc"
+    include "player_shields.inc"
     include "state.inc"
+    include "state_game_init.inc"
+    include "state_game_playing.inc"
     include "targeting.inc"
     include "tile_table.inc"
     include "tiles.inc"
@@ -93,7 +96,7 @@ init:
     call load_ui_images
 
 ; set up the display
-    ld a,8+128 ; 136   320   240   64    60hz double-buffered
+    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
     ; ld a,20 ;  512   384   64    60hz single-buffered
     call vdu_set_screen_mode
     xor a
@@ -151,60 +154,11 @@ init:
     call vdu_flip 
     call waitKeypress
 
-; set up display for gameplay
-    ; ld a,8
-    ld a,20
-    call vdu_set_screen_mode
-    xor a
-    call vdu_set_scaling
-    call vdu_cursor_off
-; load fonts
-	call fonts_load
-; select font
-    ld hl,amiga_forever_8x8
-    ld a,1 ; flags
-    call vdu_font_select
-; plot bezel art
-    ld hl,BUF_BEZEL_L
-    call vdu_buff_select
-    ld bc,0
-    ld de,0
-    call vdu_plot_bmp
-    ld hl,BUF_BEZEL_R
-    call vdu_buff_select
-    ld bc,384
-    ld de,0
-    call vdu_plot_bmp
-; draw player cockpit
-    call draw_player_cockpit
-; set gfx origin and viewport to playing field window
-    ld bc,origin_left
-    ld de,origin_top
-    call vdu_set_gfx_origin
-    ld bc,field_left
-    ld de,field_top
-    ld ix,field_right
-    ld iy,field_bottom
-    call vdu_set_gfx_viewport
-; set background color
-    ld a,26+128 ; violet
-    call vdu_gcol
-    call vdu_clg
-; VDU 28, left, bottom, right, top: Set text viewport **
-    ld c,0 ; left
-    ld d,0 ; top
-    ld e,62 ; right
-    ld b,48; bottom
-    call vdu_set_txt_viewport
-
-; initialize the global timestamp
-    call timestamp_tick
-    ret
-; end init
 
 main:
 ; start a new game
-    call game_initialize
+    ld hl,game_init
+    ld (game_state),hl
 main_loop:
 ; update the global timestamp
     call timestamp_tick

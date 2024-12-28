@@ -40,6 +40,12 @@ next_tile_id: db 0 ; next available tile id
 new_tile_table_pointer: dl 0 ; pointer to new tile record
 
 tile_table_init:
+; reset num active tiles
+    ld hl,0
+    ld (num_active_tiles),hl
+; reset next tile id
+    xor a
+    ld (next_tile_id),a
 ; clear the tile stack
     xor a ; write zeroes to tile stack
     ld hl,tile_stack
