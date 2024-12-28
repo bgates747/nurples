@@ -3117,17 +3117,17 @@ PC     Output      Line
 041209             0015*   img_load_init:
 041209             0016*   ; initialize logo's position parameters
 041209 21 00 00 00 0017*       ld hl,0
-04120D 22 BE 12 04 0018*       ld (logo_xvel),hl
-041211 22 C1 12 04 0019*       ld (logo_xpos),hl
+04120D 22 C2 12 04 0018*       ld (logo_xvel),hl
+041211 22 C5 12 04 0019*       ld (logo_xpos),hl
 041215             0020*   ; begin 16.8 maths to determine logo's y position and velocity
 041215 21 00 E0 00 0021*       ld hl,224*256
-041219 22 C7 12 04 0022*       ld (logo_ypos),hl
+041219 22 CB 12 04 0022*       ld (logo_ypos),hl
 04121D EB          0023*       ex de,hl
 04121E 21 00 28 FF 0024*       ld hl,-240+24*256
 041222             0025*       ; ld de,-256*[sprites_num_images+tiles_dg_num_images+ui_num_images]
 041222 11 00 83 01 0026*       ld de,[sprites_num_images+tiles_dg_num_images+ui_num_images]*256
 041226 CD 25 07 04 0027*       call sdiv168 ; ud.e = distance / num images = y velocity
-04122A ED 53 C4 12 0028*       ld (logo_yvel),de
+04122A ED 53 C8 12 0028*       ld (logo_yvel),de
        04          
 04122F             0029*   ; all done
 04122F C9          0030*       ret
@@ -3138,7 +3138,7 @@ PC     Output      Line
 041230 C5          0035*       push bc
 041231             0036*   
 041231             0037*   ; load the next image
-041231 CD 68 12 04 0038*       call load_next_image
+041231 CD 6C 12 04 0038*       call load_next_image
 041235             0039*   
 041235             0040*   ; plot the background
 041235 CD 4B 16 04 0041*       call vdu_cls
@@ -3156,124 +3156,123 @@ PC     Output      Line
 04124D             0053*   ; 	call vdu_plot_bmp
 04124D             0054*   
 04124D             0055*   ; move logo
-04124D CD 99 12 04 0056*       call move_logo
+04124D CD 9D 12 04 0056*       call move_logo
 041251             0057*   
 041251             0058*   ; print current filename
 041251 2A 03 12 04 0059*       ld hl,(cur_filename)
 041255 CD 07 01 04 0060*       call printString
 041259             0061*   
 041259             0062*   ; flip the framebuffer
-041259             0063*       ; call vdu_flip
-041259             0064*   
-041259             0065*   ; decrement loop counter
-041259 C1          0066*       pop bc
-04125A 0B          0067*       dec bc
-04125B 79          0068*       ld a,c
-04125C B7          0069*       or a
-04125D C2 30 12 04 0070*       jp nz,img_load_main
-041261 78          0071*       ld a,b
-041262 B7          0072*       or a
-041263 C2 30 12 04 0073*       jp nz,img_load_main
-041267 C9          0074*       ret
-041268             0075*   
-041268             0076*   load_next_image:
-041268 FD 2A 00 12 0077*       ld iy,(cur_image_list)
+041259 CD 50 16 04 0063*       call vdu_flip
+04125D             0064*   
+04125D             0065*   ; decrement loop counter
+04125D C1          0066*       pop bc
+04125E 0B          0067*       dec bc
+04125F 79          0068*       ld a,c
+041260 B7          0069*       or a
+041261 C2 30 12 04 0070*       jp nz,img_load_main
+041265 78          0071*       ld a,b
+041266 B7          0072*       or a
+041267 C2 30 12 04 0073*       jp nz,img_load_main
+04126B C9          0074*       ret
+04126C             0075*   
+04126C             0076*   load_next_image:
+04126C FD 2A 00 12 0077*       ld iy,(cur_image_list)
        04          
-04126D FD E5       0078*       push iy
-04126F FD 7E 00    0079*       ld a,(iy+image_type) ; get image type
-041272 FD 07 03    0080*       ld bc,(iy+image_width) ; get image width
-041275 FD 17 06    0081*       ld de,(iy+image_height) ; get image height
-041278 FD 31 09    0082*       ld ix,(iy+image_filesize) ; get image file size
-04127B FD 27 0F    0083*       ld hl,(iy+image_bufferId) ; get image bufferId
-04127E 22 06 12 04 0084*       ld (cur_buffer_id),hl
-041282 FD 37 0C    0085*       ld iy,(iy+image_filename) ; get image filename
-041285 FD 22 03 12 0086*       ld (cur_filename),iy
+041271 FD E5       0078*       push iy
+041273 FD 7E 00    0079*       ld a,(iy+image_type) ; get image type
+041276 FD 07 03    0080*       ld bc,(iy+image_width) ; get image width
+041279 FD 17 06    0081*       ld de,(iy+image_height) ; get image height
+04127C FD 31 09    0082*       ld ix,(iy+image_filesize) ; get image file size
+04127F FD 27 0F    0083*       ld hl,(iy+image_bufferId) ; get image bufferId
+041282 22 06 12 04 0084*       ld (cur_buffer_id),hl
+041286 FD 37 0C    0085*       ld iy,(iy+image_filename) ; get image filename
+041289 FD 22 03 12 0086*       ld (cur_filename),iy
        04          
-04128A CD 56 18 04 0087*       call vdu_load_img
-04128E FD E1       0088*       pop iy
-041290 ED 33 12    0089*       lea iy,iy+image_record_size
-041293 FD 22 00 12 0090*       ld (cur_image_list),iy
+04128E CD 56 18 04 0087*       call vdu_load_img
+041292 FD E1       0088*       pop iy
+041294 ED 33 12    0089*       lea iy,iy+image_record_size
+041297 FD 22 00 12 0090*       ld (cur_image_list),iy
        04          
-041298 C9          0091*       ret
-041299             0092*   
-041299             0093*   move_logo:
-041299             0094*   ; activate logo bitmap
-041299 21 2A 00 00 0095*       ld hl, BUF_SPLASH_LOGO
-04129D CD 38 17 04 0096*       call vdu_buff_select
-0412A1             0097*   ; update position based on velocity parameters
-0412A1 2A C7 12 04 0098*       ld hl,(logo_ypos)
-0412A5 ED 5B C4 12 0099*       ld de,(logo_yvel)
+04129C C9          0091*       ret
+04129D             0092*   
+04129D             0093*   move_logo:
+04129D             0094*   ; activate logo bitmap
+04129D 21 2A 00 00 0095*       ld hl, BUF_SPLASH_LOGO
+0412A1 CD 38 17 04 0096*       call vdu_buff_select
+0412A5             0097*   ; update position based on velocity parameters
+0412A5 2A CB 12 04 0098*       ld hl,(logo_ypos)
+0412A9 ED 5B C8 12 0099*       ld de,(logo_yvel)
        04          
-0412AA 19          0100*       add hl,de
-0412AB 22 C7 12 04 0101*       ld (logo_ypos),hl
-0412AF             0102*   ; draw logo
-0412AF ED 4B C1 12 0103*       ld bc,(logo_xpos)
+0412AE 19          0100*       add hl,de
+0412AF 22 CB 12 04 0101*       ld (logo_ypos),hl
+0412B3             0102*   ; draw logo
+0412B3 ED 4B C5 12 0103*       ld bc,(logo_xpos)
        04          
-0412B4 ED 5B C7 12 0104*       ld de,(logo_ypos)
+0412B8 ED 5B CB 12 0104*       ld de,(logo_ypos)
        04          
-0412B9 CD 3C 1B 04 0105*       call vdu_plot_bmp168
-0412BD C9          0106*       ret
-0412BE             0107*   
-0412BE 00 00 00    0108*   logo_xvel: dl 0
-0412C1 00 00 00    0109*   logo_xpos: dl 0
-0412C4             0110*   
-0412C4 00 00 00    0111*   logo_yvel: dl 0
-0412C7 00 00 00    0112*   logo_ypos: dl 0
-0412CA             0113*   
-0412CA             0114*   load_ui_images:
-0412CA             0115*   ; initialize image loading variables
-0412CA 21 F7 62 04 0116*       ld hl,ui_image_list
-0412CE 22 00 12 04 0117*       ld (cur_image_list),hl
-0412D2             0118*   ; load images
-0412D2 06 2B       0119*       ld b,ui_num_images
-0412D4             0120*   @loop:
-0412D4 C5          0121*       push bc
-0412D5 CD 68 12 04 0122*       call load_next_image
-0412D9 C1          0123*       pop bc
-0412DA 10 F8       0124*       djnz @loop
-0412DC C9          0125*       ret
-0412DD             0126*   ; end load_ui_images
-0412DD             0127*   
-0412DD             0128*   load_sprite_images:
-0412DD             0129*   ; initialize image loading variables
-0412DD 21 AD 47 04 0130*       ld hl,sprites_image_list
-0412E1 22 00 12 04 0131*       ld (cur_image_list),hl
-0412E5 01 9D 00 00 0132*       ld bc,sprites_num_images
-0412E9             0133*   ; load images
-0412E9 CD 30 12 04 0134*       call img_load_main
-0412ED C9          0135*       ret
-0412EE             0136*   ; end load_sprite_images
-0412EE             0137*   
-0412EE             0138*   load_tilesets:
-0412EE             0139*   ; initialize image loading variables
-0412EE 21 30 2B 04 0140*       ld hl,tiles_dg_image_list
-0412F2 22 00 12 04 0141*       ld (cur_image_list),hl
-0412F6 01 BB 00 00 0142*       ld bc,tiles_dg_num_images
-0412FA             0143*   ; load images
-0412FA CD 30 12 04 0144*       call img_load_main
-0412FE C9          0145*       ret
-0412FF             0146*   ; end load_tilesets
-0412FF             0147*   
-0412FF             0148*   load_backgrounds:
-0412FF             0149*   ; initialize image loading variables
-0412FF 21 00 2A 04 0150*       ld hl,bg_image_list
-041303 22 00 12 04 0151*       ld (cur_image_list),hl
-041307 01 08 00 00 0152*       ld bc,bg_num_images
-04130B             0153*   ; load images
-04130B CD 30 12 04 0154*       call img_load_main
-04130F C9          0155*       ret
-041310             0156*   ; end load_backgrounds
-041310             0157*   
-041310             0158*   ; ; initialize image loading variables
-041310             0159*   ;     ld hl,tiles_xevious_image_list
-041310             0160*   ;     ld (cur_image_list),hl
-041310             0161*   ;     ld bc,tiles_xevious_num_images
-041310             0162*   ; ; load images
-041310             0163*   ;     call img_load_main
-041310 C9          0164*       ret
-041311             0038        include "timer.inc"
-041311 FF FF FF FF 0001*       align 256
-       FF FF FF FF 
+0412BD CD 3C 1B 04 0105*       call vdu_plot_bmp168
+0412C1 C9          0106*       ret
+0412C2             0107*   
+0412C2 00 00 00    0108*   logo_xvel: dl 0
+0412C5 00 00 00    0109*   logo_xpos: dl 0
+0412C8             0110*   
+0412C8 00 00 00    0111*   logo_yvel: dl 0
+0412CB 00 00 00    0112*   logo_ypos: dl 0
+0412CE             0113*   
+0412CE             0114*   load_ui_images:
+0412CE             0115*   ; initialize image loading variables
+0412CE 21 F7 62 04 0116*       ld hl,ui_image_list
+0412D2 22 00 12 04 0117*       ld (cur_image_list),hl
+0412D6             0118*   ; load images
+0412D6 06 2B       0119*       ld b,ui_num_images
+0412D8             0120*   @loop:
+0412D8 C5          0121*       push bc
+0412D9 CD 6C 12 04 0122*       call load_next_image
+0412DD C1          0123*       pop bc
+0412DE 10 F8       0124*       djnz @loop
+0412E0 C9          0125*       ret
+0412E1             0126*   ; end load_ui_images
+0412E1             0127*   
+0412E1             0128*   load_sprite_images:
+0412E1             0129*   ; initialize image loading variables
+0412E1 21 AD 47 04 0130*       ld hl,sprites_image_list
+0412E5 22 00 12 04 0131*       ld (cur_image_list),hl
+0412E9 01 9D 00 00 0132*       ld bc,sprites_num_images
+0412ED             0133*   ; load images
+0412ED CD 30 12 04 0134*       call img_load_main
+0412F1 C9          0135*       ret
+0412F2             0136*   ; end load_sprite_images
+0412F2             0137*   
+0412F2             0138*   load_tilesets:
+0412F2             0139*   ; initialize image loading variables
+0412F2 21 30 2B 04 0140*       ld hl,tiles_dg_image_list
+0412F6 22 00 12 04 0141*       ld (cur_image_list),hl
+0412FA 01 BB 00 00 0142*       ld bc,tiles_dg_num_images
+0412FE             0143*   ; load images
+0412FE CD 30 12 04 0144*       call img_load_main
+041302 C9          0145*       ret
+041303             0146*   ; end load_tilesets
+041303             0147*   
+041303             0148*   load_backgrounds:
+041303             0149*   ; initialize image loading variables
+041303 21 00 2A 04 0150*       ld hl,bg_image_list
+041307 22 00 12 04 0151*       ld (cur_image_list),hl
+04130B 01 08 00 00 0152*       ld bc,bg_num_images
+04130F             0153*   ; load images
+04130F CD 30 12 04 0154*       call img_load_main
+041313 C9          0155*       ret
+041314             0156*   ; end load_backgrounds
+041314             0157*   
+041314             0158*   ; ; initialize image loading variables
+041314             0159*   ;     ld hl,tiles_xevious_image_list
+041314             0160*   ;     ld (cur_image_list),hl
+041314             0161*   ;     ld bc,tiles_xevious_num_images
+041314             0162*   ; ; load images
+041314             0163*   ;     call img_load_main
+041314 C9          0164*       ret
+041315             0038        include "timer.inc"
+041315 FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -14987,7 +14986,7 @@ PC     Output      Line
 04901B D0          0023*       ret nc ; no carry means no free active tile slots, so we go home
 04901C             0024*   ; other specific initialization
 04901C CD AE 05 04 0025*       call rand_8     ; snag a random number
-049020 E6 0F       0026*       and %00001111
+049020 E6 0F       0026*       and %00001111 ; keep only 4 lowest bits (max 15)
 049022 C6 40       0027*       add a,sprite_top ; make sure minimum is sprite_top
 049024 FD 77 24    0028*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
 049027 C9          0029*       ret
@@ -15087,7 +15086,7 @@ PC     Output      Line
 04911B D0          0023*       ret nc ; no carry means no free active tile slots, so we go home
 04911C             0024*   ; other specific initialization
 04911C CD AE 05 04 0025*       call rand_8     ; snag a random number
-049120 E6 0F       0026*       and %00001111
+049120 E6 0F       0026*       and %00001111 ; keep only 4 lowest bits (max 15)
 049122 C6 40       0027*       add a,sprite_top ; make sure minimum is sprite_top
 049124 FD 77 24    0028*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
 049127 C9          0029*       ret
@@ -17067,10 +17066,10 @@ PC     Output      Line
 049F50 CD 07 01 04 0090        call printString
 049F54 CD 50 16 04 0091        call vdu_flip
 049F58             0092    ; load UI images
-049F58 CD CA 12 04 0093        call load_ui_images
+049F58 CD CE 12 04 0093        call load_ui_images
 049F5C             0094    
 049F5C             0095    ; set up the display
-049F5C 3E 08       0096        ld a,8;+128 ; 136   320   240   64    60hz double-buffered
+049F5C 3E 88       0096        ld a,8+128 ; 136   320   240   64    60hz double-buffered
 049F5E             0097        ; ld a,20 ;  512   384   64    60hz single-buffered
 049F5E CD 14 17 04 0098        call vdu_set_screen_mode
 049F62 AF          0099        xor a
@@ -17107,11 +17106,11 @@ PC     Output      Line
 049F8E             0130    
 049F8E             0131    ; load background and sprite images
 049F8E CD 09 12 04 0132        call img_load_init
-049F92 CD FF 12 04 0133        call load_backgrounds
-049F96 CD DD 12 04 0134        call load_sprite_images
+049F92 CD 03 13 04 0133        call load_backgrounds
+049F96 CD E1 12 04 0134        call load_sprite_images
 049F9A             0135    
 049F9A             0136    ; load tileset_ptrs
-049F9A CD EE 12 04 0137        call load_tilesets
+049F9A CD F2 12 04 0137        call load_tilesets
 049F9E             0138    
 049F9E             0139    ; ; load sound effects ; TODO
 049F9E             0140    ; 	ld bc,SFX_num_buffers

@@ -60,7 +60,7 @@ img_load_main:
     call printString
 
 ; flip the framebuffer
-    ; call vdu_flip
+    call vdu_flip
 
 ; decrement loop counter
     pop bc
