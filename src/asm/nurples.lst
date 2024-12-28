@@ -13148,7 +13148,7 @@ PC     Output      Line
 048100             0003*   tmr_laser: ds 6 ; rate timer for firing laser
        FF FF FF FF 
        FF FF 
-048106 28 00 00    0004*   tmr_laser_reset: dl 120/3
+048106 0C 00 00    0004*   tmr_laser_reset: dl 120/10
 048109             0005*   laser_animation_timer_reset: equ 2 ; animate every two frames
 048109             0006*   
 048109             0007*   laser_defaults:
@@ -13171,7 +13171,7 @@ PC     Output      Line
 04811C             0024*   player_spawn_laser:
 04811C             0025*   ; check laser power
 04811C 3A 7E 7F 04 0026*       ld a,(laser_power)
-048120 D6 08       0027*       sub a,8 ; 8 units of power per laser shot
+048120 D6 04       0027*       sub a,4 ; units of power per laser shot
 048122 D8          0028*       ret c ; not enough power to fire
 048123             0029*    ; check laser spawn timer
 048123 FD 21 00 81 0030*       ld iy,tmr_laser
@@ -13180,7 +13180,7 @@ PC     Output      Line
 04812C F0          0032*       ret p ; not time to fire
 04812D             0033*   ; update power to reflect firing
 04812D 3A 7E 7F 04 0034*       ld a,(laser_power)
-048131 D6 08       0035*       sub a,8 ; 8 units of power per laser shot
+048131 D6 04       0035*       sub a,4 ; units of power per laser shot
 048133 32 7E 7F 04 0036*       ld (laser_power),a
 048137             0037*   ; reset timer
 048137 2A 06 81 04 0038*       ld hl,(tmr_laser_reset)

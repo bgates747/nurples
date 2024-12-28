@@ -1,7 +1,7 @@
     align 256
 speed_laser: equ 4*256 ; 6 pixels per frame 16.8 fixed
 tmr_laser: ds 6 ; rate timer for firing laser
-tmr_laser_reset: dl 120/3
+tmr_laser_reset: dl 120/10
 laser_animation_timer_reset: equ 2 ; animate every two frames
 
 laser_defaults:
@@ -24,7 +24,7 @@ laser_defaults:
 player_spawn_laser:
 ; check laser power
     ld a,(laser_power)
-    sub a,8 ; 8 units of power per laser shot
+    sub a,4 ; units of power per laser shot
     ret c ; not enough power to fire
  ; check laser spawn timer
     ld iy,tmr_laser
@@ -32,7 +32,7 @@ player_spawn_laser:
     ret p ; not time to fire
 ; update power to reflect firing
     ld a,(laser_power)
-    sub a,8 ; 8 units of power per laser shot
+    sub a,4 ; units of power per laser shot
     ld (laser_power),a
 ; reset timer
     ld hl,(tmr_laser_reset)
