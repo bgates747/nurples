@@ -627,9 +627,13 @@ DEBUG_DUMP_PLAYER_RECORD:
     RET
 
 DEBUG_PRINT_SHIELDS:
+    PUSH_ALL
     ld c,0 ; X
     ld b,0 ; Y
     call vdu_move_cursor
+
+    call dumpFlags
+    call dumpRegistersHex
     
     ld ix,bar_shields
 
@@ -669,6 +673,7 @@ DEBUG_PRINT_SHIELDS:
     call printDec
     call printNewLine
 
+    POP_ALL
     ; call waitKeypress
     ret
 ; end DEBUG_PRINT_SHIELDS

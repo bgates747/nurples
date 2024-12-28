@@ -213,11 +213,11 @@ bar_update_v:
     ret
 ; end bar_update_v
 
-player_shields: dl 64 ; integer
+player_shields: db 64 ; integer
 ; max player shields,binary
 ; can increase with power-ups (todo)
-player_shields_max: dl 64 ; integer
-player_shields_last: dl 0 ; integer
+player_shields_max: db 64 ; integer
+player_shields_last: db 0 ; integer
 bar_shields:
     dl 0 ; value
     dl 496 ; x0
@@ -238,11 +238,13 @@ init_bar_shields:
 ; outputs: hl,player_shields = updated shields
 ; destroys: hl,de
 update_shields:
-    ld de,0 ; clear deu and d
-    ld e,(iy+sprite_shield_damage)
-    ld hl,(player_shields)
-    add hl,de
-    ld (player_shields),hl
+    ld l,(iy+sprite_shield_damage)
+    ld a,(player_shields)
+    add a,l
+    jp p,@have_shields
+    ld a,0 ; we need flags
+@have_shields:
+    ld (player_shields),a
     ret
 ; end update_shields
 
@@ -269,17 +271,17 @@ init_bar_laser:
     ld a,(charge_laser_timer_max)
     ld (charge_laser_timer),a
     ld ix,bar_laser
-    ld hl,(laser_power_max)
-    ld (ix+bar_val),hl
+    ld a,(laser_power_max)
+    ld (ix+bar_val),a
     call bar_update_v
     ret
 ; end init_bar_laser
 
-laser_power: dl 64 ; integer
-laser_power_max: dl 64 ; integer
+laser_power: db 64 ; integer
+laser_power_last: db 0 ; integer
+laser_power_max: db 64 ; integer
 charge_laser_timer: db 0
 charge_laser_timer_max: db 6
-laser_power_last: dl 0 ; integer
 charge_laser:
 ; check laser timer
     ld hl,charge_laser_timer

@@ -25,11 +25,8 @@ player_spawn_laser:
 ; check laser power
     ld a,(laser_power)
     sub a,8 ; 8 units of power per laser shot
-    jp nc,@F ; enough power to fire so check timer
-    xor a ; set power to zero
-    ld (laser_power),a
-    ret
-@@: ; check laser spawn timer
+    ret c ; not enough power to fire
+ ; check laser spawn timer
     ld iy,tmr_laser
     call timestamp_tmr_get
     ret p ; not time to fire

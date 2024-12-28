@@ -24,6 +24,7 @@ game_initialize:
     call table_init
     ld hl,table_base
     ld (table_pointer),hl
+    ld (player_score_last),hl ; anything but zero so print_score will update
 ; initialize sprites and active tiles table
     call sprites_init
     call table_init
@@ -32,18 +33,17 @@ game_initialize:
     ld a,tiles_dg
     call init_tileset
 ; initialize player
-    ld hl,(player_shields_max)
-    ld (player_shields),hl
-    ld (player_score_last),hl ; anything but zero so print_score will update
-    ld hl,(laser_power_max)
-    ld (laser_power),hl
+    ld a,(player_shields_max)
+    ld (player_shields),a
+    ld a,(laser_power_max)
+    ld (laser_power),a
     ld a,(player_fuel_max)
     ld (player_fuel),a
     ld hl,0
     ld (player_score),hl
-    ld (player_shields_last),hl ; set to zero so draw_shields will update
-    ld (laser_power_last),hl ; set to zero so draw_laser will update
     xor a
+    ld (laser_power_last),a ; set to zero so draw_laser will update
+    ld (player_shields_last),a ; set to zero so draw_shields will update
     ld (player_fuel_last),a ; set to zero so draw_fuel will update    
     ld a,3
     ld (player_ships),a
