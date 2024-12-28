@@ -9,6 +9,12 @@ game_init:
     jp nz,@assets_loaded
 ; clear all buffers
     call vdu_clear_all_buffers
+; load fonts
+	call fonts_load
+; select font
+    ld hl,computer_pixel_7_8x16
+    ld a,1 ; flags
+    call vdu_font_select
 ; print loading ui message
     call vdu_cls
     ld hl,loading_ui
@@ -73,10 +79,8 @@ game_init:
     xor a
     call vdu_set_scaling
     call vdu_cursor_off
-; load fonts
-	call fonts_load
 ; select font
-    ld hl,amiga_forever_8x8
+    ld hl,Lat2_VGA8_8x8
     ld a,1 ; flags
     call vdu_font_select
 ; plot bezel art
