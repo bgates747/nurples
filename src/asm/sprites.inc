@@ -57,10 +57,10 @@ field_top: equ 0
 field_bottom: equ 383-origin_top
 field_left: equ 0
 field_right: equ 255
-sprite_top: equ field_top + 0
-sprite_bottom: equ field_bottom-16
+sprite_top: equ field_top + 64
+sprite_bottom: equ field_bottom-15
 sprite_left: equ field_left
-sprite_right: equ field_right-16
+sprite_right: equ field_right-15
 
 tile_bottom: equ 384
 

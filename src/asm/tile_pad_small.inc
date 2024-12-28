@@ -10,7 +10,7 @@ pad_small_defaults:
     db 1                    ; num_animations
     db 0                    ; animation
     db 16                   ; animation_timer
-    db 24                   ; move_timer
+    db sprite_top           ; move_timer
     db 0                    ; move_step
     db 5                    ; points
     db 0                    ; shield_damage
@@ -22,7 +22,9 @@ activate_pad_small:
     call spawn_active_tile
     ret nc ; no carry means no free active tile slots, so we go home
 ; other specific initialization
-    ld a,64
+    call rand_8     ; snag a random number
+    and %00001111 ; keep only 4 lowest bits (max 15)
+    add a,sprite_top ; make sure minimum is sprite_top
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 ; end activate_pad_small
