@@ -137,6 +137,7 @@ game_init:
     ld a,3
     ld (player_ships),a
     call player_init
+    call draw_player_ships
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl

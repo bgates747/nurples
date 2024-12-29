@@ -102,6 +102,14 @@ init_level:
 ; set tiles_row_defs
     lea ix,ix+7 ; ix points to definition of first tile of first row
     ld (tiles_row_defs),ix
+; reset tile rows and plot coordinates
+    ld hl,-1
+    ld (bg_y_plot),hl
+    inc hl
+    ld (tiles_row),hl
+    ld (tiles_x_plot),hl
+    ld hl,-15
+    ld (tiles_y_plot),hl
 ; print_level:
 level_x: equ 48
 level_y: equ 0

@@ -73,6 +73,7 @@ draw_player_cockpit:
     call init_bar_shields
     call init_bar_laser
     call init_bar_fuel
+
     ret
 ; end draw_player_cockpit
 
@@ -107,9 +108,16 @@ mfd_bg_r:
     dl 296+63 ; y1
 
 mfd_activate:
+    push ix ; preserve pointer
     ld bc,(ix+panel_x0)
     ld de,(ix+panel_y0)
     call vdu_set_gfx_origin
+    ld bc,0
+    ld de,0
+    ld ix,63
+    ld iy,63
+    call vdu_set_gfx_viewport
+    pop ix ; restore pointer
     ret
 ; end mfd_activate
 

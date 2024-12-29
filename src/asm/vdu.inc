@@ -181,6 +181,7 @@ vdu_set_gfx_origin:
 ; VDU 24, left; bottom; right; top;: Set graphics viewport 
 ; NOTE: the order of the y-coordinate parameters are inverted
 ; 	because we have turned off logical screen scaling
+; NOTE: coordinates are relative to current gfx origin
 ; inputs: bc=x0,de=y0,ix=x1,iy=y1
 ; outputs; nothing
 ; destroys: a might make it out alive

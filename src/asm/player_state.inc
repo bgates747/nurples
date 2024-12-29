@@ -20,6 +20,40 @@ player_ships: db 3 ; integer
 player_speed: equ 3*256 ; pixels per frame 16.8 fixed
 player_lasers_max: equ 4
 
+draw_player_ships:
+; activate mfd
+    ld ix,mfd_bg_r
+    call mfd_activate
+; blank out previously drawn ships
+    xor a ; color mode 0
+    ld c,c_black
+    call vdu_gcol
+    ld bc,0
+    ld de,0
+    ld ix,63
+    ld iy,15
+    call vdu_plot_rf
+; draw the ships remaining
+    ld hl,BUF_SHIP_SMALL
+    call vdu_buff_select
+    ld a,(player_ships) ; loop counter
+    ld bc,4 ; starting x-coordinate
+@loop:
+    push af ; back up loop counter
+    push bc ; save x-coordinate
+    ld de,4 ; y-coordinate
+    call vdu_plot_bmp
+    pop bc ; restore x-coordinate
+    ld hl,12 ; bump x-coords
+    add hl,bc
+    push hl
+    pop bc ; bc = new x-coordinate
+    pop af
+    dec a
+    jp nz,@loop    
+    ret
+; end draw_player_ships
+
 do_player:
     ld hl,(player_state)
     CALL_HL
@@ -85,6 +119,7 @@ player_dying:
     dec a
     jp z,game_over
     ld (player_ships),a
+    call draw_player_ships
 ; reset the sprite table
     call table_init
     ld hl,table_base

@@ -5573,7 +5573,7 @@ PC     Output      Line
 04235C             0213*   ; end check_sprite_group_collisions
 04235C             0214*   
 04235C             0215*   check_enemy_collision_laser: ; check for collisions with laser
-04235C DD 21 2A A0 0216*       ld ix,player_lasers_begin
+04235C DD 21 4F A0 0216*       ld ix,player_lasers_begin
        04          
 042361 06 04       0217*       ld b,player_lasers_max
 042363 CD 33 23 04 0218*       call check_sprite_group_collisions
@@ -5581,7 +5581,7 @@ PC     Output      Line
 042368             0220*   ; end check_enemy_collision_laser
 042368             0221*   
 042368             0222*   check_enemy_collision_player: ; check for collisions with player
-042368 DD 21 2A A1 0223*       ld ix,player_begin
+042368 DD 21 4F A1 0223*       ld ix,player_begin
        04          
 04236D CD 7E 22 04 0224*       call check_collision
 042371 C0          0225*       ret nz ; no collision so nothing to do
@@ -5602,7 +5602,7 @@ PC     Output      Line
 042389 C9          0006*       ret
 04238A             0007*   
 04238A             0008*   enemies_alive:
-04238A FD 21 6A A1 0009*       ld iy,enemy_sprites_begin
+04238A FD 21 8F A1 0009*       ld iy,enemy_sprites_begin
        04          
 04238F 06 07       0010*       ld b,table_num_enemy_records
 042391 CD 10 82 04 0011*       call move_sprite_group
@@ -5665,7 +5665,7 @@ PC     Output      Line
 042413             0021*   
 042413             0022*   enemy_spawn_fireball:
 042413 21 00 24 04 0023*       ld hl,fireball_defaults
-042417 DD 21 2A A2 0024*       ld ix,fireballs_base
+042417 DD 21 4F A2 0024*       ld ix,fireballs_base
        04          
 04241C 06 04       0025*       ld b,fireballs_max
 04241E CD F0 8E 04 0026*       call spawn_sprite_from_tile
@@ -5721,7 +5721,7 @@ PC     Output      Line
 04248A             0076*   
 04248A             0077*   init_enemy_fireballs:
 04248A             0078*   ; set pointer to seeker sprite table
-04248A FD 21 2A A2 0079*       ld iy,fireballs_base
+04248A FD 21 4F A2 0079*       ld iy,fireballs_base
        04          
 04248F FD 7E 00    0080*       ld a,(iy+sprite_id) ; sprite id
 042492 1E 04       0081*       ld e,fireballs_max ; sprite loop counter
@@ -5791,7 +5791,7 @@ PC     Output      Line
 042514             0023*   
 042514             0024*   enemy_spawn_seeker:
 042514 21 01 25 04 0025*       ld hl,seeker_defaults
-042518 DD 21 6A A1 0026*       ld ix,seekers_base
+042518 DD 21 8F A1 0026*       ld ix,seekers_base
        04          
 04251D 06 03       0027*       ld b,seekers_max
 04251F CD F0 8E 04 0028*       call spawn_sprite_from_tile
@@ -5885,7 +5885,7 @@ PC     Output      Line
 0425C7             0114*   
 0425C7             0115*   init_enemy_seekers:
 0425C7             0116*   ; set pointer to seeker sprite table
-0425C7 FD 21 6A A1 0117*       ld iy,seekers_base
+0425C7 FD 21 8F A1 0117*       ld iy,seekers_base
        04          
 0425CC FD 7E 00    0118*       ld a,(iy+sprite_id) ; sprite id
 0425CF 1E 03       0119*       ld e,seekers_max ; sprite loop counter
@@ -5937,7 +5937,7 @@ PC     Output      Line
 042613             0020*   
 042613             0021*   spawn_explosion:
 042613 21 00 26 04 0022*       ld hl,explosion_defaults
-042617 DD 21 2A A3 0023*       ld ix,explosions_base
+042617 DD 21 4F A3 0023*       ld ix,explosions_base
        04          
 04261C 06 08       0024*       ld b,explosions_max
 04261E CD DE 81 04 0025*       call spawn_sprite_from_sprite
@@ -5953,7 +5953,7 @@ PC     Output      Line
 042638             0035*   
 042638             0036*   tile_spawn_explosion:
 042638 21 00 26 04 0037*       ld hl,explosion_defaults
-04263C DD 21 2A A3 0038*       ld ix,explosions_base
+04263C DD 21 4F A3 0038*       ld ix,explosions_base
        04          
 042641 06 08       0039*       ld b,explosions_max
 042643 CD F0 8E 04 0040*       call spawn_sprite_from_tile
@@ -5985,7 +5985,7 @@ PC     Output      Line
 04267A             0066*   
 04267A             0067*   move_explosions:
 04267A             0068*   ; initialize pointers and loop counter
-04267A FD 21 2A A3 0069*       ld iy,explosions_base ; set iy to first record in table
+04267A FD 21 4F A3 0069*       ld iy,explosions_base ; set iy to first record in table
        04          
 04267F 06 08       0070*       ld b,explosions_max ; loop counter
 042681 CD 10 82 04 0071*       call move_sprite_group
@@ -5994,7 +5994,7 @@ PC     Output      Line
 042686             0074*   
 042686             0075*   init_explosions:
 042686             0076*   ; set pointer to explosion sprite table
-042686 FD 21 2A A3 0077*       ld iy,explosions_base
+042686 FD 21 4F A3 0077*       ld iy,explosions_base
        04          
 04268B FD 7E 00    0078*       ld a,(iy+sprite_id) ; sprite id
 04268E 1E 08       0079*       ld e,explosions_max ; sprite loop counter
@@ -12159,20 +12159,20 @@ PC     Output      Line
 047944 CD 8D 16 04 0030*       call vdu_gcol
 047948 01 00 00 00 0031*       ld bc,0
 04794C 11 00 00 00 0032*       ld de,0
-047950 DD 21 3F 00 0033*       ld ix,63
+047950 DD 21 3B 00 0033*       ld ix,59
        00          
-047955 FD 21 0F 00 0034*       ld iy,15
+047955 FD 21 07 00 0034*       ld iy,7
        00          
 04795A CD 5D 1B 04 0035*       call vdu_plot_rf
 04795E             0036*   ; draw the ships remaining
 04795E 21 72 01 00 0037*       ld hl,BUF_SHIP_SMALL
 047962 CD 38 17 04 0038*       call vdu_buff_select
 047966 3A 37 79 04 0039*       ld a,(player_ships) ; loop counter
-04796A 01 04 00 00 0040*       ld bc,4 ; starting x-coordinate
+04796A 01 08 00 00 0040*       ld bc,8 ; starting x-coordinate
 04796E             0041*   @loop:
 04796E F5          0042*       push af ; back up loop counter
 04796F C5          0043*       push bc ; save x-coordinate
-047970 11 04 00 00 0044*       ld de,4 ; y-coordinate
+047970 11 08 00 00 0044*       ld de,8 ; y-coordinate
 047974 CD 20 1B 04 0045*       call vdu_plot_bmp
 047978 C1          0046*       pop bc ; restore x-coordinate
 047979 21 0C 00 00 0047*       ld hl,12 ; bump x-coords
@@ -12211,7 +12211,7 @@ PC     Output      Line
 0479AF 32 8E 80 04 0077*       ld (player_shields_last),a
 0479B3 32 E1 7C 04 0078*       ld (player_fuel_last),a
 0479B7             0079*   ; set player sprite record with defaults
-0479B7 DD 21 2A A1 0080*       ld ix,player_begin
+0479B7 DD 21 4F A1 0080*       ld ix,player_begin
        04          
 0479BC 21 21 79 04 0081*       ld hl,player_defaults
 0479C0 01 00 00 00 0082*       ld bc,0*256
@@ -12257,7 +12257,7 @@ PC     Output      Line
 047A2C CD 38 79 04 0122*       call draw_player_ships
 047A30             0123*   ; reset the sprite table
 047A30 CD 06 81 04 0124*       call table_init
-047A34 21 2A A0 04 0125*       ld hl,table_base
+047A34 21 4F A0 04 0125*       ld hl,table_base
 047A38 22 E1 80 04 0126*       ld (table_pointer),hl
 047A3C             0127*   ; initialize sprites and active tiles table
 047A3C CD 3E 81 04 0128*       call sprites_init
@@ -12285,7 +12285,7 @@ PC     Output      Line
 047A7F             0148*   ; spawn player sprite at starting position
 047A7F CD 92 79 04 0149*       call player_init
 047A83             0150*   ; set the game state to playing
-047A83 21 55 86 04 0151*       ld hl,game_playing
+047A83 21 51 86 04 0151*       ld hl,game_playing
 047A87 22 00 84 04 0152*       ld (game_state), hl
 047A8B             0153*   ; set game playing substates
 047A8B 21 16 7A 04 0154*       ld hl,player_alive
@@ -12692,7 +12692,7 @@ PC     Output      Line
 047E00             0019*   ; TODO: requires sprite implementation
 047E00             0020*   player_input:
 047E00             0021*   ; point to player sprite record
-047E00 FD 21 2A A1 0022*       ld iy,player_begin
+047E00 FD 21 4F A1 0022*       ld iy,player_begin
        04          
 047E05 FD 22 E1 80 0023*       ld (table_pointer),iy
        04          
@@ -12769,7 +12769,7 @@ PC     Output      Line
 047E9B             0092*   ; a should land here loaded with the correct frame
 047E9B CD 63 1C 04 0093*       call vdu_sprite_select_frame
 047E9F             0094*   ; draw player at updated position
-047E9F FD 21 2A A1 0095*       ld iy,player_begin
+047E9F FD 21 4F A1 0095*       ld iy,player_begin
        04          
 047EA4 FD 22 E1 80 0096*       ld (table_pointer),iy
        04          
@@ -12857,7 +12857,7 @@ PC     Output      Line
 047F4C             0047*   
 047F4C             0048*   init_player_laser:
 047F4C             0049*   ; set pointer to laser sprite table
-047F4C FD 21 2A A0 0050*       ld iy,player_weapons_begin
+047F4C FD 21 4F A0 0050*       ld iy,player_weapons_begin
        04          
 047F51 FD 7E 00    0051*       ld a,(iy+sprite_id) ; sprite id
 047F54 1E 04       0052*       ld e,player_lasers_max ; sprite loop counter
@@ -12892,7 +12892,7 @@ PC     Output      Line
 047F87             0080*   
 047F87             0081*   player_move_weapons:
 047F87             0082*   ; initialize pointers and loop counter
-047F87 FD 21 2A A0 0083*       ld iy,player_weapons_begin ; set iy to first record in table
+047F87 FD 21 4F A0 0083*       ld iy,player_weapons_begin ; set iy to first record in table
        04          
 047F8C 06 04       0084*       ld b,player_lasers_max ; loop counter
 047F8E CD 10 82 04 0085*       call move_sprite_group
@@ -12917,10 +12917,10 @@ PC     Output      Line
 047FAE 2A 19 7F 04 0103*       ld hl,(tmr_laser_reset)
 047FB2 CD 16 15 04 0104*       call timestamp_tmr_set
 047FB6             0105*   ; fire the laser
-047FB6 DD 21 2A A0 0106*       ld ix,player_weapons_begin
+047FB6 DD 21 4F A0 0106*       ld ix,player_weapons_begin
        04          
 047FBB 06 04       0107*       ld b,player_lasers_max
-047FBD FD 21 2A A1 0108*       ld iy,player_begin
+047FBD FD 21 4F A1 0108*       ld iy,player_begin
        04          
 047FC2 FD 22 E1 80 0109*       ld (table_pointer),iy
        04          
@@ -12929,7 +12929,7 @@ PC     Output      Line
 047FCF D0          0112*       ret nc ; no carry means no free sprite slots, so we go home
 047FD0             0113*   ; other specific initialization
 047FD0             0114*   ; ------------------------------------------------
-047FD0 FD 21 2A A1 0115*       ld iy,player_begin
+047FD0 FD 21 4F A1 0115*       ld iy,player_begin
        04          
 047FD5             0116*   ; x-coordinate
 047FD5 FD 27 01    0117*       ld hl,(iy+sprite_x)
@@ -13129,7 +13129,7 @@ PC     Output      Line
 0480E1             0044*   ; table_total_bytes: equ table_end-table_start_variables
 0480E1             0045*   
 0480E1             0046*   ; pointer to top address of current record, initialized to table_base
-0480E1 2A A0 04    0047*   table_pointer: dl table_base
+0480E1 4F A0 04    0047*   table_pointer: dl table_base
 0480E4             0048*   
 0480E4             0049*   ; flag indicating collision with screen edge
 0480E4             0050*   ; uses orientation codes to specify which edge(s)
@@ -13174,11 +13174,11 @@ PC     Output      Line
 048106             0089*   table_init:
 048106             0090*   ; clear the sprite table
 048106 AF          0091*       xor a ; write zeroes to sprite table
-048107 21 2A A0 04 0092*       ld hl,table_base ; address to copy from
+048107 21 4F A0 04 0092*       ld hl,table_base ; address to copy from
 04810B 01 00 05 00 0093*       ld bc,table_end-table_base ; number of bytes to clear
 04810F CD E6 03 04 0094*       call clear_mem
 048113             0095*   ; write sprite ids
-048113 DD 21 2A A0 0096*       ld ix,table_base
+048113 DD 21 4F A0 0096*       ld ix,table_base
        04          
 048118 AF          0097*       xor a ; sprite id
 048119 0E 00       0098*       ld c,0 ; sprite type
@@ -13221,7 +13221,7 @@ PC     Output      Line
 048158 CD 34 1C 04 0135*   	call vdu_sprite_activate
 04815C             0136*   
 04815C             0137*   ; define player sprite
-04815C 3A 2A A1 04 0138*   	ld a,(player_begin+sprite_id)
+04815C 3A 4F A1 04 0138*   	ld a,(player_begin+sprite_id)
 048160 CD 00 1C 04 0139*   	call vdu_sprite_select
 048164 CD 13 1C 04 0140*   	call vdu_sprite_clear_frames
 048168 21 6F 01 00 0141*   	ld hl,BUF_SHIP_0L
@@ -13603,14 +13603,14 @@ PC     Output      Line
 048417             0024*   game_paused:
 048417             0025*       ; Pause menu logic
 048417 CD A8 84 04 0026*       call check_input_pause
-04841B C2 55 86 04 0027*       jp nz, game_playing ; Resume game
+04841B C2 51 86 04 0027*       jp nz, game_playing ; Resume game
 04841F CA 0E 84 04 0028*       jp z, game_main_menu ; Exit to main menu
 048423 C9          0029*       ret
 048424             0030*   
 048424             0031*   game_level_transition:
 048424             0032*       ; Handle level transitions
 048424 CD A9 84 04 0033*       call load_next_level
-048428 21 55 86 04 0034*       ld hl, game_playing
+048428 21 51 86 04 0034*       ld hl, game_playing
 04842C 22 00 84 04 0035*       ld (game_state), hl
 048430 C9          0036*       ret
 048431             0037*   
@@ -13652,19 +13652,19 @@ PC     Output      Line
 048481             0063*   game_cutscene:
 048481             0064*       ; Play a non-interactive cutscene
 048481 CD AD 84 04 0065*       call play_cutscene
-048485 C2 55 86 04 0066*       jp nz, game_playing ; Return to gameplay after cutscene
+048485 C2 51 86 04 0066*       jp nz, game_playing ; Return to gameplay after cutscene
 048489 C9          0067*       ret
 04848A             0068*   
 04848A             0069*   game_inventory:
 04848A             0070*       ; Open inventory or shop
 04848A CD AE 84 04 0071*       call display_inventory
-04848E C2 55 86 04 0072*       jp nz, game_playing ; Return to gameplay after inventory close
+04848E C2 51 86 04 0072*       jp nz, game_playing ; Return to gameplay after inventory close
 048492 C9          0073*       ret
 048493             0074*   
 048493             0075*   game_map:
 048493             0076*       ; Display map or quest
 048493 CD AF 84 04 0077*       call display_map
-048497 C2 55 86 04 0078*       jp nz, game_playing ; Return to gameplay after map close
+048497 C2 51 86 04 0078*       jp nz, game_playing ; Return to gameplay after map close
 04849B C9          0079*       ret
 04849C             0080*   
 04849C             0081*   game_exit:
@@ -13859,7 +13859,7 @@ PC     Output      Line
 0485FF CD F9 14 04 0120*       call timestamp_tick
 048603             0121*   ; reset the sprite table
 048603 CD 06 81 04 0122*       call table_init
-048607 21 2A A0 04 0123*       ld hl,table_base
+048607 21 4F A0 04 0123*       ld hl,table_base
 04860B 22 E1 80 04 0124*       ld (table_pointer),hl
 04860F             0125*   ; initialize sprites and active tiles table
 04860F CD 3E 81 04 0126*       call sprites_init
@@ -13876,53 +13876,53 @@ PC     Output      Line
 04862E 3E 03       0137*       ld a,3
 048630 32 37 79 04 0138*       ld (player_ships),a
 048634 CD 92 79 04 0139*       call player_init
-048638 CD 38 79 04 0140*       call draw_player_ships
-04863C             0141*   ; set the game state to playing
-04863C 21 55 86 04 0142*       ld hl,game_playing
-048640 22 00 84 04 0143*       ld (game_state), hl
-048644             0144*   ; set game playing substates
-048644 21 16 7A 04 0145*       ld hl,player_alive
-048648 22 34 79 04 0146*       ld (player_state), hl
-04864C 21 8A 23 04 0147*       ld hl,enemies_alive
-048650 22 7C 23 04 0148*       ld (enemies_state), hl
-048654             0149*   ; done initializing
-048654 C9          0150*       ret
-048655             0151*   ; end game_init
-048655             0068        include "state_game_playing.inc"
-048655             0001*   ; main game state
-048655             0002*   game_playing:
-048655             0003*   ; Main gameplay loop
-048655             0004*   
-048655             0005*   ; plot tiles
-048655 CD 12 8D 04 0006*       call tiles_plot
-048659             0007*   
-048659             0008*   ; set gfx viewport to playing field window
-048659 01 00 00 00 0009*       ld bc,field_left
-04865D 11 00 00 00 0010*       ld de,field_top
-048661 DD 21 FF 00 0011*       ld ix,field_right
+048638             0140*   ; set the game state to playing
+048638 21 51 86 04 0141*       ld hl,game_playing
+04863C 22 00 84 04 0142*       ld (game_state), hl
+048640             0143*   ; set game playing substates
+048640 21 16 7A 04 0144*       ld hl,player_alive
+048644 22 34 79 04 0145*       ld (player_state), hl
+048648 21 8A 23 04 0146*       ld hl,enemies_alive
+04864C 22 7C 23 04 0147*       ld (enemies_state), hl
+048650             0148*   ; done initializing
+048650 C9          0149*       ret
+048651             0150*   ; end game_init
+048651             0068        include "state_game_playing.inc"
+048651             0001*   ; main game state
+048651             0002*   game_playing:
+048651             0003*   ; Main gameplay loop
+048651             0004*   
+048651             0005*   ; plot tiles
+048651 CD 12 8D 04 0006*       call tiles_plot
+048655             0007*   
+048655             0008*   ; set gfx viewport to playing field window
+048655 01 00 00 00 0009*       ld bc,field_left
+048659 11 00 00 00 0010*       ld de,field_top
+04865D DD 21 FF 00 0011*       ld ix,field_right
        00          
-048666 FD 21 7F 01 0012*       ld iy,field_bottom
+048662 FD 21 7F 01 0012*       ld iy,field_bottom
        00          
-04866B CD EB 16 04 0013*       call vdu_set_gfx_viewport
-04866F             0014*   
-04866F             0015*   ; process movement and collisions
-04866F CD 87 79 04 0016*       call do_player
-048673 CD 7F 23 04 0017*       call do_enemies
-048677 CD 7A 26 04 0018*       call move_explosions
-04867B CD 94 8E 04 0019*       call move_tiles
-04867F             0020*   
-04867F             0021*   ; update UI
-04867F 01 00 00 00 0022*       ld bc,0
-048683 11 00 00 00 0023*       ld de,0
-048687 CD D0 16 04 0024*       call vdu_set_gfx_origin
-04868B CD 69 80 04 0025*       call print_score
-04868F CD C9 80 04 0026*       call draw_shields
-048693 CD 33 80 04 0027*       call draw_laser
-048697 CD 01 7D 04 0028*       call draw_fuel
-04869B C9          0029*       ret
-04869C             0030*   
-04869C             0069        include "targeting.inc"
-04869C FF FF FF FF 0001*       align 256
+048667 CD EB 16 04 0013*       call vdu_set_gfx_viewport
+04866B             0014*   
+04866B             0015*   ; process movement and collisions
+04866B CD 87 79 04 0016*       call do_player
+04866F CD 7F 23 04 0017*       call do_enemies
+048673 CD 7A 26 04 0018*       call move_explosions
+048677 CD 94 8E 04 0019*       call move_tiles
+04867B             0020*   
+04867B             0021*   ; update UI
+04867B 01 00 00 00 0022*       ld bc,0
+04867F 11 00 00 00 0023*       ld de,0
+048683 CD D0 16 04 0024*       call vdu_set_gfx_origin
+048687 CD 69 80 04 0025*       call print_score
+04868B CD C9 80 04 0026*       call draw_shields
+04868F CD 33 80 04 0027*       call draw_laser
+048693 CD 01 7D 04 0028*       call draw_fuel
+048697 C9          0029*       ret
+048698             0030*   
+048698             0069        include "targeting.inc"
+048698 FF FF FF FF 0001*       align 256
+       FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -13956,7 +13956,7 @@ PC     Output      Line
 048700             0008*   ; inputs: iy pointed at sprite record
 048700             0009*   ; destroys: everything except iy (sprite record pointer)
 048700             0010*   orientation_to_player:
-048700 DD 21 2A A1 0011*       ld ix,player_begin
+048700 DD 21 4F A1 0011*       ld ix,player_begin
        04          
 048705             0012*   ; compute dx
 048705 DD 27 01    0013*       ld hl,(ix+sprite_x)
@@ -13992,7 +13992,7 @@ PC     Output      Line
 04872B             0043*   ; inputs: iy pointed at tile record
 04872B             0044*   ; destroys: everything except iy (tile record pointer)
 04872B             0045*   tile_orientation_to_player:
-04872B DD 21 2A A1 0046*       ld ix,player_begin
+04872B DD 21 4F A1 0046*       ld ix,player_begin
        04          
 048730             0047*   ; compute dx
 048730 DD 27 01    0048*       ld hl,(ix+sprite_x)
@@ -14035,7 +14035,7 @@ PC     Output      Line
 048770             0085*   ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
 048770             0086*   ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
 048770             0087*   targeting_computer:
-048770 DD 21 2A A1 0088*       ld ix,player_begin
+048770 DD 21 4F A1 0088*       ld ix,player_begin
        04          
 048775             0089*   ; ; compute target velocity from x,y component velocities
 048775             0090*   ;     ld bc,(ix+sprite_xvel)
@@ -14407,7 +14407,7 @@ PC     Output      Line
 048B00 00 00 00    0034*       dl 0 ; list terminator
 048B03             0035*   tile_stack_end:
 048B03 00 88 04    0036*   tile_stack_pointer: dl tile_stack ; pointer to current stack record, initialized to tile_stack
-048B06 2A A5 04    0037*   tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
+048B06 4F A5 04    0037*   tile_table_pointer: dl tile_table_base ; pointer to top address of current record, initialized to tile_table_base
 048B09 00 00 00    0038*   num_active_tiles: dl 0 ; how many active tiles
 048B0C 00          0039*   next_tile_id: db 0 ; next available tile id
 048B0D 00 00 00    0040*   new_tile_table_pointer: dl 0 ; pointer to new tile record
@@ -14426,11 +14426,11 @@ PC     Output      Line
 048B26 CD E6 03 04 0053*       call clear_mem
 048B2A             0054*   ; clear the tile table
 048B2A AF          0055*       xor a ; write zeroes to tile table
-048B2B 21 2A A5 04 0056*       ld hl,tile_table_base ; address to copy from
+048B2B 21 4F A5 04 0056*       ld hl,tile_table_base ; address to copy from
 048B2F 01 00 40 00 0057*       ld bc,tile_table_end-tile_table_base ; number of bytes to clear
 048B33 CD E6 03 04 0058*       call clear_mem
 048B37             0059*   ; write tile ids
-048B37 DD 21 2A A5 0060*       ld ix,tile_table_base
+048B37 DD 21 4F A5 0060*       ld ix,tile_table_base
        04          
 048B3C AF          0061*       xor a ; tile id
 048B3D 06 00       0062*       ld b,0 ; loop counter
@@ -14443,7 +14443,7 @@ PC     Output      Line
 048B48 21 0C 8B 04 0069*       ld hl,next_tile_id
 048B4C 3E FF       0070*       ld a,255 ; will wrap around to 0 on first call to create active tile
 048B4E 77          0071*       ld (hl),a
-048B4F 21 2A A5 04 0072*       ld hl,tile_table_base
+048B4F 21 4F A5 04 0072*       ld hl,tile_table_base
 048B53 22 06 8B 04 0073*       ld (tile_table_pointer),hl
 048B57 21 00 88 04 0074*       ld hl,tile_stack
 048B5B 22 03 8B 04 0075*       ld (tile_stack_pointer),hl
@@ -14471,7 +14471,7 @@ PC     Output      Line
 048B72 56          0097*       ld d,(hl) ; index into tile table
 048B73 1E 40       0098*       ld e,tile_table_record_size
 048B75 ED 5C       0099*       mlt de ; de is now the offset to the table entry
-048B77 DD 21 2A A5 0100*       ld ix,tile_table_base ; point to base address of tile table
+048B77 DD 21 4F A5 0100*       ld ix,tile_table_base ; point to base address of tile table
        04          
 048B7C DD 19       0101*       add ix,de ; ix is now the address of the table entry
 048B7E             0102*   ; add tile pointer to tile stack
@@ -16335,7 +16335,7 @@ PC     Output      Line
 04995F             0561*       ; PUSH_ALL
 04995F 01 00 00 00 0562*       ld bc,0
 049963 4F          0563*       ld c,a
-049964 DD 21 2A A0 0564*       ld ix,table_base
+049964 DD 21 4F A0 0564*       ld ix,table_base
        04          
 049969 DD 09       0565*       add ix,bc
 04996B 06 14       0566*       ld b,table_num_records
@@ -16941,7 +16941,7 @@ PC     Output      Line
 049EE5 C9          0989*       ret
 049EE6             0990*   
 049EE6             0991*   dump_player_record:
-049EE6 DD 21 2A A1 0992*       ld ix,player_begin
+049EE6 DD 21 4F A1 0992*       ld ix,player_begin
        04          
 049EEB             0993*   
 049EEB CD 00 01 04 0994*       call printInline
@@ -17106,42 +17106,56 @@ PC     Output      Line
 04A00C CD 03 84 04 0091        call do_game
 04A010             0092    ; wait for the next vblank mitigate flicker and for loop timing
 04A010 CD BF 16 04 0093        call vdu_vblank
-04A014             0094    ; poll keyboard for escape keypress
-04A014 3E 08       0095        ld a, $08 ; code to send to MOS
-04A016 5B CF       0096        rst.lil $08 ; get IX pointer to System Variables
-04A018 DD 7E 05    0097        ld a, (ix + $05) ; get ASCII code of key pressed
-04A01B FE 1B       0098        cp 27 ; check if 27 (ascii code for ESC)
-04A01D CA 25 A0 04 0099        jp z, main_end ; if pressed, jump to exit
-04A021             0100    ; escape not pressed so loop
-04A021 C3 08 A0 04 0101        jp main_loop
-04A025             0102    
-04A025             0103    main_end:
-04A025 CD 05 16 04 0104        call vdu_cursor_on
-04A029 C9          0105        ret
-04A02A             0106    ; end main
-04A02A             0107    
-04A02A             0108        include "tables.inc"
-04A02A             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
-04A02A             0002*   table_base: equ $
-04A02A             0003*   player_weapons_begin: equ table_base
-04A02A             0004*   player_lasers_begin: equ player_weapons_begin
-04A02A             0005*   player_lasers_end: equ table_record_size*player_lasers_max+player_lasers_begin
-04A02A             0006*   player_weapons_end: equ table_record_size*player_lasers_max+player_weapons_begin
-04A02A             0007*   player_begin: equ player_weapons_end
-04A02A             0008*   player_end: equ table_record_size+player_begin
-04A02A             0009*   enemy_sprites_begin: equ player_end
-04A02A             0010*   seekers_base: equ enemy_sprites_begin
-04A02A             0011*   seekers_end: equ table_record_size*seekers_max+seekers_base
-04A02A             0012*   fireballs_base: equ seekers_end
-04A02A             0013*   fireballs_end: equ table_record_size*fireballs_max+fireballs_base
-04A02A             0014*   enemy_sprites_end: equ fireballs_end
-04A02A             0015*   explosions_base: equ enemy_sprites_end
-04A02A             0016*   explosions_end: equ table_record_size*explosions_max+explosions_base
-04A02A             0017*   table_end: equ explosions_end
-04A02A             0018*   
-04A02A             0019*   table_num_records: equ table_end-table_base/table_record_size
-04A02A             0020*   table_num_enemy_records: equ enemy_sprites_end-enemy_sprites_begin/table_record_size
-04A02A             0021*   
-04A02A             0022*   ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
-04A02A             0023*   tile_table_base: equ table_end
-04A02A             0024*   tile_table_end: equ 256*tile_table_record_size+tile_table_base
+04A014             0094    
+04A014             0095    ; test plot a bitmap
+04A014 21 00 01 00 0096        ld hl,BUF_CRATER
+04A018 CD 38 17 04 0097        call vdu_buff_select
+04A01C 01 00 00 00 0098        ld bc,0
+04A020 11 00 00 00 0099        ld de,0
+04A024 CD 20 1B 04 0100        call vdu_plot_bmp
+04A028             0101    
+04A028             0102    ; test clear a viewport
+04A028 01 00 00 00 0103        ld bc,0
+04A02C 11 00 00 00 0104        ld de,0
+04A030 DD 21 7F 00 0105        ld ix,127
+       00          
+04A035 FD 21 7F 00 0106        ld iy,127
+       00          
+04A03A CD EB 16 04 0107        call vdu_set_gfx_viewport
+04A03E CD 5E 16 04 0108        call vdu_clg
+04A042             0109    
+04A042             0110    ; test player ships
+04A042 CD 38 79 04 0111        call draw_player_ships
+04A046             0112    
+04A046 CD E1 03 04 0113        call waitKeypress
+04A04A             0114    
+04A04A             0115    main_end:
+04A04A CD 05 16 04 0116        call vdu_cursor_on
+04A04E C9          0117        ret
+04A04F             0118    ; end main
+04A04F             0119    
+04A04F             0120        include "tables.inc"
+04A04F             0001*   ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
+04A04F             0002*   table_base: equ $
+04A04F             0003*   player_weapons_begin: equ table_base
+04A04F             0004*   player_lasers_begin: equ player_weapons_begin
+04A04F             0005*   player_lasers_end: equ table_record_size*player_lasers_max+player_lasers_begin
+04A04F             0006*   player_weapons_end: equ table_record_size*player_lasers_max+player_weapons_begin
+04A04F             0007*   player_begin: equ player_weapons_end
+04A04F             0008*   player_end: equ table_record_size+player_begin
+04A04F             0009*   enemy_sprites_begin: equ player_end
+04A04F             0010*   seekers_base: equ enemy_sprites_begin
+04A04F             0011*   seekers_end: equ table_record_size*seekers_max+seekers_base
+04A04F             0012*   fireballs_base: equ seekers_end
+04A04F             0013*   fireballs_end: equ table_record_size*fireballs_max+fireballs_base
+04A04F             0014*   enemy_sprites_end: equ fireballs_end
+04A04F             0015*   explosions_base: equ enemy_sprites_end
+04A04F             0016*   explosions_end: equ table_record_size*explosions_max+explosions_base
+04A04F             0017*   table_end: equ explosions_end
+04A04F             0018*   
+04A04F             0019*   table_num_records: equ table_end-table_base/table_record_size
+04A04F             0020*   table_num_enemy_records: equ enemy_sprites_end-enemy_sprites_begin/table_record_size
+04A04F             0021*   
+04A04F             0022*   ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
+04A04F             0023*   tile_table_base: equ table_end
+04A04F             0024*   tile_table_end: equ 256*tile_table_record_size+tile_table_base
