@@ -132,7 +132,7 @@ do_active_tiles:
 bg_y_plot: dl -1
 bg_bufferId: dl BUF_BG_STARS_0 ; default bufferId for background tiles
 
-bg_plot: ; TODO: implement this
+bg_plot:
 ; load current bg tile bufferId as default
     ld hl,(bg_bufferId)
 ; check whether it is time for a new background tile

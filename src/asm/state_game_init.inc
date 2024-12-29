@@ -2,6 +2,7 @@ hello_world: asciz "Welcome to Purple Nurples!"
 loading_time: asciz "Loading time:"
 loading_complete: asciz "Press any key to continue."
 game_assets_loaded: db 0 ; non-zero when assets are loaded
+
 game_init:
 ; check whether assets are loaded
     ld a,(game_assets_loaded)
@@ -121,7 +122,6 @@ game_init:
     call table_init
     ld hl,table_base
     ld (table_pointer),hl
-    ld (player_score_last),hl ; anything but zero so print_score will update
 ; initialize sprites and active tiles table
     call sprites_init
     call table_init
@@ -130,6 +130,12 @@ game_init:
     ld a,tiles_dg
     call init_tileset
 ; initialize player
+    ld hl,0
+    ld (player_score),hl
+    dec hl ; anything but zero so print_score will update
+    ld (player_score_last),hl
+    ld a,3
+    ld (player_ships),a
     call player_init
 ; set the game state to playing
     ld hl,game_playing

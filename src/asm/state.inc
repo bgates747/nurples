@@ -36,9 +36,11 @@ game_level_transition:
     ret
 
 game_over:
-    ; Display game over screen
-    call display_game_over
-    jp nz, game_main_menu ; Return to main menu on input
+    call vdu_home_cursor
+    call printInline
+    asciz "Game Over!\r\nPress any key to continue..."
+    ld hl,game_init
+    ld (game_state),hl
     ret
 
 game_victory:

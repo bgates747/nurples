@@ -69,6 +69,10 @@ get_level_ptr:
 ; advance to the next level in the current tileset
 ; inputs: tileset_ptr_idx, cur_level
 next_level:
+; update starting score
+    ld hl,(player_score)
+    ld (player_starting_score),hl
+; set up pointers to next map definition
     ld hl,cur_level
     inc (hl) ; bump to next level
     call get_level_ptr ; ix points to current level lookup record
@@ -83,6 +87,7 @@ next_level:
 
 ; inputs: ix pointed to tileset level definition
 init_level:
+; set pointers
     call get_level_ptr ; ix points to level lookup record
     ld ix,(ix) ; ix points to level definition
 ; set tiles_cols
@@ -107,22 +112,16 @@ level_y: equ 0
     asciz "Level: "
     ld a,(cur_level)
     call printHexA
-    ; call printNewLine
-    ; ld hl,(cur_baseBufferId)
-    ; call printDec
-
 ; draw initial background tiles 
     ld hl,BUF_BG_STARS_0
     call vdu_buff_select
     ld bc,0
     ld de,field_top
     call vdu_plot_bmp
-
     ld hl,BUF_BG_STARS_4
     call vdu_buff_select
     ld bc,0
     ld de,field_top+256
     call vdu_plot_bmp
-
     ret
 ; end init_level
