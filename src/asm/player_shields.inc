@@ -1,9 +1,8 @@
 
-player_shields: db 64 ; integer
-; max player shields,binary
-; can increase with power-ups (todo)
-player_shields_max: db 64 ; integer
-player_shields_last: db 0 ; integer
+player_shields: db 64
+; player_shields_max: db 64
+player_shields_max: db 8 ; DEBUG
+player_shields_last: db 0
 bar_shields:
     dl 0 ; value
     dl 496 ; x0

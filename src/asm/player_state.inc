@@ -16,7 +16,8 @@ player_defaults:
     db 0                    ; frame
 
 player_state:  dl player_alive
-player_ships: db 3 ; integer
+player_ships: db 0
+player_ships_max: db 3
 player_speed: equ 3*256 ; pixels per frame 16.8 fixed
 
 draw_player_ships:

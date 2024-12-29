@@ -5,7 +5,11 @@ game_assets_loaded: db 0 ; non-zero when assets are loaded
 original_screen_mode: db 0
 
 game_init:
-    ; get current screen mode and save it so we can return to it on exit
+; check whether assets are loaded
+    ld a,(game_assets_loaded)
+    or a
+    jp nz,@assets_loaded
+; get current screen mode and save it so we can return to it on exit
     call vdu_get_screen_mode
     ld (original_screen_mode),a
 ; print ascii art splash screen
@@ -14,10 +18,6 @@ game_init:
     asciz "Welcome to\r\n"
     ld hl,purple_nurples_ascii
     call printString
-; check whether assets are loaded
-    ld a,(game_assets_loaded)
-    or a
-    jp nz,@assets_loaded
     call printInline
     asciz "Loading UI...\r\n"
 ; clear all buffers
@@ -32,7 +32,6 @@ game_init:
     call load_ui_images
 ; set up the display
     ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-    ; ld a,20 ;  512   384   64    60hz single-buffered
     call vdu_set_screen_mode
     xor a
     call vdu_set_scaling
@@ -80,7 +79,6 @@ game_init:
     asciz "Press any key to continue."
     call vdu_flip 
     call waitKeypress
-@assets_loaded:
 ; set up display for gameplay
     ld a,20
     call vdu_set_screen_mode
@@ -104,6 +102,7 @@ game_init:
     call vdu_plot_bmp
 ; draw player cockpit
     call draw_player_cockpit
+@assets_loaded:
 ; set gfx origin and viewport to playing field window
     ld bc,origin_left
     ld de,origin_top
@@ -141,7 +140,7 @@ game_init:
     ld (player_score),hl
     dec hl ; anything but zero so print_score will update
     ld (player_score_last),hl
-    ld a,3
+    ld a,(player_ships_max)
     ld (player_ships),a
     call player_init
     call draw_player_ships
