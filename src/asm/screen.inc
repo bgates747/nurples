@@ -1,7 +1,7 @@
 
 screen_right: equ 511
 screen_bottom: equ 383
-origin_top: equ 64
+origin_top: equ 48
 origin_left: equ 128
 field_top: equ 0
 field_bottom: equ screen_bottom-origin_top

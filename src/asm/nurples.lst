@@ -4651,7 +4651,7 @@ PC     Output      Line
 04183D             0179*   vdu_sprite_move_abs168:
 04183D             0180*   ; offset inputs by the gfx origin
 04183D             0181*   ; y coordinate
-04183D 21 00 40 00 0182*       ld hl,origin_top*256
+04183D 21 00 30 00 0182*       ld hl,origin_top*256
 041841 19          0183*       add hl,de
 041842 22 64 18 04 0184*       ld (@ypos-1),hl
 041846             0185*   ; x coordinate
@@ -11812,7 +11812,7 @@ PC     Output      Line
        04          
 0473AE 21 13 73 04 0080*       ld hl,player_defaults
 0473B2 01 00 00 00 0081*       ld bc,0*256
-0473B6 11 00 30 01 0082*       ld de,sprite_bottom*256
+0473B6 11 00 40 01 0082*       ld de,sprite_bottom*256
 0473BA 3E 01       0083*       ld a,1
 0473BC CD 74 7A 04 0084*       call spawn_sprite_from_coords
 0473C0 D2 EB 73 04 0085*       jp nc,@draw
@@ -11829,7 +11829,7 @@ PC     Output      Line
 0473E7 CD C6 18 04 0096*       call vdu_sprite_add_buff
 0473EB             0097*   @draw:
 0473EB 01 00 00 00 0098*       ld bc,0*256
-0473EF 11 00 30 01 0099*       ld de,sprite_bottom*256
+0473EF 11 00 40 01 0099*       ld de,sprite_bottom*256
 0473F3 CD 3D 18 04 0100*       call vdu_sprite_move_abs168
 0473F7 CD E7 17 04 0101*       call vdu_sprite_show
 0473FB 21 08 74 04 0102*       ld hl,player_alive
@@ -11865,13 +11865,13 @@ PC     Output      Line
 04743E 22 25 79 04 0132*       ld (player_score),hl
 047442             0133*   ; set gfx origin and viewport to playing field window
 047442 01 80 00 00 0134*       ld bc,origin_left
-047446 11 40 00 00 0135*       ld de,origin_top
+047446 11 30 00 00 0135*       ld de,origin_top
 04744A CD 0C 13 04 0136*       call vdu_set_gfx_origin
 04744E 01 00 00 00 0137*       ld bc,field_left
 047452 11 00 00 00 0138*       ld de,field_top
 047456 DD 21 FF 00 0139*       ld ix,field_right
        00          
-04745B FD 21 3F 01 0140*       ld iy,field_bottom
+04745B FD 21 4F 01 0140*       ld iy,field_bottom
        00          
 047460 CD 27 13 04 0141*       call vdu_set_gfx_viewport
 047464 CD 9A 12 04 0142*       call vdu_clg
@@ -12612,7 +12612,7 @@ PC     Output      Line
 0479B7             0001*   
 0479B7             0002*   screen_right: equ 511
 0479B7             0003*   screen_bottom: equ 383
-0479B7             0004*   origin_top: equ 64
+0479B7             0004*   origin_top: equ 48
 0479B7             0005*   origin_left: equ 128
 0479B7             0006*   field_top: equ 0
 0479B7             0007*   field_bottom: equ screen_bottom-origin_top
@@ -12948,7 +12948,7 @@ PC     Output      Line
 047B89 ED 5A       0313*       adc hl,de
 047B8B FA B5 7B 04 0314*       jp m,@top
 047B8F ED 52       0315*       sbc hl,de ; hl back to original value
-047B91 11 00 D0 FE 0316*       ld de,-sprite_bottom*256
+047B91 11 00 C0 FE 0316*       ld de,-sprite_bottom*256
 047B95 ED 5A       0317*       adc hl,de
 047B97 F2 BF 7B 04 0318*       jp p,@bottom
 047B9B             0319*   @xaxis:
@@ -12968,7 +12968,7 @@ PC     Output      Line
 047BBB C3 C5 7B 04 0333*       jp @collide_y
 047BBF             0334*   @bottom:
 047BBF 3E 04       0335*       ld a,collide_bottom
-047BC1 21 00 30 01 0336*       ld hl,sprite_bottom*256
+047BC1 21 00 40 01 0336*       ld hl,sprite_bottom*256
 047BC5             0337*   @collide_y:
 047BC5 32 BA 79 04 0338*       ld (sprite_screen_edge),a
 047BC9 FD 2F 04    0339*       ld (iy+sprite_y),hl
@@ -13327,13 +13327,13 @@ PC     Output      Line
 047E22 CD E1 74 04 0099*       call draw_player_cockpit
 047E26             0100*   ; set gfx origin and viewport to playing field window
 047E26 01 80 00 00 0101*       ld bc,origin_left
-047E2A 11 40 00 00 0102*       ld de,origin_top
+047E2A 11 30 00 00 0102*       ld de,origin_top
 047E2E CD 0C 13 04 0103*       call vdu_set_gfx_origin
 047E32 01 00 00 00 0104*       ld bc,field_left
 047E36 11 00 00 00 0105*       ld de,field_top
 047E3A DD 21 FF 00 0106*       ld ix,field_right
        00          
-047E3F FD 21 3F 01 0107*       ld iy,field_bottom
+047E3F FD 21 4F 01 0107*       ld iy,field_bottom
        00          
 047E44 CD 27 13 04 0108*       call vdu_set_gfx_viewport
 047E48             0109*   ; set background color
@@ -13392,7 +13392,7 @@ PC     Output      Line
 047EBC 11 00 00 00 0010*       ld de,field_top
 047EC0 DD 21 FF 00 0011*       ld ix,field_right
        00          
-047EC5 FD 21 3F 01 0012*       ld iy,field_bottom
+047EC5 FD 21 4F 01 0012*       ld iy,field_bottom
        00          
 047ECA CD 27 13 04 0013*       call vdu_set_gfx_viewport
 047ECE             0014*   
@@ -14112,14 +14112,14 @@ PC     Output      Line
 048471             0012*   tiles_plot:
 048471             0013*   ; set gfx origin to playing field window
 048471 01 80 00 00 0014*       ld bc,origin_left
-048475 11 40 00 00 0015*       ld de,origin_top
+048475 11 30 00 00 0015*       ld de,origin_top
 048479 CD 0C 13 04 0016*       call vdu_set_gfx_origin
 04847D             0017*   ; set gfx viewport to playing field window
 04847D 01 00 00 00 0018*       ld bc,field_left
 048481 11 00 00 00 0019*       ld de,field_top
 048485 DD 21 FF 00 0020*       ld ix,field_right
        00          
-04848A FD 21 3F 01 0021*       ld iy,field_bottom
+04848A FD 21 4F 01 0021*       ld iy,field_bottom
        00          
 04848F CD 27 13 04 0022*       call vdu_set_gfx_viewport
 048493             0023*   ; move the background down one pixel
