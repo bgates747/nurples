@@ -251,6 +251,16 @@ vdu_set_screen_mode:
 @arg: db 0  ; screen mode parameter
 @end:
 
+; get the current screen mode
+; inputs: none
+; outputs: a=screen mode
+; destroys: af, ix
+vdu_get_screen_mode:
+    MOSCALL mos_sysvars
+    ld a,(IX+sysvar_scrMode)
+    ret
+; end vdu_get_screen_mode
+
 ; VDU 23, 0, &C0, n: Turn logical screen scaling on and off *
 ; inputs: a is scaling mode, 1=on, 0=off
 ; note: default setting on boot is scaling ON

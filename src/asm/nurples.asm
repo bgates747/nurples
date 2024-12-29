@@ -80,6 +80,8 @@ exit:
 
 ; --- MAIN PROGRAM FILE ---
 main:
+    ; jp main_end ; DEBUG
+
 ; start a new game
     ld hl,game_init
     ld (game_state),hl
@@ -100,8 +102,16 @@ main_loop:
     jp main_loop
 
 main_end:
-    call vdu_cursor_on
+; restore original screen mode
+    ld a,(original_screen_mode)
+    call vdu_set_screen_mode
+; print thanks for playing message
+    call printInline
+    asciz "Thank you for playing\r\n"
+    ld hl,purple_nurples_ascii
+    call printString
     ret
 ; end main
 
+; needs to be the final include to leave room for the sprite and tile tables
     include "tables.inc"

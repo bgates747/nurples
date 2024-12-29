@@ -1,13 +1,25 @@
-hello_world: asciz "Welcome to Purple Nurples!"
-loading_time: asciz "Loading time:"
+; hello_world: asciz "Welcome to Purple Nurples!"
+; loading_time: asciz "Loading time:"
 loading_complete: asciz "Press any key to continue."
 game_assets_loaded: db 0 ; non-zero when assets are loaded
+original_screen_mode: db 0
 
 game_init:
+    ; get current screen mode and save it so we can return to it on exit
+    call vdu_get_screen_mode
+    ld (original_screen_mode),a
+; print ascii art splash screen
+    call vdu_cls
+    call printInline
+    asciz "Welcome to\r\n"
+    ld hl,purple_nurples_ascii
+    call printString
 ; check whether assets are loaded
     ld a,(game_assets_loaded)
     or a
     jp nz,@assets_loaded
+    call printInline
+    asciz "Loading UI...\r\n"
 ; clear all buffers
     call vdu_clear_all_buffers
 ; load fonts
@@ -16,11 +28,6 @@ game_init:
     ld hl,computer_pixel_7_8x16
     ld a,1 ; flags
     call vdu_font_select
-; print loading ui message
-    call vdu_cls
-    ld hl,loading_ui
-    call printString
-    call vdu_flip
 ; load UI images
     call load_ui_images
 ; set up the display
@@ -69,8 +76,8 @@ game_init:
     ld a,1
     ld (game_assets_loaded),a
     call vdu_cls
-    ld hl,loading_complete
-    call printString
+    call printInline
+    asciz "Press any key to continue."
     call vdu_flip 
     call waitKeypress
 @assets_loaded:
