@@ -131,17 +131,40 @@ player_dying:
 ; reset player score to what it was at the start of the level
     ld hl,(player_starting_score)
     ld (player_score),hl
+
 ; set gfx origin and viewport to playing field window
-    ld bc,origin_left
-    ld de,origin_top
-    call vdu_set_gfx_origin
-    ld bc,field_left
-    ld de,field_top
-    ld ix,field_right
-    ld iy,field_bottom
-    call vdu_set_gfx_viewport
+    call set_gfx_playing_field
     call vdu_clg
+
+; print get ready message
+    ld c,27 ; x
+    ld b,16 ; y
+    call vdu_move_cursor
+    call printInline
+    asciz "Get Ready!"
+
+; countdown to restart
+    ld c,23 ; x
+    ld b,17 ; y
+    call vdu_move_cursor
+    call printInline
+    asciz "Restarting In..."
+    ld b,6 ; loop counter
+@waitLoop:
+    push bc
+    ld a,b
+    dec a
+    call printHexA
+    ld c,39 ; x
+    ld b,17 ; y
+    call vdu_move_cursor
+    ld a,%10000000 ; bit 7 changes once per second
+    call multiPurposeDelay
+    pop bc
+    djnz @waitLoop
+
 ; restart the level
+    call vdu_clg
     ld hl,cur_level
     dec (hl) ; decrement level so it will be incremented back to the same level
     call next_level
@@ -162,6 +185,8 @@ player_dying:
     ld (enemies_state),hl
     ret
 ; end player_dying
+
+get_ready: asciz "Get Ready!"
 
 player_dead:
     call player_move_weapons

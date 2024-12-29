@@ -83,6 +83,9 @@ next_level:
 @@: ; fall through to init_level
 ; end next_level
 
+; print_level:
+level_x: equ 48
+level_y: equ 0
 ; inputs: ix pointed to tileset level definition
 init_level:
 ; set pointers
@@ -108,9 +111,7 @@ init_level:
     ld (tiles_x_plot),hl
     ld hl,-15
     ld (tiles_y_plot),hl
-; print_level:
-level_x: equ 48
-level_y: equ 0
+; print level
     ld c,level_x
     ld b,level_y
     call vdu_move_cursor
@@ -118,6 +119,8 @@ level_y: equ 0
     asciz "Level: "
     ld a,(cur_level)
     call printHexA
+    ; fall through to init_bg
+init_bg:
 ; draw initial background tiles 
     ld hl,BUF_BG_STARS_0
     call vdu_buff_select

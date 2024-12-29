@@ -6,11 +6,7 @@ game_playing:
     call tiles_plot
 
 ; set gfx viewport to playing field window
-    ld bc,field_left
-    ld de,field_top
-    ld ix,field_right
-    ld iy,field_bottom
-    call vdu_set_gfx_viewport
+    call set_gfx_playing_field
 
 ; process movement and collisions
     call do_player

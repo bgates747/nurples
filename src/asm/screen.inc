@@ -12,3 +12,16 @@ sprite_bottom: equ field_bottom-15
 sprite_left: equ field_left
 sprite_right: equ field_right-15
 tile_bottom: equ screen_bottom+1
+
+; set gfx origin and viewport to playing field window
+set_gfx_playing_field:
+    ld bc,origin_left
+    ld de,origin_top
+    call vdu_set_gfx_origin
+    ld bc,field_left
+    ld de,field_top
+    ld ix,field_right
+    ld iy,field_bottom
+    call vdu_set_gfx_viewport
+    ret
+; end set_gfx_playing_field

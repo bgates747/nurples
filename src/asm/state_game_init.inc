@@ -104,14 +104,7 @@ game_init:
     call draw_player_cockpit
 @assets_loaded:
 ; set gfx origin and viewport to playing field window
-    ld bc,origin_left
-    ld de,origin_top
-    call vdu_set_gfx_origin
-    ld bc,field_left
-    ld de,field_top
-    ld ix,field_right
-    ld iy,field_bottom
-    call vdu_set_gfx_viewport
+    call set_gfx_playing_field
 ; set background color
     ld a,26+128 ; violet
     call vdu_gcol

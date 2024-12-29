@@ -480,207 +480,206 @@ PC     Output      Line
 040083             0043*   ; print a zero-terminated string at a graphics coordinate
 040083             0044*   ; Inputs: HL Pointer to string, BC,DE x,y position (in pixels)
 040083             0045*   printStringGfx:
-040083             0046*   @printStringGfx:
-040083 E5          0047*       push hl ; preserve string pointer
-040084             0048*   ; move graphics cursor to x,y location
-040084 3E 44       0049*       ld a,plot_pt+mv_abs
-040086 CD DF 16 04 0050*       call vdu_plot
-04008A             0051*   ; print string
-04008A E1          0052*       pop hl ; restore string pointer
-04008B             0053*   @print_loop:
-04008B 7E          0054*       ld a,(hl)
-04008C B7          0055*       or a ; check for end of string
-04008D C8          0056*       ret z ; if zero, we're done
-04008E 08          0057*       ex af,af' ; preserve character
-04008F 3E 05       0058*       ld a,5 ; VDU 5 char to gfx cursor
-040091 5B D7       0059*       rst.lil 10h ; send it
-040093 08          0060*       ex af,af' ; restore character
-040094 5B D7       0061*       rst.lil 10h ; print character
-040096 23          0062*       inc hl
-040097 C3 8B 00 04 0063*       jp @print_loop
-04009B C9          0064*       ret
-04009C             0065*   ; end printStringGfx
-04009C             0066*   
-04009C             0067*   ; Print a 24-bit HEX number
-04009C             0068*   ; HLU: Number to print
-04009C             0069*   printHex24:
-04009C             0070*       HLU_TO_A
+040083 E5          0046*       push hl ; preserve string pointer
+040084             0047*   ; move graphics cursor to x,y location
+040084 3E 44       0048*       ld a,plot_pt+mv_abs
+040086 CD DF 16 04 0049*       call vdu_plot
+04008A             0050*   ; print string
+04008A E1          0051*       pop hl ; restore string pointer
+04008B             0052*   @print_loop:
+04008B 7E          0053*       ld a,(hl)
+04008C B7          0054*       or a ; check for end of string
+04008D C8          0055*       ret z ; if zero, we're done
+04008E 08          0056*       ex af,af' ; preserve character
+04008F 3E 05       0057*       ld a,5 ; VDU 5 char to gfx cursor
+040091 5B D7       0058*       rst.lil 10h ; send it
+040093 08          0059*       ex af,af' ; restore character
+040094 5B D7       0060*       rst.lil 10h ; print character
+040096 23          0061*       inc hl
+040097 C3 8B 00 04 0062*       jp @print_loop
+04009B C9          0063*       ret
+04009C             0064*   ; end printStringGfx
+04009C             0065*   
+04009C             0066*   ; Print a 24-bit HEX number
+04009C             0067*   ; HLU: Number to print
+04009C             0068*   printHex24:
+04009C             0069*       HLU_TO_A
 04009C 3B          0001*M1     dec sp ; 1 cycle
 04009D E5          0002*M1     push hl ; 4 cycles
 04009E 33          0003*M1     inc sp ; 1 cycle
 04009F F1          0004*M1     pop af ; 4 cycles
 0400A0             0005*M1     ; 10 cycles total
-0400A0 CD AA 00 04 0071*       CALL printHex8
-0400A4             0072*   ; Print a 16-bit HEX number
-0400A4             0073*   ; HL: Number to print
-0400A4             0074*   printHex16:
-0400A4 7C          0075*       LD A,H
-0400A5 CD AA 00 04 0076*       CALL printHex8
-0400A9 7D          0077*       LD A,L
-0400AA             0078*   ; Print an 8-bit HEX number
-0400AA             0079*   ; A: Number to print
-0400AA             0080*   printHex8:
-0400AA 4F          0081*       LD C,A
-0400AB 1F          0082*       RRA
-0400AC 1F          0083*       RRA
-0400AD 1F          0084*       RRA
-0400AE 1F          0085*       RRA
-0400AF CD B4 00 04 0086*       CALL @F
-0400B3 79          0087*       LD A,C
-0400B4             0088*   @@:
-0400B4 E6 0F       0089*       AND 0Fh
-0400B6 C6 90       0090*       ADD A,90h
-0400B8 27          0091*       DAA
-0400B9 CE 40       0092*       ADC A,40h
-0400BB 27          0093*       DAA
-0400BC 5B D7       0094*       RST.LIL 10h
-0400BE C9          0095*       RET
-0400BF             0096*   
-0400BF             0097*   ; Print a 0x HEX prefix
-0400BF             0098*   DisplayHexPrefix:
-0400BF 3E 30       0099*       LD A, '0'
-0400C1 5B D7       0100*       RST.LIL 10h
-0400C3 3E 78       0101*       LD A, 'x'
-0400C5 5B D7       0102*       RST.LIL 10h
-0400C7 C9          0103*       RET
-0400C8             0104*   
-0400C8             0105*       MACRO printDecBC
-0400C8             0106*       push hl
-0400C8             0107*       push bc
-0400C8             0108*       pop hl
-0400C8             0109*       call printDec
-0400C8             0110*       pop hl
-0400C8             0111*       ENDMACRO
-0400C8             0112*   
-0400C8             0113*       MACRO printDecDE
-0400C8             0114*       push hl
-0400C8             0115*       push de
-0400C8             0116*       pop hl
-0400C8             0117*       call printDec
-0400C8             0118*       pop hl
-0400C8             0119*       ENDMACRO
-0400C8             0120*   
-0400C8             0121*       MACRO printDecHL
-0400C8             0122*       call printDec
-0400C8             0123*       ENDMACRO
-0400C8             0124*   
-0400C8             0125*       MACRO printDecIX
-0400C8             0126*       push hl
-0400C8             0127*       push ix
-0400C8             0128*       pop hl
-0400C8             0129*       call printDec
-0400C8             0130*       pop hl
-0400C8             0131*       ENDMACRO
-0400C8             0132*   
-0400C8             0133*       MACRO printDecIY
-0400C8             0134*       push hl
-0400C8             0135*       push iy
-0400C8             0136*       pop hl
-0400C8             0137*       call printDec
-0400C8             0138*       pop hl
-0400C8             0139*       ENDMACRO
+0400A0 CD AA 00 04 0070*       CALL printHex8
+0400A4             0071*   ; Print a 16-bit HEX number
+0400A4             0072*   ; HL: Number to print
+0400A4             0073*   printHex16:
+0400A4 7C          0074*       LD A,H
+0400A5 CD AA 00 04 0075*       CALL printHex8
+0400A9 7D          0076*       LD A,L
+0400AA             0077*   ; Print an 8-bit HEX number
+0400AA             0078*   ; A: Number to print
+0400AA             0079*   printHex8:
+0400AA 4F          0080*       LD C,A
+0400AB 1F          0081*       RRA
+0400AC 1F          0082*       RRA
+0400AD 1F          0083*       RRA
+0400AE 1F          0084*       RRA
+0400AF CD B4 00 04 0085*       CALL @F
+0400B3 79          0086*       LD A,C
+0400B4             0087*   @@:
+0400B4 E6 0F       0088*       AND 0Fh
+0400B6 C6 90       0089*       ADD A,90h
+0400B8 27          0090*       DAA
+0400B9 CE 40       0091*       ADC A,40h
+0400BB 27          0092*       DAA
+0400BC 5B D7       0093*       RST.LIL 10h
+0400BE C9          0094*       RET
+0400BF             0095*   
+0400BF             0096*   ; Print a 0x HEX prefix
+0400BF             0097*   DisplayHexPrefix:
+0400BF 3E 30       0098*       LD A, '0'
+0400C1 5B D7       0099*       RST.LIL 10h
+0400C3 3E 78       0100*       LD A, 'x'
+0400C5 5B D7       0101*       RST.LIL 10h
+0400C7 C9          0102*       RET
+0400C8             0103*   
+0400C8             0104*       MACRO printDecBC
+0400C8             0105*       push hl
+0400C8             0106*       push bc
+0400C8             0107*       pop hl
+0400C8             0108*       call printDec
+0400C8             0109*       pop hl
+0400C8             0110*       ENDMACRO
+0400C8             0111*   
+0400C8             0112*       MACRO printDecDE
+0400C8             0113*       push hl
+0400C8             0114*       push de
+0400C8             0115*       pop hl
+0400C8             0116*       call printDec
+0400C8             0117*       pop hl
+0400C8             0118*       ENDMACRO
+0400C8             0119*   
+0400C8             0120*       MACRO printDecHL
+0400C8             0121*       call printDec
+0400C8             0122*       ENDMACRO
+0400C8             0123*   
+0400C8             0124*       MACRO printDecIX
+0400C8             0125*       push hl
+0400C8             0126*       push ix
+0400C8             0127*       pop hl
+0400C8             0128*       call printDec
+0400C8             0129*       pop hl
+0400C8             0130*       ENDMACRO
+0400C8             0131*   
+0400C8             0132*       MACRO printDecIY
+0400C8             0133*       push hl
+0400C8             0134*       push iy
+0400C8             0135*       pop hl
+0400C8             0136*       call printDec
+0400C8             0137*       pop hl
+0400C8             0138*       ENDMACRO
+0400C8             0139*   
 0400C8             0140*   
-0400C8             0141*   
-0400C8             0142*   ; Prints the right justified decimal value in HL without leading zeroes
-0400C8             0143*   ; HL : Value to print
-0400C8             0144*   ; preserves all registers and flags
-0400C8             0145*   printDec:
-0400C8             0146*   ; BEGIN MY CODE
-0400C8             0147*   ; back up all the things
-0400C8 F5          0148*       push af
-0400C9 C5          0149*       push bc
-0400CA D5          0150*       push de
-0400CB E5          0151*       push hl
-0400CC             0152*   ; END MY CODE
-0400CC 11 F4 00 04 0153*       LD DE, _printDecBuffer
-0400D0 CD 04 01 04 0154*       CALL u24_to_ascii
-0400D4             0155*   ; BEGIN MY CODE
-0400D4             0156*   ; replace leading zeroes with spaces
-0400D4 21 F4 00 04 0157*       LD HL, _printDecBuffer
-0400D8 06 07       0158*       ld B, 7 ; if HL was 0, we want to keep the final zero
-0400DA             0159*   @loop:
-0400DA 7E          0160*       LD A, (HL)
-0400DB FE 30       0161*       CP '0'
-0400DD C2 E7 00 04 0162*       JP NZ, @done
-0400E1 3E 20       0163*       LD A, ' '
-0400E3 77          0164*       LD (HL), A
-0400E4 23          0165*       INC HL
-0400E5             0166*       ; CALL vdu_cursor_forward
-0400E5 10 F3       0167*       DJNZ @loop
-0400E7             0168*   @done:
-0400E7             0169*   ; END MY CODE
-0400E7 21 F4 00 04 0170*       LD HL, _printDecBuffer
-0400EB CD 63 00 04 0171*       CALL printString
-0400EF             0172*   ; BEGIN MY CODE
-0400EF             0173*   ; restore all the things
-0400EF E1          0174*       pop hl
-0400F0 D1          0175*       pop de
-0400F1 C1          0176*       pop bc
-0400F2 F1          0177*       pop af
-0400F3             0178*   ; END MY CODE
-0400F3 C9          0179*       RET
-0400F4 00 00 00 00 0180*   _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
+0400C8             0141*   ; Prints the right justified decimal value in HL without leading zeroes
+0400C8             0142*   ; HL : Value to print
+0400C8             0143*   ; preserves all registers and flags
+0400C8             0144*   printDec:
+0400C8             0145*   ; BEGIN MY CODE
+0400C8             0146*   ; back up all the things
+0400C8 F5          0147*       push af
+0400C9 C5          0148*       push bc
+0400CA D5          0149*       push de
+0400CB E5          0150*       push hl
+0400CC             0151*   ; END MY CODE
+0400CC 11 F4 00 04 0152*       LD DE, _printDecBuffer
+0400D0 CD 04 01 04 0153*       CALL u24_to_ascii
+0400D4             0154*   ; BEGIN MY CODE
+0400D4             0155*   ; replace leading zeroes with spaces
+0400D4 21 F4 00 04 0156*       LD HL, _printDecBuffer
+0400D8 06 07       0157*       ld B, 7 ; if HL was 0, we want to keep the final zero
+0400DA             0158*   @loop:
+0400DA 7E          0159*       LD A, (HL)
+0400DB FE 30       0160*       CP '0'
+0400DD C2 E7 00 04 0161*       JP NZ, @done
+0400E1 3E 20       0162*       LD A, ' '
+0400E3 77          0163*       LD (HL), A
+0400E4 23          0164*       INC HL
+0400E5             0165*       ; CALL vdu_cursor_forward
+0400E5 10 F3       0166*       DJNZ @loop
+0400E7             0167*   @done:
+0400E7             0168*   ; END MY CODE
+0400E7 21 F4 00 04 0169*       LD HL, _printDecBuffer
+0400EB CD 63 00 04 0170*       CALL printString
+0400EF             0171*   ; BEGIN MY CODE
+0400EF             0172*   ; restore all the things
+0400EF E1          0173*       pop hl
+0400F0 D1          0174*       pop de
+0400F1 C1          0175*       pop bc
+0400F2 F1          0176*       pop af
+0400F3             0177*   ; END MY CODE
+0400F3 C9          0178*       RET
+0400F4 00 00 00 00 0179*   _printDecBuffer: blkb 16,0 ; a few bytes extra just to be sure
        00 00 00 00 
        00 00 00 00 
        00 00 00 00 
-040104             0181*   
-040104             0182*   ; This routine converts the unsigned 24-bit value in HLU into its ASCII representation,
-040104             0183*   ; starting to memory location pointing by DE, in decimal form and with leading zeroes
-040104             0184*   ; so it will allways be 8 characters length
-040104             0185*   ; HL : Value to convert to string
-040104             0186*   ; DE : pointer to buffer, at least 8 byte + 0
-040104             0187*   u24_to_ascii:
-040104 01 80 69 67 0188*       LD BC,-10000000
-040108 CD 3B 01 04 0189*       CALL @one_digit
-04010C 01 C0 BD F0 0190*       LD BC,-1000000
-040110 CD 3B 01 04 0191*       CALL @one_digit
-040114 01 60 79 FE 0192*       LD BC,-100000
-040118 CD 3B 01 04 0193*       CALL @one_digit
-04011C 01 F0 D8 FF 0194*       LD BC,-10000
-040120 CD 3B 01 04 0195*       CALL @one_digit
-040124 01 18 FC FF 0196*       LD BC,-1000
-040128 CD 3B 01 04 0197*       CALL @one_digit
-04012C 01 9C FF FF 0198*       LD BC,-100
-040130 CD 3B 01 04 0199*       CALL @one_digit
-040134 0E F6       0200*       LD C,-10
-040136 CD 3B 01 04 0201*       CALL @one_digit
-04013A 48          0202*       LD C,B
-04013B             0203*   @one_digit:
-04013B 3E 2F       0204*       LD A,'0'-1
-04013D             0205*   @divide_me:
-04013D 3C          0206*       INC A
-04013E 09          0207*       ADD HL,BC
-04013F 38 FC       0208*       JR C,@divide_me
-040141 ED 42       0209*       SBC HL,BC
-040143 12          0210*       LD (DE),A
-040144 13          0211*       INC DE
-040145 C9          0212*       RET
-040146             0213*   
-040146             0214*   print_u24:
-040146 D5          0215*       push de
-040147 E5          0216*       push hl
-040148 11 F4 00 04 0217*       ld de,_printDecBuffer
-04014C CD 04 01 04 0218*       call u24_to_ascii
-040150 21 F4 00 04 0219*       ld hl,_printDecBuffer
-040154 CD 63 00 04 0220*       call printString
-040158 3E 20       0221*       ld a,' '
-04015A 5B D7       0222*       rst.lil 10h
-04015C E1          0223*       pop hl
-04015D D1          0224*       pop de
-04015E C9          0225*       ret
-04015F             0226*   
-04015F             0227*   ; u168_to_ascii: Converts an unsigned 16.8 fixed-point value in HL to an ASCII string.
-04015F             0228*   ; HL : Value to convert to string (integer part in H, fractional part in L)
-04015F             0229*   ; DE : Pointer to buffer, requires at least 11 bytes (8 digits, sign, decimal point, and null terminator)
-04015F             0230*   u168_to_ascii:
-04015F             0231*   ; add a leading space to make room for sign flag if needed
-04015F 3E 20       0232*       ld a,' '
-040161 12          0233*       ld (de),a
-040162 13          0234*       inc de
-040163             0235*   ; Convert integer part
-040163 E5          0236*       push hl ; Save HL (we’ll need the fractional part later)
-040164             0237*       ; call hlu_udiv256 ; Shift to get integer portion in HL
-040164             0238*       SRL_UHL ; Shift to get integer portion in HL
+040104             0180*   
+040104             0181*   ; This routine converts the unsigned 24-bit value in HLU into its ASCII representation,
+040104             0182*   ; starting to memory location pointing by DE, in decimal form and with leading zeroes
+040104             0183*   ; so it will allways be 8 characters length
+040104             0184*   ; HL : Value to convert to string
+040104             0185*   ; DE : pointer to buffer, at least 8 byte + 0
+040104             0186*   u24_to_ascii:
+040104 01 80 69 67 0187*       LD BC,-10000000
+040108 CD 3B 01 04 0188*       CALL @one_digit
+04010C 01 C0 BD F0 0189*       LD BC,-1000000
+040110 CD 3B 01 04 0190*       CALL @one_digit
+040114 01 60 79 FE 0191*       LD BC,-100000
+040118 CD 3B 01 04 0192*       CALL @one_digit
+04011C 01 F0 D8 FF 0193*       LD BC,-10000
+040120 CD 3B 01 04 0194*       CALL @one_digit
+040124 01 18 FC FF 0195*       LD BC,-1000
+040128 CD 3B 01 04 0196*       CALL @one_digit
+04012C 01 9C FF FF 0197*       LD BC,-100
+040130 CD 3B 01 04 0198*       CALL @one_digit
+040134 0E F6       0199*       LD C,-10
+040136 CD 3B 01 04 0200*       CALL @one_digit
+04013A 48          0201*       LD C,B
+04013B             0202*   @one_digit:
+04013B 3E 2F       0203*       LD A,'0'-1
+04013D             0204*   @divide_me:
+04013D 3C          0205*       INC A
+04013E 09          0206*       ADD HL,BC
+04013F 38 FC       0207*       JR C,@divide_me
+040141 ED 42       0208*       SBC HL,BC
+040143 12          0209*       LD (DE),A
+040144 13          0210*       INC DE
+040145 C9          0211*       RET
+040146             0212*   
+040146             0213*   print_u24:
+040146 D5          0214*       push de
+040147 E5          0215*       push hl
+040148 11 F4 00 04 0216*       ld de,_printDecBuffer
+04014C CD 04 01 04 0217*       call u24_to_ascii
+040150 21 F4 00 04 0218*       ld hl,_printDecBuffer
+040154 CD 63 00 04 0219*       call printString
+040158 3E 20       0220*       ld a,' '
+04015A 5B D7       0221*       rst.lil 10h
+04015C E1          0222*       pop hl
+04015D D1          0223*       pop de
+04015E C9          0224*       ret
+04015F             0225*   
+04015F             0226*   ; u168_to_ascii: Converts an unsigned 16.8 fixed-point value in HL to an ASCII string.
+04015F             0227*   ; HL : Value to convert to string (integer part in H, fractional part in L)
+04015F             0228*   ; DE : Pointer to buffer, requires at least 11 bytes (8 digits, sign, decimal point, and null terminator)
+04015F             0229*   u168_to_ascii:
+04015F             0230*   ; add a leading space to make room for sign flag if needed
+04015F 3E 20       0231*       ld a,' '
+040161 12          0232*       ld (de),a
+040162 13          0233*       inc de
+040163             0234*   ; Convert integer part
+040163 E5          0235*       push hl ; Save HL (we’ll need the fractional part later)
+040164             0236*       ; call hlu_udiv256 ; Shift to get integer portion in HL
+040164             0237*       SRL_UHL ; Shift to get integer portion in HL
 040164 3B          0001*M1     dec sp ; 1 cycle
 040165 E5          0002*M1     push hl ; 4 cycles
 040166 33          0003*M1     inc sp ; 1 cycle
@@ -688,347 +687,347 @@ PC     Output      Line
 040168 23          0005*M1     inc hl ; 1 cycle
 040169 52 2B       0006*M1     dec.s hl ; 2 cycles <-- the .s sets hlu to zero (undocumented)
 04016B             0007*M1     ; 13 cycles total
-04016B 01 F0 D8 FF 0239*       ld bc, -10000
-04016F CD 92 01 04 0240*       call @one_int
-040173 01 18 FC FF 0241*       ld bc, -1000
-040177 CD 92 01 04 0242*       call @one_int
-04017B 01 9C FF FF 0243*       ld bc, -100
-04017F CD 92 01 04 0244*       call @one_int
-040183 0E F6       0245*       ld c, -10
-040185 CD 92 01 04 0246*       call @one_int
-040189 48          0247*       ld c, b
-04018A CD 92 01 04 0248*       call @one_int
-04018E C3 9D 01 04 0249*       jp @frac ; Jump to fractional part conversion
-040192             0250*   @one_int:
-040192 3E 2F       0251*       ld a, '0' - 1 ; Start ASCII character at '0'
-040194             0252*   @divide_me:
-040194 3C          0253*       inc a
-040195 09          0254*       add hl, bc ; Accumulate until overflow
-040196 38 FC       0255*       jr c, @divide_me
-040198 ED 42       0256*       sbc hl, bc ; Remove excess after overflow
-04019A 12          0257*       ld (de), a ; Store ASCII digit
-04019B 13          0258*       inc de
-04019C C9          0259*       ret
-04019D             0260*   ; Convert fractional part
-04019D             0261*   @frac:
-04019D 3E 2E       0262*       ld a, '.' ; Decimal point
-04019F 12          0263*       ld (de), a
-0401A0 13          0264*       inc de
-0401A1 E1          0265*       pop hl ; Restore HL with original fraction
-0401A2 06 03       0266*       ld b, 3 ; Loop counter for 3 fractional digits
-0401A4             0267*   @frac_loop:
-0401A4 26 0A       0268*       ld h, 10 ; Load multiplier for fractional part
-0401A6 ED 6C       0269*       mlt hl ; Multiply by 10, result in HL (H holds the integer part)
-0401A8 3E 30       0270*       ld a, '0'
-0401AA 84          0271*       add a, h ; Convert integer part to ASCII
-0401AB 12          0272*       ld (de), a
-0401AC 13          0273*       inc de
-0401AD 10 F5       0274*       djnz @frac_loop ; Repeat for each fractional digit
-0401AF             0275*   ; Add null terminator
-0401AF AF          0276*       xor a ; Null terminator
-0401B0 12          0277*       ld (de), a
-0401B1 C9          0278*       ret
-0401B2             0279*   
-0401B2             0280*   print_u168:
-0401B2 D5          0281*       push de
-0401B3 E5          0282*       push hl
-0401B4 11 F4 00 04 0283*       ld de,_printDecBuffer
-0401B8 CD 5F 01 04 0284*       call u168_to_ascii
-0401BC 21 F4 00 04 0285*       ld hl,_printDecBuffer
-0401C0 CD 63 00 04 0286*       call printString
-0401C4 E1          0287*       pop hl
-0401C5 D1          0288*       pop de
-0401C6 C9          0289*       ret
-0401C7             0290*   
-0401C7             0291*   ; signed version of u168_to_ascii
-0401C7             0292*   s168_to_ascii:
-0401C7 D5          0293*       push de ; save starting address of buffer
-0401C8 CD 6C 04 04 0294*       call hlu_abs
-0401CC F5          0295*       push af ; save sign flag
-0401CD CD 5F 01 04 0296*       call u168_to_ascii
-0401D1 F1          0297*       pop af ; restore sign flag
-0401D2 D1          0298*       pop de ; restore starting address of buffer
-0401D3 F0          0299*       ret p ; hlu was positive so nothing to do
-0401D4 3E 2D       0300*       ld a,'-'
-0401D6 12          0301*       ld (de),a
-0401D7 C9          0302*       ret
-0401D8             0303*   
-0401D8             0304*   print_s168:
-0401D8 D5          0305*       push de
-0401D9 E5          0306*       push hl
-0401DA 11 F4 00 04 0307*       ld de,_printDecBuffer
-0401DE CD C7 01 04 0308*       call s168_to_ascii
-0401E2 21 F4 00 04 0309*       ld hl,_printDecBuffer
-0401E6 CD 63 00 04 0310*       call printString
-0401EA E1          0311*       pop hl
-0401EB D1          0312*       pop de
-0401EC C9          0313*       ret
-0401ED             0314*   
-0401ED             0315*   print_s168_hl:
-0401ED F5          0316*       push af
-0401EE E5          0317*       push hl
-0401EF CD D8 01 04 0318*       call print_s168
-0401F3 3E 20       0319*       ld a,' '
-0401F5 5B D7       0320*       rst.lil 10h
-0401F7 E1          0321*       pop hl
-0401F8 F1          0322*       pop af
-0401F9 C9          0323*       ret
-0401FA             0324*   
-0401FA             0325*   print_s168_bc:
-0401FA F5          0326*       push af
-0401FB C5          0327*       push bc
-0401FC E5          0328*       push hl
-0401FD C5          0329*       push bc
-0401FE E1          0330*       pop hl
-0401FF CD D8 01 04 0331*       call print_s168
-040203 3E 20       0332*       ld a,' '
-040205 5B D7       0333*       rst.lil 10h
-040207 E1          0334*       pop hl
-040208 C1          0335*       pop bc
-040209 F1          0336*       pop af
-04020A C9          0337*       ret
-04020B             0338*   
-04020B             0339*   print_s168_de:
-04020B F5          0340*       push af
-04020C D5          0341*       push de
-04020D E5          0342*       push hl
-04020E EB          0343*       ex de,hl
-04020F CD D8 01 04 0344*       call print_s168
-040213 3E 20       0345*       ld a,' '
-040215 5B D7       0346*       rst.lil 10h
-040217 E1          0347*       pop hl
-040218 D1          0348*       pop de
-040219 F1          0349*       pop af
-04021A C9          0350*       ret
-04021B             0351*   
-04021B             0352*   print_s168_hl_bc_de:
-04021B F5          0353*       push af
-04021C C5          0354*       push bc
-04021D D5          0355*       push de
-04021E E5          0356*       push hl
-04021F CD D8 01 04 0357*       call print_s168
-040223 3E 20       0358*       ld a,' '
-040225 5B D7       0359*       rst.lil 10h
-040227 C5          0360*       push bc
-040228 E1          0361*       pop hl
-040229 CD D8 01 04 0362*       call print_s168
-04022D 3E 20       0363*       ld a,' '
-04022F 5B D7       0364*       rst.lil 10h
-040231 EB          0365*       ex de,hl
-040232 CD D8 01 04 0366*       call print_s168
-040236 3E 20       0367*       ld a,' '
-040238 5B D7       0368*       rst.lil 10h
-04023A E1          0369*       pop hl
-04023B D1          0370*       pop de
-04023C C1          0371*       pop bc
-04023D F1          0372*       pop af
-04023E C9          0373*       ret
-04023F             0374*   
-04023F             0375*   print_s168_bc_de:
-04023F F5          0376*       push af
-040240 C5          0377*       push bc
-040241 D5          0378*       push de
-040242 C5          0379*       push bc
-040243 E1          0380*       pop hl
-040244 CD D8 01 04 0381*       call print_s168
-040248 3E 20       0382*       ld a,' '
-04024A 5B D7       0383*       rst.lil 10h
-04024C EB          0384*       ex de,hl
-04024D CD D8 01 04 0385*       call print_s168
-040251 3E 20       0386*       ld a,' '
-040253 5B D7       0387*       rst.lil 10h
-040255 E1          0388*       pop hl
-040256 D1          0389*       pop de
-040257 C1          0390*       pop bc
-040258 F1          0391*       pop af
-040259 C9          0392*       ret
-04025A             0393*   
-04025A             0394*   print_s168_a:
-04025A F5          0395*       push af
-04025B C5          0396*       push bc
-04025C E5          0397*       push hl
-04025D 21 00 00 00 0398*       ld hl,0
-040261 6F          0399*       ld l,a
-040262 CD ED 01 04 0400*       call print_s168_hl
-040266 E1          0401*       pop hl
-040267 C1          0402*       pop bc
-040268 F1          0403*       pop af
-040269 C9          0404*       ret
-04026A             0405*   
-04026A             0406*   ; #### new functions added by Brandon R. Gates ####
-04026A             0407*   
-04026A             0408*   ; print the binary representation of the 8-bit value in a
-04026A             0409*   ; destroys a, hl, bc
-04026A             0410*   printBin8:
-04026A 06 08       0411*       ld b,8 ; loop counter for 8 bits
-04026C 21 87 02 04 0412*       ld hl,@cmd ; set hl to the low byte of the output string
-040270             0413*       ; (which will be the high bit of the value in a)
-040270             0414*   @loop:
-040270 07          0415*       rlca ; put the next highest bit into carry
-040271 38 04       0416*       jr c,@one
-040273 36 30       0417*       ld (hl),'0'
-040275 18 02       0418*       jr @next_bit
-040277             0419*   @one:
-040277 36 31       0420*       ld (hl),'1'
-040279             0421*   @next_bit:
-040279 23          0422*       inc hl
-04027A 10 F4       0423*       djnz @loop
-04027C             0424*   ; print it
-04027C 21 87 02 04 0425*       ld hl,@cmd
-040280 01 08 00 00 0426*       ld bc,@end-@cmd
-040284 5B DF       0427*       rst.lil $18
-040286 C9          0428*       ret
-040287             0429*   @cmd: ds 8 ; eight bytes for eight bits
-04028F             0430*   @end:
-04028F             0431*   
-04028F             0432*   ; print the binary representation of the 8-bit value in a
-04028F             0433*   ; in reverse order (lsb first)
-04028F             0434*   ; destroys a, hl, bc
-04028F             0435*   printBin8Rev:
+04016B 01 F0 D8 FF 0238*       ld bc, -10000
+04016F CD 92 01 04 0239*       call @one_int
+040173 01 18 FC FF 0240*       ld bc, -1000
+040177 CD 92 01 04 0241*       call @one_int
+04017B 01 9C FF FF 0242*       ld bc, -100
+04017F CD 92 01 04 0243*       call @one_int
+040183 0E F6       0244*       ld c, -10
+040185 CD 92 01 04 0245*       call @one_int
+040189 48          0246*       ld c, b
+04018A CD 92 01 04 0247*       call @one_int
+04018E C3 9D 01 04 0248*       jp @frac ; Jump to fractional part conversion
+040192             0249*   @one_int:
+040192 3E 2F       0250*       ld a, '0' - 1 ; Start ASCII character at '0'
+040194             0251*   @divide_me:
+040194 3C          0252*       inc a
+040195 09          0253*       add hl, bc ; Accumulate until overflow
+040196 38 FC       0254*       jr c, @divide_me
+040198 ED 42       0255*       sbc hl, bc ; Remove excess after overflow
+04019A 12          0256*       ld (de), a ; Store ASCII digit
+04019B 13          0257*       inc de
+04019C C9          0258*       ret
+04019D             0259*   ; Convert fractional part
+04019D             0260*   @frac:
+04019D 3E 2E       0261*       ld a, '.' ; Decimal point
+04019F 12          0262*       ld (de), a
+0401A0 13          0263*       inc de
+0401A1 E1          0264*       pop hl ; Restore HL with original fraction
+0401A2 06 03       0265*       ld b, 3 ; Loop counter for 3 fractional digits
+0401A4             0266*   @frac_loop:
+0401A4 26 0A       0267*       ld h, 10 ; Load multiplier for fractional part
+0401A6 ED 6C       0268*       mlt hl ; Multiply by 10, result in HL (H holds the integer part)
+0401A8 3E 30       0269*       ld a, '0'
+0401AA 84          0270*       add a, h ; Convert integer part to ASCII
+0401AB 12          0271*       ld (de), a
+0401AC 13          0272*       inc de
+0401AD 10 F5       0273*       djnz @frac_loop ; Repeat for each fractional digit
+0401AF             0274*   ; Add null terminator
+0401AF AF          0275*       xor a ; Null terminator
+0401B0 12          0276*       ld (de), a
+0401B1 C9          0277*       ret
+0401B2             0278*   
+0401B2             0279*   print_u168:
+0401B2 D5          0280*       push de
+0401B3 E5          0281*       push hl
+0401B4 11 F4 00 04 0282*       ld de,_printDecBuffer
+0401B8 CD 5F 01 04 0283*       call u168_to_ascii
+0401BC 21 F4 00 04 0284*       ld hl,_printDecBuffer
+0401C0 CD 63 00 04 0285*       call printString
+0401C4 E1          0286*       pop hl
+0401C5 D1          0287*       pop de
+0401C6 C9          0288*       ret
+0401C7             0289*   
+0401C7             0290*   ; signed version of u168_to_ascii
+0401C7             0291*   s168_to_ascii:
+0401C7 D5          0292*       push de ; save starting address of buffer
+0401C8 CD 6C 04 04 0293*       call hlu_abs
+0401CC F5          0294*       push af ; save sign flag
+0401CD CD 5F 01 04 0295*       call u168_to_ascii
+0401D1 F1          0296*       pop af ; restore sign flag
+0401D2 D1          0297*       pop de ; restore starting address of buffer
+0401D3 F0          0298*       ret p ; hlu was positive so nothing to do
+0401D4 3E 2D       0299*       ld a,'-'
+0401D6 12          0300*       ld (de),a
+0401D7 C9          0301*       ret
+0401D8             0302*   
+0401D8             0303*   print_s168:
+0401D8 D5          0304*       push de
+0401D9 E5          0305*       push hl
+0401DA 11 F4 00 04 0306*       ld de,_printDecBuffer
+0401DE CD C7 01 04 0307*       call s168_to_ascii
+0401E2 21 F4 00 04 0308*       ld hl,_printDecBuffer
+0401E6 CD 63 00 04 0309*       call printString
+0401EA E1          0310*       pop hl
+0401EB D1          0311*       pop de
+0401EC C9          0312*       ret
+0401ED             0313*   
+0401ED             0314*   print_s168_hl:
+0401ED F5          0315*       push af
+0401EE E5          0316*       push hl
+0401EF CD D8 01 04 0317*       call print_s168
+0401F3 3E 20       0318*       ld a,' '
+0401F5 5B D7       0319*       rst.lil 10h
+0401F7 E1          0320*       pop hl
+0401F8 F1          0321*       pop af
+0401F9 C9          0322*       ret
+0401FA             0323*   
+0401FA             0324*   print_s168_bc:
+0401FA F5          0325*       push af
+0401FB C5          0326*       push bc
+0401FC E5          0327*       push hl
+0401FD C5          0328*       push bc
+0401FE E1          0329*       pop hl
+0401FF CD D8 01 04 0330*       call print_s168
+040203 3E 20       0331*       ld a,' '
+040205 5B D7       0332*       rst.lil 10h
+040207 E1          0333*       pop hl
+040208 C1          0334*       pop bc
+040209 F1          0335*       pop af
+04020A C9          0336*       ret
+04020B             0337*   
+04020B             0338*   print_s168_de:
+04020B F5          0339*       push af
+04020C D5          0340*       push de
+04020D E5          0341*       push hl
+04020E EB          0342*       ex de,hl
+04020F CD D8 01 04 0343*       call print_s168
+040213 3E 20       0344*       ld a,' '
+040215 5B D7       0345*       rst.lil 10h
+040217 E1          0346*       pop hl
+040218 D1          0347*       pop de
+040219 F1          0348*       pop af
+04021A C9          0349*       ret
+04021B             0350*   
+04021B             0351*   print_s168_hl_bc_de:
+04021B F5          0352*       push af
+04021C C5          0353*       push bc
+04021D D5          0354*       push de
+04021E E5          0355*       push hl
+04021F CD D8 01 04 0356*       call print_s168
+040223 3E 20       0357*       ld a,' '
+040225 5B D7       0358*       rst.lil 10h
+040227 C5          0359*       push bc
+040228 E1          0360*       pop hl
+040229 CD D8 01 04 0361*       call print_s168
+04022D 3E 20       0362*       ld a,' '
+04022F 5B D7       0363*       rst.lil 10h
+040231 EB          0364*       ex de,hl
+040232 CD D8 01 04 0365*       call print_s168
+040236 3E 20       0366*       ld a,' '
+040238 5B D7       0367*       rst.lil 10h
+04023A E1          0368*       pop hl
+04023B D1          0369*       pop de
+04023C C1          0370*       pop bc
+04023D F1          0371*       pop af
+04023E C9          0372*       ret
+04023F             0373*   
+04023F             0374*   print_s168_bc_de:
+04023F F5          0375*       push af
+040240 C5          0376*       push bc
+040241 D5          0377*       push de
+040242 C5          0378*       push bc
+040243 E1          0379*       pop hl
+040244 CD D8 01 04 0380*       call print_s168
+040248 3E 20       0381*       ld a,' '
+04024A 5B D7       0382*       rst.lil 10h
+04024C EB          0383*       ex de,hl
+04024D CD D8 01 04 0384*       call print_s168
+040251 3E 20       0385*       ld a,' '
+040253 5B D7       0386*       rst.lil 10h
+040255 E1          0387*       pop hl
+040256 D1          0388*       pop de
+040257 C1          0389*       pop bc
+040258 F1          0390*       pop af
+040259 C9          0391*       ret
+04025A             0392*   
+04025A             0393*   print_s168_a:
+04025A F5          0394*       push af
+04025B C5          0395*       push bc
+04025C E5          0396*       push hl
+04025D 21 00 00 00 0397*       ld hl,0
+040261 6F          0398*       ld l,a
+040262 CD ED 01 04 0399*       call print_s168_hl
+040266 E1          0400*       pop hl
+040267 C1          0401*       pop bc
+040268 F1          0402*       pop af
+040269 C9          0403*       ret
+04026A             0404*   
+04026A             0405*   ; #### new functions added by Brandon R. Gates ####
+04026A             0406*   
+04026A             0407*   ; print the binary representation of the 8-bit value in a
+04026A             0408*   ; destroys a, hl, bc
+04026A             0409*   printBin8:
+04026A 06 08       0410*       ld b,8 ; loop counter for 8 bits
+04026C 21 87 02 04 0411*       ld hl,@cmd ; set hl to the low byte of the output string
+040270             0412*       ; (which will be the high bit of the value in a)
+040270             0413*   @loop:
+040270 07          0414*       rlca ; put the next highest bit into carry
+040271 38 04       0415*       jr c,@one
+040273 36 30       0416*       ld (hl),'0'
+040275 18 02       0417*       jr @next_bit
+040277             0418*   @one:
+040277 36 31       0419*       ld (hl),'1'
+040279             0420*   @next_bit:
+040279 23          0421*       inc hl
+04027A 10 F4       0422*       djnz @loop
+04027C             0423*   ; print it
+04027C 21 87 02 04 0424*       ld hl,@cmd
+040280 01 08 00 00 0425*       ld bc,@end-@cmd
+040284 5B DF       0426*       rst.lil $18
+040286 C9          0427*       ret
+040287             0428*   @cmd: ds 8 ; eight bytes for eight bits
+04028F             0429*   @end:
+04028F             0430*   
+04028F             0431*   ; print the binary representation of the 8-bit value in a
+04028F             0432*   ; in reverse order (lsb first)
+04028F             0433*   ; destroys a, hl, bc
+04028F             0434*   printBin8Rev:
        FF FF FF FF 
        FF FF FF FF 
-04028F 06 08       0436*       ld b,8 ; loop counter for 8 bits
-040291 21 AC 02 04 0437*       ld hl,@cmd ; set hl to the low byte of the output string
-040295             0438*       ; (which will be the high bit of the value in a)
-040295             0439*   @loop:
-040295 0F          0440*       rrca ; put the next lowest bit into carry
-040296 38 04       0441*       jr c,@one
-040298 36 30       0442*       ld (hl),'0'
-04029A 18 02       0443*       jr @next_bit
-04029C             0444*   @one:
-04029C 36 31       0445*       ld (hl),'1'
-04029E             0446*   @next_bit:
-04029E 23          0447*       inc hl
-04029F 10 F4       0448*       djnz @loop
-0402A1             0449*   ; print it
-0402A1 21 AC 02 04 0450*       ld hl,@cmd
-0402A5 01 08 00 00 0451*       ld bc,@end-@cmd
-0402A9 5B DF       0452*       rst.lil $18
-0402AB C9          0453*       ret
-0402AC             0454*   @cmd: ds 8 ; eight bytes for eight bits
-0402B4             0455*   @end:
-0402B4             0456*   
+04028F 06 08       0435*       ld b,8 ; loop counter for 8 bits
+040291 21 AC 02 04 0436*       ld hl,@cmd ; set hl to the low byte of the output string
+040295             0437*       ; (which will be the high bit of the value in a)
+040295             0438*   @loop:
+040295 0F          0439*       rrca ; put the next lowest bit into carry
+040296 38 04       0440*       jr c,@one
+040298 36 30       0441*       ld (hl),'0'
+04029A 18 02       0442*       jr @next_bit
+04029C             0443*   @one:
+04029C 36 31       0444*       ld (hl),'1'
+04029E             0445*   @next_bit:
+04029E 23          0446*       inc hl
+04029F 10 F4       0447*       djnz @loop
+0402A1             0448*   ; print it
+0402A1 21 AC 02 04 0449*       ld hl,@cmd
+0402A5 01 08 00 00 0450*       ld bc,@end-@cmd
+0402A9 5B DF       0451*       rst.lil $18
+0402AB C9          0452*       ret
+0402AC             0453*   @cmd: ds 8 ; eight bytes for eight bits
+0402B4             0454*   @end:
+0402B4             0455*   
        FF FF FF FF 
        FF FF FF FF 
-0402B4 20 61 66 3D 0457*   str_afu: db " af=",0
+0402B4 20 61 66 3D 0456*   str_afu: db " af=",0
        00          
-0402B9 20 68 6C 3D 0458*   str_hlu: db " hl=",0
+0402B9 20 68 6C 3D 0457*   str_hlu: db " hl=",0
        00          
-0402BE 20 62 63 3D 0459*   str_bcu: db " bc=",0
+0402BE 20 62 63 3D 0458*   str_bcu: db " bc=",0
        00          
-0402C3 20 64 65 3D 0460*   str_deu: db " de=",0
+0402C3 20 64 65 3D 0459*   str_deu: db " de=",0
        00          
-0402C8 20 69 78 3D 0461*   str_ixu: db " ix=",0
+0402C8 20 69 78 3D 0460*   str_ixu: db " ix=",0
        00          
-0402CD 20 69 79 3D 0462*   str_iyu: db " iy=",0
+0402CD 20 69 79 3D 0461*   str_iyu: db " iy=",0
        00          
-0402D2             0463*   
-0402D2             0464*   ; print udeuhl to screen in hexidecimal format
-0402D2             0465*   ; inputs: none
-0402D2             0466*   ; outputs: concatenated hexidecimal udeuhl
-0402D2             0467*   ; destroys: nothing
-0402D2             0468*   dumpUDEUHLHex:
-0402D2             0469*   ; store everything in scratch
-0402D2 22 31 03 04 0470*       ld (uhl),hl
-0402D6 ED 43 34 03 0471*       ld (ubc),bc
+0402D2             0462*   
+0402D2             0463*   ; print udeuhl to screen in hexidecimal format
+0402D2             0464*   ; inputs: none
+0402D2             0465*   ; outputs: concatenated hexidecimal udeuhl
+0402D2             0466*   ; destroys: nothing
+0402D2             0467*   dumpUDEUHLHex:
+0402D2             0468*   ; store everything in scratch
+0402D2 22 31 03 04 0469*       ld (uhl),hl
+0402D6 ED 43 34 03 0470*       ld (ubc),bc
        04          
-0402DB ED 53 37 03 0472*       ld (ude),de
+0402DB ED 53 37 03 0471*       ld (ude),de
        04          
-0402E0 DD 22 3A 03 0473*       ld (uix),ix
+0402E0 DD 22 3A 03 0472*       ld (uix),ix
        04          
-0402E5 FD 22 3D 03 0474*       ld (uiy),iy
+0402E5 FD 22 3D 03 0473*       ld (uiy),iy
        04          
-0402EA F5          0475*       push af
-0402EB             0476*   
-0402EB             0477*   ; print each register
-0402EB             0478*   
-0402EB 21 25 03 04 0479*       ld hl,str_udeuhl
-0402EF CD 63 00 04 0480*       call printString
-0402F3 2A 37 03 04 0481*       ld hl,(ude)
-0402F7 CD 9C 00 04 0482*       call printHex24
-0402FB 3E 2E       0483*       ld a,'.' ; print a dot to separate the values
-0402FD 5B D7       0484*       rst.lil 10h
-0402FF 2A 31 03 04 0485*       ld hl,(uhl)
-040303 CD 9C 00 04 0486*       call printHex24
-040307 CD 78 00 04 0487*       call printNewLine
-04030B             0488*   
-04030B             0489*   ; restore everything
-04030B 2A 31 03 04 0490*       ld hl, (uhl)
-04030F ED 4B 34 03 0491*       ld bc, (ubc)
+0402EA F5          0474*       push af
+0402EB             0475*   
+0402EB             0476*   ; print each register
+0402EB             0477*   
+0402EB 21 25 03 04 0478*       ld hl,str_udeuhl
+0402EF CD 63 00 04 0479*       call printString
+0402F3 2A 37 03 04 0480*       ld hl,(ude)
+0402F7 CD 9C 00 04 0481*       call printHex24
+0402FB 3E 2E       0482*       ld a,'.' ; print a dot to separate the values
+0402FD 5B D7       0483*       rst.lil 10h
+0402FF 2A 31 03 04 0484*       ld hl,(uhl)
+040303 CD 9C 00 04 0485*       call printHex24
+040307 CD 78 00 04 0486*       call printNewLine
+04030B             0487*   
+04030B             0488*   ; restore everything
+04030B 2A 31 03 04 0489*       ld hl, (uhl)
+04030F ED 4B 34 03 0490*       ld bc, (ubc)
        04          
-040314 ED 5B 37 03 0492*       ld de, (ude)
+040314 ED 5B 37 03 0491*       ld de, (ude)
        04          
-040319 DD 2A 3A 03 0493*       ld ix, (uix)
+040319 DD 2A 3A 03 0492*       ld ix, (uix)
        04          
-04031E FD 2A 3D 03 0494*       ld iy, (uiy)
+04031E FD 2A 3D 03 0493*       ld iy, (uiy)
        04          
-040323 F1          0495*       pop af
-040324             0496*   ; all done
-040324 C9          0497*       ret
-040325             0498*   
-040325 75 64 65 2E 0499*   str_udeuhl: db "ude.uhl=",0
+040323 F1          0494*       pop af
+040324             0495*   ; all done
+040324 C9          0496*       ret
+040325             0497*   
+040325 75 64 65 2E 0498*   str_udeuhl: db "ude.uhl=",0
        75 68 6C 3D 
        00          
-04032E             0500*   
-04032E             0501*   ; global scratch memory for registers
-04032E 00 00 00    0502*   uaf: dl 0
-040331 00 00 00    0503*   uhl: dl 0
-040334 00 00 00    0504*   ubc: dl 0
-040337 00 00 00    0505*   ude: dl 0
-04033A 00 00 00    0506*   uix: dl 0
-04033D 00 00 00    0507*   uiy: dl 0
-040340 00 00 00    0508*   usp: dl 0
-040343 00 00 00    0509*   upc: dl 0
+04032E             0499*   
+04032E             0500*   ; global scratch memory for registers
+04032E 00 00 00    0501*   uaf: dl 0
+040331 00 00 00    0502*   uhl: dl 0
+040334 00 00 00    0503*   ubc: dl 0
+040337 00 00 00    0504*   ude: dl 0
+04033A 00 00 00    0505*   uix: dl 0
+04033D 00 00 00    0506*   uiy: dl 0
+040340 00 00 00    0507*   usp: dl 0
+040343 00 00 00    0508*   upc: dl 0
+040346             0509*   
 040346             0510*   
-040346             0511*   
-040346             0512*   ; set all the bits in the flag register
-040346             0513*   ; more of an academic exercise than anything useful
-040346             0514*   ; inputs; none
-040346             0515*   ; outputs; a=0,f=255
-040346             0516*   ; destroys: flags, hl
-040346             0517*   ; preserves: a, because why not
-040346             0518*   setAllFlags:
-040346 21 FF 00 00 0519*       ld hl,255
-04034A 67          0520*       ld h,a ; four cycles to preserve a is cheap
-04034B E5          0521*       push hl
-04034C F1          0522*       pop af
-04034D C9          0523*       ret
-04034E             0524*   
-04034E             0525*   ; reset all the bits in the flag register
-04034E             0526*   ; unlike its inverse counterpart, this may actually be useful
-04034E             0527*   ; inputs; none
-04034E             0528*   ; outputs; a=0,f=0
-04034E             0529*   ; destroys: flags, hl
-04034E             0530*   ; preserves: a, because why not
-04034E             0531*   resetAllFlags:
-04034E 21 00 00 00 0532*       ld hl,0
-040352 67          0533*       ld h,a ; four cycles to preserve a is cheap
-040353 E5          0534*       push hl
-040354 F1          0535*       pop af
-040355 C9          0536*       ret
-040356             0537*   
-040356             0538*   ; wait until user presses a key
-040356             0539*   ; inputs: none
-040356             0540*   ; outputs: ascii code of key pressed in a
-040356             0541*   ; destroys: af,ix
-040356             0542*   waitKeypress:
-040356             0543*       MOSCALL mos_getkey
+040346             0511*   ; set all the bits in the flag register
+040346             0512*   ; more of an academic exercise than anything useful
+040346             0513*   ; inputs; none
+040346             0514*   ; outputs; a=0,f=255
+040346             0515*   ; destroys: flags, hl
+040346             0516*   ; preserves: a, because why not
+040346             0517*   setAllFlags:
+040346 21 FF 00 00 0518*       ld hl,255
+04034A 67          0519*       ld h,a ; four cycles to preserve a is cheap
+04034B E5          0520*       push hl
+04034C F1          0521*       pop af
+04034D C9          0522*       ret
+04034E             0523*   
+04034E             0524*   ; reset all the bits in the flag register
+04034E             0525*   ; unlike its inverse counterpart, this may actually be useful
+04034E             0526*   ; inputs; none
+04034E             0527*   ; outputs; a=0,f=0
+04034E             0528*   ; destroys: flags, hl
+04034E             0529*   ; preserves: a, because why not
+04034E             0530*   resetAllFlags:
+04034E 21 00 00 00 0531*       ld hl,0
+040352 67          0532*       ld h,a ; four cycles to preserve a is cheap
+040353 E5          0533*       push hl
+040354 F1          0534*       pop af
+040355 C9          0535*       ret
+040356             0536*   
+040356             0537*   ; wait until user presses a key
+040356             0538*   ; inputs: none
+040356             0539*   ; outputs: ascii code of key pressed in a
+040356             0540*   ; destroys: af,ix
+040356             0541*   waitKeypress:
+040356             0542*       MOSCALL mos_getkey
 040356 3E 00       0001*M1 			LD	A, function
 040358 5B CF       0002*M1 			RST.LIL	08h
-04035A C9          0544*       ret
-04035B             0545*   
-04035B             0546*   ; clear a block of memory by writing a prescribed value to each byte in the range
-04035B             0547*   ; inputs: a = value to write, hl = address of first byte, bc = number of bytes
-04035B             0548*   ; outputs: memory block is cleared
-04035B             0549*   ; destroys: hl, de
-04035B             0550*   clear_mem:
-04035B 0B          0551*       dec bc ; we do this because we will increment de before writing the first byte
-04035C 77          0552*       ld (hl),a
-04035D E5          0553*       push hl
-04035E D1          0554*       pop de
-04035F 13          0555*       inc de ; target address
-040360 ED B0       0556*       ldir
-040362 C9          0557*       ret
+04035A C9          0543*       ret
+04035B             0544*   
+04035B             0545*   ; clear a block of memory by writing a prescribed value to each byte in the range
+04035B             0546*   ; inputs: a = value to write, hl = address of first byte, bc = number of bytes
+04035B             0547*   ; outputs: memory block is cleared
+04035B             0548*   ; destroys: hl, de
+04035B             0549*   clear_mem:
+04035B 0B          0550*       dec bc ; we do this because we will increment de before writing the first byte
+04035C 77          0551*       ld (hl),a
+04035D E5          0552*       push hl
+04035E D1          0553*       pop de
+04035F 13          0554*       inc de ; target address
+040360 ED B0       0555*       ldir
+040362 C9          0556*       ret
 040363             0032        include "arith24.inc"
 040363             0001*   ;------------------------------------------------------------------------
 040363             0002*   ;  arith24.asm
