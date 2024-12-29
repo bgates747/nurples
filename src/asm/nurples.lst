@@ -15362,7 +15362,7 @@ PC     Output      Line
 049300             0002*   pad_small_defaults:
 049300 01          0003*       db tile_pad_small       ; type
 049301 75 01 00    0004*       dl BUF_TILE_PAD_0       ; base_bufferId
-049304 28 93 04    0005*       dl move_pad_small       ; move_program
+049304 26 93 04    0005*       dl move_pad_small       ; move_program
 049307 40          0006*       db %01000000            ; collisions bit 6 signals sprite alive
 049308 10          0007*       db 16                   ; dim_x
 049309 10          0008*       db 16                   ; dim_y
@@ -15370,7 +15370,7 @@ PC     Output      Line
 04930B 01          0010*       db 1                    ; num_animations
 04930C 00          0011*       db 0                    ; animation
 04930D 10          0012*       db 16                   ; animation_timer
-04930E 00          0013*       db sprite_top           ; move_timer
+04930E 00          0013*       db 0                    ; move_timer
 04930F 00          0014*       db 0                    ; move_step
 049310 05          0015*       db 5                    ; points
 049311 00          0016*       db 0                    ; shield_damage
@@ -15383,144 +15383,46 @@ PC     Output      Line
 04931B D0          0023*       ret nc ; no carry means no free active tile slots, so we go home
 04931C             0024*   ; other specific initialization
 04931C CD AE 05 04 0025*       call rand_8     ; snag a random number
-049320 E6 0F       0026*       and %00001111 ; keep only 4 lowest bits (max 15)
-049322 C6 00       0027*       add a,sprite_top ; make sure minimum is sprite_top
-049324 FD 77 24    0028*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
-049327 C9          0029*       ret
-049328             0030*   ; end activate_pad_small
-049328             0031*   
-049328             0032*   move_pad_small:
-049328 CD 81 8E 04 0033*       call move_active_tile
-04932C CA 90 8B 04 0034*       jp z,table_deactivate_tile
-049330 CD 5C 23 04 0035*       call check_enemy_collision_laser
-049334 CA 65 93 04 0036*       jp z,kill_pad_small
-049338             0037*   ; do animation
-049338 FD 35 23    0038*       dec (iy+tile_animation_timer)
-04933B C2 51 93 04 0039*       jp nz,@F
-04933F 3E 10       0040*       ld a,16
-049341 FD 77 23    0041*       ld (iy+tile_animation_timer),a
-049344 FD 7E 28    0042*       ld a,(iy+tile_frame)
-049347 3C          0043*       inc a
-049348 E6 07       0044*       and %00000111 ; modulo 8
-04934A FD 77 28    0045*       ld (iy+tile_frame),a
-04934D CD D5 8E 04 0046*       call draw_active_tile
-049351             0047*   @@: ; check whether it is time to spawn a seeker
-049351 FD 35 24    0048*       dec (iy+tile_move_timer)
-049354 C0          0049*       ret nz
-049355             0050*   ; spwan a seeker
-049355 CD 14 25 04 0051*       call enemy_spawn_seeker
-049359             0052*       ; fall through to reset move timer
-049359             0053*   pad_small_reset_move_timer:
-049359 CD AE 05 04 0054*       call rand_8     ; snag a random number
-04935D E6 1F       0055*       and %00011111   ; keep only 5 lowest bits (max 31)
-04935F C6 40       0056*       add a,64 ; range is now 64-127
-049361 FD 77 24    0057*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
-049364 C9          0058*       ret
-049365             0059*   
-049365             0060*   kill_pad_small:
-049365 CD 58 80 04 0061*       call update_score
-049369 C3 13 90 04 0062*       jp activate_crater
-04936D             0063*   ; end move_pad_small
-04936D             0078        include "tile_turret_fireball.inc"
-04936D FF FF FF FF 0001*       align 256
+049320 E6 1F       0026*       and %00011111 ; keep only 5 lowest bits (max 31)
+049322 DD 77 24    0027*       ld (ix+tile_move_timer),a ; when this hits zero,will spawn a seeker
+049325 C9          0028*       ret
+049326             0029*   ; end activate_pad_small
+049326             0030*   
+049326             0031*   move_pad_small:
+049326 CD 81 8E 04 0032*       call move_active_tile
+04932A CA 90 8B 04 0033*       jp z,table_deactivate_tile
+04932E CD 5C 23 04 0034*       call check_enemy_collision_laser
+049332 CA 63 93 04 0035*       jp z,kill_pad_small
+049336             0036*   ; do animation
+049336 FD 35 23    0037*       dec (iy+tile_animation_timer)
+049339 C2 4F 93 04 0038*       jp nz,@F
+04933D 3E 10       0039*       ld a,16
+04933F FD 77 23    0040*       ld (iy+tile_animation_timer),a
+049342 FD 7E 28    0041*       ld a,(iy+tile_frame)
+049345 3C          0042*       inc a
+049346 E6 07       0043*       and %00000111 ; modulo 8
+049348 FD 77 28    0044*       ld (iy+tile_frame),a
+04934B CD D5 8E 04 0045*       call draw_active_tile
+04934F             0046*   @@: ; check whether it is time to spawn a seeker
+04934F FD 35 24    0047*       dec (iy+tile_move_timer)
+049352 C0          0048*       ret nz
+049353             0049*   ; spwan a seeker
+049353 CD 14 25 04 0050*       call enemy_spawn_seeker
+049357             0051*       ; fall through to reset move timer
+049357             0052*   pad_small_reset_move_timer:
+049357 CD AE 05 04 0053*       call rand_8     ; snag a random number
+04935B E6 1F       0054*       and %00011111   ; keep only 5 lowest bits (max 31)
+04935D C6 40       0055*       add a,64 ; range is now 64-127
+04935F FD 77 24    0056*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
+049362 C9          0057*       ret
+049363             0058*   
+049363             0059*   kill_pad_small:
+049363 CD 58 80 04 0060*       call update_score
+049367 C3 13 90 04 0061*       jp activate_crater
+04936B             0062*   ; end move_pad_small
+04936B             0078        include "tile_turret_fireball.inc"
+04936B FF FF FF FF 0001*       align 256
        FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF FF 
-       FF FF FF    
-049400             0002*   turret_fireball_defaults:
-049400 02          0003*       db enemy_ground         ; type
-049401 7D 01 00    0004*       dl BUF_TURRET_000       ; base_bufferId
-049404 28 94 04    0005*       dl move_turret_fireball ; move_program
-049407 40          0006*       db %01000000            ; collisions bit 6 signals sprite alive
-049408 10          0007*       db 16                   ; dim_x
-049409 10          0008*       db 16                   ; dim_y
-04940A 20          0009*       db 32                   ; num_orientations
-04940B 01          0010*       db 1                    ; num_animations
-04940C 00          0011*       db 0                    ; animation
-04940D 00          0012*       db 0                    ; animation_timer
-04940E 00          0013*       db sprite_top           ; move_timer
-04940F 00          0014*       db 0                    ; move_step
-049410 05          0015*       db 5                    ; points
-049411 00          0016*       db 0                    ; shield_damage
-049412 00          0017*       db 0                    ; frame
-049413             0018*   
-049413             0019*   activate_turret_fireball:
-049413 21 00 94 04 0020*       ld hl,turret_fireball_defaults
-049417             0021*   ; get next available active tile id
-049417 CD C9 8B 04 0022*       call spawn_active_tile
-04941B D0          0023*       ret nc ; no carry means no free active tile slots, so we go home
-04941C             0024*   ; other specific initialization
-04941C CD AE 05 04 0025*       call rand_8     ; snag a random number
-049420 E6 0F       0026*       and %00001111 ; keep only 4 lowest bits (max 15)
-049422 C6 00       0027*       add a,sprite_top ; make sure minimum is sprite_top
-049424 FD 77 24    0028*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
-049427 C9          0029*       ret
-049428             0030*   ; end activate_turret_fireball
-049428             0031*   
-049428             0032*   move_turret_fireball:
-049428 CD 81 8E 04 0033*       call move_active_tile
-04942C CA 90 8B 04 0034*       jp z,table_deactivate_tile
-049430 CD 5C 23 04 0035*       call check_enemy_collision_laser
-049434 CA 67 94 04 0036*       jp z,kill_turret_fireball
-049438             0037*   ; target player
-049438 CD 2B 87 04 0038*       call tile_orientation_to_player
-04943C 21 00 04 00 0039*       ld hl,speed_fireball
-049440 22 58 87 04 0040*       ld (Vp),hl ; param for targeting_computer
-049444 CD 70 87 04 0041*       call targeting_computer
-049448 FD 2F 10    0042*       ld (iy+tile_heading),hl ; save active tile heading
-04944B CD 67 8C 04 0043*       call tile_frame_heading
-04944F CD D5 8E 04 0044*       call draw_active_tile
-049453             0045*   ; check whether it is time to spawn a fireball
-049453 FD 35 24    0046*       dec (iy+tile_move_timer)
-049456 C0          0047*       ret nz
-049457             0048*   ; spwan a fireball
-049457 CD 13 24 04 0049*       call enemy_spawn_fireball
-04945B             0050*       ; fall through to reset move timer
-04945B             0051*   turret_fireball_reset_move_timer:
-04945B CD AE 05 04 0052*       call rand_8     ; snag a random number
-04945F E6 1F       0053*       and %00011111   ; keep only 5 lowest bits (max 31)
-049461 C6 18       0054*       add a,24 ; range is now 24-55
-049463 FD 77 24    0055*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
-049466 C9          0056*       ret
-049467             0057*   
-049467             0058*   kill_turret_fireball:
-049467 CD 58 80 04 0059*       call update_score
-04946B C3 13 90 04 0060*       jp activate_crater
-04946F             0061*   ; end move_turret_fireball
-04946F             0079        include "debug.inc"
-04946F FF FF FF FF 0001*       align 256
        FF FF FF FF 
        FF FF FF FF 
        FF FF FF FF 
@@ -15557,6 +15459,103 @@ PC     Output      Line
        FF FF FF FF 
        FF FF FF FF 
        FF          
+049400             0002*   turret_fireball_defaults:
+049400 02          0003*       db enemy_ground         ; type
+049401 7D 01 00    0004*       dl BUF_TURRET_000       ; base_bufferId
+049404 26 94 04    0005*       dl move_turret_fireball ; move_program
+049407 40          0006*       db %01000000            ; collisions bit 6 signals sprite alive
+049408 10          0007*       db 16                   ; dim_x
+049409 10          0008*       db 16                   ; dim_y
+04940A 20          0009*       db 32                   ; num_orientations
+04940B 01          0010*       db 1                    ; num_animations
+04940C 00          0011*       db 0                    ; animation
+04940D 00          0012*       db 0                    ; animation_timer
+04940E 00          0013*       db 0                    ; move_timer
+04940F 00          0014*       db 0                    ; move_step
+049410 05          0015*       db 5                    ; points
+049411 00          0016*       db 0                    ; shield_damage
+049412 00          0017*       db 0                    ; frame
+049413             0018*   
+049413             0019*   activate_turret_fireball:
+049413 21 00 94 04 0020*       ld hl,turret_fireball_defaults
+049417             0021*   ; get next available active tile id
+049417 CD C9 8B 04 0022*       call spawn_active_tile
+04941B D0          0023*       ret nc ; no carry means no free active tile slots, so we go home
+04941C             0024*   ; other specific initialization
+04941C CD AE 05 04 0025*       call rand_8     ; snag a random number
+049420 E6 1F       0026*       and %00011111 ; keep only 5 lowest bits (max 31)
+049422 DD 77 24    0027*       ld (ix+tile_move_timer),a ; when this hits zero,will spawn a fireball
+049425 C9          0028*       ret
+049426             0029*   ; end activate_turret_fireball
+049426             0030*   
+049426             0031*   move_turret_fireball:
+049426 CD 81 8E 04 0032*       call move_active_tile
+04942A CA 90 8B 04 0033*       jp z,table_deactivate_tile
+04942E CD 5C 23 04 0034*       call check_enemy_collision_laser
+049432 CA 65 94 04 0035*       jp z,kill_turret_fireball
+049436             0036*   ; target player
+049436 CD 2B 87 04 0037*       call tile_orientation_to_player
+04943A 21 00 04 00 0038*       ld hl,speed_fireball
+04943E 22 58 87 04 0039*       ld (Vp),hl ; param for targeting_computer
+049442 CD 70 87 04 0040*       call targeting_computer
+049446 FD 2F 10    0041*       ld (iy+tile_heading),hl ; save active tile heading
+049449 CD 67 8C 04 0042*       call tile_frame_heading
+04944D CD D5 8E 04 0043*       call draw_active_tile
+049451             0044*   ; check whether it is time to spawn a fireball
+049451 FD 35 24    0045*       dec (iy+tile_move_timer)
+049454 C0          0046*       ret nz
+049455             0047*   ; spwan a fireball
+049455 CD 13 24 04 0048*       call enemy_spawn_fireball
+049459             0049*       ; fall through to reset move timer
+049459             0050*   turret_fireball_reset_move_timer:
+049459 CD AE 05 04 0051*       call rand_8     ; snag a random number
+04945D E6 1F       0052*       and %00011111   ; keep only 5 lowest bits (max 31)
+04945F C6 18       0053*       add a,24 ; range is now 24-55
+049461 FD 77 24    0054*       ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
+049464 C9          0055*       ret
+049465             0056*   
+049465             0057*   kill_turret_fireball:
+049465 CD 58 80 04 0058*       call update_score
+049469 C3 13 90 04 0059*       jp activate_crater
+04946D             0060*   ; end move_turret_fireball
+04946D             0079        include "debug.inc"
+04946D FF FF FF FF 0001*       align 256
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF    
 049500             0002*   
 049500             0003*   
 049500             0004*   printHexA:
