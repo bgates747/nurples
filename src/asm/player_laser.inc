@@ -17,6 +17,8 @@ laser_defaults:
     db 0	                ; shield_damage
     db 0                    ; frame
 
+
+player_lasers_max: equ 4
 laser_speed: equ 4*256 ; 6 pixels per frame 16.8 fixed
 tmr_laser: ds 6 ; rate timer for firing laser
 tmr_laser_reset: dl 120/10
@@ -25,6 +27,7 @@ laser_animation_timer_reset: equ 2 ; animate every two frames
 laser_power: db 64 ; integer
 laser_power_last: db 0 ; integer
 laser_power_max: db 64 ; integer
+laser_power_per_shot: db 4 ; integer
 charge_laser_timer: db 0
 charge_laser_timer_max: db 6
 bar_laser:
@@ -87,17 +90,16 @@ player_move_weapons:
 ; end player_move_weapons
 
 player_spawn_laser:
-; check laser power
-    ld a,(laser_power)
-    sub a,4 ; units of power per laser shot
-    ret c ; not enough power to fire
  ; check laser spawn timer
     ld iy,tmr_laser
     call timestamp_tmr_get
     ret p ; not time to fire
-; update power to reflect firing
+; check laser power
     ld a,(laser_power)
-    sub a,4 ; units of power per laser shot
+    ld hl,laser_power_per_shot
+    sub (hl) ; units of power per laser shot
+    ret c ; not enough power to fire
+; update power to reflect firing
     ld (laser_power),a
 ; reset timer
     ld hl,(tmr_laser_reset)

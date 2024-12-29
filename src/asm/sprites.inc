@@ -39,15 +39,10 @@ sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collisio
 sprite_frame:              equ  40; 1 bytes ;current animation frame
 
 ; ###### SPRITE TABLE VARIABLES ######
-; maximum number of sprites
-table_max_records: equ 16 ; it can handle more but this is pushing it
-; table_total_bytes: equ table_end-table_start_variables
-
 ; pointer to top address of current record, initialized to table_base
 table_pointer: dl table_base
 
 ; flag indicating collision with screen edge
-; uses orientation codes to specify which edge(s)
 sprite_screen_edge: db #00 
 
 ; ######### COLLISION SPRITE PARAMETERS ##########

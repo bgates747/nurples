@@ -18,7 +18,6 @@ player_defaults:
 player_state:  dl player_alive
 player_ships: db 3 ; integer
 player_speed: equ 3*256 ; pixels per frame 16.8 fixed
-player_lasers_max: equ 4
 
 draw_player_ships:
 ; activate mfd
