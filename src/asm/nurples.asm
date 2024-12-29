@@ -62,6 +62,7 @@ exit:
     include "player_laser.inc"
     include "player_score.inc"
     include "player_shields.inc"
+    include "screen.inc"
     include "sprites.inc"
     include "state.inc"
     include "state_game_init.inc"
