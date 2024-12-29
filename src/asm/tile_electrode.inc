@@ -1,4 +1,3 @@
-    align 256
 electrode_defaults:
     db 9                    ; type
     dl BUF_TILE_BLANK       ; base_bufferId

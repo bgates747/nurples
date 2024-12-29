@@ -1,4 +1,3 @@
-    align 256
 ; ====== COLLISION DETECTION ======
 ; --- constants ---
 ; sprite_collisions flags

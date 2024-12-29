@@ -1,4 +1,3 @@
-    align 256
 tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
 tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
     ; initialize to zero for a maximum of 256 rows in a level

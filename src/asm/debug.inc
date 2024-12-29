@@ -1,6 +1,3 @@
-    align 256
-
-
 printHexA:
     push af
     push bc

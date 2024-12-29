@@ -1,5 +1,3 @@
-    align 256
-
 ; Print a zero-terminated string inline with code, e.g.:
 ;
 ;    call printInline

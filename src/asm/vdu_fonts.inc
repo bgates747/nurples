@@ -1,4 +1,3 @@
-    align 256
 ; select font
 ; inputs: hl = bufferId, a = font flags
 ; Flags:

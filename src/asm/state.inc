@@ -1,5 +1,3 @@
-    align 256
-
 ; Game state variables
 game_state:  dl game_main_menu
 

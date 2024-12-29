@@ -1,4 +1,3 @@
-    align 256
 ; https://agonconsole8.github.io/agon-docs/VDP---PLOT-Commands.html
 ; PLOT code 	(Decimal) 	Effect
 ; &00-&07 	0-7 	Solid line, includes both ends

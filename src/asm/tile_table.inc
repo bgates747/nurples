@@ -1,5 +1,5 @@
 ; ###### tile TABLE FIELD INDICES ######
-tile_table_record_size:         equ  64; 41 bytes ;41 bytes per tile record
+tile_table_record_size:         equ  64; bytes per tile record
 tile_id:                 equ   0; 1 bytes ;unique tileId, zero-based
 ; tile state variables
 tile_state_variables:    equ   1; beginning of tile state variables
@@ -29,7 +29,6 @@ tile_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 tile_frame:              equ  40; 1 bytes ;current animation frame
 
 ; ###### tile TABLE VARIABLES ######
-    align 256
 tile_stack: blkb 256*3,0 ; stack of pointers to tile records
     dl 0 ; list terminator
 tile_stack_end:

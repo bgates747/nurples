@@ -1,4 +1,3 @@
-    align 256
 lightning_defaults:
     db tile_lightning       ; type
     dl BUF_LIGHTNING_H_0    ; base_bufferId

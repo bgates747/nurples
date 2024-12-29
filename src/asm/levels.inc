@@ -1,5 +1,3 @@
-    align 256
-
 ; tileset indices
 tiles_dg: equ 0
 ; tiles_xevious: equ 1

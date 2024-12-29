@@ -1,5 +1,3 @@
-    align 256
-
 ; UART ports for reading joystick input
 ; bit tests: 0 means actuated, 1 means not actuated
 portC: 	EQU 	$9E ; reads dpad input

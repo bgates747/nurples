@@ -73,8 +73,6 @@ exit:
     include "sprites.inc"
     include "debug.inc"
 
-    align 256
-
 ; --- MAIN PROGRAM FILE ---
 hello_world: asciz "Welcome to Purple Nurples!"
 loading_time: asciz "Loading time:"

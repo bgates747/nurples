@@ -1,5 +1,3 @@
-    align 256
-
 ; compute orientation to player 
 ; based on relative positions
 ; returns: uh.l 16.8 fixed angle256 to player

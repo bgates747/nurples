@@ -1,4 +1,3 @@
-    align 256
 pad_small_defaults:
     db tile_pad_small       ; type
     dl BUF_TILE_PAD_0       ; base_bufferId

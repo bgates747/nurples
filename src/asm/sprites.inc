@@ -9,7 +9,7 @@ player_air: equ 6
 player_ground: equ 7
 
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_record_size:         equ  64; 40 bytes ;40 bytes per sprite record
+table_record_size:         equ  64; bytes per sprite record
 sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
 ; sprite state variables
 sprite_state_variables:    equ   1; beginning of sprite state variables

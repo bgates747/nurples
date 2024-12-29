@@ -1,5 +1,3 @@
-    align 256
-
 laser_defaults:
     db player_air        ; type
     dl BUF_LASER_A	    ; base_bufferId

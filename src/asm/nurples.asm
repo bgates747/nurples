@@ -78,8 +78,6 @@ exit:
     include "tile_turret_fireball.inc"
     include "debug.inc"
 
-    align 256
-
 ; --- MAIN PROGRAM FILE ---
 main:
 ; start a new game

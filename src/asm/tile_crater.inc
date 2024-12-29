@@ -1,4 +1,3 @@
-    align 256
 crater_defaults:
     db tile_crater          ; type
     dl BUF_EXPLOSION_A      ; base_bufferId

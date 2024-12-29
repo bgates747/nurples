@@ -1,4 +1,3 @@
-    align 256
 turret_fireball_defaults:
     db enemy_ground         ; type
     dl BUF_TURRET_000       ; base_bufferId

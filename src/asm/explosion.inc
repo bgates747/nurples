@@ -1,5 +1,3 @@
-    align 256
-
 explosions_max: equ 8
 explosion_defaults:
     db explosion            ; type

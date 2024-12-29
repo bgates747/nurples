@@ -1,5 +1,3 @@
-    align 256
-
 seekers_count: db 0
 seekers_max: equ 3
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
