@@ -40,6 +40,29 @@ printNewLine:
     pop af
     RET
 
+; print a zero-terminated string at a graphics coordinate
+; Inputs: HL Pointer to string, BC,DE x,y position (in pixels)
+printStringGfx:
+    push hl ; preserve string pointer
+; move graphics cursor to x,y location
+    ld a,plot_pt+mv_abs
+    call vdu_plot
+; print string
+    pop hl ; restore string pointer
+@print_loop:
+    ld a,(hl)
+    or a ; check for end of string
+    ret z ; if zero, we're done
+    ex af,af' ; preserve character
+    ld a,5 ; VDU 5 char to gfx cursor
+    rst.lil 10h ; send it
+    ex af,af' ; restore character
+    rst.lil 10h ; print character
+    inc hl
+    jp @print_loop
+    ret
+; end printStringGfx
+
 ; Print a 24-bit HEX number
 ; HLU: Number to print
 printHex24:
