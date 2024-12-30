@@ -21,9 +21,9 @@ ctl_panel_r:
 
 ctl_panel_top:
     dl BUF_CTL_PANEL_TOP ; bufferId
-    dl 128 ; x0
+    dl 80 ; x0
     dl 0 ; y0
-    dl 128+254 ; x1
+    dl 80+351 ; x1
     dl 0+47 ; y1
 
 mfd_bezel_l:

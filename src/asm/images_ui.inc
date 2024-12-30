@@ -60,7 +60,7 @@ ui_image_list: ; type; width; height; size; filename; bufferId:
 	dl 1, 16, 16, 256, fn_credits, 8
 	dl 1, 128, 128, 16384, fn_ctl_panel_l, 9
 	dl 1, 128, 128, 16384, fn_ctl_panel_r, 10
-	dl 1, 256, 48, 12288, fn_ctl_panel_top, 11
+	dl 1, 352, 48, 16896, fn_ctl_panel_top, 11
 	dl 1, 16, 16, 256, fn_jerry_can, 12
 	dl 1, 36, 18, 648, fn_mfd_arms, 13
 	dl 1, 96, 96, 9216, fn_mfd_bezel, 14

@@ -164,20 +164,20 @@ start_level_countdown:
     ret
 ; end start_level_countdown
 
-level_x: equ 48
-level_y: equ 0
+level_x: equ 39
+level_y: equ 1
 print_level:
 ; set text colors
-    ld a,16+128 ; darkest blue
+    ld a,c_black+128
     call vdu_colour_text
-    ld a,58 ; dark orange
+    ld a,c_green
     call vdu_colour_text
 ; set text coordinates and print
     ld c,level_x
     ld b,level_y
     call vdu_move_cursor
     call printInline
-    asciz "Level: "
+    asciz "Level "
     ld a,(cur_level)
     call printHexA
     ret 
