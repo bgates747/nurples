@@ -19,6 +19,13 @@ ctl_panel_r:
     dl 384+128 ; x1
     dl 256+128 ; y1
 
+ctl_panel_top:
+    dl BUF_CTL_PANEL_TOP ; bufferId
+    dl 128 ; x0
+    dl 0 ; y0
+    dl 128+254 ; x1
+    dl 0+47 ; y1
+
 mfd_bezel_l:
     dl BUF_MFD_BEZEL ; bufferId
     dl 24 ; x0
@@ -37,6 +44,8 @@ draw_player_cockpit:
     ld ix,ctl_panel_l
     call draw_player_ctl_panel
     ld ix,ctl_panel_r
+    call draw_player_ctl_panel
+    ld ix,ctl_panel_top
     call draw_player_ctl_panel
     ld ix,mfd_bezel_l
     call draw_player_ctl_panel

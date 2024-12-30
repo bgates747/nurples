@@ -1,7 +1,7 @@
 
 player_shields: db 64
-; player_shields_max: db 64
-player_shields_max: db 8 ; DEBUG
+player_shields_max: db 64
+; player_shields_max: db 8 ; DEBUG
 player_shields_last: db 0
 bar_shields:
     dl 0 ; value
