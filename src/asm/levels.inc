@@ -83,10 +83,7 @@ next_level:
 @@: ; fall through to init_level
 ; end next_level
 
-; print_level:
-level_x: equ 48
-level_y: equ 0
-; inputs: ix pointed to tileset level definition
+; inputs: tileset_ptr_idx, cur_level
 init_level:
 ; set pointers
     call get_level_ptr ; ix points to level lookup record
@@ -111,15 +108,11 @@ init_level:
     ld (tiles_x_plot),hl
     ld hl,-15
     ld (tiles_y_plot),hl
-; print level
-    ld c,level_x
-    ld b,level_y
-    call vdu_move_cursor
-    call printInline
-    asciz "Level: "
-    ld a,(cur_level)
-    call printHexA
-    ; fall through to init_bg
+; print level number
+    call print_level
+    ret
+; end init_level
+
 init_bg:
 ; draw initial background tiles 
     ld hl,BUF_BG_STARS_0
@@ -134,3 +127,58 @@ init_bg:
     call vdu_plot_bmp
     ret
 ; end init_level
+start_level_countdown:
+; set gfx origin and viewport to playing field window
+    call set_gfx_playing_field
+    call init_bg
+; set text colors
+    ld a,16+128 ; darkest blue
+    call vdu_colour_text
+    ld a,58 ; dark orange
+    call vdu_colour_text
+; print get ready message
+    ld c,27 ; x
+    ld b,16 ; y
+    call vdu_move_cursor
+    call printInline
+    asciz "Get Ready!"
+; countdown to restart
+    ld c,24 ; x
+    ld b,17 ; y
+    call vdu_move_cursor
+    call printInline
+    asciz "Starting In..."
+    ld b,6 ; loop counter
+@waitLoop:
+    push bc
+    ld a,b
+    dec a
+    call printHexA
+    ld c,38 ; x
+    ld b,17 ; y
+    call vdu_move_cursor
+    ld a,%10000000 ; bit 7 changes once per second
+    call multiPurposeDelay
+    pop bc
+    djnz @waitLoop
+    ret
+; end start_level_countdown
+
+level_x: equ 48
+level_y: equ 0
+print_level:
+; set text colors
+    ld a,16+128 ; darkest blue
+    call vdu_colour_text
+    ld a,58 ; dark orange
+    call vdu_colour_text
+; set text coordinates and print
+    ld c,level_x
+    ld b,level_y
+    call vdu_move_cursor
+    call printInline
+    asciz "Level: "
+    ld a,(cur_level)
+    call printHexA
+    ret 
+; end print_level

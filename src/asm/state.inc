@@ -34,9 +34,26 @@ game_level_transition:
     ret
 
 game_over:
-    call vdu_home_cursor
+; set text colors
+    ld a,16+128 ; darkest blue
+    call vdu_colour_text
+    ld a,58 ; dark orange
+    call vdu_colour_text
+; print game over and prompt
+    ld c,27 ; x
+    ld b,16 ; y
+    call vdu_move_cursor
     call printInline
-    asciz "Game Over!\r\nPress any key to continue..."
+    asciz "GAME OVER!"
+    ld c,19 ; x
+    ld b,17 ; y
+    call vdu_move_cursor
+    call printInline
+    asciz "Press any key to continue."
+    ld a,%00100000 ; wait just a tick before polling for input
+    call multiPurposeDelay
+    call waitKeypress
+; initialize a new game
     ld hl,game_init
     ld (game_state),hl
     ret

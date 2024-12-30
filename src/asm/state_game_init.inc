@@ -105,10 +105,7 @@ game_init:
 @assets_loaded:
 ; set gfx origin and viewport to playing field window
     call set_gfx_playing_field
-; set background color
-    ld a,26+128 ; violet
-    call vdu_gcol
-    call vdu_clg
+    call init_bg ; plot the starry background
 ; VDU 28, left, bottom, right, top: Set text viewport **
     ld c,0 ; left
     ld d,0 ; top
@@ -135,8 +132,9 @@ game_init:
     ld (player_score_last),hl
     ld a,(player_ships_max)
     ld (player_ships),a
-    call player_init
     call draw_player_ships
+    call start_level_countdown
+    call player_init
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl

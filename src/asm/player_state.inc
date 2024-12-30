@@ -113,7 +113,6 @@ player_alive:
 ; end player_alive
 
 player_dying:
-; DEBUG
 ; decrement lives
     ld a,(player_ships)
     dec a
@@ -131,43 +130,9 @@ player_dying:
 ; reset player score to what it was at the start of the level
     ld hl,(player_starting_score)
     ld (player_score),hl
-
-; set gfx origin and viewport to playing field window
-    call set_gfx_playing_field
-    call vdu_clg
-
-; print get ready message
-    ld c,27 ; x
-    ld b,16 ; y
-    call vdu_move_cursor
-    call printInline
-    asciz "Get Ready!"
-
-; countdown to restart
-    ld c,23 ; x
-    ld b,17 ; y
-    call vdu_move_cursor
-    call printInline
-    asciz "Restarting In..."
-    ld b,6 ; loop counter
-@waitLoop:
-    push bc
-    ld a,b
-    dec a
-    call printHexA
-    ld c,39 ; x
-    ld b,17 ; y
-    call vdu_move_cursor
-    ld a,%10000000 ; bit 7 changes once per second
-    call multiPurposeDelay
-    pop bc
-    djnz @waitLoop
-
 ; restart the level
-    call vdu_clg
-    ld hl,cur_level
-    dec (hl) ; decrement level so it will be incremented back to the same level
-    call next_level
+    call start_level_countdown
+    call init_level
 ; spawn player sprite at starting position
     call player_init
 ; set the game state to playing
@@ -178,11 +143,6 @@ player_dying:
     ld (player_state), hl
     ld hl,enemies_alive
     ld (enemies_state), hl
-    ret
-; END DEBUG
-
-    ld hl,enemies_despawning
-    ld (enemies_state),hl
     ret
 ; end player_dying
 

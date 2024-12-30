@@ -138,7 +138,7 @@ bg_plot:
 ; load the next background tile
     ld hl,BUF_BG_STARS_0
     call rand_8
-    and %0000111
+    and %0000011
     add a,l
     ld l,a
     ld a,0

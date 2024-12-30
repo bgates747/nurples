@@ -20,6 +20,12 @@ score_x: equ 50
 score_y: equ 33
 ; inputs: none
 print_score:
+; set text colors
+    ld a,c_black+128
+    call vdu_colour_text
+    ld a,c_green
+    call vdu_colour_text
+; print the score
     ld hl,(player_score_last)
     ld de,(player_score)
     ld (player_score_last),de
