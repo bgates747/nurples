@@ -9,15 +9,15 @@ ctl_panel_l:
     dl BUF_CTL_PANEL_L ; bufferId
     dl 0 ; x0
     dl 256 ; y0
-    dl 0+128 ; x1
-    dl 256+128 ; y1
+    dl 0+127 ; x1
+    dl 256+127 ; y1
 
 ctl_panel_r:
     dl BUF_CTL_PANEL_R ; bufferId
     dl 384 ; x0
     dl 256 ; y0
-    dl 384+128 ; x1
-    dl 256+128 ; y1
+    dl 384+127 ; x1
+    dl 256+127 ; y1
 
 ctl_panel_top:
     dl BUF_CTL_PANEL_TOP ; bufferId
@@ -30,15 +30,22 @@ mfd_bezel_l:
     dl BUF_MFD_BEZEL ; bufferId
     dl 24 ; x0
     dl 280 ; y0
-    dl 24+96 ; x1
-    dl 280+96 ; y1
+    dl 24+95 ; x1
+    dl 280+95 ; y1
 
 mfd_bezel_r:
     dl BUF_MFD_BEZEL ; bufferId
     dl 392 ; x0
     dl 280 ; y0
-    dl 392+96 ; x1
-    dl 280+96 ; y1
+    dl 392+95 ; x1
+    dl 280+95 ; y1
+
+mfd_ships:
+    dl 0 ; bufferId
+    dl 128 ; x0
+    dl 8 ; y0
+    dl 128+79 ; x1
+    dl 8+31 ; y1
 
 draw_player_cockpit:
     ld ix,ctl_panel_l
@@ -63,20 +70,29 @@ draw_player_cockpit:
     ld bc,492
     ld de,368
     call vdu_plot_bmp
+
     ld hl,BUF_POWER
     call vdu_buff_select
     ld bc,4
     ld de,368
     call vdu_plot_bmp
+
     ld hl,BUF_CREDITS
     call vdu_buff_select
     ld bc,384
     ld de,261
     call vdu_plot_bmp
+
     ld hl,BUF_JERRY_CAN
     call vdu_buff_select
     ld bc,110
     ld de,258
+    call vdu_plot_bmp
+
+    ld hl,BUF_CTL_PANEL_NAVBALL_SM
+    call vdu_buff_select
+    ld bc,420
+    ld de,309
     call vdu_plot_bmp
 
     call init_bar_shields

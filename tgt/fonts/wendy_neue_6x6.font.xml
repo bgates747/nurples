@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <settings>
-  <setting name="original_font_path" value="/home/smith/Agon/emulator/sdcard/mystuff/agon-utils/examples/font_editor/src/fonts/net/ttf/wendy_neue/wendy_neue.ttf"/>
+  <setting name="original_font_path" value="/home/smith/Agon/emulator/sdcard/mystuff/agon-utils/src/fonts/net/ttf/wendy_neue/wendy_neue.ttf"/>
   <setting name="font_name" value="wendy_neue"/>
   <setting name="font_variant" value=""/>
   <setting name="font_width" value="7"/>

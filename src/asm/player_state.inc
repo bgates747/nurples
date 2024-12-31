@@ -22,7 +22,7 @@ player_speed: equ 3*256 ; pixels per frame 16.8 fixed
 
 draw_player_ships:
 ; activate mfd
-    ld ix,mfd_bg_r
+    ld ix,mfd_ships
     call mfd_activate
 ; blank out previously drawn ships
     xor a ; color mode 0
@@ -30,27 +30,28 @@ draw_player_ships:
     call vdu_gcol
     ld bc,0
     ld de,0
-    ld ix,63
-    ld iy,15
+    ld ix,0+79
+    ld iy,0+15
     call vdu_plot_rf
 ; draw the ships remaining
-    ld hl,BUF_SHIP_SMALL
+    ld hl,BUF_SHIP_MFD
     call vdu_buff_select
     ld a,(player_ships) ; loop counter
-    ld bc,4 ; starting x-coordinate
+    ld bc,0 ; starting x-coordinate
 @loop:
+    dec a ; we don't count the ship we're flying
+    ret z 
     push af ; back up loop counter
     push bc ; save x-coordinate
-    ld de,4 ; y-coordinate
+    ld de,0 ; y-coordinate
     call vdu_plot_bmp
     pop bc ; restore x-coordinate
-    ld hl,12 ; bump x-coords
+    ld hl,16 ; bump x-coords
     add hl,bc
     push hl
     pop bc ; bc = new x-coordinate
     pop af
-    dec a
-    jp nz,@loop    
+    jp @loop    
     ret
 ; end draw_player_ships
 

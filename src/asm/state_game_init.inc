@@ -25,7 +25,7 @@ game_init:
 ; load fonts
 	call fonts_load
 ; select font
-    ld hl,computer_pixel_7_8x16
+    ld hl,Lat38_VGA8_8x8
     ld a,1 ; flags
     call vdu_font_select
 ; load UI images
@@ -86,7 +86,7 @@ game_init:
     call vdu_set_scaling
     call vdu_cursor_off
 ; select font
-    ld hl,Lat2_VGA8_8x8
+    ld hl,Lat38_VGA8_8x8
     ld a,1 ; flags
     call vdu_font_select
 ; plot bezel art
