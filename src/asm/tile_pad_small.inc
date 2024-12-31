@@ -42,11 +42,16 @@ move_pad_small:
     and %00000111 ; modulo 8
     ld (iy+tile_frame),a
     call draw_active_tile
-@@: ; check whether it is time to spawn a seeker    
+@@: ; check player alive
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    ret z ; player dead so nothing more to do
+; check whether it is time to spawn a seeker    
     dec (iy+tile_move_timer)
     ret nz
 ; spwan a seeker    
     call enemy_spawn_seeker
+    ; ret ; DEBUG
     ; fall through to reset move timer
 pad_small_reset_move_timer:
     call rand_8     ; snag a random number

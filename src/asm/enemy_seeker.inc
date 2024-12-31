@@ -5,7 +5,7 @@ speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 seeker_defaults:
     db enemy_air            ; type
     dl BUF_SEEKER_000       ; base_bufferId
-    dl move_enemy_seeker    ; move_program
+    dl en_nav_seek_zag    ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
@@ -31,11 +31,60 @@ enemy_spawn_seeker:
     ret
 ; end enemy_spawn_seeker
 
+move_enemy_seeker_orbit:
+; compute x coordinate of orbit origin based on sprite id
+    ld a,seeker_min_sprite_id
+    sub (iy+sprite_id)
+    ld l,a
+    ld h,85 ; 1/3 the playing field width
+    mlt hl
+    ld a,64 ; 1/4 of the playing field width
+    add a,l ; a = x coordinate of orbit origin
+    ld (iy+sprite_move_step),a ; as good a place as any to store it
+; initialize orbit angle
+    xor a
+    ld (iy+sprite_orientation),a
+; ; initialize move timer
+;     inc a ; set to 1
+;     ld (iy+sprite_move_timer),a
+; init done, so update move program
+    ld hl,@stage1 ; update move program pointer
+    ld (iy+sprite_move_program),hl
+; fall through to @stage1
+@stage1:
+; ; check whether time to update orbit angle
+;     dec (iy+sprite_move_timer)
+;     jp nz,@F ; not time to change so simply movethe sprite on the current heading
+;     inc (iy+sprite_move_timer) ; reset timer to 1
+; update the target coordinates based on orbit angle and radius
+    inc (iy+sprite_orientation) ; increment angle
+    ld hl,0 ; clear hlu and l
+    ld h,(iy+sprite_orientation) ; uh.l = angle
+    ld de,128*256 ; ud.e = radius
+    call polar_to_cartesian ; u.bc, u.de = x,y offsets
+    ld a,(iy+sprite_move_step) ; x coordinate of orbit origin
+    add a,b ; add x offset
+    ld bc,0 ; bcu and c
+    ld b,a ; ub.c = x
+    ld hl,336/2*256 
+    add hl,de
+    ex de,hl ; ud.e = y
+    call bearing_to_coord ; uh.l = angle to coordinate
+    ld (iy+sprite_heading),hl ; save angle as heading
+; compute component velocities, save them in sprite record, and move the sprite
+    call sprite_compute_velocities
+@@:
+    call move_sprite ; move the sprite
+    jp move_enemy_seeker
+; end move_enemy_seeker_orbit
+
 move_enemy_seeker:
-; run the movement program for the seeker enemy
-    call en_nav_seek_zag
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    jp z,@F ; player is dead so don't check for collisions
     call check_enemy_collision_player
     jp z,@player
+@@:
     call check_enemy_collision_laser
     jp z,@laser
 ; change the animation frame to match heading
@@ -76,7 +125,7 @@ en_nav_seek_zag:
     call move_sprite ; move the sprite
     or a ; a will be non-zero if have collided with screen edge
     jp nz,@zag_switch ; switch direction
-    ret ; didn't hit edge, nothing else to do
+    jp move_enemy_seeker ; didn't hit an edge so check collisions and move sprite
 @zig_zag_start:
     ld iy,(table_pointer) 
     call rand_8

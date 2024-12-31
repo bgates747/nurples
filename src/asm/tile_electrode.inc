@@ -27,6 +27,9 @@ activate_electrode:
 move_electrode:
     call move_active_tile 
     jp z,table_deactivate_tile
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    jp z,@laser ; player is dead so don't check for collisions
     call check_enemy_collision_player
     jp nz,@laser ; no collision so check laser collision    
     call update_shields

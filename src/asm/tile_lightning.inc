@@ -28,6 +28,9 @@ move_lightning:
     call move_active_tile 
     jp z,table_deactivate_tile
     call check_enemy_collision_laser ; kills laser on collision but does not die
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    jp z,@animate ; player is dead so don't check for collisions
     call check_enemy_collision_player
     jp nz,@animate ; no collision so do animation
     call update_shields

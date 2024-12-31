@@ -133,7 +133,6 @@ game_init:
     ld a,(player_ships_max)
     ld (player_ships),a
     call draw_player_ships
-    call start_level_countdown
     call player_init
 ; set the game state to playing
     ld hl,game_playing

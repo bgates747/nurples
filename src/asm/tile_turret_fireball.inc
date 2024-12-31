@@ -40,6 +40,10 @@ move_turret_fireball:
     ld (iy+tile_heading),hl ; save active tile heading
     call tile_frame_heading
     call draw_active_tile
+; check player alive
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    ret z ; player dead so nothing more to do
 ; check whether it is time to spawn a fireball      
     dec (iy+tile_move_timer)
     ret nz

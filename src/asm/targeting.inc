@@ -64,6 +64,41 @@ tile_orientation_to_player:
     ret
 ; end tile_orientation_to_player
 
+; compute orientation to coordinate 
+; based on relative positions
+; returns: uh.l 16.8 fixed angle256 to coordinate
+;    ub.c and ud.e as 16.8 signed fixed point numbers
+;    representing delta-x/y *to* target respectively
+; inputs: iy pointed at sprite record, ub.c,ud.e are target x,y coordinates
+; destroys: everything except iy (sprite record pointer)
+bearing_to_coord:
+; compute dx
+    push bc
+    pop hl
+    ld bc,(iy+sprite_x)
+    or a ; clear carry
+    sbc hl,bc ; dx
+    push hl ; save dx
+; compute dy
+    ex de,hl
+    ld de,(iy+sprite_y)
+    or a ; clear carry
+    sbc hl,de ; dy
+    ex de,hl ; de = dy
+; compute angle to coordinate
+    pop bc ; dx (was hl)
+    push bc ; save dx
+    push de ; save dy
+    call atan2_168fast ; uh.l = angle to coordinate
+    ld a,%11100000 
+    and l ; round angle to nearest 32th of a circle
+    ld l,a
+    ld (Bearing_t),hl ; return angle to coordinate
+    pop de ; restore dy
+    pop bc ; restore dx
+    ret
+; end bearing_to_coord
+
 ; targeting_computer variables fixed 16.8 format
 Bearing_t: dl 0x000000 ; angle to target
 Heading_t: dl 0x000000 ; angle of target motion

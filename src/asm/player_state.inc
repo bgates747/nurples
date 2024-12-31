@@ -113,13 +113,62 @@ player_alive:
     ret
 ; end player_alive
 
-player_dying:
+kill_player:
+; set player collision flag to dead
+    ld ix,player_begin
+    res sprite_alive,(ix+sprite_collisions)
+; change seeker move program to move_enemy_seeker_orbit
+    ld iy,seekers_base
+    ld hl,move_enemy_seeker_orbit
+    ld b,seekers_max
+    call change_sprite_group_move_program
 ; decrement lives
     ld a,(player_ships)
     dec a
     jp z,game_over
     ld (player_ships),a
     call draw_player_ships
+; set player state to dying
+    ld hl,player_dying
+    ld (player_state),hl
+    ret
+; end kill_player
+
+player_dying:
+; spawn explosions at player location
+    ld b,16 ; loop counter
+@loop_explode:
+    push bc ; save loop counter
+    call spawn_explosion_player
+; move explosions for a few frames
+    ld b,16 ; loop counter
+@loop_animate:
+    push bc
+    call @animate
+    pop bc
+    djnz @loop_animate
+    pop bc
+    djnz @loop_explode
+; set game state to player dead
+    ld hl,player_dead
+    ld (player_state),hl
+    ret
+@animate:
+    call tiles_plot
+    call set_gfx_playing_field
+    call player_move_weapons
+    call do_enemies
+    call move_explosions
+    call move_tiles
+    call vdu_vblank
+    ; call vdu_vblank ; DEBUG
+    ; call vdu_vblank ; DEBUG
+    ret
+; end player_dying
+
+get_ready: asciz "Get Ready!"
+
+player_dead:
 ; reset the sprite table
     call table_init
     ld hl,table_base
@@ -145,19 +194,4 @@ player_dying:
     ld hl,enemies_alive
     ld (enemies_state), hl
     ret
-; end player_dying
-
-get_ready: asciz "Get Ready!"
-
-player_dead:
-    call player_move_weapons
-    ret
 ; end player_dead
-
-
-kill_player:
-    ld hl,player_dying
-    ld (player_state),hl
-    ret
-; end kill_player
-

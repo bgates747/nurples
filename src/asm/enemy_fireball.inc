@@ -53,6 +53,9 @@ move_enemy_fireball:
     ld a,(sprite_screen_edge)
     or a ; a will be non-zero if have scrolled off screen
     jp nz,table_deactivate_sprite
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    jp z,@animate ; player is dead so don't check for collisions
     call check_enemy_collision_player
     jp nz,@animate ; no collision so do animation
     call update_shields

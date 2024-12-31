@@ -287,6 +287,24 @@ move_sprite_group:
     jp @next_record
 ; end move_sprite_group
 
+; update behavior subroutines for a specified sprite group
+; inputs: hl = pointer to move program, iy = pointer to sprite group, b = number of records in sprite group
+change_sprite_group_move_program:
+@update_loop:
+; check sprite_alive bit to see if sprite is active
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@next_record ; ... skip to next record
+; otherwise load the behavior subroutine address
+    ld (iy+sprite_move_program),hl
+ ; clear just spawned flag
+    res 7,(iy+sprite_type)
+; fall through to @next_record
+@next_record:
+    lea iy,iy+table_record_size
+    djnz @update_loop ; loop until we've checked all the records
+    ret
+; end change_sprite_group_move_program
+
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly
 ; inputs: table_pointer set to sprite record
