@@ -85,6 +85,10 @@ next_level:
 
 ; inputs: tileset_ptr_idx, cur_level
 init_level:
+; ; initialize sprites and active tiles table
+;     call sprites_init
+;     call table_init
+;     call tile_table_init
 ; set pointers
     call get_level_ptr ; ix points to level lookup record
     ld ix,(ix) ; ix points to level definition
@@ -104,12 +108,12 @@ init_level:
     ld hl,-1
     ld (bg_y_plot),hl
     inc hl
-    ld (tiles_row),hl
     ld (tiles_x_plot),hl
     ld hl,-15
     ld (tiles_y_plot),hl
 ; print level number
     call print_level
+    ; call start_level_countdown
     ret
 ; end init_level
 
