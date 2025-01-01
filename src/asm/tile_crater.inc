@@ -1,6 +1,6 @@
 crater_defaults:
     db tile_crater          ; type
-    dl BUF_EXPLOSION_A      ; base_bufferId
+    dl BUF_CRATER_A      ; base_bufferId
     dl move_crater          ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
