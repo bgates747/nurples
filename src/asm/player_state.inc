@@ -122,12 +122,6 @@ kill_player:
     ld hl,move_enemy_seeker_orbit
     ld b,seekers_max
     call change_sprite_group_move_program
-; decrement lives
-    ld a,(player_ships)
-    dec a
-    jp z,game_over
-    ld (player_ships),a
-    call draw_player_ships
 ; set player state to dying
     ld hl,player_dying
     ld (player_state),hl
@@ -161,14 +155,18 @@ player_dying:
     call move_explosions
     call move_tiles
     call vdu_vblank
-    ; call vdu_vblank ; DEBUG
-    ; call vdu_vblank ; DEBUG
     ret
 ; end player_dying
 
 get_ready: asciz "Get Ready!"
 
 player_dead:
+; decrement lives
+    ld a,(player_ships)
+    dec a
+    jp z,game_over
+    ld (player_ships),a
+    call draw_player_ships
 ; reset the sprite table
     call table_init
     ld hl,table_base

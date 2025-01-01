@@ -5457,200 +5457,192 @@ PC     Output      Line
 041FC2 01          0006*       db enemy_air            ; type
 041FC3 4F 01 00    0007*       dl BUF_SEEKER_000       ; base_bufferId
 041FC6 79 20 04    0008*       dl en_nav_seek_zag    ; move_program
-041FC9             0009*       ; dl move_enemy_seeker_orbit    ; move_program DEBUG
-041FC9 40          0010*       db %01000000            ; collisions bit 6 signals sprite alive
-041FCA 10          0011*       db 16                   ; dim_x
-041FCB 10          0012*       db 16                   ; dim_y
-041FCC 20          0013*       db 32                   ; num_orientations
-041FCD 01          0014*       db 1                    ; num_animations
-041FCE 00          0015*       db 0                    ; animation
-041FCF 00          0016*       db 0                    ; animation_timer
-041FD0 01          0017*       db 1                    ; move_timer
-041FD1 00          0018*       db 0                    ; move_step
-041FD2 0A          0019*       db 10                   ; points
-041FD3 FC          0020*       db -4                   ; shield_damage
-041FD4 00          0021*       db 0                    ; frame
-041FD5             0022*   
-041FD5             0023*   enemy_spawn_seeker:
-041FD5 21 C2 1F 04 0024*       ld hl,seeker_defaults
-041FD9 DD 21 47 8A 0025*       ld ix,seekers_base
+041FC9 40          0009*       db %01000000            ; collisions bit 6 signals sprite alive
+041FCA 10          0010*       db 16                   ; dim_x
+041FCB 10          0011*       db 16                   ; dim_y
+041FCC 20          0012*       db 32                   ; num_orientations
+041FCD 01          0013*       db 1                    ; num_animations
+041FCE 00          0014*       db 0                    ; animation
+041FCF 00          0015*       db 0                    ; animation_timer
+041FD0 01          0016*       db 1                    ; move_timer
+041FD1 00          0017*       db 0                    ; move_step
+041FD2 0A          0018*       db 10                   ; points
+041FD3 FC          0019*       db -4                   ; shield_damage
+041FD4 00          0020*       db 0                    ; frame
+041FD5             0021*   
+041FD5             0022*   enemy_spawn_seeker:
+041FD5 21 C2 1F 04 0023*       ld hl,seeker_defaults
+041FD9 DD 21 47 8A 0024*       ld ix,seekers_base
        04          
-041FDE 06 03       0026*       ld b,seekers_max
-041FE0 CD FB 7A 04 0027*       call spawn_sprite_from_tile
-041FE4 D0          0028*       ret nc ; no carry means no free sprite slots, so we go home
-041FE5             0029*   ; other specific initialization
-041FE5 21 80 02 00 0030*       ld hl,speed_seeker
-041FE9 DD 2F 0D    0031*       ld (ix+sprite_vel),hl
-041FEC C9          0032*       ret
-041FED             0033*   ; end enemy_spawn_seeker
-041FED             0034*   
-041FED             0035*   move_enemy_seeker_orbit:
-041FED             0036*   ; compute x coordinate of orbit origin based on sprite id
-041FED 3E 05       0037*       ld a,seeker_min_sprite_id
-041FEF FD 96 00    0038*       sub (iy+sprite_id)
-041FF2 6F          0039*       ld l,a
-041FF3 26 55       0040*       ld h,85 ; 1/3 the playing field width
-041FF5 ED 6C       0041*       mlt hl
-041FF7 3E 40       0042*       ld a,64 ; 1/4 of the playing field width
-041FF9 85          0043*       add a,l ; a = x coordinate of orbit origin
-041FFA FD 77 25    0044*       ld (iy+sprite_move_step),a ; as good a place as any to store it
-041FFD             0045*   ; initialize orbit angle
-041FFD AF          0046*       xor a
-041FFE FD 77 13    0047*       ld (iy+sprite_orientation),a
-042001             0048*   ; ; initialize move timer
-042001             0049*   ;     inc a ; set to 1
-042001             0050*   ;     ld (iy+sprite_move_timer),a
-042001             0051*   ; init done, so update move program
-042001 21 08 20 04 0052*       ld hl,@stage1 ; update move program pointer
-042005 FD 2F 1A    0053*       ld (iy+sprite_move_program),hl
-042008             0054*   ; fall through to @stage1
-042008             0055*   @stage1:
-042008             0056*   ; ; check whether time to update orbit angle
-042008             0057*   ;     dec (iy+sprite_move_timer)
-042008             0058*   ;     jp nz,@F ; not time to change so simply movethe sprite on the current heading
-042008             0059*   ;     inc (iy+sprite_move_timer) ; reset timer to 1
-042008             0060*   ; update the target coordinates based on orbit angle and radius
-042008 FD 34 13    0061*       inc (iy+sprite_orientation) ; increment angle
-04200B 21 00 00 00 0062*       ld hl,0 ; clear hlu and l
-04200F FD 66 13    0063*       ld h,(iy+sprite_orientation) ; uh.l = angle
-042012 11 00 80 00 0064*       ld de,128*256 ; ud.e = radius
-042016 CD F0 06 04 0065*       call polar_to_cartesian ; u.bc, u.de = x,y offsets
-04201A FD 7E 25    0066*       ld a,(iy+sprite_move_step) ; x coordinate of orbit origin
-04201D 80          0067*       add a,b ; add x offset
-04201E 01 00 00 00 0068*       ld bc,0 ; bcu and c
-042022 47          0069*       ld b,a ; ub.c = x
-042023 21 00 A8 00 0070*       ld hl,336/2*256
-042027 19          0071*       add hl,de
-042028 EB          0072*       ex de,hl ; ud.e = y
-042029 CD E8 73 04 0073*       call bearing_to_coord ; uh.l = angle to coordinate
-04202D FD 2F 10    0074*       ld (iy+sprite_heading),hl ; save angle as heading
-042030             0075*   ; compute component velocities, save them in sprite record, and move the sprite
-042030 CD 9C 70 04 0076*       call sprite_compute_velocities
-042034             0077*   @@:
-042034 CD FB 6F 04 0078*       call move_sprite ; move the sprite
-042038             0079*   ; ; change the animation frame to match heading
-042038             0080*   ;     ld a,(iy+sprite_id)
-042038             0081*   ;     call vdu_sprite_select
-042038             0082*   ;     call sprite_frame_heading ; a, sprite_frame set to heading-based frame
-042038             0083*   ;     call vdu_sprite_select_frame
-042038             0084*   ;     ret
-042038 C3 3C 20 04 0085*       jp move_enemy_seeker
-04203C             0086*   ; end move_enemy_seeker_orbit
-04203C             0087*   
-04203C             0088*   move_enemy_seeker:
-04203C DD 21 07 8A 0089*       ld ix,player_begin
+041FDE 06 03       0025*       ld b,seekers_max
+041FE0 CD FB 7A 04 0026*       call spawn_sprite_from_tile
+041FE4 D0          0027*       ret nc ; no carry means no free sprite slots, so we go home
+041FE5             0028*   ; other specific initialization
+041FE5 21 80 02 00 0029*       ld hl,speed_seeker
+041FE9 DD 2F 0D    0030*       ld (ix+sprite_vel),hl
+041FEC C9          0031*       ret
+041FED             0032*   ; end enemy_spawn_seeker
+041FED             0033*   
+041FED             0034*   move_enemy_seeker_orbit:
+041FED             0035*   ; compute x coordinate of orbit origin based on sprite id
+041FED 3E 05       0036*       ld a,seeker_min_sprite_id
+041FEF FD 96 00    0037*       sub (iy+sprite_id)
+041FF2 6F          0038*       ld l,a
+041FF3 26 55       0039*       ld h,85 ; 1/3 the playing field width
+041FF5 ED 6C       0040*       mlt hl
+041FF7 3E 40       0041*       ld a,64 ; 1/4 of the playing field width
+041FF9 85          0042*       add a,l ; a = x coordinate of orbit origin
+041FFA FD 77 25    0043*       ld (iy+sprite_move_step),a ; as good a place as any to store it
+041FFD             0044*   ; initialize orbit angle
+041FFD AF          0045*       xor a
+041FFE FD 77 13    0046*       ld (iy+sprite_orientation),a
+042001             0047*   ; ; initialize move timer
+042001             0048*   ;     inc a ; set to 1
+042001             0049*   ;     ld (iy+sprite_move_timer),a
+042001             0050*   ; init done, so update move program
+042001 21 08 20 04 0051*       ld hl,@stage1 ; update move program pointer
+042005 FD 2F 1A    0052*       ld (iy+sprite_move_program),hl
+042008             0053*   ; fall through to @stage1
+042008             0054*   @stage1:
+042008             0055*   ; ; check whether time to update orbit angle
+042008             0056*   ;     dec (iy+sprite_move_timer)
+042008             0057*   ;     jp nz,@F ; not time to change so simply movethe sprite on the current heading
+042008             0058*   ;     inc (iy+sprite_move_timer) ; reset timer to 1
+042008             0059*   ; update the target coordinates based on orbit angle and radius
+042008 FD 34 13    0060*       inc (iy+sprite_orientation) ; increment angle
+04200B 21 00 00 00 0061*       ld hl,0 ; clear hlu and l
+04200F FD 66 13    0062*       ld h,(iy+sprite_orientation) ; uh.l = angle
+042012 11 00 80 00 0063*       ld de,128*256 ; ud.e = radius
+042016 CD F0 06 04 0064*       call polar_to_cartesian ; u.bc, u.de = x,y offsets
+04201A FD 7E 25    0065*       ld a,(iy+sprite_move_step) ; x coordinate of orbit origin
+04201D 80          0066*       add a,b ; add x offset
+04201E 01 00 00 00 0067*       ld bc,0 ; bcu and c
+042022 47          0068*       ld b,a ; ub.c = x
+042023 21 00 A8 00 0069*       ld hl,336/2*256
+042027 19          0070*       add hl,de
+042028 EB          0071*       ex de,hl ; ud.e = y
+042029 CD E8 73 04 0072*       call bearing_to_coord ; uh.l = angle to coordinate
+04202D FD 2F 10    0073*       ld (iy+sprite_heading),hl ; save angle as heading
+042030             0074*   ; compute component velocities, save them in sprite record, and move the sprite
+042030 CD 9C 70 04 0075*       call sprite_compute_velocities
+042034             0076*   @@:
+042034 CD FB 6F 04 0077*       call move_sprite ; move the sprite
+042038 C3 3C 20 04 0078*       jp move_enemy_seeker
+04203C             0079*   ; end move_enemy_seeker_orbit
+04203C             0080*   
+04203C             0081*   move_enemy_seeker:
+04203C DD 21 07 8A 0082*       ld ix,player_begin
        04          
-042041 DD CB 1D 76 0090*       bit sprite_alive,(ix+sprite_collisions)
-042045 CA 51 20 04 0091*       jp z,@F ; player is dead so don't check for collisions
-042049 CD CB 1E 04 0092*       call check_enemy_collision_player
-04204D CA 71 20 04 0093*       jp z,@player
-042051             0094*   @@:
-042051 CD BF 1E 04 0095*       call check_enemy_collision_laser
-042055 CA 69 20 04 0096*       jp z,@laser
-042059             0097*   ; change the animation frame to match heading
-042059 FD 7E 00    0098*       ld a,(iy+sprite_id)
-04205C CD 92 17 04 0099*       call vdu_sprite_select
-042060 CD C7 70 04 0100*       call sprite_frame_heading ; a, sprite_frame set to heading-based frame
-042064 CD F5 17 04 0101*       call vdu_sprite_select_frame
-042068 C9          0102*       ret
-042069             0103*   @laser:
-042069 CD 7E 6D 04 0104*       call update_score
-04206D C3 24 21 04 0105*       jp spawn_explosion
-042071             0106*   @player:
-042071 CD E4 6D 04 0107*       call update_shields
-042075 C3 24 21 04 0108*       jp spawn_explosion
-042079             0109*   ; end move_enemy_seeker
-042079             0110*   
-042079             0111*   ; contains the logic for how to move the enemy
-042079             0112*   ; and then does the moving
-042079             0113*   ; inputs: a fully-populated active sprite table
-042079             0114*   ;         player position variables
-042079             0115*   ; destroys: everything except index registers
-042079             0116*   ; outputs: moving enemies
-042079             0117*   en_nav_seek_zag:
-042079             0118*   ; set velocity and orientation by player's relative location
-042079             0119*   ; move enemies y-axis
-042079             0120*   ; where is player relative to us?
-042079 CD 96 73 04 0121*       call orientation_to_player ; uh.l angle to player, ub.c, ud.e = dx, dy
-04207D             0122*   ; is player above or below us?
-04207D ED 53 37 03 0123*       ld (ude),de ; dy
+042041 DD CB 1D 76 0083*       bit sprite_alive,(ix+sprite_collisions)
+042045 CA 51 20 04 0084*       jp z,@F ; player is dead so don't check for collisions
+042049 CD CB 1E 04 0085*       call check_enemy_collision_player
+04204D CA 71 20 04 0086*       jp z,@player
+042051             0087*   @@:
+042051 CD BF 1E 04 0088*       call check_enemy_collision_laser
+042055 CA 69 20 04 0089*       jp z,@laser
+042059             0090*   ; change the animation frame to match heading
+042059 FD 7E 00    0091*       ld a,(iy+sprite_id)
+04205C CD 92 17 04 0092*       call vdu_sprite_select
+042060 CD C7 70 04 0093*       call sprite_frame_heading ; a, sprite_frame set to heading-based frame
+042064 CD F5 17 04 0094*       call vdu_sprite_select_frame
+042068 C9          0095*       ret
+042069             0096*   @laser:
+042069 CD 7E 6D 04 0097*       call update_score
+04206D C3 24 21 04 0098*       jp spawn_explosion
+042071             0099*   @player:
+042071 CD E4 6D 04 0100*       call update_shields
+042075 C3 24 21 04 0101*       jp spawn_explosion
+042079             0102*   ; end move_enemy_seeker
+042079             0103*   
+042079             0104*   ; contains the logic for how to move the enemy
+042079             0105*   ; and then does the moving
+042079             0106*   ; inputs: a fully-populated active sprite table
+042079             0107*   ;         player position variables
+042079             0108*   ; destroys: everything except index registers
+042079             0109*   ; outputs: moving enemies
+042079             0110*   en_nav_seek_zag:
+042079             0111*   ; set velocity and orientation by player's relative location
+042079             0112*   ; move enemies y-axis
+042079             0113*   ; where is player relative to us?
+042079 CD 96 73 04 0114*       call orientation_to_player ; uh.l angle to player, ub.c, ud.e = dx, dy
+04207D             0115*   ; is player above or below us?
+04207D ED 53 37 03 0116*       ld (ude),de ; dy
        04          
-042082 3A 39 03 04 0124*       ld a,(ude+2) ; deu
-042086 17          0125*       rla ; shift sign bit into carry
-042087 D2 AF 20 04 0126*       jp nc,@zig_zag ; player is below,evade
-04208B             0127*   ; player is even or above,so home in on current heading
-04208B FD 2F 10    0128*       ld (iy+sprite_heading),hl ; save sprite heading
-04208E             0129*   ; fall through to @compute_velocities
-04208E             0130*   @compute_velocities:
-04208E CD 9C 70 04 0131*       call sprite_compute_velocities
-042092 CD FB 6F 04 0132*       call move_sprite ; move the sprite
-042096 B7          0133*       or a ; a will be non-zero if have collided with screen edge
-042097 C2 BA 20 04 0134*       jp nz,@zag_switch ; switch direction
-04209B             0135*       ; ret ; didn't hit edge, nothing else to do
-04209B C3 3C 20 04 0136*       jp move_enemy_seeker ; didn't hit an edge so check collisions and move sprite
-04209F             0137*   @zig_zag_start:
-04209F FD 2A 36 6E 0138*       ld iy,(table_pointer)
+042082 3A 39 03 04 0117*       ld a,(ude+2) ; deu
+042086 17          0118*       rla ; shift sign bit into carry
+042087 D2 AF 20 04 0119*       jp nc,@zig_zag ; player is below,evade
+04208B             0120*   ; player is even or above,so home in on current heading
+04208B FD 2F 10    0121*       ld (iy+sprite_heading),hl ; save sprite heading
+04208E             0122*   ; fall through to @compute_velocities
+04208E             0123*   @compute_velocities:
+04208E CD 9C 70 04 0124*       call sprite_compute_velocities
+042092 CD FB 6F 04 0125*       call move_sprite ; move the sprite
+042096 B7          0126*       or a ; a will be non-zero if have collided with screen edge
+042097 C2 BA 20 04 0127*       jp nz,@zag_switch ; switch direction
+04209B C3 3C 20 04 0128*       jp move_enemy_seeker ; didn't hit an edge so check collisions and move sprite
+04209F             0129*   @zig_zag_start:
+04209F FD 2A 36 6E 0130*       ld iy,(table_pointer)
        04          
-0420A4 CD 14 05 04 0139*       call rand_8
-0420A8 E6 3F       0140*       and %00111111 ; limit it to 64
-0420AA CB DF       0141*       set 3,a ; make sure it's at least 8
-0420AC FD 77 24    0142*       ld (iy+sprite_move_timer),a ; store it
-0420AF             0143*       ; fall through to @zig_zag
-0420AF             0144*   @zig_zag:
-0420AF FD 7E 24    0145*       ld a,(iy+sprite_move_timer)
-0420B2 3D          0146*       dec a
-0420B3 FD 77 24    0147*       ld (iy+sprite_move_timer),a
-0420B6 C2 DC 20 04 0148*       jp nz,@zig_zag_no_switch
-0420BA             0149*   @zag_switch:
-0420BA             0150*       ; otherwise flip direction and restart timer
-0420BA FD 7E 25    0151*       ld a,(iy+sprite_move_step)
-0420BD EE 01       0152*       xor %1 ; flips bit zero
-0420BF FD 77 25    0153*       ld (iy+sprite_move_step),a ; store it
-0420C2 C2 D1 20 04 0154*       jp nz,@F ; zag right
-0420C6             0155*   ;otherwise zag left
-0420C6 21 00 A0 00 0156*       ld hl,160*256; southwest heading
-0420CA FD 2F 10    0157*       ld (iy+sprite_heading),hl ; save sprite heading
-0420CD C3 9F 20 04 0158*       jp @zig_zag_start
-0420D1             0159*   @@: ; zag right
-0420D1 21 00 60 00 0160*       ld hl,96*256; southeast heading
-0420D5 FD 2F 10    0161*       ld (iy+sprite_heading),hl ; save sprite heading
-0420D8 C3 9F 20 04 0162*       jp @zig_zag_start
-0420DC             0163*   @zig_zag_no_switch:
-0420DC             0164*       ; ld a,(sprite_orientation)
-0420DC FD 27 10    0165*       ld hl,(iy+sprite_heading)
-0420DF C3 8E 20 04 0166*       jp @compute_velocities
-0420E3             0167*   ; end en_nav_seek_zag
-0420E3             0168*   
-0420E3             0169*   
-0420E3             0170*   init_enemy_seekers:
-0420E3             0171*   ; set pointer to seeker sprite table
-0420E3 FD 21 47 8A 0172*       ld iy,seekers_base
+0420A4 CD 14 05 04 0131*       call rand_8
+0420A8 E6 3F       0132*       and %00111111 ; limit it to 64
+0420AA CB DF       0133*       set 3,a ; make sure it's at least 8
+0420AC FD 77 24    0134*       ld (iy+sprite_move_timer),a ; store it
+0420AF             0135*       ; fall through to @zig_zag
+0420AF             0136*   @zig_zag:
+0420AF FD 7E 24    0137*       ld a,(iy+sprite_move_timer)
+0420B2 3D          0138*       dec a
+0420B3 FD 77 24    0139*       ld (iy+sprite_move_timer),a
+0420B6 C2 DC 20 04 0140*       jp nz,@zig_zag_no_switch
+0420BA             0141*   @zag_switch:
+0420BA             0142*       ; otherwise flip direction and restart timer
+0420BA FD 7E 25    0143*       ld a,(iy+sprite_move_step)
+0420BD EE 01       0144*       xor %1 ; flips bit zero
+0420BF FD 77 25    0145*       ld (iy+sprite_move_step),a ; store it
+0420C2 C2 D1 20 04 0146*       jp nz,@F ; zag right
+0420C6             0147*   ;otherwise zag left
+0420C6 21 00 A0 00 0148*       ld hl,160*256; southwest heading
+0420CA FD 2F 10    0149*       ld (iy+sprite_heading),hl ; save sprite heading
+0420CD C3 9F 20 04 0150*       jp @zig_zag_start
+0420D1             0151*   @@: ; zag right
+0420D1 21 00 60 00 0152*       ld hl,96*256; southeast heading
+0420D5 FD 2F 10    0153*       ld (iy+sprite_heading),hl ; save sprite heading
+0420D8 C3 9F 20 04 0154*       jp @zig_zag_start
+0420DC             0155*   @zig_zag_no_switch:
+0420DC             0156*       ; ld a,(sprite_orientation)
+0420DC FD 27 10    0157*       ld hl,(iy+sprite_heading)
+0420DF C3 8E 20 04 0158*       jp @compute_velocities
+0420E3             0159*   ; end en_nav_seek_zag
+0420E3             0160*   
+0420E3             0161*   
+0420E3             0162*   init_enemy_seekers:
+0420E3             0163*   ; set pointer to seeker sprite table
+0420E3 FD 21 47 8A 0164*       ld iy,seekers_base
        04          
-0420E8 FD 7E 00    0173*       ld a,(iy+sprite_id) ; sprite id
-0420EB 1E 03       0174*       ld e,seekers_max ; sprite loop counter
-0420ED             0175*   ; define seeker sprites
-0420ED             0176*   @sprites_loop:
-0420ED F5          0177*       push af
-0420EE D5          0178*       push de
-0420EF CD 92 17 04 0179*   	call vdu_sprite_select
-0420F3 CD A5 17 04 0180*   	call vdu_sprite_clear_frames
-0420F7 21 4F 01 00 0181*   	ld hl,BUF_SEEKER_000
-0420FB 06 20       0182*   	ld b,32 ; 32 bitmaps for seeker
-0420FD             0183*   @frames_loop:
-0420FD C5          0184*   	push bc
-0420FE E5          0185*   	push hl
-0420FF CD E7 18 04 0186*   	call vdu_sprite_add_buff
-042103 E1          0187*   	pop hl
-042104 23          0188*   	inc hl
-042105 C1          0189*   	pop bc
-042106 10 F5       0190*   	djnz @frames_loop
-042108 D1          0191*       pop de ; sprite loop counter
-042109 F1          0192*       pop af ; sprite id
-04210A 3C          0193*       inc a
-04210B 1D          0194*       dec e
-04210C C2 ED 20 04 0195*       jp nz,@sprites_loop
-042110 C9          0196*       ret
-042111             0197*   ; end init_enemy_seekers
+0420E8 FD 7E 00    0165*       ld a,(iy+sprite_id) ; sprite id
+0420EB 1E 03       0166*       ld e,seekers_max ; sprite loop counter
+0420ED             0167*   ; define seeker sprites
+0420ED             0168*   @sprites_loop:
+0420ED F5          0169*       push af
+0420EE D5          0170*       push de
+0420EF CD 92 17 04 0171*   	call vdu_sprite_select
+0420F3 CD A5 17 04 0172*   	call vdu_sprite_clear_frames
+0420F7 21 4F 01 00 0173*   	ld hl,BUF_SEEKER_000
+0420FB 06 20       0174*   	ld b,32 ; 32 bitmaps for seeker
+0420FD             0175*   @frames_loop:
+0420FD C5          0176*   	push bc
+0420FE E5          0177*   	push hl
+0420FF CD E7 18 04 0178*   	call vdu_sprite_add_buff
+042103 E1          0179*   	pop hl
+042104 23          0180*   	inc hl
+042105 C1          0181*   	pop bc
+042106 10 F5       0182*   	djnz @frames_loop
+042108 D1          0183*       pop de ; sprite loop counter
+042109 F1          0184*       pop af ; sprite id
+04210A 3C          0185*       inc a
+04210B 1D          0186*       dec e
+04210C C2 ED 20 04 0187*       jp nz,@sprites_loop
+042110 C9          0188*       ret
+042111             0189*   ; end init_enemy_seekers
 042111             0050        include "explosion.inc"
 042111             0001*   explosions_max: equ 8
 042111             0002*   explosion_defaults:
@@ -11190,82 +11182,80 @@ PC     Output      Line
        04          
 04680C 21 ED 1F 04 0122*       ld hl,move_enemy_seeker_orbit
 046810 06 03       0123*       ld b,seekers_max
-046812 CD E6 6F 04 0124*       call move_program_sprite_group
-046816             0125*   ; decrement lives
-046816 3A 14 67 04 0126*       ld a,(player_ships)
-04681A 3D          0127*       dec a
-04681B CA 24 71 04 0128*       jp z,game_over
-04681F 32 14 67 04 0129*       ld (player_ships),a
-046823 CD 16 67 04 0130*       call draw_player_ships
-046827             0131*   ; set player state to dying
-046827 21 30 68 04 0132*       ld hl,player_dying
-04682B 22 11 67 04 0133*       ld (player_state),hl
-04682F C9          0134*       ret
-046830             0135*   ; end kill_player
-046830             0136*   
-046830             0137*   player_dying:
-046830             0138*   ; spawn explosions at player location
-046830 06 10       0139*       ld b,16 ; loop counter
-046832             0140*   @loop_explode:
-046832 C5          0141*       push bc ; save loop counter
-046833 CD 49 21 04 0142*       call spawn_explosion_player
-046837             0143*   ; move explosions for a few frames
-046837 06 10       0144*       ld b,16 ; loop counter
-046839             0145*   @loop_animate:
-046839 C5          0146*       push bc
-04683A CD 4D 68 04 0147*       call @animate
-04683E C1          0148*       pop bc
-04683F 10 F8       0149*       djnz @loop_animate
-046841 C1          0150*       pop bc
-046842 10 EE       0151*       djnz @loop_explode
-046844             0152*   ; set game state to player dead
-046844 21 75 68 04 0153*       ld hl,player_dead
-046848 22 11 67 04 0154*       ld (player_state),hl
-04684C C9          0155*       ret
-04684D             0156*   @animate:
-04684D CD 2F 79 04 0157*       call tiles_plot
-046851 CD 13 6E 04 0158*       call set_gfx_playing_field
-046855 CD B0 6C 04 0159*       call player_move_weapons
-046859 CD E2 1E 04 0160*       call do_enemies
-04685D CD B7 21 04 0161*       call move_explosions
-046861 CD 9F 7A 04 0162*       call move_tiles
-046865 CD 14 13 04 0163*       call vdu_vblank
-046869             0164*       ; call vdu_vblank ; DEBUG
-046869             0165*       ; call vdu_vblank ; DEBUG
-046869 C9          0166*       ret
-04686A             0167*   ; end player_dying
-04686A             0168*   
-04686A 47 65 74 20 0169*   get_ready: asciz "Get Ready!"
+046812 CD E6 6F 04 0124*       call change_sprite_group_move_program
+046816             0125*   ; set player state to dying
+046816 21 1F 68 04 0126*       ld hl,player_dying
+04681A 22 11 67 04 0127*       ld (player_state),hl
+04681E C9          0128*       ret
+04681F             0129*   ; end kill_player
+04681F             0130*   
+04681F             0131*   player_dying:
+04681F             0132*   ; spawn explosions at player location
+04681F 06 10       0133*       ld b,16 ; loop counter
+046821             0134*   @loop_explode:
+046821 C5          0135*       push bc ; save loop counter
+046822 CD 49 21 04 0136*       call spawn_explosion_player
+046826             0137*   ; move explosions for a few frames
+046826 06 10       0138*       ld b,16 ; loop counter
+046828             0139*   @loop_animate:
+046828 C5          0140*       push bc
+046829 CD 3C 68 04 0141*       call @animate
+04682D C1          0142*       pop bc
+04682E 10 F8       0143*       djnz @loop_animate
+046830 C1          0144*       pop bc
+046831 10 EE       0145*       djnz @loop_explode
+046833             0146*   ; set game state to player dead
+046833 21 64 68 04 0147*       ld hl,player_dead
+046837 22 11 67 04 0148*       ld (player_state),hl
+04683B C9          0149*       ret
+04683C             0150*   @animate:
+04683C CD 2F 79 04 0151*       call tiles_plot
+046840 CD 13 6E 04 0152*       call set_gfx_playing_field
+046844 CD B0 6C 04 0153*       call player_move_weapons
+046848 CD E2 1E 04 0154*       call do_enemies
+04684C CD B7 21 04 0155*       call move_explosions
+046850 CD 9F 7A 04 0156*       call move_tiles
+046854 CD 14 13 04 0157*       call vdu_vblank
+046858 C9          0158*       ret
+046859             0159*   ; end player_dying
+046859             0160*   
+046859 47 65 74 20 0161*   get_ready: asciz "Get Ready!"
        52 65 61 64 
        79 21 00    
-046875             0170*   
-046875             0171*   player_dead:
-046875             0172*   ; reset the sprite table
-046875 CD 5B 6E 04 0173*       call table_init
-046879 21 07 89 04 0174*       ld hl,table_base
-04687D 22 36 6E 04 0175*       ld (table_pointer),hl
-046881             0176*   ; initialize sprites and active tiles table
-046881 CD 93 6E 04 0177*       call sprites_init
-046885 CD 5B 6E 04 0178*       call table_init
-046889 CD B9 77 04 0179*       call tile_table_init
-04688D             0180*   ; reset player score to what it was at the start of the level
-04688D 2A 7B 6D 04 0181*       ld hl,(player_starting_score)
-046891 22 75 6D 04 0182*       ld (player_score),hl
-046895             0183*   ; restart the level
-046895 CD 67 64 04 0184*       call start_level_countdown
-046899 CD 00 64 04 0185*       call init_level
-04689D             0186*   ; spawn player sprite at starting position
-04689D CD 71 67 04 0187*       call player_init
-0468A1             0188*   ; set the game state to playing
-0468A1 21 61 73 04 0189*       ld hl,game_playing
-0468A5 22 F3 70 04 0190*       ld (game_state), hl
-0468A9             0191*   ; set game playing substates
-0468A9 21 F5 67 04 0192*       ld hl,player_alive
-0468AD 22 11 67 04 0193*       ld (player_state), hl
-0468B1 21 ED 1E 04 0194*       ld hl,enemies_alive
-0468B5 22 DF 1E 04 0195*       ld (enemies_state), hl
-0468B9 C9          0196*       ret
-0468BA             0197*   ; end player_dead
+046864             0162*   
+046864             0163*   player_dead:
+046864             0164*   ; decrement lives
+046864 3A 14 67 04 0165*       ld a,(player_ships)
+046868 3D          0166*       dec a
+046869 CA 24 71 04 0167*       jp z,game_over
+04686D 32 14 67 04 0168*       ld (player_ships),a
+046871 CD 16 67 04 0169*       call draw_player_ships
+046875             0170*   ; reset the sprite table
+046875 CD 5B 6E 04 0171*       call table_init
+046879 21 07 89 04 0172*       ld hl,table_base
+04687D 22 36 6E 04 0173*       ld (table_pointer),hl
+046881             0174*   ; initialize sprites and active tiles table
+046881 CD 93 6E 04 0175*       call sprites_init
+046885 CD 5B 6E 04 0176*       call table_init
+046889 CD B9 77 04 0177*       call tile_table_init
+04688D             0178*   ; reset player score to what it was at the start of the level
+04688D 2A 7B 6D 04 0179*       ld hl,(player_starting_score)
+046891 22 75 6D 04 0180*       ld (player_score),hl
+046895             0181*   ; restart the level
+046895 CD 67 64 04 0182*       call start_level_countdown
+046899 CD 00 64 04 0183*       call init_level
+04689D             0184*   ; spawn player sprite at starting position
+04689D CD 71 67 04 0185*       call player_init
+0468A1             0186*   ; set the game state to playing
+0468A1 21 61 73 04 0187*       ld hl,game_playing
+0468A5 22 F3 70 04 0188*       ld (game_state), hl
+0468A9             0189*   ; set game playing substates
+0468A9 21 F5 67 04 0190*       ld hl,player_alive
+0468AD 22 11 67 04 0191*       ld (player_state), hl
+0468B1 21 ED 1E 04 0192*       ld hl,enemies_alive
+0468B5 22 DF 1E 04 0193*       ld (enemies_state), hl
+0468B9 C9          0194*       ret
+0468BA             0195*   ; end player_dead
 0468BA             0059        include "player_cockpit.inc"
 0468BA             0001*   ; offsets into control panel element definitions
 0468BA             0002*   panel_bufferId: equ 0
@@ -12326,7 +12316,7 @@ PC     Output      Line
 046FE6             0289*   
 046FE6             0290*   ; update behavior subroutines for a specified sprite group
 046FE6             0291*   ; inputs: hl = pointer to move program, iy = pointer to sprite group, b = number of records in sprite group
-046FE6             0292*   move_program_sprite_group:
+046FE6             0292*   change_sprite_group_move_program:
 046FE6             0293*   @update_loop:
 046FE6             0294*   ; check sprite_alive bit to see if sprite is active
 046FE6 FD CB 1D 76 0295*       bit sprite_alive,(iy+sprite_collisions)
@@ -12340,7 +12330,7 @@ PC     Output      Line
 046FF5 ED 33 40    0303*       lea iy,iy+table_record_size
 046FF8 10 EC       0304*       djnz @update_loop ; loop until we've checked all the records
 046FFA C9          0305*       ret
-046FFB             0306*   ; end move_program_sprite_group
+046FFB             0306*   ; end change_sprite_group_move_program
 046FFB             0307*   
 046FFB             0308*   ; compute a sprite's new position based on its component x,y velocities
 046FFB             0309*   ; with screen boundary checking and update its sprite table record accordingly
