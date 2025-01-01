@@ -128,8 +128,6 @@ game_init:
 ; initialize player
     ld hl,0
     ld (player_score),hl
-    dec hl ; anything but zero so print_score will update
-    ld (player_score_last),hl
     ld a,(player_ships_max)
     ld (player_ships),a
     call draw_player_ships

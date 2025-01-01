@@ -200,6 +200,9 @@ player_dying:
 get_ready: asciz "Get Ready!"
 
 player_dead:
+; reset player score to what it was at the start of the level
+    ld hl,(player_starting_score)
+    ld (player_score),hl
 ; decrement lives
     ld a,(player_ships)
     dec a
@@ -214,9 +217,9 @@ player_dead:
     call sprites_init
     call table_init
     call tile_table_init
-; reset player score to what it was at the start of the level
-    ld hl,(player_starting_score)
-    ld (player_score),hl
+; ; reset player score to what it was at the start of the level
+;     ld hl,(player_starting_score)
+;     ld (player_score),hl
 ; restart the level
     call init_level
 ; spawn player sprite at starting position

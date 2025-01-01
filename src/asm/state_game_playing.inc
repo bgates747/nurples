@@ -18,7 +18,7 @@ game_playing:
     ld bc,0
     ld de,0
     call vdu_set_gfx_origin
-    call print_score
+    ; call print_score
     call draw_shields
     call draw_laser
     call draw_fuel

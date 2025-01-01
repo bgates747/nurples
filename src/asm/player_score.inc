@@ -1,6 +1,5 @@
 ; scores are unsigned integers
 player_score: dl 0
-player_score_last: dl 0 ; if equal to player_score, no need to update
 player_starting_score: dl 0 ; to reset after restarting a map
 
 ; inputs: iy set to sprite/tile record being tallied
@@ -12,6 +11,7 @@ update_score:
     ld hl,(player_score)
     add hl,de
     ld (player_score),hl
+    call print_score
     ret
 ; end update_score
 
@@ -26,12 +26,6 @@ print_score:
     ld a,c_green
     call vdu_colour_text
 ; print the score
-    ld hl,(player_score_last)
-    ld de,(player_score)
-    ld (player_score_last),de
-    xor a ; clear carry
-    sbc hl,de
-    ret z ; no change to update
     ld c,score_x
     ld b,score_y
     call vdu_move_cursor

@@ -111,8 +111,9 @@ init_level:
     ld (tiles_x_plot),hl
     ld hl,-15
     ld (tiles_y_plot),hl
-; print level number
+; print level number, score, and countdown to start
     call print_level
+    call print_score
     call start_level_countdown
     ret
 ; end init_level
