@@ -40,10 +40,6 @@ spawn_explosion_player:
     call spawn_sprite_from_sprite
     jp nc,table_deactivate_sprite ; no carry means no free sprite slots, so we deactivate parent sprite and go home
 ; other specific initialization
-    ld hl,0
-    ld (ix+sprite_xvel),hl
-    ld hl,1*256
-    ld (ix+sprite_yvel),hl
     ret
 ; end spawn_explosion_player
 

@@ -134,6 +134,10 @@ player_dying:
 @loop_explode:
     push bc ; save loop counter
     call spawn_explosion_player
+    ld hl,0
+    ld (ix+sprite_xvel),hl
+    ld hl,1*256
+    ld (ix+sprite_yvel),hl
 ; move explosions for a few frames
     ld b,16 ; loop counter
 @loop_animate:
@@ -143,6 +147,30 @@ player_dying:
     djnz @loop_animate
     pop bc
     djnz @loop_explode
+; delay until grand finale
+    ld b,16 ; loop counter
+@loop_delay:
+    push bc
+    call @animate
+    pop bc
+    djnz @loop_delay
+; set up the grand finale
+    ld b,explosions_max ; loop counter
+@loop_spawn_finale:
+    push bc
+    call spawn_explosion_player
+    call @rand
+    ld (ix+sprite_xvel),hl
+    call @rand
+    ld (ix+sprite_yvel),hl
+    pop bc
+    djnz @loop_spawn_finale
+@loop_finale_animate:
+    push bc
+    call @animate
+    pop bc
+    djnz @loop_finale_animate
+
 ; set game state to player dead
     ld hl,player_dead
     ld (player_state),hl
@@ -155,6 +183,17 @@ player_dying:
     call move_explosions
     call move_tiles
     call vdu_vblank
+    ret
+@rand:
+    ld hl,0
+    call rand_8
+    ld b,a
+    and %00000001
+    ld h,a
+    ld l,b
+    bit 7,b
+    ret z
+    call neg_hlu
     ret
 ; end player_dying
 
