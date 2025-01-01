@@ -113,7 +113,7 @@ init_level:
     ld (tiles_y_plot),hl
 ; print level number
     call print_level
-    ; call start_level_countdown
+    call start_level_countdown
     ret
 ; end init_level
 

@@ -218,7 +218,6 @@ player_dead:
     ld hl,(player_starting_score)
     ld (player_score),hl
 ; restart the level
-    call start_level_countdown
     call init_level
 ; spawn player sprite at starting position
     call player_init
