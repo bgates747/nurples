@@ -13,6 +13,8 @@ __pycache__/
 # stupid macos files
 .DS_Store
 ._DS_Store
+.DS._Store
+._DS._Store
 
 # Distribution / packaging
 .Python
