@@ -77,6 +77,11 @@ collision_draw_hitboxes:
 ;   a = -1, zero flag reset, negative sign, carry set -> No collision detected
 ; Destroys: HL, DE, AF
 check_collision:
+; DEBUG temporarily disable collisions
+    xor a
+    dec a
+    ret
+; END DEBUG
 check_collision_box:
 ; Test 1: (ay + ah) - by < 0
     ld hl,0                     ; Clear hlu

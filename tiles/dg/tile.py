@@ -331,6 +331,6 @@ if __name__ == "__main__":
     main(bufferId, tile_width, tile_height, h_pitch, v_pitch, base_name, tiles_x, tiles_y, ranges, asm_src_dir, source_dir, target_dir, tileset_number)
 
     level_number = 0
-    tiled_map_filepath = "tiles/dg/dg0_03.tmx"
+    tiled_map_filepath = "tiles/dg/dg0_02.tmx"
     asm_levels_tiled_filepath = f"{asm_src_dir}/levels_tileset_{tileset_number}.inc"
     generate_asm_tiled_level(tiled_map_filepath, asm_levels_tiled_filepath, tileset_number, level_number, bufferId)

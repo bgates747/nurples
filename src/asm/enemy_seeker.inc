@@ -1,11 +1,11 @@
 seekers_count: db 0
-seekers_max: equ 3
+seekers_max: equ 230
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
 
 seeker_defaults:
     db enemy_air            ; type
     dl BUF_SEEKER_000       ; base_bufferId
-    dl en_nav_seek_zag    ; move_program
+    dl move_enemy_seeker_random    ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
@@ -19,6 +19,28 @@ seeker_defaults:
     db -4                   ; shield_damage
     db 0                    ; frame
 
+; DEBUG
+; text coordinates for seeker display
+seeker_x: equ 39
+seeker_y: equ 2
+num_seekers: db 0
+; inputs: none
+print_seeker:
+; set text colors
+    ld a,c_black+128
+    call vdu_colour_text
+    ld a,c_green
+    call vdu_colour_text
+; print the seeker
+    ld c,seeker_x
+    ld b,seeker_y
+    call vdu_move_cursor
+    ld a,(num_seekers)
+    call printHexA
+    ret
+; end print_seeker
+; END DEBUG
+
 enemy_spawn_seeker:
     ld hl,seeker_defaults
     ld ix,seekers_base
@@ -28,8 +50,35 @@ enemy_spawn_seeker:
 ; other specific initialization
     ld hl,speed_seeker
     ld (ix+sprite_vel),hl
+; DEBUG
+    ld hl,num_seekers
+    inc (hl)
+    call print_seeker
+    call @rand
+    ld (ix+sprite_xvel),hl
+    call @rand
+    ld (ix+sprite_yvel),hl
+    ret
+@rand:
+    ld hl,0
+    call rand_8
+    ld b,a
+    and %00000001
+    ld h,a
+    ld l,b
+    bit 7,b
+    ret z
+    call neg_hlu
+    ret
+; END DEBUG
     ret
 ; end enemy_spawn_seeker
+
+; DEBUG
+move_enemy_seeker_random:
+    call move_sprite
+    ret
+; END DEBUG
 
 move_enemy_seeker_orbit:
 ; compute x coordinate of orbit origin based on sprite id
