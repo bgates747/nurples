@@ -1,8 +1,27 @@
+; load a sound file to a buffer
+; inputs: hl = bufferId ; ix = file size ; iy = pointer to filename
+vdu_load_sfx:
+; back up input parameters
+    push hl ; bufferId
+; load the sound
+    call vdu_load_buffer_from_file
+; now make the buffer a sound sample
+    pop hl ; bufferId
+    xor a ; zero is the magic number for 8-bit signed PCM 16KHz
+    ; push hl ; bufferId
+    call vdu_buffer_to_sound 
+; ; play the loaded sound
+;     ld c,0 ; channel
+;     ld b,127 ; full volume
+;     ld de,1000 ; 1 second duration
+;     pop hl ; bufferId
+;     call vdu_play_sample
+    ret
+
 last_channel: db 0
-max_channels: equ 6
+max_channels: equ 3
 
 vdu_play_sfx:
-vdu_play_sfx_disable: ret ; disabled by default, set to nop to enable
     ld (@bufferId),hl
     ld (@duration),bc
     ld a,23
