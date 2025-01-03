@@ -19,12 +19,6 @@ def make_tbl_08_sfx(conn, cursor):
     """)
     conn.commit()
 
-import os
-import shutil
-import sqlite3
-import subprocess
-from tempfile import NamedTemporaryFile
-
 def copy_to_temp(file_path):
     """Copy a file to a temporary file."""
     temp_file = NamedTemporaryFile(delete=False, suffix='.wav')
@@ -62,12 +56,24 @@ def make_sfx(db_path, src_dir, tgt_dir, proc_dir):
         # Step 1: Copy the original file to the processed directory as the initial processed file
         shutil.copy(src_path, proc_path)
 
+        # If the file is stereo, take the left channel only and convert it to mono
+        temp_path = copy_to_temp(proc_path)
+        subprocess.run([
+            'ffmpeg',
+            '-y',                                  # Overwrite output file
+            '-i', temp_path,                      # Input file
+            '-ac', '1',                           # Set audio channels to mono
+            proc_path                              # Output file
+        ], check=True)
+        os.remove(temp_path)
+
         # Step 2: Apply compression to reduce dynamic range
         temp_path = copy_to_temp(proc_path)
         subprocess.run([
             'ffmpeg',
             '-y',                                  # Overwrite output file
             '-i', temp_path,                      # Input file
+            '-ac', '1',                           # Set audio channels to mono
             '-af', 'acompressor=threshold=-20dB:ratio=3:attack=5:release=50:makeup=5',  # Compression settings
             proc_path                              # Output file
         ], check=True)
@@ -79,6 +85,7 @@ def make_sfx(db_path, src_dir, tgt_dir, proc_dir):
             'ffmpeg',
             '-y',                                  # Overwrite output file
             '-i', temp_path,                      # Input file
+            '-ac', '1',                           # Set audio channels to mono
             '-af', 'loudnorm=I=-24:TP=-2:LRA=11', # Normalize loudness
             proc_path                              # Output file
         ], check=True)
@@ -90,6 +97,7 @@ def make_sfx(db_path, src_dir, tgt_dir, proc_dir):
             'ffmpeg',
             '-y',                                  # Overwrite output file
             '-i', temp_path,                      # Input file
+            '-ac', '1',                           # Set audio channels to mono
             '-ar', '16384',                       # Resample to 16 kHz
             proc_path                              # Output file
         ], check=True)

@@ -28,7 +28,7 @@ PC     Output      Line
 040048 DD E5       0013        push ix
 04004A FD E5       0014        push iy
 04004C             0015    
-04004C CD 0B 1B 04 0016        call main
+04004C CD BA 1A 04 0016        call main
 040050             0017    
 040050             0018    exit:
 040050 FD E1       0019        pop iy
@@ -4850,107 +4850,77 @@ PC     Output      Line
 041A68             0046        include "music.inc"
 041A68             0001*   ; This file is created by build_98_asm_sfx.py, do not edit it!
 041A68             0002*   
-041A68             0003*   SFX_num_buffers: equ 2
+041A68             0003*   SFX_num_buffers: equ 1
 041A68             0004*   ; SFX buffer ids:
-041A68             0005*   BUF_AMBIENT_BEAT70: equ 0x3000
-041A68             0006*   BUF_SPACE_ADVENTURE: equ 0x3001
-041A68             0007*   
-041A68             0008*   ; SFX buffer id reverse lookup:
-041A68             0009*   SFX_buffer_id_lut:
-041A68 00 30 00    0010*   	dl BUF_AMBIENT_BEAT70
-041A6B 01 30 00    0011*   	dl BUF_SPACE_ADVENTURE
-041A6E             0012*   
-041A6E             0013*   ; SFX duration lookup:
-041A6E             0014*   SFX_duration_lut:
-041A6E 22 26 00    0015*   	dl 9762 ; AMBIENT_BEAT70
-041A71 1E 26 00    0016*   	dl 9758 ; SPACE_ADVENTURE
-041A74             0017*   
-041A74             0018*   ; SFX load routines jump table:
-041A74             0019*   SFX_load_routines_table:
-041A74 7A 1A 04    0020*   	dl load_sfx_AMBIENT_BEAT70
-041A77 9D 1A 04    0021*   	dl load_sfx_SPACE_ADVENTURE
-041A7A             0022*   
-041A7A             0023*   ; Import sfx .raw files and load them into VDP buffers
-041A7A             0024*   
-041A7A             0025*   load_sfx_AMBIENT_BEAT70:
-041A7A 21 C0 1A 04 0026*   	ld hl,FAMBIENT_BEAT70
-041A7E 11 00 E0 B7 0027*   	ld de,filedata
-041A82 01 00 00 01 0028*   	ld bc,65536
-041A86 3E 01       0029*   	ld a,mos_load
-041A88 5B CF       0030*   	RST.LIL 08h
-041A8A 21 00 30 00 0031*   	ld hl,BUF_AMBIENT_BEAT70
-041A8E DD 21 80 80 0032*   	ld ix,163968
+041A68             0005*   BUF_SPACE_ADVENTURE: equ 0x3000
+041A68             0006*   
+041A68             0007*   ; SFX buffer id reverse lookup:
+041A68             0008*   SFX_buffer_id_lut:
+041A68 00 30 00    0009*   	dl BUF_SPACE_ADVENTURE
+041A6B             0010*   
+041A6B             0011*   ; SFX duration lookup:
+041A6B             0012*   SFX_duration_lut:
+041A6B 1E 26 00    0013*   	dl 9758 ; SPACE_ADVENTURE
+041A6E             0014*   
+041A6E             0015*   ; SFX load routines jump table:
+041A6E             0016*   SFX_load_routines_table:
+041A6E 71 1A 04    0017*   	dl load_sfx_SPACE_ADVENTURE
+041A71             0018*   
+041A71             0019*   ; Import sfx .raw files and load them into VDP buffers
+041A71             0020*   
+041A71             0021*   load_sfx_SPACE_ADVENTURE:
+041A71 21 94 1A 04 0022*   	ld hl,FSPACE_ADVENTURE
+041A75 11 00 E0 B7 0023*   	ld de,filedata
+041A79 01 00 00 01 0024*   	ld bc,65536
+041A7D 3E 01       0025*   	ld a,mos_load
+041A7F 5B CF       0026*   	RST.LIL 08h
+041A81 21 00 30 00 0027*   	ld hl,BUF_SPACE_ADVENTURE
+041A85 DD 21 2C 80 0028*   	ld ix,163884
        02          
-041A93 FD 21 C0 1A 0033*   	ld iy,FAMBIENT_BEAT70
+041A8A FD 21 94 1A 0029*   	ld iy,FSPACE_ADVENTURE
        04          
-041A98 CD CE 18 04 0034*   	call vdu_load_sfx
-041A9C C9          0035*   	ret
-041A9D             0036*   
-041A9D             0037*   load_sfx_SPACE_ADVENTURE:
-041A9D 21 D9 1A 04 0038*   	ld hl,FSPACE_ADVENTURE
-041AA1 11 00 E0 B7 0039*   	ld de,filedata
-041AA5 01 00 00 01 0040*   	ld bc,65536
-041AA9 3E 01       0041*   	ld a,mos_load
-041AAB 5B CF       0042*   	RST.LIL 08h
-041AAD 21 01 30 00 0043*   	ld hl,BUF_SPACE_ADVENTURE
-041AB1 DD 21 2C 80 0044*   	ld ix,163884
-       02          
-041AB6 FD 21 D9 1A 0045*   	ld iy,FSPACE_ADVENTURE
-       04          
-041ABB CD CE 18 04 0046*   	call vdu_load_sfx
-041ABF C9          0047*   	ret
-041AC0             0048*   
-041AC0             0049*   ; File name lookups:
-041AC0 6D 75 73 69 0050*   FAMBIENT_BEAT70: db "music/AMBIENT_BEAT70.raw",0
-       63 2F 41 4D 
-       42 49 45 4E 
-       54 5F 42 45 
-       41 54 37 30 
-       2E 72 61 77 
-       00          
-041AD9 6D 75 73 69 0051*   FSPACE_ADVENTURE: db "music/SPACE_ADVENTURE.raw",0
+041A8F CD CE 18 04 0030*   	call vdu_load_sfx
+041A93 C9          0031*   	ret
+041A94             0032*   
+041A94             0033*   ; File name lookups:
+041A94 6D 75 73 69 0034*   FSPACE_ADVENTURE: db "music/SPACE_ADVENTURE.raw",0
        63 2F 53 50 
        41 43 45 5F 
        41 44 56 45 
        4E 54 55 52 
        45 2E 72 61 
        77 00       
-041AF3             0052*   
-041AF3             0053*   ; Play sfx routines
-041AF3             0054*   
-041AF3             0055*   sfx_play_ambient_beat70:
-041AF3 21 00 30 00 0056*   	ld hl,BUF_AMBIENT_BEAT70
-041AF7 01 22 26 00 0057*   	ld bc,9762
-041AFB C3 DB 18 04 0058*   	jp vdu_play_sfx
-041AFF             0059*   
-041AFF             0060*   sfx_play_space_adventure:
-041AFF 21 01 30 00 0061*   	ld hl,BUF_SPACE_ADVENTURE
-041B03 01 1E 26 00 0062*   	ld bc,9758
-041B07 C3 DB 18 04 0063*   	jp vdu_play_sfx
-041B0B             0047        ; include "sfx.inc"
-041B0B             0048    
-041B0B             0049    ; --- MAIN PROGRAM FILE ---
-041B0B             0050    main:
-041B0B CD 5C 00 04 0051        call printInline
-041B0F 4C 6F 61 64 0052        asciz "Loading SFX...\r\n"
+041AAE             0035*   
+041AAE             0036*   ; Play sfx routines
+041AAE             0037*   
+041AAE             0038*   sfx_play_space_adventure:
+041AAE 21 00 30 00 0039*   	ld hl,BUF_SPACE_ADVENTURE
+041AB2 01 1E 26 00 0040*   	ld bc,9758
+041AB6 C3 DB 18 04 0041*   	jp vdu_play_sfx
+041ABA             0047        ; include "sfx.inc"
+041ABA             0048    
+041ABA             0049    ; --- MAIN PROGRAM FILE ---
+041ABA             0050    main:
+041ABA CD 5C 00 04 0051        call printInline
+041ABE 4C 6F 61 64 0052        asciz "Loading SFX...\r\n"
        69 6E 67 20 
        53 46 58 2E 
        2E 2E 0D 0A 
        00          
-041B20             0053        ; call load_sfx_AMBIENT_BEAT70
-041B20 CD 9D 1A 04 0054        call load_sfx_SPACE_ADVENTURE
-041B24 CD 5C 00 04 0055        call printInline
-041B28 53 46 58 20 0056        asciz "SFX loaded.\r\n"
+041ACF             0053        ; call load_sfx_AMBIENT_BEAT70
+041ACF CD 71 1A 04 0054        call load_sfx_SPACE_ADVENTURE
+041AD3 CD 5C 00 04 0055        call printInline
+041AD7 53 46 58 20 0056        asciz "SFX loaded.\r\n"
        6C 6F 61 64 
        65 64 2E 0D 
        0A 00       
-041B36             0057    
-041B36             0058    @loop:
-041B36 CD 56 03 04 0059        call waitKeypress
-041B3A FE 1B       0060        cp '\e'
-041B3C C8          0061        ret z
-041B3D             0062        ; call sfx_play_ambient_beat70
-041B3D CD FF 1A 04 0063        call sfx_play_space_adventure
-041B41 C3 36 1B 04 0064        jp @loop
-041B45             0065    ; end main
-041B45             0066    
+041AE5             0057    
+041AE5             0058    @loop:
+041AE5 CD 56 03 04 0059        call waitKeypress
+041AE9 FE 1B       0060        cp '\e'
+041AEB C8          0061        ret z
+041AEC             0062        ; call sfx_play_ambient_beat70
+041AEC CD AE 1A 04 0063        call sfx_play_space_adventure
+041AF0 C3 E5 1A 04 0064        jp @loop
+041AF4             0065    ; end main
+041AF4             0066    

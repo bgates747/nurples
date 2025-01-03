@@ -101,14 +101,7 @@ def make_asm_sfx(db_path, sfx_inc_path, asm_tgt_dir, next_buffer_id):
 
 if __name__ == "__main__":
     db_path = 'build/data/build.db'
-    # asm_tgt_dir = 'sfx'
-    # sfx_inc_path = f"src/asm/sfx.asm"
-    # next_buffer_id = 0x3000
-    # # next_buffer_id = 64256 
-    # make_asm_sfx(db_path, sfx_inc_path, asm_tgt_dir, next_buffer_id)
-
     asm_tgt_dir = 'music'
     sfx_inc_path = f"src/asm/music.inc"
     next_buffer_id = 0x3000
-    # next_buffer_id = 64256 
     make_asm_sfx(db_path, sfx_inc_path, asm_tgt_dir, next_buffer_id)
