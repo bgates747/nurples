@@ -48,14 +48,18 @@ exit:
 
 ; --- MAIN PROGRAM FILE ---
 main:
-    ; call load_sfx_ACHTUNG
+    call printInline
+    asciz "Loading SFX...\r\n"
+    ; call load_sfx_AMBIENT_BEAT70
     call load_sfx_SPACE_ADVENTURE
+    call printInline
+    asciz "SFX loaded.\r\n"
 
 @loop:
     call waitKeypress
     cp '\e'
     ret z
-    ; call sfx_play_achtung
+    ; call sfx_play_ambient_beat70
     call sfx_play_space_adventure
     jp @loop
 ; end main

@@ -1,6 +1,6 @@
 import sqlite3
 
-def make_asm_sfx(db_path, sfx_inc_path, tgt_dir, next_buffer_id):
+def make_asm_sfx(db_path, sfx_inc_path, asm_tgt_dir, next_buffer_id):
     # Connect to the database
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row  # Set row_factory to access columns by names
@@ -81,7 +81,7 @@ def make_asm_sfx(db_path, sfx_inc_path, tgt_dir, next_buffer_id):
         for row in rows:
             sfx_id = row['sfx_id']
             base_filename = row['filename'].split('.')[0].upper()
-            f.write(f"F{base_filename}: db \"{tgt_dir}/{base_filename}.raw\",0\n")
+            f.write(f"F{base_filename}: db \"{asm_tgt_dir}/{base_filename}.raw\",0\n")
 
         # Make the play sfx routines
         f.write("\n; Play sfx routines\n")
@@ -101,14 +101,14 @@ def make_asm_sfx(db_path, sfx_inc_path, tgt_dir, next_buffer_id):
 
 if __name__ == "__main__":
     db_path = 'build/data/build.db'
-    # tgt_dir = 'sfx'
+    # asm_tgt_dir = 'sfx'
     # sfx_inc_path = f"src/asm/sfx.asm"
     # next_buffer_id = 0x3000
     # # next_buffer_id = 64256 
-    # make_asm_sfx(db_path, sfx_inc_path, tgt_dir, next_buffer_id)
+    # make_asm_sfx(db_path, sfx_inc_path, asm_tgt_dir, next_buffer_id)
 
-    tgt_dir = 'tgt/music'
+    asm_tgt_dir = 'music'
     sfx_inc_path = f"src/asm/music.inc"
     next_buffer_id = 0x3000
     # next_buffer_id = 64256 
-    make_asm_sfx(db_path, sfx_inc_path, tgt_dir, next_buffer_id)
+    make_asm_sfx(db_path, sfx_inc_path, asm_tgt_dir, next_buffer_id)
