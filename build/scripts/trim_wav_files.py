@@ -15,7 +15,7 @@ def trim_wav_files(src_dir, tgt_dir):
 
     trimmed_files = []
     for filename in sorted(os.listdir(src_dir)):
-        if filename.endswith('.wav'):
+        if filename.endswith('.wav') or filename.endswith('.mp3'):
             src_path = os.path.join(src_dir, filename)
             tgt_path = os.path.join(tgt_dir, filename)
 
@@ -23,7 +23,7 @@ def trim_wav_files(src_dir, tgt_dir):
             command = [
                 'ffmpeg',
                 '-i', src_path,              # Input file
-                '-t', '10',                  # Duration (first 10 seconds)
+                '-t', '30',                  # Duration (first 10 seconds)
                 '-c', 'copy',                # Copy codec to avoid re-encoding
                 tgt_path                     # Output file
             ]
@@ -37,6 +37,6 @@ def trim_wav_files(src_dir, tgt_dir):
 
 
 if __name__ == '__main__':
-    src_dir = 'assets/sound/music'
+    src_dir = 'assets/sound/music/original'
     tgt_dir = 'assets/sound/music/trimmed'
     trim_wav_files(src_dir, tgt_dir)

@@ -51,7 +51,11 @@ main:
     call printInline
     asciz "Loading SFX...\r\n"
     ; call load_sfx_AMBIENT_BEAT70
-    call load_sfx_SPACE_ADVENTURE
+    ; call load_sfx_SPACE_ADVENTURE
+    call load_sfx_COME_UNDONE
+    call load_sfx_RHIANNON
+    call load_sfx_AFRICA
+    call load_sfx_EVERY_BREATH_YOU_TAKE
     call printInline
     asciz "SFX loaded.\r\n"
 
@@ -60,7 +64,15 @@ main:
     cp '\e'
     ret z
     ; call sfx_play_ambient_beat70
-    call sfx_play_space_adventure
+    ; call sfx_play_space_adventure
+    cp '1'
+    call z,sfx_play_come_undone
+    cp '2'
+    call z,sfx_play_rhiannon
+    cp '3'
+    call z,sfx_play_africa
+    cp '4'
+    call z,sfx_play_every_breath_you_take
     jp @loop
 ; end main
 

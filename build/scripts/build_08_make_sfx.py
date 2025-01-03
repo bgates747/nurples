@@ -21,13 +21,9 @@ def make_tbl_08_sfx(conn, cursor):
 
 def copy_to_temp(file_path):
     """Copy a file to a temporary file."""
-    temp_file = NamedTemporaryFile(delete=False, suffix='.wav')
+    temp_file = NamedTemporaryFile(delete=False, suffix=os.path.splitext(file_path)[1])
     shutil.copy(file_path, temp_file.name)
     return temp_file.name
-
-def replace_with_temp(file_path, temp_path):
-    """Replace a file with a temporary file and delete the temp file."""
-    os.replace(temp_path, file_path)
 
 def make_sfx(db_path, src_dir, tgt_dir, proc_dir):
     conn = sqlite3.connect(db_path)
@@ -43,29 +39,29 @@ def make_sfx(db_path, src_dir, tgt_dir, proc_dir):
 
     sfxs = []
     for filename in sorted(os.listdir(src_dir)):
-        if filename.endswith('.wav'):
-            filename = filename.replace('.wav', '.raw')
-            sfxs.append((len(sfxs), filename))
+        if filename.endswith(('.wav', '.mp3')):
+            filename_raw = os.path.splitext(filename)[0] + '.raw'
+            sfxs.append((len(sfxs), filename, filename_raw))
 
     for sfx in sfxs:
-        sfx_id, filename = sfx
-        src_path = os.path.join(src_dir, filename.replace('.raw', '.wav'))  # Original source file
-        tgt_path = os.path.join(tgt_dir, filename)  # Final .raw target file
-        proc_path = os.path.join(proc_dir, filename.replace('.raw', '.wav'))  # Processed .wav file
+        sfx_id, original_filename, raw_filename = sfx
+        src_path = os.path.join(src_dir, original_filename)  # Original source file
+        tgt_path = os.path.join(tgt_dir, raw_filename)       # Final .raw target file
+        proc_path = os.path.join(proc_dir, os.path.splitext(original_filename)[0] + '.wav')
 
-        # Step 1: Copy the original file to the processed directory as the initial processed file
-        shutil.copy(src_path, proc_path)
-
-        # If the file is stereo, take the left channel only and convert it to mono
-        temp_path = copy_to_temp(proc_path)
-        subprocess.run([
-            'ffmpeg',
-            '-y',                                  # Overwrite output file
-            '-i', temp_path,                      # Input file
-            '-ac', '1',                           # Set audio channels to mono
-            proc_path                              # Output file
-        ], check=True)
-        os.remove(temp_path)
+        # Step 1: Convert to .wav if necessary
+        if original_filename.endswith('.mp3'):
+            temp_path = copy_to_temp(src_path)
+            subprocess.run([
+                'ffmpeg',
+                '-y',                      # Overwrite output file
+                '-i', temp_path,           # Input file
+                '-ac', '1',                # Set audio channels to mono
+                proc_path                  # Output file
+            ], check=True)
+            os.remove(temp_path)
+        else:
+            shutil.copy(src_path, proc_path)
 
         # Step 2: Apply compression to reduce dynamic range
         temp_path = copy_to_temp(proc_path)
@@ -119,7 +115,7 @@ def make_sfx(db_path, src_dir, tgt_dir, proc_dir):
         duration = size // 16.384  # Assuming size is in bytes for 8-bit mono at 16 kHz
         cursor.execute("""
             INSERT INTO tbl_08_sfx (sfx_id, size, duration, filename)
-            VALUES (?, ?, ?, ?);""", (sfx_id, size, duration, filename))
+            VALUES (?, ?, ?, ?);""", (sfx_id, size, duration, raw_filename))
 
     conn.commit()
     conn.close()
