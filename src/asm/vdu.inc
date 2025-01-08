@@ -420,33 +420,6 @@ vdu_load_buffer:
 @length:	dw 0x0000
 @end: db 0 ; padding
 
-; clear a buffer
-; inputs: hl = bufferId
-vdu_clear_buffer:
-    ld a,l
-    ld (@bufferId),a
-    ld a,h
-    ld (@bufferId+1),a
-    ld hl,@cmd
-    ld bc,@end-@cmd
-    rst.lil $18
-    ret
-@cmd:       db 23,0,0xA0
-@bufferId:	dw 0x0000
-		    db 2 ; clear buffer
-@end:
-
-vdu_clear_all_buffers:
-; clear all buffers
-    ld hl,@beg
-    ld bc,@end-@beg
-    rst.lil $18
-    ret
-@beg: db 23,0,$A0
-      dw -1 ; clear all buffers
-      db 2  ; command 2: clear a buffer
-@end:
-
 ; Command 14: Consolidate blocks in a buffer
 vdu_consolidate_buffer:
 ; set parameters for vdu call

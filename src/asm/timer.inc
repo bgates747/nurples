@@ -1,12 +1,21 @@
 ; Table 32. Timer Control Registers
-; this constant is the base address of the timer control registers
-; each timer takes three bytes:
+TMR0_CTL: equ 80h 
+TMR1_CTL: equ 83h
+TMR2_CTL: equ 86h 
+TMR3_CTL: equ 89h 
+TMR4_CTL: equ 8Ch
+TMR5_CTL: equ 8Fh
+
+; each timer register takes three bytes:
 ;   0: control register
 ;   1: low byte of timer reset value
 ;   2: high byte of timer reset value
 ; note that the value is only 8-bits,so we use in0/out0 i/o calls,
 ; which correctly force the high and upper bytes of the address bus to zero
-TMR_CTL:     equ 80h
+
+TMR_REG_CTL: equ 0
+TMR_RES_LOW: equ 1
+TMR_RES_HIGH: equ 2
 
 ; Timer Control Register Bit Definitions
 PRT_IRQ_0:    equ %00000000 ; The timer does not reach its end-of-count value. 
@@ -86,24 +95,67 @@ prt_reload_emulator: equ 11519 ; 1 centisecond on emulator with 16 clock divider
 prt_reload_hardware: equ 11532 ; 1 centisecond on hardware with 16 clock divider
 prt_reload: dl 0x000000
 
+; returns: a = 0 if running on hardware,1 if running on emulator
+;          de = number PRT interrupts during test interval
+prt_calibrate:
+    call vdu_vblank
+; set a MOS timer
+    ld hl,120*1 ; 1 second
+    ld iy,tmr_test
+    call tmr_set
+; set a PRT timer
+    ; ld hl,prt_reload_hardware 
+    ; ld hl,prt_reload_emulator
+    ld hl,prt_reload_emulator + prt_reload_hardware / 2
+    ld (prt_reload),hl
+    call prt_set
+@loop:
+; check time remaining on MOS timer
+    call tmr_get
+    jp z,@done ; time expired,so quit
+    jp m,@done ; time past expiration (negative),so quit
+    jr @loop
+@done:
+    ld de,(prt_irq_counter)
+    ld bc,prt_reload_hardware ; default value for running on hardware
+    ld (prt_reload),bc
+    ld hl,100 ; halfway between 101 for real hardware and 99 for emulator
+    xor a ; clear carry,zero is default value for running on hardware
+    ld (is_emulator),a
+    sbc hl,de
+    ld hl,on_hardware ; default message for running on hardware
+    jp z,prt_calibrate ; zero result is indeterminate so we try again
+    ret m ; negative result means we're on hardware
+    inc a ; we're on emulator
+    ld (is_emulator),a
+    ld bc,prt_reload_emulator
+    ld (prt_reload),bc
+    ld hl,on_emulator
+    ret
+is_emulator: db 0
+on_hardware: defb "Running on hardware\r\n",0
+on_emulator: defb "Running on emulator\r\n",0
+
+calibrating_timer: defb "Calibrating timer\r\n",0
+
 ; set PRT timer
 prt_set:
     ld hl,0
     ld (prt_irq_counter),hl
     ld hl,(prt_reload)
-    out0 ($84),l
-	out0 ($85),h
+    out0 (TMR1_CTL+TMR_RES_LOW),l
+	out0 (TMR1_CTL+TMR_RES_HIGH),h
 ; disable timer
     ld a,PRT_IRQ_0 | IRQ_EN_0 | PRT_MODE_0 | CLK_DIV_16 | RST_EN_1 | PRT_EN_0
-	out0 ($83),a
+	out0 (TMR1_CTL+TMR_REG_CTL),a
 ; enable timer,with interrupt and CONTINUOUS mode,clock divider 16
     ld a,PRT_IRQ_0 | IRQ_EN_1 | PRT_MODE_1 | CLK_DIV_16 | RST_EN_1 | PRT_EN_1
-	out0 ($83),a
+	out0 (TMR1_CTL+TMR_REG_CTL),a
     ret
 
 ; ===============================================
 ; PRT Timer Interrupt Handling
-; https://github.com/tomm/agon-cpu-emulator/blob/main/sdcard/regression_suite/timerirq.inc
+; https://github.com/tomm/agon-cpu-emulator/blob/main/sdcard/regression_suite/timerirq.asm
 ; -----------------------------------------------
 prt_irq_init:
     ; set up interrupt vector table 2
@@ -131,7 +183,7 @@ prt_irq_handler:
 	di
 	push af
     push hl
-	in0 a,($83)
+	in0 a,(TMR1_CTL+TMR_REG_CTL)
 	ld hl,(prt_irq_counter)
 	inc hl
 	ld (prt_irq_counter),hl
@@ -245,6 +297,7 @@ timestamp_chg: dl 0
 ; update the global timestamp from the system clock
 ; inputs: none
 ; returns: hl = time elapsed in 1/120ths of a second
+;          de = current time
 ;          ix = pointer to syvars table
 ; destroys: af,hl,de,ix
 timestamp_tick:
@@ -311,7 +364,7 @@ stopwatch_started: ds 3 ; buffer to hold stopwatch start time
 ; ------------------
 ; delay routine
 ; Author: Richard Turrnidge
-; https://github.com/richardturnnidge/lessons/blob/main/slowdown.inc
+; https://github.com/richardturnnidge/lessons/blob/main/slowdown.asm
 ; routine waits a fixed time,then returns
 ; arrive with A =  the delay byte. One bit to be set only.
 ; eg. ld A,00000100b

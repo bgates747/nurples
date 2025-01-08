@@ -13,6 +13,7 @@ start:
     push ix
     push iy
 
+    call init
     call main
 
 exit:
@@ -37,6 +38,7 @@ exit:
     include "images.inc"
     include "timer.inc"
     include "vdu.inc"
+    include "vdu_buffered_api.inc"
     include "vdu_fonts.inc"
     include "vdu_plot.inc"
     include "vdu_sprites.inc"
@@ -78,10 +80,21 @@ exit:
     include "tile_turret_fireball.inc"
     include "debug.inc"
 
-; --- MAIN PROGRAM FILE ---
-main:
-    ; jp main_end ; DEBUG
+; JUKEBOX INCLUDES
+    include "music.inc"
+    include "play.inc"
+    include "timer_jukebox.inc"
 
+; --- MAIN PROGRAM FILE ---
+init:
+; load play sample command buffers
+    call load_command_buffer
+; initialize play sample timer interrupt handler
+    call ps_prt_irq_init
+    ret
+; end init
+
+main:
 ; start a new game
     ld hl,game_init
     ld (game_state),hl

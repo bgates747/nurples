@@ -23,3 +23,6 @@ table_num_enemy_records: equ enemy_sprites_end-enemy_sprites_begin/table_record_
 ; ### THIS IS THE SPACE ALLOCATED TO THE ACTIVE TILES TABLE ###
 tile_table_base: equ table_end
 tile_table_end: equ 256*tile_table_record_size+tile_table_base
+
+; ### THIS IS THE SPACE ALLOCATED TO JUKEBOX SONG DATA ###
+song_data: equ tile_table_end
