@@ -107,7 +107,7 @@ sprites_init:
 @sprite_loop:
 	push af ; save loop counter / sprite id
 	call vdu_sprite_select
-	ld hl,BUF_CRATER ; can be anything, but why not a smoking hole in the ground?
+	ld hl,BUF_CRATER_0 ; can be anything, but why not a smoking hole in the ground?
 	call vdu_sprite_add_buff
 	pop af ; restore loop counter / sprite id
     inc a
