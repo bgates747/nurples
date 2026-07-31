@@ -305,7 +305,9 @@ vdu_play_sample:
     ld (@channel1),a
     ld a,b
     ld (@volume),a
-    ld (@frequency),de
+    ; ADL stores all three bytes of DE.  Duration is the final word so DEU
+    ; lands in the unsent @end padding byte; frequency remains zero.
+    ld (@duration),de
     ld (@bufferId),hl
     ; clean up byte that got stomped on by bufferId load from hl
     ld a,23 
