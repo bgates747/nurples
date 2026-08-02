@@ -1,5 +1,7 @@
+import argparse
 import os
 import subprocess
+import sys
 
 def download_youtube_audio(url, output_dir="downloads"):
     """
@@ -20,31 +22,41 @@ def download_youtube_audio(url, output_dir="downloads"):
 
     # yt-dlp command to download and convert to MP3
     command = [
-        "yt-dlp",
+        sys.executable,
+        "-m",
+        "yt_dlp",
         "-x",  # Extract audio
         "--audio-format", "mp3",  # Convert to MP3
+        "--print", "after_move:filepath",
         "--output", output_template,  # Define output file template
         url,
     ]
 
     print(f"Downloading and converting: {url}")
     try:
-        subprocess.run(command, check=True)
-        print(f"Download complete. Audio saved to: {output_dir}")
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        output_paths = [line for line in result.stdout.splitlines() if line]
+        if not output_paths:
+            raise RuntimeError("yt-dlp completed without reporting an output path")
+        output_path = output_paths[-1]
+        print(f"Download complete. Audio saved to: {output_path}")
+        return output_path
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
         raise
 
 if __name__ == "__main__":
-    # Example usage
-    # youtube_url = "https://youtu.be/0xGPi-Al3zQ" # Rhiannon by Fleetwood Mac
-    # youtube_url = "https://youtu.be/Epj84QVw2rc" # Come Undone by Duran Duran
-    # youtube_url = "https://youtu.be/1lyu1KKwC74"  # Bitter Sweet Symphony by The Verve
-    youtube_url = "https://youtu.be/Kb7lAMjFuA0" # Africa by Toto
-    # youtube_url = "https://youtu.be/6cucosmPj-A"  # Every Breath You Take by The Police
-    output_directory = "assets/sound/music"
-    try:
-        mp3_path = download_youtube_audio(youtube_url, output_directory)
-        print(f"MP3 file saved at: {mp3_path}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    parser = argparse.ArgumentParser(description="Download audio with yt-dlp")
+    parser.add_argument("url", help="Video URL to download")
+    parser.add_argument(
+        "--output-dir",
+        default="assets/sound/music",
+        help="Directory for the converted MP3",
+    )
+    args = parser.parse_args()
+    print(download_youtube_audio(args.url, args.output_dir))

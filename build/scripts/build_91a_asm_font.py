@@ -164,7 +164,15 @@ def scale_font_images(font_def_file, base_font_src_dir, font_rgba2_dir, scale_fa
         font_img.save(os.path.join(scaled_png_dir, row['img_filename']))
 
         # Convert the image to Agon rgba2 format
-        au.img_to_rgba2(os.path.join(scaled_png_dir, row['img_filename']), os.path.join(font_rgba2_dir, row['img_filename'].replace('.png', '.rgba2')))
+        au.img_to_rgba2(
+            os.path.join(scaled_png_dir, row['img_filename']),
+            os.path.join(
+                font_rgba2_dir,
+                row['img_filename'].replace('.png', '.rgba2'),
+            ),
+            'build/palettes/Agon64.gpl',
+            'RGB',
+        )
         
         # Update the data frame
         df.at[index, 'dim_x'] = new_width
@@ -399,4 +407,3 @@ def maken_zee_fonts(next_buffer_id):
 if __name__ == "__main__":
     next_buffer_id = 0
     maken_zee_fonts(next_buffer_id)
-

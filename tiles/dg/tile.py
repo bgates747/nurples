@@ -3,7 +3,11 @@ from PIL import Image
 import hashlib
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
-from agonImages import img_to_rgba2, img_to_rgba8, convert_to_agon_palette
+from nurples_tools.images import (
+    convert_to_agon_palette,
+    img_to_rgba2,
+    img_to_rgba8,
+)
 import csv
 
 def chop_tiles(source_dir, target_dir, base_name, file_name, tile_width, tile_height, h_pitch, v_pitch, tiles_x, tiles_y, start_x, start_y, set_num, bufferId):

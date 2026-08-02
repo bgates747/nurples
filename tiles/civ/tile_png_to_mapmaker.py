@@ -1,7 +1,6 @@
 import os, shutil, csv
 from PIL import Image
-from agonImages import convert_to_agon_palette, img_to_rgba2, img_to_rgba8
-from hex_compare import hex_dump_comparison
+from nurples_tools.images import img_to_rgba8
 
 def png_to_mapmaker(source_dir, mapmaker_dir, tile_width, tile_height):
     files = []

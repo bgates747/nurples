@@ -3,6 +3,7 @@ import os
 import shutil
 from PIL import Image
 import agonutils as au
+from nurples_tools.images import img_to_rgba8
 
 def crop_images_fixed_size(img, target_width=16, target_height=16):
     """
@@ -202,10 +203,17 @@ def make_images(buffer_id, img_width, img_height, images_type, asm_images_filepa
 
             if image_type == 1:
                 rgba_filepath = f'{output_dir_rgba}/{file_name}.rgba2'
-                au.img_to_rgba2(image_filepath, rgba_filepath)
+                au.img_to_rgba2(
+                    image_filepath,
+                    rgba_filepath,
+                    palette_filepath,
+                    'RGB',
+                    transparent_rgb,
+                )
             else:
                 rgba_filepath = f'{output_dir_rgba}/{file_name}.rgba8'
-                au.img_to_rgba8(image_filepath, rgba_filepath)
+                with Image.open(image_filepath) as rgba8_image:
+                    img_to_rgba8(rgba8_image, rgba_filepath)
 
             end_time = time.perf_counter()
             print(f'{file_name} conversion took {end_time - start_time} seconds')

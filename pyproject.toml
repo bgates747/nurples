@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nurples-tools"
+version = "0.1.0"
+description = "Project-local build helpers for Purple Nurples"
+requires-python = ">=3.14,<3.15"
+
+[tool.setuptools.packages.find]
+include = ["nurples_tools*"]
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

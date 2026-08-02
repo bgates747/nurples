@@ -1,7 +1,7 @@
 import sqlite3
 import os
 from PIL import Image
-from agonImages import img_to_rgba2, convert_to_palette
+import agonutils as au
 
 def dict_factory(cursor, row):
     d = {}
@@ -115,8 +115,12 @@ def make_rgba2_files(db_path, src_png_dir, tgt_rgba2_dir):
         panel_base_filename = row['panel_base_filename']
         src_file = os.path.join(src_png_dir, panel_base_filename + ".png")
         tgt_file = os.path.join(tgt_rgba2_dir, panel_base_filename + ".rgba2")
-        src_img = Image.open(src_file)
-        img_to_rgba2(src_img, tgt_file)
+        au.img_to_rgba2(
+            src_file,
+            tgt_file,
+            'build/palettes/Agon64.gpl',
+            'RGB',
+        )
     conn.close()
 
 if __name__ == "__main__":

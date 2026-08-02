@@ -3,7 +3,7 @@ import sqlite3
 from PIL import Image
 import os
 import shutil
-from agonImages import rgba8_to_img
+from nurples_tools.images import rgba8_to_img
 
 def process_image(source_image, tgt_uv_filepath, object_type):
     input_size = source_image.width

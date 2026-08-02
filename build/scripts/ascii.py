@@ -18,7 +18,7 @@ def format_ascii_art_for_assembly(ascii_art):
 
 if __name__ == "__main__":
     # Example ASCII art
-    ascii_art = """
+    ascii_art = r"""
         __    __                 __                                   
 _____ _/  |__/  |______    ____ |  | __                               
 \__  \\   __\   __\__  \ _/ ___\|  |/ /                               
@@ -40,7 +40,7 @@ __________ ____ _______________________.____     ___________
 /    |    \    |  / |    |   \|    |   |    |___  |        \/        \\
 \____|__  /______/  |____|_  /|____|   |_______ \/_______  /_______  /
         \/                 \/                  \/        \/        \/ 
-"""
+""".replace("\\\\", "\\")
 
     # Process the ASCII art
     formatted_output = format_ascii_art_for_assembly(ascii_art)
