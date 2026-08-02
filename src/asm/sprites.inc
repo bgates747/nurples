@@ -145,7 +145,7 @@ sprites_init:
 ; gets the next available sprite id for a particular sprite group
 ; inputs; ix = pointer to sprite group, b = number of records in sprite group
 ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+;      otherwise, a = 0, carry reset, ix invalid and must not be dereferenced
 ; destroys: a,b,c,hl,ix
 table_get_next_id:
 @loop:
@@ -167,7 +167,7 @@ table_get_next_id:
 ; inputs: hl = pointer to new sprite default settings, ub.c, ud.e = x,y position 
 ;         ix = pointer to sprite group, a = number of records in sprite group
 ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+;      otherwise, a = 0, carry reset, ix invalid and must not be dereferenced
 spawn_sprite_from_coords:
     ld (@sprite_x),bc ; store x-coordinate
     ld (@sprite_y),de ; store y-coordinate
@@ -202,7 +202,7 @@ spawn_sprite_from_coords:
 ; inputs: hl = pointer to new sprite default settings, table_pointer = existing sprite
 ;         ix = pointer to sprite group, b = number of records in sprite group
 ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest sprite vars
+;      otherwise, a = 0, carry reset, ix invalid and must not be dereferenced
 spawn_sprite_from_sprite: 
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars

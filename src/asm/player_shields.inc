@@ -13,7 +13,9 @@ bar_shields:
 
 init_bar_shields:
     ld ix,bar_shields
-    ld hl,(player_shields_max)
+    ld hl,0
+    ld a,(player_shields_max)
+    ld l,a
     ld (ix+bar_val),hl
     call bar_update_v
     ret

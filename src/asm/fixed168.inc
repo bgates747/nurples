@@ -286,7 +286,10 @@ sin168:
 @@:
     ld l,3 ; multiply by 3 to get our lookup index
     mlt hl
-    ld de,sin_lut_168 ; grab the lut address
+    ld de,0 ; MLT leaves HLU unchanged, so copy only the 16-bit product
+    ld d,h
+    ld e,l
+    ld hl,sin_lut_168 ; grab the lut address
     add hl,de ; bump hl by the index
     ld hl,(hl) ; don't try this on a z80!
     pop de

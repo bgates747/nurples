@@ -125,6 +125,7 @@ game_init:
     ld (player_ships),a
     call draw_player_ships
     call player_init
+    ret nc ; retry game_init next frame rather than publishing an invalid player
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl

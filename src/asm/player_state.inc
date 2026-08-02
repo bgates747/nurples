@@ -84,7 +84,7 @@ player_init:
     ld de,sprite_bottom*256
     ld a,1
     call spawn_sprite_from_coords
-    jp nc,@draw
+    ret nc ; IX is invalid when the one-record player pool is full
     res 7,(ix+sprite_type)
 ; load sprite frames
     ld a,(ix+sprite_id)
@@ -104,7 +104,7 @@ player_init:
     ld hl,player_alive
     ld (player_state),hl
     set sprite_alive,(ix+sprite_collisions)
-
+    scf ; publish successful initialization to the caller
     ret
 ; end player_init
 
@@ -135,11 +135,13 @@ player_dying:
 @loop_explode:
     push bc ; save loop counter
     call spawn_explosion_player
+    jp nc,@animate_initial ; never dereference IX after allocation failure
     ld hl,0
     ld (ix+sprite_xvel),hl
     ld hl,1*256
     ld (ix+sprite_yvel),hl
 ; move explosions for a few frames
+@animate_initial:
     ld b,16 ; loop counter
 @loop_animate:
     push bc
@@ -160,12 +162,15 @@ player_dying:
 @loop_spawn_finale:
     push bc
     call spawn_explosion_player
+    jp nc,@next_finale_spawn ; IX is outside the explosion pool on failure
     call @rand
     ld (ix+sprite_xvel),hl
     call @rand
     ld (ix+sprite_yvel),hl
+@next_finale_spawn:
     pop bc
     djnz @loop_spawn_finale
+    ld b,explosion_lifetime_updates ; clear just-spawned, then finish all frames
 @loop_finale_animate:
     push bc
     call @animate
@@ -225,6 +230,12 @@ player_dead:
     call init_level
 ; spawn player sprite at starting position
     call player_init
+    jp c,@player_ready
+; allocation should be impossible after table_init; recover without touching IX
+    ld hl,game_init
+    ld (game_state),hl
+    ret
+@player_ready:
 ; set the game state to playing
     ld hl,game_playing
     ld (game_state), hl

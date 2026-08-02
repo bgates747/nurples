@@ -12,6 +12,7 @@ tileset_ptrs_end: dl 0 ; list terminator
 ; returns: ix = pointer to tileset levels lut
 get_tileset_ptr:
     ld a,(tileset_ptr_idx)
+    ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,a ; d = tileset index
     ld e,3 ; three bytes per index record
     mlt de ; offset into tileset_ptrs lut
@@ -57,6 +58,7 @@ get_level_ptr:
     call get_tileset_ptr
     ld ix,(ix) ; ix = pointer to tileset levels lut
     ld a,(cur_level)
+    ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,a ; d = level index
     ld e,3 ; three bytes per level record
     mlt de ; offset into tileset levels lut

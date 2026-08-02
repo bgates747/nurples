@@ -14,10 +14,18 @@ decisions are recorded in the dated development log.
   the new architecture is proven working, conduct a separately reviewed
   stylistic-consistency pass across legacy and migrated dispatch idioms.
 - [ ] **ASM-002 — Player-death memory corruption:** repair and regression-test
-  the deterministic explosion-pool exhaustion path in `player_dying`, which
-  writes through `IX == table_end` into the first active-tile record. Replace
-  the unreloaded 256-iteration finale counter and make every failed spawn path
-  return without dereferencing its failed allocation pointer.
+  the position-dependent but readily reproducible explosion-pool exhaustion
+  path in `player_dying`, which writes through `IX == table_end` into the first
+  active-tile record. Replace the unreloaded 256-iteration finale counter and
+  make every failed spawn path return without dereferencing its failed
+  allocation pointer.
+- [ ] **ASM-003 — ADL lookup-index safety:** zero-extend every `MLT` result
+  used in 24-bit pointer arithmetic for level, tile-table, activation-table,
+  and trigonometric lookups; verify the resulting addresses in the assembler
+  listing.
+- [ ] **ASM-004 — Active-tile dispatch bounds:** align the activation callback
+  table with tile IDs 0 through 16 and derive its dispatch bound from the
+  table size so tile 16 cannot interpret following opcodes as a callback.
 - [ ] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and

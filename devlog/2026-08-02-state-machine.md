@@ -95,13 +95,15 @@ post-start unresponsiveness.
    the preceding `djnz`. The next `djnz` wraps and executes 256 iterations. The
    full death handler performs 528 internal animation/VBlank iterations rather
    than one bounded update per outer frame.
-6. The same finale deterministically corrupts memory. At least one explosion is
-   still alive when eight new finale explosions are requested without an
-   intervening animation step. The pool cannot satisfy all eight. On failure,
-   `table_get_next_id` leaves IX one record past the explosion group, which is
-   `table_end`; `player_dying` ignores carry and writes x/y velocities through
-   IX. Because `tile_table_base == table_end`, those stores overwrite fields in
-   tile-table record zero, whether or not that record is currently active.
+6. The same finale has a position-dependent but readily reproducible memory
+   corruption path. If the latest preliminary explosion survives (normally
+   when the player dies roughly 32 pixels or more above the bottom boundary),
+   only seven slots are free when eight finale explosions are requested. On
+   failure, `table_get_next_id` leaves IX one record past the explosion group,
+   which is `table_end`; `player_dying` ignores carry and writes x/y velocities
+   through IX. Because `tile_table_base == table_end`, those stores overwrite
+   fields in tile-table record zero, whether or not that record is active. A
+   pool filled by any other route reaches the same unsafe write.
 7. `player_init` treats a failed player-sprite allocation as a draw path. Its
    one-record allocation failure also leaves IX past the group, after which the
    routine draws and sets the alive bit through an invalid pointer.
@@ -118,6 +120,20 @@ post-start unresponsiveness.
     `player_shields_max`, unintentionally incorporating the following two bytes.
     The initial layout currently masks the value error, but the access violates
     the field-width contract and is unsafe lifecycle initialization code.
+12. Several lookup indexes use `MLT` and then add the result to a 24-bit
+    pointer without clearing the register's upper byte. The eZ80 operation is
+    explicitly `rr[15:0] <- rr[15:8] * rr[7:0]`, so `DEU` or `HLU` survives.
+    This affects tileset and level lookup, active-tile allocation/stack
+    arithmetic, tile activation dispatch, and the sine lookup. A stale `04h`
+    can therefore move a lookup roughly `0x040000` bytes away from its table.
+13. `do_active_tiles` accepts tile IDs 1 through 16, but
+    `tile_activation_routines` contains only indices 0 through 15 and places
+    `activate_crater` at index 15 despite `tile_crater == 16`. Tile 16 reads the
+    first three opcode bytes following the table as an indirect callback.
+14. Warm new-game setup calls `init_level`, which prints the score and performs
+    the countdown, before resetting `player_score`. It also never resets
+    `player_starting_score`, so the first death in a later session can restore
+    a score from the previous session.
 
 The current `CALL_HL` macro was checked against the assembler listing. Its
 synthetic return address points to the instruction after `jp (hl)`; the macro

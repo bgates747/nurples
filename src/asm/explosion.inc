@@ -1,4 +1,9 @@
 explosions_max: equ 8
+explosion_animation_count: equ 5
+explosion_animation_ticks: equ 8
+; One update clears the just-spawned flag, then every animation frame runs for
+; explosion_animation_ticks updates.
+explosion_lifetime_updates: equ explosion_animation_count*explosion_animation_ticks+1
 explosion_defaults:
     db explosion            ; type
     dl BUF_EXPLOSION_A	    ; base_bufferId
@@ -7,9 +12,9 @@ explosion_defaults:
     db 7	                ; dim_x
     db 7                    ; dim_y
     db 1                    ; num_orientations
-    db 5                    ; num_animations
-    db 5	                ; animation
-    db 8	                ; animation_timer
+    db explosion_animation_count ; num_animations
+    db explosion_animation_count ; animation
+    db explosion_animation_ticks ; animation_timer
     db 0	                ; move_timer
     db 0	                ; move_step
     db 0	                ; points
@@ -38,8 +43,10 @@ spawn_explosion_player:
     ld ix,explosions_base
     ld b,explosions_max
     call spawn_sprite_from_sprite
-    jp nc,table_deactivate_sprite ; no carry means no free sprite slots, so we deactivate parent sprite and go home
-; other specific initialization
+    ret c ; carry is the only indication that IX names a valid explosion
+; no slot: keep the player hidden and return failure without exposing invalid IX
+    call table_deactivate_sprite
+    xor a ; clear carry after the VDU calls in table_deactivate_sprite
     ret
 ; end spawn_explosion_player
 
@@ -69,7 +76,7 @@ move_explosion:
     inc (iy+sprite_frame)
     dec (iy+sprite_animation)
     jp z,table_deactivate_sprite ; reached the end of the animations
-    ld a,8 ; reset animation timer
+    ld a,explosion_animation_ticks ; reset animation timer
     ld (iy+sprite_animation_timer),a
     ret
 ; end move_explosion

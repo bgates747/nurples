@@ -100,10 +100,11 @@ do_active_tiles:
     push hl ; save pointer to tile definition
     or a ; check for null tile
     jp z,@next_tile ; skip to next tile if null
-    cp 17 ; carry reset if active tile
+    cp tile_activation_routines_count ; carry reset if active tile
     jp nc,@next_tile ; skip to next tile if not active
 ; call the tile activation routine
     ld hl,tile_activation_routines
+    ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,3 ; three bytes per table entry
     ld e,a ; a is the tile type
     mlt de ; de is now the offset to the table entry

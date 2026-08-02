@@ -93,6 +93,7 @@ tile_table_get_next_id:
 ; point ix to next tile record
     ld hl,next_tile_id
     inc (hl)
+    ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,(hl) ; index into tile table
     ld e,tile_table_record_size
     mlt de ; de is now the offset to the table entry
@@ -100,6 +101,7 @@ tile_table_get_next_id:
     add ix,de ; ix is now the address of the table entry
 ; add tile pointer to tile stack
     ld hl,tile_stack
+    ld de,0 ; keep the second pointer offset independently width-safe
     ld d,a ; number of active tiles
     dec d ; zero-based index
     ld e,3 ; three bytes per tile record
@@ -125,6 +127,7 @@ table_deactivate_tile:
     push hl ; save copy from address
 ; compute bytes to copy
     ld a,(num_active_tiles)
+    ld hl,0 ; MLT writes HL[15:0] only; clear HLU before pointer arithmetic
     ld l,a
     ld h,3
     mlt hl

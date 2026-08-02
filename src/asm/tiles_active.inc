@@ -33,7 +33,10 @@ tile_activation_routines:
     dl activate_null_tile
     dl activate_null_tile
     dl activate_null_tile
-    dl activate_crater
+    dl activate_null_tile ; tile 15
+    dl activate_crater ; tile 16
+tile_activation_routines_end:
+tile_activation_routines_count: equ [tile_activation_routines_end-tile_activation_routines]/3
 ; end tile_activation_routines
 
 activate_null_tile:
