@@ -64,13 +64,6 @@ game_init:
     call load_sprite_images
 ; load tileset_ptrs
     call load_tilesets
-; ; load sound effects ; TODO
-; 	ld bc,SFX_num_buffers
-; 	ld hl,SFX_buffer_id_lut
-; 	ld (cur_buffer_id_lut),hl
-; 	ld hl,SFX_load_routines_table
-; 	ld (cur_load_jump_table),hl
-; 	call sfx_load_main
 ; print loading complete message and wait for user keypress
     ld a,1
     ld (game_assets_loaded),a

@@ -13,7 +13,6 @@ start:
     push ix
     push iy
 
-    call init
     call main
 
 exit:
@@ -80,20 +79,7 @@ exit:
     include "tile_turret_fireball.inc"
     include "debug.inc"
 
-; JUKEBOX INCLUDES
-    include "music.inc"
-    include "play.inc"
-    include "timer_jukebox.inc"
-
 ; --- MAIN PROGRAM FILE ---
-init:
-; load play sample command buffers
-    call load_command_buffer
-; initialize play sample timer interrupt handler
-    call ps_prt_irq_init
-    ret
-; end init
-
 main:
 ; start a new game
     ld hl,game_init

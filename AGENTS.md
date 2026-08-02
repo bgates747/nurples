@@ -97,9 +97,9 @@ ad-hoc recursive shell command.
 ## Architecture and project-specific conventions
 
 - `src/asm/` contains the game and assembly includes.
-- `assets/` and `tiles/` contain source art/audio and tile experiments.
+- `assets/` and `tiles/` contain source art and tile experiments.
 - `build/scripts/` contains build and analysis scripts; several are dormant
-  Wolf/MapMaker/Jukebox-era tools listed in `TODO.md`.
+  Wolf/MapMaker-era tools listed in `TODO.md`.
 - `nurples_tools/` contains installed project-local Python adapters only.
 - `tgt/` contains deployable generated data.
 - `tools/legacy_fonts/` preserves inactive font experiments; it is not part of

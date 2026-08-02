@@ -46,6 +46,24 @@ All reusable script code must be safe to import. Generators, GUI display,
 downloads, recursive cleanup, deployment, and emulator launch belong behind an
 explicit CLI entry point.
 
+## Vendored fonts
+
+`assets/fonts` is the authoritative source for the 29 runtime font binaries and
+their conversion metadata. The build must not read fonts from an emulator SD
+tree, another checkout, or an Author-specific absolute path.
+
+Build and verify the deployable `tgt/fonts` copies and
+`src/asm/fonts_list.inc` manifest with:
+
+```bash
+.venv/bin/python build/scripts/build_fonts.py
+.venv/bin/python build/scripts/build_fonts.py --check
+```
+
+Runtime font filenames are relative to `tgt` and therefore begin with
+`fonts/`. Historical `original_font_path` values in the vendored XML are
+provenance only and are not build inputs.
+
 ## Audit status
 
 The 2026-08-02 audit parsed all 49 Python files that were tracked when the work

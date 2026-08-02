@@ -60,6 +60,12 @@ and require behavioral decisions or fixtures; they are promoted to `TODO.md`.
 
 ### PY-001 — stale orchestrator and stages
 
+Author scope decision after the audit: the first PY-001 repair is limited to
+generating assets consumed by the current game. Its required stages must be
+derived from current source/deployable references. Dormant experiments,
+alternate asset pipelines, demos, and historical Wolf/MapMaker/Jukebox stages
+remain out of scope; this decision does not delete their source files.
+
 - `build_00_all_the_things.py` depends on main-only globals, missing
   `src/mapmaker`, a missing `do_assembly`, and `src/asm/wolf3d.asm`; it passes
   wrong argument counts/order into SFX stages and enables every stage.
@@ -139,6 +145,38 @@ validate decremented header dimensions as if they were actual dimensions.
 The five preserved scripts have no current caller, reference obsolete
 `src/assets` locations, and include a shell-based recursive deletion in
 `process_ttf_font.py`. They remain quarantined and uninstalled.
+
+## Current-game asset follow-up
+
+The Author visually validated an isolated, byte-identical build in the Fab Agon
+emulator. The current sprites and DG tiles looked correct. Differences produced
+by the canonical `agonutils` encoder are therefore non-significant for this
+game and do not require a legacy RGBA2222 compatibility mode.
+
+The music table belonged to an unsuccessful playback experiment. The Author
+directed that experiment to be removed from `dev` entirely. Streamed-music
+runtime hooks, Jukebox/test programs, generated media, source media,
+experiment-only processing scripts, the obsolete `tbl_08_sfx` database table,
+and the `yt-dlp` dependency are therefore not part of the current game or
+PY-001 orchestrator. Generic sound API includes that predate the experiment
+remain available but are not included by `nurples.asm`.
+
+The font audit found that all 29 runtime binaries existed, but their generated
+filenames omitted the separator after `fonts` and the repository had no portable
+source stage. The exact binaries and metadata are now vendored under
+`assets/fonts`. `build/scripts/build_fonts.py` deterministically copies them to
+`tgt/fonts`, regenerates `src/asm/fonts_list.inc` with `fonts/<name>.font`
+runtime paths, and provides a non-mutating `--check` mode. The historical
+absolute source paths retained in XML are metadata only.
+
+## Non-working checkpoint
+
+The cleaned no-music build assembled successfully and launched from an isolated
+temporary emulator profile. During Author testing, the game became unresponsive
+at an unknown point after the initial keypress. The game was already known to
+misbehave before this cleanup, so no causal relationship has been established.
+This state is intentionally preserved as cleanup progress, not as a working or
+release-ready milestone. Runtime diagnosis remains future work.
 
 ## Verification evidence
 

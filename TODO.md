@@ -3,9 +3,14 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
-- [ ] **PY-001 — Build orchestrator:** retire or rebuild
-  `build_00_all_the_things.py` and its stale Wolf/MapMaker/Jukebox stages around
-  current Purple Nurples inputs and explicit configuration.
+- [ ] **PY-001 — Current asset build orchestrator:** audit and rebuild
+  `build_00_all_the_things.py` only for assets consumed by the current Purple
+  Nurples game. Derive the required stages from the current source and
+  deployable asset references. Do not revive dormant experiments, alternate
+  asset pipelines, demo applications, or historical Wolf/MapMaker
+  stages unless the Author promotes them separately later. Canonical sprite
+  and tile output is visually accepted, runtime fonts are now vendored, and
+  the failed music experiment is intentionally excluded.
 - [ ] **PY-002 — Safe standalone tools:** put the remaining import-time
   generators and broad edit/cleanup scripts behind explicit, project-scoped,
   dry-run-capable CLIs.
@@ -21,8 +26,8 @@ decisions are recorded in the dated development log.
   deployment, and canonical emulator launch in
   `build_99_asm_assemble.py`; require explicit actions.
 - [ ] **PY-007 — Utility correctness:** fix the stationary-velocity collision
-  calculation, noise-level filter, deterministic fireball generation, and
-  current input paths before using those tools.
+  calculation, deterministic fireball generation, and current input paths
+  before using those tools.
 - [ ] **PY-008 — Script consolidation:** make navball a configuration-only
   caller of the common image builder and consolidate exact/near duplicate tile
   and comparison scripts.

@@ -29,15 +29,6 @@ def do_all_the_things(db_path, map_dim_x, map_dim_y, tgt_dir, floor_nums):
         for floor_num in floor_nums:
             import_mapmaker(db_path, floor_num, map_src_dir, map_dim_x, map_dim_y)
 
-# build_08_make_sfx.py
-    sfx_src_dir = 'src/assets/sfx'
-    sfx_tgt_dir = 'tgt/sfx'
-    if do_08_make_sfx:
-        print(f"build_08_make_sfx: Making sound effects")
-        from build_08_make_sfx import make_sfx
-        make_sfx(db_path, sfx_src_dir, sfx_tgt_dir)
-        
-        
 # build_91_asm_img_load.py
     if do_91_asm_img_load:
         print(f"build_91_asm_img_load: Making image load assembler file")
@@ -52,16 +43,6 @@ def do_all_the_things(db_path, map_dim_x, map_dim_y, tgt_dir, floor_nums):
         print(f"build_91a_asm_font: Making font assembler file")
         from build_91a_asm_font import maken_zee_fonts
         maken_zee_fonts(next_buffer_id)
-
-# build_98_asm_sfx.py
-    sfx_inc_path = 'src/asm/sfx.asm'
-    sfx_tgt_dir = 'sfx'
-    if do_98_asm_sfx:
-        print(f"build_98_asm_sfx: Making sfx assembler file")
-        from build_98_asm_sfx import make_asm_sfx
-        # next_buffer_id = 0x3000
-        next_buffer_id = 64256 
-        make_asm_sfx(db_path, sfx_inc_path, sfx_tgt_dir, next_buffer_id)
 
 # build_99_asm_assemble.py
     if do_99_asm_assemble:
@@ -81,20 +62,16 @@ if __name__ == "__main__":
     do_00_delete_tgt_dir = False
     do_02_fetch_tiles = False
     do_06_import_mapmaker_files = False
-    do_08_make_sfx = False
     do_91_asm_img_load = False
     do_91a_asm_font = False
-    do_98_asm_sfx = False
     do_99_asm_assemble = False
 
 # I find it easier to simply comment out the scripts I don't want to run
     do_00_delete_tgt_dir = True
     do_02_fetch_tiles = True
     do_06_import_mapmaker_files = True
-    do_08_make_sfx = True
     do_91_asm_img_load = True
     do_91a_asm_font = True
-    do_98_asm_sfx = True
     do_99_asm_assemble = True
 
     map_dim_x, map_dim_y = 16, 16 # Don't mess with this

@@ -105,11 +105,6 @@ player_init:
     ld (player_state),hl
     set sprite_alive,(ix+sprite_collisions)
 
-; point to first song in the index
-    ld hl,SFX_filename_index
-    ld hl,(hl) ; pointer to first song filename
-    call play_song
-    
     ret
 ; end player_init
 
