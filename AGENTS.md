@@ -109,6 +109,18 @@ Shared palette conversion, RGBA2222, compression, and image-format behavior
 belongs in canonical `agon-utils`. A project adapter may bridge Pillow objects
 to the canonical path API but must not duplicate its palette algorithms.
 
+New indirect state dispatch uses validated numeric IDs, fixed callback tables,
+and a real `call` followed by tail `jp (hl)`, as scaffolded in
+`src/asm/state_new.inc`. Do not mechanically rewrite legacy `CALL_HL` sites or
+other functioning legacy code for stylistic consistency. Change legacy code
+only when it causes a demonstrated unsafe state, unintended branch, or when a
+reviewed migration requires replacing that specific boundary.
+
+Once the replacement architecture has reached a proven working state, a
+separately reviewed stylistic pass may standardize dispatch and related idioms
+across the codebase. Do not begin that pass during stabilization or treat it as
+implicit authorization to rewrite legacy code.
+
 ## Current task and unresolved checklist
 
 See `TODO.md`. Chronological evidence and decisions belong under `devlog/`.

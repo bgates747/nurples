@@ -3,6 +3,21 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **ASM-001 — Cooperative state-machine migration:** review and integrate
+  `src/asm/state_new.inc` incrementally. The global coordinator must publish
+  phase and policy without assigning actor-local states; every actor-owned mini
+  state machine must reconcile itself against the global phase before its
+  local handler runs. Replace blocking lifecycle handlers with bounded frame
+  updates and qualify each migrated phase in the emulator. Preserve legacy
+  dispatch and behavior unless a specific site causes a demonstrated unsafe
+  state, unintended branch, or is the reviewed boundary being migrated. After
+  the new architecture is proven working, conduct a separately reviewed
+  stylistic-consistency pass across legacy and migrated dispatch idioms.
+- [ ] **ASM-002 — Player-death memory corruption:** repair and regression-test
+  the deterministic explosion-pool exhaustion path in `player_dying`, which
+  writes through `IX == table_end` into the first active-tile record. Replace
+  the unreloaded 256-iteration finale counter and make every failed spawn path
+  return without dereferencing its failed allocation pointer.
 - [ ] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and
