@@ -1,41 +1,81 @@
-image_type: equ 0
-image_width: equ image_type+3
-image_height: equ image_width+3
-image_filesize: equ image_height+3
-image_filename: equ image_filesize+3
-image_bufferId: equ image_filename+3
-image_record_size: equ image_bufferId+3
+; Purple Nurples AGNB startup integration
+; =======================================
+;
+; UI and gameplay bitmaps retain their established explicit VDP buffer IDs,
+; now carried in two canonical AGNB 0.1 containers. The loose VDU font loader
+; remains separate.
 
-cur_image_list: dl 0
-cur_filename: dl 0
-cur_buffer_id: dl 0
+ui_agnb_filename:   db "ui.agnb",0
+game_agnb_filename: db "game.agnb",0
 
-img_load_init:
-; initialize logo's position parameters
-    ld hl,0
-    ld (logo_xvel),hl
-    ld (logo_xpos),hl
-; begin 16.8 maths to determine logo's y position and velocity
-    ld hl,224*256 
-    ld (logo_ypos),hl
-    ex de,hl
-    ld hl,-240+24*256
-    ; ld de,-256*[sprites_num_images+tiles_dg_num_images+ui_num_images]
-    ld de,[sprites_num_images+tiles_dg_num_images+ui_num_images]*256
-    call sdiv168 ; ud.e = distance / num images = y velocity
-    ld (logo_yvel),de
-; all done
+; The 160x106 logo travels from just inside the lower edge to an 8-pixel top
+; margin. Keep these expressions unambiguous because ez80asm evaluates complex
+; arithmetic left-to-right.
+logo_y_start:    equ 224*256
+logo_y_end:      equ 8*256
+logo_y_distance: equ -216*256
+
+logo_xpos: dl 0
+logo_ypos: dl 0
+logo_yvel: dl 0
+
+game_load_index:             dl 0
+game_load_remaining:         dl 0
+game_load_callback_overflow: db 0
+
+
+; Print one completion breadcrumb at a safe record boundary. The canonical
+; loader invokes this only after the bitmap has been fully created.
+img_load_agnb_breadcrumb:
+    ld a,'.'
+    rst.lil 10h
+    xor a
     ret
 
-; inputs: bc is the number of images to load, cur_image_list set
-img_load_main:
-; back up loop counter
-    push bc
 
-; load the next image
-    call load_next_image
+; Initialize exact 16.8 accumulated displacement for all game.agnb records.
+img_load_init:
+    ld hl,0
+    ld (logo_xpos),hl
+    ld (game_load_index),hl
+    ld a,l
+    ld (game_load_callback_overflow),a
 
-; plot the background
+    ld hl,logo_y_start
+    ld (logo_ypos),hl
+
+    ld hl,game_num_images
+    ld (game_load_remaining),hl
+
+    ld hl,logo_y_distance
+    ld de,game_num_images*256
+    call sdiv168 ; DE = signed 16.8 distance per completed bitmap
+    ld (logo_yvel),de
+    ret
+
+
+; Draw the splash and advance its marching logo after one complete game image.
+; The callback result is ignored by AGNB, so an impossible extra callback is
+; latched for validation after the loader returns.
+img_load_agnb_progress:
+    ld hl,(game_load_remaining)
+    ld de,0
+    or a
+    sbc hl,de
+    jr nz,@record_expected
+    ld a,1
+    ld (game_load_callback_overflow),a
+    xor a
+    ret
+
+@record_expected:
+    dec hl
+    ld (game_load_remaining),hl
+    ld de,(game_load_index)
+    inc de
+    ld (game_load_index),de
+
+; Clear before repainting because screen mode 8 is single-buffered.
     call vdu_cls
     ld hl,BUF_SPLASH_BG
     call vdu_buff_select
@@ -43,120 +83,79 @@ img_load_main:
     ld de,0
     call vdu_plot_bmp
 
-; ; draw the most recently loaded image
-; 	ld hl,(cur_buffer_id)
-; 	call vdu_buff_select
-; 	ld bc,0
-; 	ld de,0
-; 	call vdu_plot_bmp
-
-; move logo
     call move_logo
 
-; print current filename
-    ld hl,(cur_filename)
-    call printString
+; Show deterministic record progress without retaining 350 pathname strings.
+    call printInline
+    asciz "Loading images: "
+    ld hl,(game_load_index)
+    call printDec
+    call printInline
+    asciz "/"
+    ld hl,game_num_images
+    call printDec
 
-; flip the framebuffer
-    ; call vdu_flip
-
-; decrement loop counter
-    pop bc
-    dec bc
-    ld a,c
-    or a
-    jp nz,img_load_main
-    ld a,b
-    or a
-    jp nz,img_load_main
+    xor a
     ret
 
-load_next_image:
-    ld iy,(cur_image_list)
-    push iy
-    ld a,(iy+image_type) ; get image type
-    ld bc,(iy+image_width) ; get image width
-    ld de,(iy+image_height) ; get image height
-    ld ix,(iy+image_filesize) ; get image file size
-    ld hl,(iy+image_bufferId) ; get image bufferId
-    ld (cur_buffer_id),hl
-    ld iy,(iy+image_filename) ; get image filename
-    ld (cur_filename),iy
-    call vdu_load_img
-    pop iy
-    lea iy,iy+image_record_size
-    ld (cur_image_list),iy
-    ret
 
 move_logo:
-; activate logo bitmap
-    ld hl, BUF_SPLASH_LOGO
-    call vdu_buff_select
-; update position based on velocity parameters
+; Snap the last callback to the exact endpoint so fixed-point division
+; remainder cannot accumulate into a visible shortfall.
+    ld hl,(game_load_remaining)
+    ld de,0
+    or a
+    sbc hl,de
+    jr nz,@accumulate
+    ld hl,logo_y_end
+    jr @position_ready
+
+@accumulate:
     ld hl,(logo_ypos)
     ld de,(logo_yvel)
     add hl,de
+
+@position_ready:
     ld (logo_ypos),hl
-; draw logo
+    ld hl,BUF_SPLASH_LOGO
+    call vdu_buff_select
     ld bc,(logo_xpos)
     ld de,(logo_ypos)
     call vdu_plot_bmp168
     ret
 
-logo_xvel: dl 0
-logo_xpos: dl 0
 
-logo_yvel: dl 0
-logo_ypos: dl 0
-
+; Load the bootstrap graphics while reporting one dot per finalized bitmap.
+; outputs: canonical AGNB status in A/Z
 load_ui_images:
-; initialize image loading variables
-    ld hl,ui_image_list
-    ld (cur_image_list),hl
-; load images
-    ld b,ui_num_images
-@loop:
-    push bc
-    call load_next_image
-    pop bc
-    djnz @loop
-    ret
-; end load_ui_images
+    ld de,ui_agnb_filename
+    ld hl,img_load_agnb_breadcrumb
+    jp agnb_load_images_with_callback
 
-load_sprite_images:
-; initialize image loading variables
-    ld hl,sprites_image_list
-    ld (cur_image_list),hl
-    ld bc,sprites_num_images
-; load images
-    call img_load_main
-    ret
-; end load_sprite_images
 
-load_tilesets:
-; initialize image loading variables
-    ld hl,tiles_dg_image_list
-    ld (cur_image_list),hl
-    ld bc,tiles_dg_num_images
-; load images
-    call img_load_main
-    ret
-; end load_tilesets
+; Load all backgrounds, sprites, and DG tiles through one persistent handle.
+; The postcondition guards both catalog drift and callback overrun.
+; outputs: A=0/Z on exact success; AGNB metadata error/NZ otherwise
+load_game_images:
+    call img_load_init
+    ld de,game_agnb_filename
+    ld hl,img_load_agnb_progress
+    call agnb_load_images_with_callback
+    ret nz
 
-load_backgrounds:
-; initialize image loading variables
-    ld hl,bg_image_list
-    ld (cur_image_list),hl
-    ld bc,bg_num_images
-; load images
-    call img_load_main
+    ld hl,(game_load_remaining)
+    ld de,0
+    or a
+    sbc hl,de
+    jr nz,@count_error
+    ld a,(game_load_callback_overflow)
+    or a
+    jr nz,@count_error
+    xor a
     ret
-; end load_backgrounds
 
-; ; initialize image loading variables
-;     ld hl,tiles_xevious_image_list
-;     ld (cur_image_list),hl
-;     ld bc,tiles_xevious_num_images
-; ; load images
-;     call img_load_main
+@count_error:
+    ld a,agnb_error_metadata
+    ld (agnb_last_error),a
+    or a
     ret

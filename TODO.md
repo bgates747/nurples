@@ -40,7 +40,7 @@ decisions are recorded in the dated development log.
   repeated seeker edge contact, level completion, player death at multiple
   heights, respawn, and game over. Inspect all new latched fault bytes after
   the run. Do not merge or push the repair copy before the Author accepts it.
-- [ ] **PY-001 — Current asset build orchestrator:** audit and rebuild
+- [x] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and
   deployable asset references. Do not revive dormant experiments, alternate

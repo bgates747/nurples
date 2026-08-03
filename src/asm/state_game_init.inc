@@ -23,13 +23,21 @@ game_init:
 ; clear all buffers
     call vdu_clear_all_buffers
 ; load fonts
+	call printInline
+	asciz "Loading font: "
 	call fonts_load
+	jp nc,@font_load_error
+	call printNewLine
 ; select font
     ld hl,Lat38_VGA8_8x8
     ld a,1 ; flags
     call vdu_font_select
 ; load UI images
+	call printInline
+	asciz "Loading UI: "
     call load_ui_images
+	jp nz,@agnb_load_error
+	call printNewLine
 ; set up the display
     ld a,8;+128 ; 136   320   240   64    60hz double-buffered
     call vdu_set_screen_mode
@@ -58,12 +66,9 @@ game_init:
     ld e,39 ; right
     ld b,0; bottom
     call vdu_set_txt_viewport
-; load background and sprite images
-    call img_load_init
-    call load_backgrounds
-    call load_sprite_images
-; load tileset_ptrs
-    call load_tilesets
+; load all backgrounds, sprites, and active DG tiles from one container
+    call load_game_images
+    jp nz,@agnb_load_error
 ; print loading complete message and wait for user keypress
     ld a,1
     ld (game_assets_loaded),a
@@ -95,6 +100,34 @@ game_init:
     call vdu_plot_bmp
 ; draw player cockpit
     call draw_player_cockpit
+    jp @assets_loaded
+
+@font_load_error:
+    call printNewLine
+    call printInline
+    asciz "Font load failed. Press any key to return to MOS.\r\n"
+    call waitKeypress
+    ld a,1
+    ld (game_exit_requested),a
+    ret
+
+@agnb_load_error:
+; Preserve the loader result while returning to a predictable full screen.
+    push af
+    ld a,(original_screen_mode)
+    call vdu_set_screen_mode
+    call vdu_cls
+    call printInline
+    asciz "AGNB image load failed: "
+    pop af
+    call printHex8
+    call printNewLine
+    call printInline
+    asciz "Press any key to return to MOS.\r\n"
+    call waitKeypress
+    ld a,1
+    ld (game_exit_requested),a
+    ret
 @assets_loaded:
 ; set gfx origin and viewport to playing field window
     call set_gfx_playing_field

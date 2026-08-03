@@ -91,11 +91,7 @@ def render_fonts_manifest(fonts: list[FontAsset]) -> str:
 
 def sync_fonts(fonts: list[FontAsset], target_dir: Path) -> None:
     target_dir.mkdir(parents=True, exist_ok=True)
-    expected_names = {
-        name
-        for font in fonts
-        for name in (font.path.name, font.metadata_path.name)
-    }
+    expected_names = {font.path.name for font in fonts}
     for existing_path in target_dir.iterdir():
         if (
             existing_path.is_file()
@@ -106,7 +102,6 @@ def sync_fonts(fonts: list[FontAsset], target_dir: Path) -> None:
 
     for font in fonts:
         shutil.copy2(font.path, target_dir / font.path.name)
-        shutil.copy2(font.metadata_path, target_dir / font.metadata_path.name)
 
 
 def build_fonts(source_dir: Path, target_dir: Path, manifest_path: Path) -> None:
@@ -119,11 +114,7 @@ def build_fonts(source_dir: Path, target_dir: Path, manifest_path: Path) -> None
 def check_fonts(source_dir: Path, target_dir: Path, manifest_path: Path) -> list[str]:
     fonts = discover_fonts(source_dir)
     errors = []
-    expected_names = {
-        name
-        for font in fonts
-        for name in (font.path.name, font.metadata_path.name)
-    }
+    expected_names = {font.path.name for font in fonts}
     if target_dir.is_dir():
         actual_names = {
             path.name
@@ -136,13 +127,12 @@ def check_fonts(source_dir: Path, target_dir: Path, manifest_path: Path) -> list
         errors.append("tgt/fonts file set differs from vendored assets")
 
     for font in fonts:
-        for source_path in (font.path, font.metadata_path):
-            target_path = target_dir / source_path.name
-            if (
-                not target_path.is_file()
-                or target_path.read_bytes() != source_path.read_bytes()
-            ):
-                errors.append(f"target differs: {target_path}")
+        target_path = target_dir / font.path.name
+        if (
+            not target_path.is_file()
+            or target_path.read_bytes() != font.path.read_bytes()
+        ):
+            errors.append(f"target differs: {target_path}")
 
     expected_manifest = render_fonts_manifest(fonts)
     if (

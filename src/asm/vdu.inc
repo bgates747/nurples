@@ -453,6 +453,28 @@ vdu_consolidate_buffer:
            db 14
 @end:
 
+; Convert a consolidated buffer to an explicitly rated audio sample.
+; This is a dependency of the canonical AGNB API's dormant audio entry point;
+; Purple Nurples currently creates no audio container and does not call it.
+; inputs: HL=bufferId, A=base format (0 signed, 1 unsigned), DE=sample rate
+vdu_buffer_to_sound:
+    ld (@bufferId),hl
+    add a,8
+    ld (@format),a
+    ld (@sampleRate),de
+    ld hl,@cmd
+    ld bc,@end-@cmd
+    rst.lil $18
+    ret
+@cmd:        db 23,0,$85
+             db 0,5,2
+@bufferId:   dw 0
+@format:     db 0
+@sampleRate: dw 0
+; Native ADL stores three bytes from DE. This byte absorbs DEU outside the VDU
+; packet, matching the canonical dependency implementation.
+@end:        db 0
+
 ; load an image file to a buffer and make it a bitmap
 ; inputs: a = image type ; bc,de image width,height ; hl = bufferId ; ix = file size ; iy = pointer to filename
 vdu_load_img:

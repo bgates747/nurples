@@ -46,6 +46,20 @@ All reusable script code must be safe to import. Generators, GUI display,
 downloads, recursive cleanup, deployment, and emulator launch belong behind an
 explicit CLI entry point.
 
+The current game build has four explicit actions:
+
+```bash
+.venv/bin/python build/scripts/build_00_all_the_things.py --assets
+.venv/bin/python build/scripts/build_00_all_the_things.py --check
+.venv/bin/python build/scripts/build_00_all_the_things.py --assemble
+.venv/bin/python build/scripts/build_00_all_the_things.py --all
+```
+
+`--assets` builds the one runtime font plus `ui.agnb` and `game.agnb` from the
+accepted RGBA2222 payloads under `assets/rgba2`. `--check` verifies generated
+metadata and every packed payload without writing. The orchestrator does not
+deploy files or launch an emulator.
+
 ## Vendored fonts
 
 `assets/fonts` preserves the vendored font collection and conversion metadata.
@@ -53,7 +67,7 @@ The runtime selection in `nurples_tools/fonts.py` contains only the
 `Lat38-VGA8_8x8.font` face used by the game. The build must not read fonts from
 an emulator SD tree, another checkout, or an Author-specific absolute path.
 
-Build and verify the deployable `tgt/fonts` copies and
+Build and verify the deployable `tgt/fonts` binary and
 `src/asm/fonts_list.inc` manifest with:
 
 ```bash
@@ -63,7 +77,8 @@ Build and verify the deployable `tgt/fonts` copies and
 
 Runtime font filenames are relative to `tgt` and therefore begin with
 `fonts/`. Historical `original_font_path` values in the vendored XML are
-provenance only and are not build inputs.
+provenance only. XML metadata is a build input retained under `assets/fonts`;
+it is not copied into the deployable target.
 
 ## Audit status
 

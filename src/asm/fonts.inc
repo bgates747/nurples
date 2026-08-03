@@ -11,7 +11,7 @@ fonts_load:
     push ix ; mos_fread does not preserve the font-list cursor
     call vdu_load_buffer_from_file
     pop ix
-    jp nc,@next_font
+    jr nc,@load_failed
 
 ; create font from buffer
     ld hl,(ix+font_list_bufferId)
@@ -24,6 +24,10 @@ fonts_load:
     ld hl,(ix+font_list_bufferId)
     ld a,1 ; flags
     call vdu_font_select
+
+; Report only a fully uploaded, created, and selected font.
+    ld a,'.'
+    rst.lil 10h
 
 ; ; debug print filename
 ;     call printNewLine
@@ -38,5 +42,12 @@ fonts_load:
     pop bc
     djnz @load_loop
 
-; all done
+; all done: every font completed successfully
+    scf
+    ret
+
+@load_failed:
+; Balance the loop counter saved by this iteration and publish failure.
+    pop bc
+    or a ; clear carry
     ret

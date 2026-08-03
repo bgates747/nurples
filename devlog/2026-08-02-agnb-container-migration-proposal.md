@@ -137,3 +137,16 @@ on `dev`. The canonical Purple Nurples checkout remains untouched. The work
 will remain uncommitted and unpushed until the Author has visually qualified
 the emulator result and explicitly approves a commit. Integration into `main`
 requires a later deliberate instruction.
+
+## Implementation and qualification
+
+The approved design was implemented on `dev`. The runtime target now contains
+only the loose `Lat38-VGA8_8x8.font`, `ui.agnb`, `game.agnb`, and
+`nurples.bin`. The two containers preserve all 396 accepted RGBA2222 payloads,
+dimensions, ordering, and buffer IDs byte-for-byte; the former loose payloads
+are now tracked under `assets/rgba2` as build inputs.
+
+The integrated `--all` build assembled successfully. The independent AGNB
+parser, 48-unit-test suite, Ruff, `pip check`, deterministic build check, and
+two focused read-only reviews all passed. The Author visually accepted startup
+and gameplay in the durable `nurples-repair` emulator profile on 2026-08-02.

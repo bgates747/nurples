@@ -50,6 +50,32 @@ class AssemblySafetyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertGreater(output.stat().st_size, 0)
 
+    def test_agnb_startup_uses_two_containers_and_exact_progress_count(self) -> None:
+        images = read_asm("images.inc")
+        startup = read_asm("state_game_init.inc")
+        counts = read_asm("images_agnb.inc")
+
+        self.assertIn('ui_agnb_filename:   db "ui.agnb",0', images)
+        self.assertIn('game_agnb_filename: db "game.agnb",0', images)
+        self.assertIn("game_num_images: equ 350", counts)
+        self.assertIn("ld de,game_num_images*256", images)
+        self.assertIn("ld hl,logo_y_end", images)
+        self.assertIn("ld (game_load_callback_overflow),a", images)
+        self.assertIn("call load_ui_images", startup)
+        self.assertIn("call load_game_images", startup)
+        self.assertNotIn("call load_backgrounds", startup)
+        self.assertNotIn("call load_sprite_images", startup)
+        self.assertNotIn("call load_tilesets", startup)
+
+    def test_font_breadcrumb_follows_successful_creation(self) -> None:
+        fonts = read_asm("fonts.inc")
+        create = fonts.index("call vdu_font_create")
+        select = fonts.index("call vdu_font_select", create)
+        breadcrumb = fonts.index("ld a,'.'", select)
+        self.assertLess(create, select)
+        self.assertLess(select, breadcrumb)
+        self.assertIn("jr nc,@load_failed", fonts)
+
     def test_player_spawn_failures_are_guarded_before_ix_use(self) -> None:
         player_source = read_asm("player_state.inc")
         player_init = routine(player_source, "player_init", "; end player_init")
@@ -781,9 +807,10 @@ class AssemblySafetyTests(unittest.TestCase):
             "push ix ; mos_fread does not preserve the font-list cursor\n"
             "    call vdu_load_buffer_from_file\n"
             "    pop ix\n"
-            "    jp nc,@next_font",
+            "    jr nc,@load_failed",
             fonts,
         )
+        self.assertIn("@load_failed:\n; Balance the loop counter", read_asm("fonts.inc"))
 
         source = read_asm("vdu.inc")
         loader = block(

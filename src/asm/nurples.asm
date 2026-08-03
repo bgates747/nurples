@@ -34,6 +34,7 @@ exit:
     include "files.inc"
     include "fixed168.inc"
     include "fonts.inc"
+    include "images_agnb.inc"
     include "images.inc"
     include "timer.inc"
     include "vdu.inc"
@@ -41,6 +42,7 @@ exit:
     include "vdu_fonts.inc"
     include "vdu_plot.inc"
     include "vdu_sprites.inc"
+    include "agnb_api.inc"
 
 ; APPLICATION INCLUDES
     include "ascii.inc"

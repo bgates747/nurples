@@ -42,6 +42,10 @@ class FontBuildTests(unittest.TestCase):
 
             self.assertEqual(manifest.read_bytes(), first_manifest)
             self.assertEqual(check_fonts(FONT_SOURCE, target, manifest), [])
+            self.assertEqual(
+                {path.name for path in target.iterdir()},
+                {"Lat38-VGA8_8x8.font"},
+            )
 
 
 if __name__ == "__main__":

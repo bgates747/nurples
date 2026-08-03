@@ -100,6 +100,15 @@
     ; 10 cycles total
     ENDMACRO
 
+; Direct FatFS call wrapper used by the canonical AGNB stream loader.
+; FatFS entry points may clobber IY, which is application-owned here.
+    MACRO FFSCALL function
+    push iy
+    ld a,function
+    rst.lil $08
+    pop iy
+    ENDMACRO
+
     MACRO PUSH_ALL
     ex af,af'
     exx
