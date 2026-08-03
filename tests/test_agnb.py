@@ -82,6 +82,7 @@ class AgnbContainerTests(unittest.TestCase):
             {
                 "fonts/Lat38-VGA8_8x8.font",
                 "game.agnb",
+                "nurples-map-tests.bin",
                 "nurples.bin",
                 "ui.agnb",
             },

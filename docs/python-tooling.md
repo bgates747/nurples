@@ -60,6 +60,24 @@ accepted RGBA2222 payloads under `assets/rgba2`. `--check` verifies generated
 metadata and every packed payload without writing. The orchestrator does not
 deploy files or launch an emulator.
 
+The standalone gameplay-map suite has separate, non-destructive stages:
+
+```bash
+.venv/bin/python build/scripts/build_maps.py
+.venv/bin/python build/scripts/build_maps.py --check
+.venv/bin/python build/scripts/build_map_tests.py
+.venv/bin/python build/scripts/build_map_tests.py --start-map 5
+```
+
+The map compiler reads only the ordered manifest and its TMX/TSX/catalog
+inputs. It never invokes the dormant coupled `tiles/dg/tile.py` entry point or
+regenerates bitmap assets. The assembly stage copies `src/asm` into a temporary
+directory and overlays the generated suite text there as the temporary
+`levels_tileset_0.inc` expected by `nurples.asm`, leaving the repository's
+campaign include byte-for-byte untouched. It writes the separate runtime
+artifact `tgt/nurples-map-tests.bin`; `--start-map` selects a PN-MAP ID to run
+first while retaining the cyclic nine-map suite.
+
 ## Vendored fonts
 
 `assets/fonts` preserves the vendored font collection and conversion metadata.

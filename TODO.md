@@ -44,6 +44,12 @@ decisions are recorded in the dated development log.
   level-scoped reset that removes live enemies, projectiles, explosions, and
   active tiles at a natural level boundary without erasing the player record or
   player-owned state. Qualify a transition with each actor type still live.
+- [ ] **ASM-010 — Launcher zero-delay underflow:** normalize or explicitly
+  handle an initial randomized delay of zero in small seeker pads and fireball
+  turrets. Both handlers currently decrement before testing, so a nominal
+  immediate activation wraps to 255 updates and makes spawn timing
+  unexpectedly nondeterministic. Qualify initial and subsequent spawn cadence
+  without changing the established actor-pool limits.
 - [x] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and

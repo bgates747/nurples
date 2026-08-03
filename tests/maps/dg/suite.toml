@@ -1,0 +1,44 @@
+# Ordered standalone Purple Nurples gameplay qualification suite.
+# The compiler reverses each TMX's top-to-bottom rows for the runtime.
+
+format_version = 1
+symbol_prefix = "tileset_00"
+tileset = "../../../tiles/dg/dg0.tsx"
+tile_catalog = "../../../tiles/dg/dg_0_files.xml"
+output = "../../../src/asm/levels_test_maps.inc"
+
+[[levels]]
+name = "PN-MAP-00 Flight Deck"
+source = "pn_map_00_flight_deck.tmx"
+
+[[levels]]
+name = "PN-MAP-01 Seeker Nursery"
+source = "pn_map_01_seeker_nursery.tmx"
+
+[[levels]]
+name = "PN-MAP-02 Fire-Control Range"
+source = "pn_map_02_fire_control_range.tmx"
+
+[[levels]]
+name = "PN-MAP-03 Circuit Breaker"
+source = "pn_map_03_circuit_breaker.tmx"
+
+[[levels]]
+name = "PN-MAP-04 Demolition Yard"
+source = "pn_map_04_demolition_yard.tmx"
+
+[[levels]]
+name = "PN-MAP-05 Damage Control"
+source = "pn_map_05_damage_control.tmx"
+
+[[levels]]
+name = "PN-MAP-08 Orbital Shipyard"
+source = "pn_map_08_orbital_shipyard.tmx"
+
+[[levels]]
+name = "PN-MAP-06 Dirty Handoff"
+source = "pn_map_06_dirty_handoff.tmx"
+
+[[levels]]
+name = "PN-MAP-07 Clean Room"
+source = "pn_map_07_clean_room.tmx"
