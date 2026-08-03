@@ -148,14 +148,29 @@ vdu_set_txt_viewport:
 @end:   db 0x00	  ; padding
 
 ; Wait for VBLANK interrupt
-vdu_vblank:		
-    PUSH 	IX			
+vdu_timing_fault_vblank_timeout: equ 0
+vdu_timing_fault_flags: db 0
+vdu_vblank:
+    push bc
+    push de
+    push ix
 	MOSCALL	mos_sysvars
-	LD	A, (IX + sysvar_time + 0)
-@wait:		
-    CP 	A, (IX + sysvar_time + 0)
-    JR	Z, @wait
-    POP	IX
+    ld e,(ix+sysvar_time+0)
+    ld bc,0 ; 65,536 polls before failing open
+@wait:
+    ld a,(ix+sysvar_time+0)
+    cp e
+    jp nz,@done
+    dec c
+    jp nz,@wait
+    djnz @wait
+    ld a,(vdu_timing_fault_flags)
+    or %00000001
+    ld (vdu_timing_fault_flags),a
+@done:
+    pop ix
+    pop de
+    pop bc
     RET
 
 ; VDU 29, x; y;: Set graphics origin
@@ -322,6 +337,7 @@ vdu_load_img_rgba2_to_8:
     pop bc
     pop de
     pop hl
+    ret nc ; leave the cleared target untouched when the source cannot open
 ; fall through to vdu_rgba2_to_8
 
 ; https://discord.com/channels/1158535358624039014/1158536711148675072/1257757461729771771
@@ -447,6 +463,14 @@ vdu_load_img:
 	push de
 ; load the image
 	call vdu_load_buffer_from_file
+    jp c,@loaded
+; balance the saved arguments and fail without creating an empty bitmap
+	pop de
+	pop bc
+	pop af
+    or a ; preserve A while reasserting the carry-clear failure contract
+    ret
+@loaded:
 ; now make it a bitmap
     ld hl,(bufferId0)
     call vdu_consolidate_buffer
@@ -455,9 +479,12 @@ vdu_load_img:
 	pop de ; image height
 	pop bc ; image width
 	pop af ; image type
-	jp vdu_bmp_create ; will return to caller from there
+	call vdu_bmp_create
+    scf
+    ret
 
 ; inputs: hl = bufferId; iy = pointer to filename
+; outputs: carry set after a complete read/close; carry clear if open failed
 vdu_load_buffer_from_file:
     ld (bufferId0),hl
 
@@ -472,8 +499,10 @@ vdu_load_buffer_from_file:
 ;   A: Filehandle, or 0 if couldn't open
 	push iy ; pointer to filename
 	pop hl
-	ld c,fa_read
+    ld c,fa_read
     MOSCALL mos_fopen
+    or a
+    ret z ; carry clear: do not read or close the all-files handle zero
     ld (@filehandle),a
 
 @read_file:
@@ -509,7 +538,9 @@ vdu_load_buffer_from_file:
 ; close the file
 @close_file:
     ld a,(@filehandle)
+    ld c,a
     MOSCALL mos_fclose
+    scf
     ret ; vdu_load_buffer_from_file
 
 @filehandle: db 0 ; file handle

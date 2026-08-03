@@ -27,6 +27,7 @@ tile_move_step:          equ  37; 1 bytes ;stage in a move program sequence, var
 tile_points:             equ  38; 1 bytes ;points awarded for killing this tile type
 tile_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 tile_frame:              equ  40; 1 bytes ;current animation frame
+tile_definitions_size:   equ  tile_frame-tile_definitions+1
 
 ; ###### tile TABLE VARIABLES ######
 tile_stack: blkb 256*3,0 ; stack of pointers to tile records
@@ -37,6 +38,10 @@ tile_table_pointer: dl tile_table_base ; pointer to top address of current recor
 num_active_tiles: dl 0 ; how many active tiles
 next_tile_id: db 0 ; next available tile id
 new_tile_table_pointer: dl 0 ; pointer to new tile record
+tile_fault_bad_record: equ 0
+tile_fault_bad_move_program: equ 1
+tile_fault_bad_deactivation: equ 2
+tile_fault_flags: db 0 ; latched fail-closed diagnostics
 
 tile_table_init:
 ; reset num active tiles
@@ -45,6 +50,7 @@ tile_table_init:
 ; reset next tile id
     xor a
     ld (next_tile_id),a
+    ld (tile_fault_flags),a
 ; clear the tile stack
     xor a ; write zeroes to tile stack
     ld hl,tile_stack
@@ -78,27 +84,37 @@ tile_table_init:
 ; gets the next available tile id
 ; inputs; none
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
-; destroys: a,hl,ix
+;      otherwise, a = 0, carry flag reset, ix invalid and must not be dereferenced
+; destroys: a,b,de,hl,ix
 ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 tile_table_get_next_id:
-    ld hl,num_active_tiles
-    inc (hl)
-    jp nz,@F ; check rollover to > 256 active tiles
-    dec (hl) ; undo increment
-    xor a ; reset carry flag indicating that we didn't find a free tile
-    ret
-@@:
-    ld a,(hl) ; number of active tiles
-; point ix to next tile record
-    ld hl,next_tile_id
-    inc (hl)
+; The byte-sized active count deliberately caps the dense stack at 255 entries.
+    ld a,(num_active_tiles)
+    inc a
+    jp z,@not_found
+; Search the entire ring rather than assuming the next physical record is free.
+    ld b,0 ; DJNZ with zero visits all 256 tile records
+    ld a,(next_tile_id)
+@search:
+    inc a
     ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
-    ld d,(hl) ; index into tile table
+    ld d,a ; candidate index into tile table
     ld e,tile_table_record_size
     mlt de ; de is now the offset to the table entry
     ld ix,tile_table_base ; point to base address of tile table
     add ix,de ; ix is now the address of the table entry
+    bit sprite_alive,(ix+tile_collisions)
+    jp z,@found
+    djnz @search
+@not_found:
+    xor a ; reset carry flag indicating that we didn't find a free tile
+    ret
+@found:
+    ld (next_tile_id),a
+    ld (ix+tile_id),a ; repair the stable identity byte before publishing it
+    ld hl,num_active_tiles
+    inc (hl)
+    ld a,(hl) ; number of active tiles
 ; add tile pointer to tile stack
     ld hl,tile_stack
     ld de,0 ; keep the second pointer offset independently width-safe
@@ -114,11 +130,132 @@ tile_table_get_next_id:
     ret ; done
 ; end tile_table_get_next_id
 
+; Validate an address into the dense tile-stack entries currently in use.
+; inputs: hl = candidate tile-stack address
+; outputs: carry set for an aligned slot in the active dense-stack range
+; destroys: a,de,hl
+tile_stack_pointer_valid:
+    ld de,tile_stack
+    or a
+    sbc hl,de
+    jp c,@invalid
+    ld a,(num_active_tiles)
+    or a
+    jp z,@invalid
+    ld de,0
+    ld d,a
+    ld e,3
+    mlt de
+    or a
+    sbc hl,de
+    jp nc,@invalid
+    add hl,de ; restore the in-range offset
+; For offsets below 768, divisibility by three can be tested without a loop.
+; 256 == 1 (mod 3), and multiplication by 171 maps byte multiples of three
+; into 0..85 while every non-multiple maps into 86..255.
+    ld a,h
+    add a,l
+    adc a,0
+    ld d,a
+    ld e,171
+    mlt de
+    ld a,e
+    cp 86
+    jp nc,@invalid
+    scf
+    ret
+@invalid:
+    xor a
+    ret
+; end tile_stack_pointer_valid
+
+; Validate a 64-byte-aligned pointer into the active-tile record table.
+; inputs: iy = candidate tile record
+; outputs: carry set only for an aligned in-range record pointer
+; destroys: a,de,hl
+tile_table_record_pointer_valid:
+    push iy
+    pop hl
+    ld de,tile_table_base
+    or a
+    sbc hl,de ; offset from the tile-table base
+    jp c,@invalid
+    ld de,tile_table_end-tile_table_base
+    or a
+    sbc hl,de
+    jp nc,@invalid
+    add hl,de ; restore the in-range offset
+    ld a,l
+    and tile_table_record_size-1
+    jp nz,@invalid
+; Convert the aligned offset to its stable record id: H*4 + L/64.
+    ld a,h
+    add a,a
+    add a,a
+    ld d,a
+    ld a,l
+    rlca
+    rlca
+    and %00000011
+    or d
+    cp (iy+tile_id)
+    jp nz,@invalid
+    scf
+    ret
+@invalid:
+    xor a
+    ret
+; end tile_table_record_pointer_valid
+
 ; deactivate the tile with the given id
 ; inputs: tile_stack_pointer set to record to remove
 ; outputs: decrements num_active_tiles by one, tile_stack_pointer set to record above removed record, removes tile pointer from the tile stack, shifts stack records above it down one position
 ; destroys: a,hl,bc,de
 table_deactivate_tile: 
+; refuse malformed count/cursor/record combinations before moving memory
+    ld a,(num_active_tiles)
+    or a
+    jp z,@invalid
+    ld hl,(tile_stack_pointer)
+    call tile_stack_pointer_valid
+    jp nc,@invalid
+    ld hl,(tile_stack_pointer)
+    ld hl,(hl)
+    push iy
+    pop de
+    or a
+    sbc hl,de
+    jp nz,@invalid
+    call tile_table_record_pointer_valid
+    jp nc,@invalid
+; make the physical record reusable before compacting its stack entry
+    res sprite_alive,(iy+tile_collisions)
+    res sprite_just_died,(iy+tile_collisions)
+    res 7,(iy+tile_type)
+    jp tile_stack_remove_current_entry
+@invalid:
+    ld hl,tile_fault_flags
+    set tile_fault_bad_deactivation,(hl)
+    ret
+; end table_deactivate_tile
+
+; Remove a malformed stack entry without dereferencing the record pointer.
+; A record referenced only by a corrupt entry may remain quarantined as alive;
+; reclaiming an unknown physical record would be less safe than leaking a slot.
+tile_stack_quarantine_entry:
+    ld hl,(tile_stack_pointer)
+    call tile_stack_pointer_valid
+    jp nc,@invalid
+    jp tile_stack_remove_current_entry
+@invalid:
+    ld hl,tile_fault_flags
+    set tile_fault_bad_deactivation,(hl)
+    ret
+; end tile_stack_quarantine_entry
+
+; Compact the already-validated dense-stack cursor and retain the historical
+; cursor-minus-three convention used by deactivation during iteration.
+tile_stack_remove_current_entry:
 ; compute address to copy from
     ld hl,(tile_stack_pointer)
     inc hl
@@ -152,12 +289,12 @@ table_deactivate_tile:
     dec hl
     ld (tile_stack_pointer),hl
     ret
-; end table_deactivate_tile
+; end tile_stack_remove_current_entry
 
 ; spawn a new active tile at the prescribed location
 ; inputs: hl = pointer to new tile default settings, tiles_x_plot, tiles_y_plot = x,y position
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
+;      otherwise, a = 0, carry flag reset, ix invalid and must not be dereferenced
 ; destroys: a,hl,bc,de,ix
 ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 spawn_active_tile:
@@ -170,7 +307,7 @@ spawn_active_tile:
     lea ix,ix+tile_definitions ; bump pointer to copy to
     push ix ; pointer to default tile settings
     pop de ; address to copy to
-    ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+    ld bc,tile_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new tile record
 ; copy tile position from inputs
     ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
@@ -181,6 +318,9 @@ spawn_active_tile:
 ; set default tile velocities
     ld hl,0
     ld (ix+tile_xvel),hl
+    ld (ix+tile_vel),hl
+    ld (ix+tile_heading),hl
+    ld (ix+tile_orientation),hl
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
 ; return to caller
@@ -193,7 +333,7 @@ spawn_active_tile:
 ; spawn a new active tile at the prescribed location
 ; inputs: iy pointer to current hl = pointer to new tile default settings
 ; returns: if new tile available, a = tile id, ix pointing to new tile vars, carry set
-;      otherwise, a = 0, carry flag reset, ix pointing to highest tile vars
+;      otherwise, a = 0, carry flag reset, ix invalid and must not be dereferenced
 ; destroys: a,hl,bc,de,ix
 ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 spawn_active_tile_from_sprite:
@@ -206,7 +346,7 @@ spawn_active_tile_from_sprite:
     lea ix,ix+tile_definitions ; bump pointer to copy to
     push ix ; pointer to default tile settings
     pop de ; address to copy to
-    ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+    ld bc,tile_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new tile record
 ; copy tile position from existing sprite
     ld ix,(new_tile_table_pointer) ; reset pointer to new tile record
@@ -218,6 +358,9 @@ spawn_active_tile_from_sprite:
 ; set default tile velocities
     ld hl,0
     ld (ix+tile_xvel),hl
+    ld (ix+tile_vel),hl
+    ld (ix+tile_heading),hl
+    ld (ix+tile_orientation),hl
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
 ; return to caller

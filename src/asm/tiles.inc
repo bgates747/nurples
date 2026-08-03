@@ -2,6 +2,7 @@ tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
 tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
     ; initialize to zero for a maximum of 256 rows in a level
 tiles_cols: db 0 ; number of tile columns in the current level
+tiles_level_complete: db 0 ; latched until the global state consumes it
 
 cur_baseBufferId: dl 0
     db 0 ; padding for byte-shifting
@@ -10,6 +11,9 @@ tiles_x_plot: dl 0
 tiles_y_plot: dl -15
 
 tiles_plot:
+    ld a,(tiles_level_complete)
+    or a
+    ret nz
 ; set gfx origin to playing field window
     ld bc,origin_left
     ld de,origin_top
@@ -65,7 +69,10 @@ tiles_plot:
     ld (tiles_y_plot),ix
     ld a,ixl
     cp 1
-    ret nz
+    jp z,@next_row
+    xor a ; no level-complete result this frame
+    ret
+@next_row:
 ; do active tiles
     push hl ; save pointer to next row tile def
     call do_active_tiles
@@ -81,9 +88,13 @@ tiles_plot:
 ; decrement tiles row counter
     ld hl,tiles_row
     dec (hl)
-    ret nz
-@inc_level:
-    jp next_level
+    jp z,@level_complete
+    xor a ; no level-complete result this frame
+    ret
+@level_complete:
+    ld a,1
+    ld (tiles_level_complete),a
+    ret
 ; end tiles_plot
 
 do_active_tiles:

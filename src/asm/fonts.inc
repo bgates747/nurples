@@ -8,7 +8,10 @@ fonts_load:
 ; load font into a buffer
     ld hl,(ix+font_list_bufferId)
     ld iy,(ix+font_list_filename)
+    push ix ; mos_fread does not preserve the font-list cursor
     call vdu_load_buffer_from_file
+    pop ix
+    jp nc,@next_font
 
 ; create font from buffer
     ld hl,(ix+font_list_bufferId)
@@ -28,6 +31,7 @@ fonts_load:
 ;     call printString
 
 ; advance font_list pointer to next record
+@next_font:
     lea ix,ix+font_list_record_size
 
 ; restore loop counter

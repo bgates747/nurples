@@ -37,6 +37,7 @@ sprite_move_step:          equ  37; 1 bytes ;stage in a move program sequence, v
 sprite_points:             equ  38; 1 bytes ;points awarded for killing this sprite type
 sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 sprite_frame:              equ  40; 1 bytes ;current animation frame
+sprite_definitions_size:   equ  sprite_frame-sprite_definitions+1
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; pointer to top address of current record, initialized to table_base
@@ -44,6 +45,9 @@ table_pointer: dl table_base
 
 ; flag indicating collision with screen edge
 sprite_screen_edge: db #00 
+sprite_fault_bad_record: equ 0
+sprite_fault_bad_move_program: equ 1
+sprite_fault_flags: db 0 ; latched fail-closed diagnostics
 
 ; ######### COLLISION SPRITE PARAMETERS ##########
 ; integer coordinates are all that are needed for collision calculations
@@ -70,6 +74,7 @@ cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 table_init:
 ; clear the sprite table
     xor a ; write zeroes to sprite table
+    ld (sprite_fault_flags),a
     ld hl,table_base ; address to copy from
     ld bc,table_end-table_base ; number of bytes to clear
     call clear_mem
@@ -87,16 +92,63 @@ table_init:
     ret
 ; end table_init
 
+; Validate a record pointer and its stable identity byte against the physical
+; 64-byte slot it occupies in the sprite table.
+; inputs: iy = candidate sprite record
+; outputs: carry set only for an aligned in-range pointer with the expected id
+; destroys: a,de,hl
+sprite_table_record_pointer_valid:
+    push iy
+    pop hl
+    ld de,table_base
+    or a
+    sbc hl,de ; offset from the sprite-table base
+    jp c,@invalid
+    ld de,table_end-table_base
+    or a
+    sbc hl,de
+    jp nc,@invalid
+    add hl,de ; restore the in-range offset
+    ld a,l
+    and table_record_size-1
+    jp nz,@invalid
+; Convert the aligned offset to its record id: H*4 + L/64.
+    ld a,h
+    add a,a
+    add a,a
+    ld d,a
+    ld a,l
+    rlca
+    rlca
+    and %00000011
+    or d
+    cp (iy+sprite_id)
+    jp nz,@invalid
+    scf
+    ret
+@invalid:
+    xor a
+    ret
+; end sprite_table_record_pointer_valid
+
 ; deactivate the sprite with the given id
 ; inputs: iy set to sprite record
 ; outputs: nothing
-; destroys: a,hl
+; destroys: a,de,hl
 table_deactivate_sprite:
+    call sprite_table_record_pointer_valid
+    jp nc,@invalid
     ld a,(iy+sprite_id) ; get spriteId
+    push iy
     call vdu_sprite_select ; select sprite 
     call vdu_sprite_hide
+    pop iy
     res sprite_alive,(iy+sprite_collisions)
     res sprite_just_died,(iy+sprite_collisions)
+    ret
+@invalid:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_record,(hl)
     ret
 ; end table_deactivate_sprite
 
@@ -181,7 +233,7 @@ spawn_sprite_from_coords:
     lea ix,ix+sprite_definitions ; bump pointer to copy to
     push ix ; pointer to default sprite settings
     pop de ; address to copy to
-    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ld bc,sprite_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new sprite record
     pop ix ; restore pointer to new sprite record
 ; copy sprite position from existing sprite
@@ -189,6 +241,13 @@ spawn_sprite_from_coords:
     ld (ix+sprite_x),hl
     ld hl,(@sprite_y)
     ld (ix+sprite_y),hl
+; clear motion state retained by a previously used physical record
+    ld hl,0
+    ld (ix+sprite_xvel),hl
+    ld (ix+sprite_yvel),hl
+    ld (ix+sprite_vel),hl
+    ld (ix+sprite_heading),hl
+    ld (ix+sprite_orientation),hl
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
     set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
@@ -213,7 +272,7 @@ spawn_sprite_from_sprite:
     lea ix,ix+sprite_definitions ; bump pointer to copy to
     push ix ; pointer to default sprite settings
     pop de ; address to copy to
-    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ld bc,sprite_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new sprite record
     pop ix ; restore pointer to new sprite record
 ; copy sprite position from existing sprite
@@ -222,6 +281,13 @@ spawn_sprite_from_sprite:
     ld (ix+sprite_x),hl
     ld hl,(iy+sprite_y)
     ld (ix+sprite_y),hl
+; clear motion state retained by a previously used physical record
+    ld hl,0
+    ld (ix+sprite_xvel),hl
+    ld (ix+sprite_yvel),hl
+    ld (ix+sprite_vel),hl
+    ld (ix+sprite_heading),hl
+    ld (ix+sprite_orientation),hl
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
     set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
@@ -229,12 +295,82 @@ spawn_sprite_from_sprite:
     ret
 ; end spawn_sprite_from_sprite
 
+; Exact stabilization whitelist for writable legacy sprite callbacks.
+; inputs: iy = validated sprite record, hl = stored callback
+; outputs: carry set only for an exact pool/type/program combination
+; destroys: a,de,hl
+sprite_move_program_valid:
+    ld a,(iy+sprite_id)
+    cp player_lasers_end_sprite_id
+    jp c,@player_laser
+    cp seeker_min_sprite_id
+    jp c,@invalid ; the player record is not dispatched by this routine
+    cp seekers_end_sprite_id
+    jp c,@seeker
+    cp fireballs_end_sprite_id
+    jp c,@fireball
+    cp explosions_end_sprite_id
+    jp c,@explosion
+    jp @invalid
+@player_laser:
+    ld a,(iy+sprite_type)
+    cp player_air
+    jp nz,@invalid
+    ld de,move_player_laser
+    call @matches
+    jp z,@valid
+    jp @invalid
+@seeker:
+    ld a,(iy+sprite_type)
+    cp enemy_air
+    jp nz,@invalid
+    ld de,en_nav_seek_zag
+    call @matches
+    jp z,@valid
+    ld de,move_enemy_seeker_orbit
+    call @matches
+    jp z,@valid
+    ld de,move_enemy_seeker_orbit_stage1
+    call @matches
+    jp z,@valid
+    jp @invalid
+@fireball:
+    ld a,(iy+sprite_type)
+    cp enemy_projectile
+    jp nz,@invalid
+    ld de,move_enemy_fireball
+    call @matches
+    jp z,@valid
+    jp @invalid
+@explosion:
+    ld a,(iy+sprite_type)
+    cp explosion
+    jp nz,@invalid
+    ld de,move_explosion
+    call @matches
+    jp z,@valid
+@invalid:
+    xor a
+    ret
+@valid:
+    scf
+    ret
+@matches:
+    push hl
+    or a
+    sbc hl,de
+    pop hl
+    ret
+; end sprite_move_program_valid
+
 ; call the behavior subroutines for a specified sprite group
 ; inputs: iy = pointer to sprite group, b = number of records in sprite group
 move_sprite_group:
     push bc ; backup loop counter
     push iy ; backup table pointer
 @move_loop:
+    call sprite_table_record_pointer_valid
+    jp nc,@bad_record
     ld (table_pointer),iy ; update table pointer
     push bc ; backup loop counter
 ; check top bit of sprite_type to see if sprite is just spawned
@@ -248,7 +384,11 @@ move_sprite_group:
     jp z,@next_record ; ... skip to next record
 ; otherwise move the sprite
     ld hl,(iy+sprite_move_program) ; load the behavior subroutine address
+    call sprite_move_program_valid
+    jp nc,@bad_move_program
+    push iy ; behavior callbacks do not own the traversal record pointer
     CALL_HL ; run the behavior subroutine
+    pop iy
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     ld a,(iy+sprite_frame)
@@ -268,6 +408,8 @@ move_sprite_group:
     pop bc ; get back loop counter
 @reset_just_spawned:
     push bc ; back up loop counter
+    call sprite_table_record_pointer_valid
+    jp nc,@bad_reset_record
     bit 7,(iy+sprite_type) ; check if just spawned
     jp z,@F
     res 7,(iy+sprite_type) ; clear just spawned flag
@@ -281,6 +423,22 @@ move_sprite_group:
     lea iy,iy+table_record_size
     pop bc ; get back loop counter
     djnz @reset_just_spawned
+    ret
+@bad_record:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_record,(hl)
+    pop iy
+    pop bc
+    ret
+@bad_move_program:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_move_program,(hl)
+    call table_deactivate_sprite
+    jp @next_record
+@bad_reset_record:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_record,(hl)
+    pop bc
     ret
 @sprite_died:
     call table_deactivate_sprite

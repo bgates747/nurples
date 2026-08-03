@@ -1,5 +1,5 @@
 turret_fireball_defaults:
-    db enemy_ground         ; type
+    db tile_turret_fireball ; type
     dl BUF_TURRET_000       ; base_bufferId
     dl move_turret_fireball ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
@@ -59,5 +59,5 @@ turret_fireball_reset_move_timer:
 
 kill_turret_fireball:
     call update_score
-    jp activate_crater
+    jp transform_active_tile_to_crater
 ; end move_turret_fireball

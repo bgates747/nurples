@@ -6,12 +6,18 @@ tileset_ptrs:
     ; dl tiles_xevious_levels
     dl tileset_00_levels
 tileset_ptrs_end: dl 0 ; list terminator
+tileset_ptrs_count: equ [tileset_ptrs_end-tileset_ptrs]/3
 
 ; get a pointer to the current tileset
 ; inputs: tileset_ptr_idx
 ; returns: ix = pointer to tileset levels lut
 get_tileset_ptr:
     ld a,(tileset_ptr_idx)
+    cp tileset_ptrs_count
+    jp c,@index_valid
+    xor a ; corrupt/out-of-range selectors recover to the first tileset
+    ld (tileset_ptr_idx),a
+@index_valid:
     ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,a ; d = tileset index
     ld e,3 ; three bytes per index record
@@ -35,16 +41,11 @@ init_tileset:
 ; end init_tileset
 
 next_tileset:
-    ld hl,tileset_ptr_idx
-    inc (hl) ; bump to next index
-    call get_tileset_ptr ; ix = pointer to tileset_ptrs record
-    ld hl,(ix) ; ix = pointer to tileset levels lut
-    sign_hlu ; check for list terminator (0)
-    jp nz,@F ; not end of list
-    ld a,-1 ; will wrap around to zero on the next iteration
-    ld (tileset_ptr_idx),a
-    jp next_tileset ; try again
-@@:
+    ld a,(tileset_ptr_idx)
+    inc a ; bump to next index
+    cp tileset_ptrs_count
+    jp c,init_tileset
+    xor a ; wrap to the first tileset without dereferencing the terminator
     jp init_tileset
 ; end next_tileset
 
@@ -57,7 +58,16 @@ num_levels: db 0
 get_level_ptr:
     call get_tileset_ptr
     ld ix,(ix) ; ix = pointer to tileset levels lut
+    ld a,(ix-1) ; refresh the count after any outer-selector recovery
+    ld (num_levels),a
+    ld b,a
     ld a,(cur_level)
+    cp b
+    jp c,@index_valid
+@index_invalid:
+    xor a ; corrupt/out-of-range selectors recover to the first level
+    ld (cur_level),a
+@index_valid:
     ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,a ; d = level index
     ld e,3 ; three bytes per level record
@@ -72,17 +82,24 @@ next_level:
 ; update starting score
     ld hl,(player_score)
     ld (player_starting_score),hl
-; set up pointers to next map definition
-    ld hl,cur_level
-    inc (hl) ; bump to next level
-    call get_level_ptr ; ix points to current level lookup record
-    ld hl,(ix) ; hl = pointer to next level lookup record
-    sign_hlu ; check for list terminator (0)
-    jp nz,@F ; not end of list
-    xor a ; reset level to zero
+; refresh the authoritative inner-table count before advancing
+    call get_tileset_ptr
+    ld ix,(ix)
+    ld a,(ix-1)
+    ld (num_levels),a
+    ld b,a
+; select the next valid level without indexing the terminator
+    ld a,(cur_level)
+    inc a ; bump to next level
+    jp z,@advance_tileset ; guard a corrupt 255 index wrapping to zero
+    cp b
+    jp nc,@advance_tileset
     ld (cur_level),a
-    jp next_tileset ; try next tileset
-@@: ; fall through to init_level
+    jp init_level
+@advance_tileset:
+    xor a
+    ld (cur_level),a
+    jp next_tileset
 ; end next_level
 
 ; inputs: tileset_ptr_idx, cur_level
@@ -100,6 +117,8 @@ init_level:
 ; set tiles_row counter
     ld a,(ix+1)
     ld (tiles_row),a
+    xor a
+    ld (tiles_level_complete),a
 ; set cur_baseBufferId
     ld hl,(ix+4)
     ld (cur_baseBufferId),hl

@@ -16,6 +16,11 @@ player_defaults:
     db 0                    ; frame
 
 player_state:  dl player_alive
+player_event_none: equ 0
+player_event_game_over: equ 1
+player_event: db player_event_none
+player_fault_bad_state: equ 0
+player_fault_flags: db 0 ; latched fail-closed diagnostics
 player_ships: db 0
 player_ships_max: db 3
 player_speed: equ 3*256 ; pixels per frame 16.8 fixed
@@ -57,9 +62,42 @@ draw_player_ships:
 
 do_player:
     ld hl,(player_state)
+    call player_state_pointer_valid
+    jp c,@dispatch
+    ld hl,player_fault_flags
+    set player_fault_bad_state,(hl)
+    ld a,player_event_game_over
+    ld (player_event),a
+    ret
+@dispatch:
     CALL_HL
     ret
 ; end do_player
+
+; Exact stabilization whitelist for writable legacy player-state pointers.
+; Invalid actor state is surfaced as an event for the global coordinator.
+player_state_pointer_valid:
+    ld de,player_alive
+    call @matches
+    jp z,@valid
+    ld de,player_dying
+    call @matches
+    jp z,@valid
+    ld de,player_dead
+    call @matches
+    jp z,@valid
+    xor a
+    ret
+@valid:
+    scf
+    ret
+@matches:
+    push hl
+    or a
+    sbc hl,de
+    pop hl
+    ret
+; end player_state_pointer_valid
 
 ; set initial player position
 ; inputs: none,everything is hardcoded
@@ -115,6 +153,11 @@ player_alive:
 ; end player_alive
 
 kill_player:
+; update_shields callers still own their collision-record index registers
+    push af
+    push bc
+    push ix
+    push iy
 ; set player collision flag to dead
     ld ix,player_begin
     res sprite_alive,(ix+sprite_collisions)
@@ -126,6 +169,10 @@ kill_player:
 ; set player state to dying
     ld hl,player_dying
     ld (player_state),hl
+    pop iy
+    pop ix
+    pop bc
+    pop af
     ret
 ; end kill_player
 
@@ -212,17 +259,15 @@ player_dead:
 ; decrement lives
     ld a,(player_ships)
     dec a
-    jp z,game_over
     ld (player_ships),a
+    jp nz,@respawn
+; actors publish outcomes; the global playing state owns the phase transition
+    ld a,player_event_game_over
+    ld (player_event),a
+    ret
+@respawn:
     call draw_player_ships
-; reset the sprite table
-    call table_init
-    ld hl,table_base
-    ld (table_pointer),hl
-; initialize sprites and active tiles table
-    call sprites_init
-    call table_init
-    call tile_table_init
+    call reset_runtime_tables
 ; ; reset player score to what it was at the start of the level
 ;     ld hl,(player_starting_score)
 ;     ld (player_score),hl
@@ -232,16 +277,11 @@ player_dead:
     call player_init
     jp c,@player_ready
 ; allocation should be impossible after table_init; recover without touching IX
-    ld hl,game_init
-    ld (game_state),hl
+    ld a,player_event_game_over
+    ld (player_event),a
     ret
 @player_ready:
-; set the game state to playing
-    ld hl,game_playing
-    ld (game_state), hl
 ; set game playing substates
-    ld hl,player_alive
-    ld (player_state), hl
     ld hl,enemies_alive
     ld (enemies_state), hl
     ret

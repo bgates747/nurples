@@ -48,10 +48,10 @@ move_enemy_seeker_orbit:
 ;     inc a ; set to 1
 ;     ld (iy+sprite_move_timer),a
 ; init done, so update move program
-    ld hl,@stage1 ; update move program pointer
+    ld hl,move_enemy_seeker_orbit_stage1 ; update move program pointer
     ld (iy+sprite_move_program),hl
-; fall through to @stage1
-@stage1:
+; fall through to the persistent orbit behavior
+move_enemy_seeker_orbit_stage1:
 ; ; check whether time to update orbit angle
 ;     dec (iy+sprite_move_timer)
 ;     jp nz,@F ; not time to change so simply movethe sprite on the current heading
@@ -124,34 +124,44 @@ en_nav_seek_zag:
     call sprite_compute_velocities
     call move_sprite ; move the sprite
     or a ; a will be non-zero if have collided with screen edge
-    jp nz,@zag_switch ; switch direction
+    jp nz,@edge_switch ; switch direction, but never move twice in one frame
     jp move_enemy_seeker ; didn't hit an edge so check collisions and move sprite
-@zig_zag_start:
+@reset_zig_zag_timer:
     ld iy,(table_pointer) 
     call rand_8
     and %00111111 ; limit it to 64
     set 3,a ; make sure it's at least 8
     ld (iy+sprite_move_timer),a ; store it
-    ; fall through to @zig_zag
+    ret
 @zig_zag:
     ld a,(iy+sprite_move_timer)
     dec a
     ld (iy+sprite_move_timer),a
     jp nz,@zig_zag_no_switch
 @zag_switch:
-    ; otherwise flip direction and restart timer
+    call @switch_zag_heading
+    call @reset_zig_zag_timer
+    jp @zig_zag_no_switch
+@edge_switch:
+; The generic mover has already clamped/bounced this seeker. Choose the next
+; zag and return through collision handling; moving again here can loop forever
+; at the bottom edge because both zag headings point downward.
+    call @switch_zag_heading
+    call @reset_zig_zag_timer
+    jp move_enemy_seeker
+@switch_zag_heading:
     ld a,(iy+sprite_move_step)
     xor %1 ; flips bit zero
     ld (iy+sprite_move_step),a ; store it
-    jp nz,@F ; zag right
+    jp nz,@right ; zag right
 ;otherwise zag left
     ld hl,160*256; southwest heading
     ld (iy+sprite_heading),hl ; save sprite heading
-    jp @zig_zag_start
-@@: ; zag right
+    ret
+@right:
     ld hl,96*256; southeast heading
     ld (iy+sprite_heading),hl ; save sprite heading
-    jp @zig_zag_start
+    ret
 @zig_zag_no_switch:
     ; ld a,(sprite_orientation)
     ld hl,(iy+sprite_heading)

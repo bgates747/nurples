@@ -8,24 +8,38 @@ decisions are recorded in the dated development log.
   phase and policy without assigning actor-local states; every actor-owned mini
   state machine must reconcile itself against the global phase before its
   local handler runs. Replace blocking lifecycle handlers with bounded frame
-  updates and qualify each migrated phase in the emulator. Preserve legacy
-  dispatch and behavior unless a specific site causes a demonstrated unsafe
+  updates and qualify each migrated phase in the emulator. Define and test an
+  explicit priority for simultaneous player-death and level-complete events;
+  the legacy death animation can currently publish both across different
+  scheduler boundaries. Preserve legacy dispatch and behavior unless a
+  specific site causes a demonstrated unsafe
   state, unintended branch, or is the reviewed boundary being migrated. After
   the new architecture is proven working, conduct a separately reviewed
   stylistic-consistency pass across legacy and migrated dispatch idioms.
-- [ ] **ASM-002 — Player-death memory corruption:** repair and regression-test
+- [x] **ASM-002 — Player-death memory corruption:** repair and regression-test
   the position-dependent but readily reproducible explosion-pool exhaustion
   path in `player_dying`, which writes through `IX == table_end` into the first
   active-tile record. Replace the unreloaded 256-iteration finale counter and
   make every failed spawn path return without dereferencing its failed
   allocation pointer.
-- [ ] **ASM-003 — ADL lookup-index safety:** zero-extend every `MLT` result
+- [x] **ASM-003 — ADL lookup-index safety:** zero-extend every `MLT` result
   used in 24-bit pointer arithmetic for level, tile-table, activation-table,
   and trigonometric lookups; verify the resulting addresses in the assembler
   listing.
-- [ ] **ASM-004 — Active-tile dispatch bounds:** align the activation callback
+- [x] **ASM-004 — Active-tile dispatch bounds:** align the activation callback
   table with tile IDs 0 through 16 and derive its dispatch bound from the
   table size so tile 16 cannot interpret following opcodes as a callback.
+- [x] **ASM-005 — Definition-copy bounds:** copy only the 19 initialized bytes
+  in sprite/tile defaults instead of reading 23 bytes past each blob into
+  adjacent data or code.
+- [x] **ASM-006 — Tile activation domains:** use tile-domain type IDs and split
+  map crater spawning from in-place active-tile transformation so neither path
+  consumes a stale context pointer.
+- [ ] **ASM-007 — Stabilization runtime qualification:** after review, run the
+  isolated repair build in the Nurples emulator profile and exercise startup,
+  repeated seeker edge contact, level completion, player death at multiple
+  heights, respawn, and game over. Inspect all new latched fault bytes after
+  the run. Do not merge or push the repair copy before the Author accepts it.
 - [ ] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and

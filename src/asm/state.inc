@@ -1,34 +1,91 @@
 ; Game state variables
 game_state:  dl game_main_menu
+game_fault_bad_state: equ 0
+game_fault_flags: db 0 ; latched fail-closed diagnostics
+game_exit_requested: db 0 ; main-loop handoff; state handlers must return normally
 
 do_game:
     ld hl,(game_state)   ; Load the current game state
+    call game_state_pointer_valid
+    jp c,@dispatch
+    ld hl,game_fault_flags
+    set game_fault_bad_state,(hl)
+    ld hl,game_init ; publish recovery; do not run it in the corrupt frame
+    ld (game_state),hl
+    ret
+@dispatch:
     CALL_HL                ; Call the corresponding state handler
     ret
+
+; Exact stabilization whitelist for writable legacy global-state pointers.
+; inputs/outputs: hl = candidate handler; carry set only for an exact match
+; destroys: a,de
+game_state_pointer_valid:
+    ld de,game_main_menu
+    call @matches
+    jp z,@valid
+    ld de,game_paused
+    call @matches
+    jp z,@valid
+    ld de,game_level_transition
+    call @matches
+    jp z,@valid
+    ld de,game_over
+    call @matches
+    jp z,@valid
+    ld de,game_victory
+    call @matches
+    jp z,@valid
+    ld de,game_loading
+    call @matches
+    jp z,@valid
+    ld de,game_cutscene
+    call @matches
+    jp z,@valid
+    ld de,game_inventory
+    call @matches
+    jp z,@valid
+    ld de,game_map
+    call @matches
+    jp z,@valid
+    ld de,game_exit
+    call @matches
+    jp z,@valid
+    ld de,game_init
+    call @matches
+    jp z,@valid
+    ld de,game_playing
+    call @matches
+    jp z,@valid
+    xor a
+    ret
+@valid:
+    scf
+    ret
+@matches:
+    push hl
+    or a
+    sbc hl,de
+    pop hl
+    ret
+; end game_state_pointer_valid
 
 ; ========================
 ; Main Game States
 ; ========================
 
 game_main_menu:
-    ; Handle main menu options
-    ; Example: Check input for "Start Game"
-    call check_input_menu
-    jp nz, game_init ; Start game on selection
+    ; Unimplemented legacy state: remain here deterministically.
     ret
 
 
 
 game_paused:
-    ; Pause menu logic
-    call check_input_pause
-    jp nz, game_playing ; Resume game
-    jp z, game_main_menu ; Exit to main menu
+    ; Unimplemented legacy state: remain here deterministically.
     ret
 
 game_level_transition:
-    ; Handle level transitions
-    call load_next_level
+    call next_level
     ld hl, game_playing
     ld (game_state), hl
     ret
@@ -59,9 +116,7 @@ game_over:
     ret
 
 game_victory:
-    ; Display victory screen
-    call display_victory
-    jp nz, game_main_menu ; Return to main menu on input
+    ; Unimplemented legacy state: remain here deterministically.
     ret
 
 ; ========================
@@ -76,27 +131,22 @@ game_loading:
     ret
 
 game_cutscene:
-    ; Play a non-interactive cutscene
-    call play_cutscene
-    jp nz, game_playing ; Return to gameplay after cutscene
+    ; Unimplemented legacy state: remain here deterministically.
     ret
 
 game_inventory:
-    ; Open inventory or shop
-    call display_inventory
-    jp nz, game_playing ; Return to gameplay after inventory close
+    ; Unimplemented legacy state: remain here deterministically.
     ret
 
 game_map:
-    ; Display map or quest
-    call display_map
-    jp nz, game_playing ; Return to gameplay after map close
+    ; Unimplemented legacy state: remain here deterministically.
     ret
 
 game_exit:
-    ; Handle exit logic
+    ; Request orderly shutdown after returning through the state dispatcher.
     call save_game
-    jp exit_game         ; Safely shut down
+    ld a,1
+    ld (game_exit_requested),a
     ret
 
 ; ========================
@@ -141,7 +191,3 @@ display_map:
 
 save_game:
     ret
-
-exit_game:
-    ret
-

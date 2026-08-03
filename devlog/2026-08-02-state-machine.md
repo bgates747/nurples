@@ -91,10 +91,10 @@ post-start unresponsiveness.
    `game_over` delays and waits for a key, and `player_dying` performs hundreds
    of internal world/VBlank iterations. During those spans the outer timestamp,
    transition arbitration, and Escape polling do not run.
-5. The `player_dying` finale enters its animation loop with B already zero from
-   the preceding `djnz`. The next `djnz` wraps and executes 256 iterations. The
-   full death handler performs 528 internal animation/VBlank iterations rather
-   than one bounded update per outer frame.
+5. Before repair, the `player_dying` finale entered its animation loop with B
+   already zero from the preceding `djnz`. The next `djnz` wraps and executes
+   256 iterations. The full death handler performed 528 internal
+   animation/VBlank iterations rather than one bounded update per outer frame.
 6. The same finale has a position-dependent but readily reproducible memory
    corruption path. If the latest preliminary explosion survives (normally
    when the player dies roughly 32 pixels or more above the bottom boundary),
@@ -134,6 +134,48 @@ post-start unresponsiveness.
     the countdown, before resetting `player_score`. It also never resets
     `player_starting_score`, so the first death in a later session can restore
     a score from the previous session.
+15. Sprite and tile spawners copy 42 bytes from defaults blobs that define only
+    19 bytes (record offsets 22 through 40). Each spawn therefore reads 23
+    bytes of adjacent variables or code into the record's reserved tail.
+16. `turret_fireball_defaults` stores sprite-domain `enemy_ground == 2` in a
+    tile record whose tile-domain type is `tile_turret_fireball == 5`.
+17. `activate_crater` serves two incompatible contexts. Map activation calls it
+    without allocating a tile and with an unrelated `tile_table_pointer`, while
+    kill handlers intentionally use that pointer to transform an existing tile
+    in place.
+18. Tileset and level selectors trust writable indices and discover table ends
+    by dereferencing sentinel records. An out-of-range selector can therefore
+    address outside either lookup before the terminator test runs.
+19. The active-tile allocator advances a ring index without checking whether
+    that physical record is still alive. With churn below the byte-sized stack
+    limit, it can overwrite a live record and publish the same physical slot
+    more than once. Deactivation also leaves the physical alive/just-died flags
+    set, preventing safe reuse.
+20. Active-tile traversals use pointer contents and inactive records as implicit
+    terminators. A malformed dense-stack slot can be dereferenced before it is
+    validated, and one inactive record can silently truncate the remainder of
+    the update.
+21. `kill_electrode` saves its source tile pointer on the machine return stack,
+    then has an early `ret` inside its scan. That path consumes the saved data
+    as a return address. Its later source rediscovery is also unbounded and can
+    walk beyond the active stack if compaction or corruption loses the source.
+22. The lethal `update_shields` path enters `kill_player`, which overwrites the
+    collision caller's AF, BC, IX, and IY before control returns to the same
+    collision handler.
+23. A seek-zag enemy that reaches the bottom edge can loop forever inside one
+    frame. `move_sprite` clamps and bounces it, but the edge branch immediately
+    selects another downward heading and moves again, repeating without ever
+    returning to the scheduler.
+24. `fonts_load` keeps its font-list cursor in IX across `mos_fread`, although
+    that MOS call does not preserve IX. Separately, a failed `mos_fopen` returns
+    handle zero; the old loader continued and eventually passed zero to
+    `mos_fclose`, whose API meaning is close all files.
+25. `vdu_vblank` and `multiPurposeDelay` poll the MOS clock without a bound. A
+    stalled clock can trap the whole application permanently inside either
+    helper.
+26. Dormant `game_exit` tail-jumps to a no-op helper and returns with the stored
+    state unchanged, so reaching it repeats the exit state forever instead of
+    returning control to the application's shutdown path.
 
 The current `CALL_HL` macro was checked against the assembler listing. Its
 synthetic return address points to the instruction after `jp (hl)`; the macro
@@ -147,14 +189,95 @@ not inverted. The joystick UART bits are separately active-low as documented in
 ## Responsiveness hypotheses
 
 The first level's mandatory six-second busy countdown begins after the startup
-keypress and can look unresponsive. A later player death monopolizes roughly
-528 VBlanks, including the erroneous 256-iteration finale. Both are strong
-explanations for apparent freezes at their respective points, but neither has
-been correlated with a trace of the reported emulator run.
+keypress and can look unresponsive. After correcting the wrapped finale count,
+a player death still monopolizes 313 internal animation/VBlank iterations. Both
+are strong explanations for apparent freezes at their respective points, but
+neither has been correlated with a trace of the reported emulator run.
 
-`vdu_vblank` and `multiPurposeDelay` also contain unbounded polling loops. If
-the MOS time source stops advancing, either can become a true hang. No evidence
-currently shows that this happened in the observed run.
+The old `vdu_vblank` and `multiPurposeDelay` implementations also contained
+unbounded polling loops. No evidence shows that a stalled MOS clock caused the
+observed run, but both loops are now bounded and latch a diagnostic bit before
+failing open.
+
+## Isolated stabilization repair
+
+The stabilization work is intentionally confined to the persistent Git copy at
+`/home/smith/Agon/mystuff/nurples-repair` on `dev`. The canonical Nurples tree
+has not been edited, merged, or pushed.
+
+Local repairs completed in the copy:
+
+1. Allocation failures now stop before invalid IX use; the death finale has an
+   explicit 41-update lifetime, and player initialization publishes success.
+2. Every active MLT-derived pointer offset is zero-extended. Activation and
+   lookup counts are derived from their tables, selector indices are clamped,
+   and level transitions no longer dereference terminators.
+3. Sprite and tile defaults copy exactly their 19 initialized bytes and clear
+   retained motion state before a physical record is reused.
+4. The active-tile allocator searches all 256 physical records, the dense stack
+   remains capped at 255 entries, and deactivation clears lifecycle flags.
+   Stack slots and physical records are range-, alignment-, and identity-checked
+   before dereference; malformed slots are quarantined through bounded
+   compaction.
+5. Electrode removal is bounded and stack-balanced. Crater map spawning and
+   in-place tile transformation now have separate entry points, and tile
+   defaults use tile-domain types.
+6. Global, player, enemy, sprite, and tile legacy indirect dispatches use exact
+   stabilization whitelists. Corrupt entries fail closed and latch domain fault
+   bits; callback traversal restores its IY cursor.
+7. Level completion and game-over outcomes return to the global coordinator
+   before the old playing frame advances enemies or the world. Shared table
+   reset code removes duplicated lifecycle setup, and new-session score values
+   are initialized before level presentation.
+8. The seek-zag edge path performs at most one movement update per outer frame.
+   The clock polls are bounded, file-open failure cannot read or close handle
+   zero, font iteration preserves IX, image creation is skipped on load failure,
+   and the dormant exit state requests shutdown through the main loop.
+
+The file loader's success carry means that the file opened, reads reached a
+zero-byte EOF, and the handle closed. It does not yet compare bytes read against
+the expected size passed by image callers; that is an integrity-strengthening
+opportunity, not a demonstrated cause of the current failure.
+
+### Verification evidence
+
+- `ez80asm` completed both passes and regenerated the tracked listing/binary.
+  A second disposable assembly matched both artifacts byte-for-byte.
+- The final binary is 41,251 bytes with SHA-256
+  `5972820b56ceeaa5882180667b3355db34c1ed20cca043c4daac2421d497b166`.
+  The final listing SHA-256 is
+  `2d923f1ef5c1d55acea7ed740cac87189f51c9693537a46b93f3fcfe423f92f1`.
+- All 35 unit tests pass. The suite includes source invariants, a disposable
+  assembly, current font generation, and canonical `agonutils` adapter checks.
+- `pip check`, the canonical native `agonutils` test, and `ruff check .` pass.
+- Independent listing review confirms one tileset, 17 activation callbacks,
+  19-byte definition copies, the 41-update explosion lifetime, sprite record
+  counts 20/7, exact handler whitelists, record/alignment guards, both bounded
+  clock loops, and the orderly exit handoff.
+- No emulator run has been used to qualify gameplay behavior at this checkpoint.
+
+## Architectural boundary not crossed
+
+The remaining problems are coupled lifecycle-policy changes rather than local
+safety repairs:
+
+1. `player_dying` can call `tiles_plot` internally and latch level completion.
+   The next outer frame consumes that global result before `player_dead`, so a
+   death at the end of a level can initialize the next level and only then
+   respawn or enter game over. Correcting this needs an explicit priority rule
+   and central arbitration for simultaneous actor/world outcomes.
+2. Player death, level initialization/countdown, game over, and the initial key
+   wait still monopolize the scheduler. Converting them to bounded updates is
+   the cooperative migration described by ASM-001, not a local branch repair.
+3. Legacy `game_init` and `player_dead` still assign `enemies_state`, and
+   `player_dead` still owns world reset/level initialization. Moving that
+   responsibility requires the agreed actor-owned reconciliation boundary.
+4. Exact pointer whitelists contain arbitrary-jump hazards but remain a bridge.
+   Numeric IDs, fixed registries, legal-transition validation, and event
+   arbitration remain the intended endpoint in `state_new.inc`.
+
+No architectural migration has been started. Runtime emulator qualification is
+recorded as ASM-007 and awaits Author review of this checkpoint.
 
 ## `state_new.inc` scaffold
 

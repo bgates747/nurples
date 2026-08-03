@@ -22,8 +22,8 @@ init_bar_shields:
 ; end init_bar_shields
 
 ; inputs: iy set to sprite/tile record being tallied
-; outputs: hl,player_shields = updated shields
-; destroys: hl,de
+; outputs: a/player_shields = updated shields, Z set when depleted
+; destroys: hl,de; preserves bc,ix,iy
 update_shields:
     ld l,(iy+sprite_shield_damage)
     ld a,(player_shields)

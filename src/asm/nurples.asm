@@ -82,6 +82,8 @@ exit:
 ; --- MAIN PROGRAM FILE ---
 main:
 ; start a new game
+    xor a
+    ld (game_exit_requested),a
     ld hl,game_init
     ld (game_state),hl
 main_loop:
@@ -89,6 +91,10 @@ main_loop:
     call timestamp_tick
 ; do gamestate logic
     call do_game
+; state handlers return through the dispatcher; honor an orderly exit request
+    ld a,(game_exit_requested)
+    or a
+    jp nz,main_end
 ; wait for the next vblank mitigate flicker and for loop timing
     call vdu_vblank
 ; poll keyboard for escape keypress

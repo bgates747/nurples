@@ -56,26 +56,80 @@ move_active_tile:
     ret
 ; end move_active_tile
 
+; Exact stabilization whitelist for writable legacy tile callbacks.
+; inputs: iy = validated tile record, hl = stored callback
+; outputs: carry set and hl = expected callback on an exact type/program match
+; destroys: a,de,hl
+tile_move_program_valid:
+    ld a,(iy+tile_type)
+    cp tile_pad_small
+    jp z,@pad_small
+    cp tile_turret_fireball
+    jp z,@turret_fireball
+    cp tile_electrode
+    jp z,@electrode
+    cp tile_lightning
+    jp z,@lightning
+    cp tile_crater
+    jp z,@crater
+    jp @invalid
+@pad_small:
+    ld de,move_pad_small
+    jp @compare
+@turret_fireball:
+    ld de,move_turret_fireball
+    jp @compare
+@electrode:
+    ld de,move_electrode
+    jp @compare
+@lightning:
+    ld de,move_lightning
+    jp @compare
+@crater:
+    ld de,move_crater
+@compare:
+    or a
+    sbc hl,de
+    jp nz,@invalid
+    push de
+    pop hl ; publish the fixed expected address, not writable record data
+    scf
+    ret
+@invalid:
+    xor a
+    ret
+; end tile_move_program_valid
+
 move_tiles:
-; initialize pointers and loop counter
+; initialize the dense-stack cursor
+    ld a,(num_active_tiles)
+    or a
+    ret z
     ld iy,tile_stack ; set iy to first record in table
 @move_loop:
+    push iy
+    pop hl
+    call tile_stack_pointer_valid
+    ret nc ; normal end-of-stack or fail-closed malformed cursor
     ld (tile_stack_pointer),iy ; update stack pointer
-    ld a,(iy+2)
-    or a ; will be zero if at end of stack
-    ret z ; end of stack so we're done
 ; point iy to tile record
     ld iy,(iy) ; iy points to the current tile record
+    call tile_table_record_pointer_valid
+    jp nc,@bad_record
     ld (tile_table_pointer),iy ; update table pointer
 ; check top bit of tile_type to see if tile is just spawned
     bit 7,(iy+tile_type)
     jp nz,@just_spawned ; if just spawned, skip to next record
 ; check sprite_alive bit to see if tile is active
-    bit sprite_alive,(iy+sprite_collisions)
-    ret z ; end of stack so we're done
+    bit sprite_alive,(iy+tile_collisions)
+    jp z,@inactive_record
 ; otherwise we prepare to move the tile
     ld hl,(iy+tile_move_program) ; load the behavior subroutine address
+    call tile_move_program_valid
+    jp nc,@bad_move_program
+    push iy ; callbacks may use index registers internally but do not own them
     CALL_HL
+    pop iy
  ; get back stack pointer and loop
 @next_record:
     ld iy,(tile_stack_pointer)
@@ -83,6 +137,19 @@ move_tiles:
     jp @move_loop ; loop until we've checked all the records
 @just_spawned:
     res 7,(iy+tile_type) ; clear just spawned flag
+    jp @next_record
+@inactive_record:
+    call table_deactivate_tile
+    jp @next_record
+@bad_record:
+    ld hl,tile_fault_flags
+    set tile_fault_bad_record,(hl)
+    call tile_stack_quarantine_entry
+    jp @next_record
+@bad_move_program:
+    ld hl,tile_fault_flags
+    set tile_fault_bad_move_program,(hl)
+    call table_deactivate_tile
     jp @next_record
 ; end move_tiles
 
@@ -114,7 +181,7 @@ spawn_sprite_from_tile:
     lea ix,ix+sprite_definitions ; bump pointer to copy to
     push ix ; pointer to default sprite settings
     pop de ; address to copy to
-    ld bc,table_record_size-sprite_definitions ; number of bytes to copy
+    ld bc,sprite_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new sprite record
     pop ix ; restore pointer to new sprite record
 ; copy sprite position from existing tile
@@ -123,6 +190,13 @@ spawn_sprite_from_tile:
     ld (ix+sprite_x),hl
     ld hl,(iy+tile_y)
     ld (ix+sprite_y),hl
+; clear motion state retained by a previously used physical record
+    ld hl,0
+    ld (ix+sprite_xvel),hl
+    ld (ix+sprite_yvel),hl
+    ld (ix+sprite_vel),hl
+    ld (ix+sprite_heading),hl
+    ld (ix+sprite_orientation),hl
 ; return to caller
     set 7,(ix+sprite_type) ; set just spawned flag
     set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
@@ -138,7 +212,7 @@ spawn_active_tile_from_tile:
     lea ix,ix+tile_definitions ; bump pointer to copy to
     push ix ; pointer to default tile settings
     pop de ; address to copy to
-    ld bc,tile_table_record_size-tile_definitions ; number of bytes to copy
+    ld bc,tile_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new tile record
     ld ix,(tile_table_pointer) ; restore pointer to new tile record
     ret

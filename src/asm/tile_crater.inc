@@ -17,10 +17,14 @@ crater_defaults:
 
 activate_crater:
     ld hl,crater_defaults
-    call spawn_active_tile_from_tile
-; other specific initialization
-    ret
+    jp spawn_active_tile
 ; end activate_crater
+
+; Replace an existing active tile without allocating or changing its position.
+transform_active_tile_to_crater:
+    ld hl,crater_defaults
+    jp spawn_active_tile_from_tile
+; end transform_active_tile_to_crater
 
 move_crater:
     call move_active_tile 

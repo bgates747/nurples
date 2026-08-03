@@ -372,8 +372,13 @@ stopwatch_started: ds 3 ; buffer to hold stopwatch start time
 multiPurposeDelay:
     push af                      
     push bc
-    push ix                 
-    ld b,a 
+    push de
+    push ix
+    ld e,a ; timestamp bit mask
+    ld a,32
+    ld (multiPurposeDelay_timeout_outer),a
+    ld b,0
+    ld d,0
     ld a,$08
     RST.LIL	08h                 ; get IX pointer to sysvars               
 
@@ -391,17 +396,35 @@ waitLoop:
                                 ;   bit 5 - changes 4 times per second
                                 ;   bit 6 - changes 2 times per second
                                 ;   bit 7 - changes 1 times per second
-    and b 
+    and e
     ld c,a 
     ld a,(oldTimeStamp)
     cp c                        ; is A same as last value?
-    jr z,waitLoop              ; loop here if it is
+    jp nz,@changed
+; Bound a stalled MOS clock to 32 * 65,536 polls.
+    dec d
+    jp nz,waitLoop
+    djnz waitLoop
+    ld a,(multiPurposeDelay_timeout_outer)
+    dec a
+    ld (multiPurposeDelay_timeout_outer),a
+    jp nz,waitLoop
+    ld a,(timer_fault_flags)
+    or %00000001
+    ld (timer_fault_flags),a
+    jp @done
+@changed:
     ld a,c 
     ld (oldTimeStamp),a        ; set new value
 
+@done:
     pop ix
+    pop de
     pop bc
     pop af
     ret
 
-oldTimeStamp:   .db 00h
+timer_fault_delay_timeout: equ 0
+timer_fault_flags: db 0
+oldTimeStamp: .db 00h
+multiPurposeDelay_timeout_outer: db 0

@@ -107,22 +107,17 @@ game_init:
     call vdu_set_txt_viewport
 ; initialize the global timestamp
     call timestamp_tick
-; reset the sprite table
-    call table_init
-    ld hl,table_base
-    ld (table_pointer),hl
-; initialize sprites and active tiles table
-    call sprites_init
-    call table_init
-    call tile_table_init
-; initialize the first level
+; initialize new-session values before init_level displays them
+    ld hl,0
+    ld (player_score),hl
+    ld (player_starting_score),hl
+    ld a,(player_ships_max)
+    ld (player_ships),a
+; initialize runtime tables and the first level
+    call reset_runtime_tables
     ld a,tiles_dg
     call init_tileset
 ; initialize player
-    ld hl,0
-    ld (player_score),hl
-    ld a,(player_ships_max)
-    ld (player_ships),a
     call draw_player_ships
     call player_init
     ret nc ; retry game_init next frame rather than publishing an invalid player
@@ -130,10 +125,22 @@ game_init:
     ld hl,game_playing
     ld (game_state), hl
 ; set game playing substates
-    ld hl,player_alive
-    ld (player_state), hl
     ld hl,enemies_alive
     ld (enemies_state), hl
 ; done initializing
     ret
 ; end game_init
+
+; Reset only shared runtime infrastructure. Session and level semantics remain
+; with their respective callers.
+reset_runtime_tables:
+    call table_init
+    ld hl,table_base
+    ld (table_pointer),hl
+    call sprites_init
+    call table_init
+    call tile_table_init
+    xor a
+    ld (player_event),a
+    ret
+; end reset_runtime_tables
