@@ -110,6 +110,11 @@ player_init:
     ld (laser_power),a
     ld a,(player_fuel_max)
     ld (player_fuel),a
+; Gameplay timers belong to a life, not to the cockpit drawing routines.
+    ld a,(charge_laser_timer_max)
+    ld (charge_laser_timer),a
+    ld a,(discharge_fuel_timer_max)
+    ld (discharge_fuel_timer),a
 ; set all to zero so they will update
     xor a
     ld (laser_power_last),a

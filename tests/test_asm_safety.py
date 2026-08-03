@@ -67,6 +67,125 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertNotIn("call load_sprite_images", startup)
         self.assertNotIn("call load_tilesets", startup)
 
+    def test_game_init_unconditionally_rebuilds_all_vdp_resources(self) -> None:
+        active_source = read_asm("nurples.asm") + "".join(
+            path.read_text() for path in sorted(ASM_DIR.glob("*.inc"))
+        )
+        self.assertNotIn("game_assets_loaded", active_source)
+
+        startup = routine(
+            read_asm("state_game_init.inc"),
+            "game_init",
+            "; end game_init",
+        )
+        system_font = startup.index("ld hl,65535")
+        select_font = startup.index("call vdu_font_select", system_font)
+        reset_sprites = startup.index("call vdu_sprite_reset", select_font)
+        clear_buffers = startup.index(
+            "call vdu_clear_all_buffers",
+            reset_sprites,
+        )
+        load_font = startup.index("call fonts_load", clear_buffers)
+        load_ui = startup.index("call load_ui_images", load_font)
+        load_game = startup.index("call load_game_images", load_ui)
+        initialize_tables = startup.index("call reset_runtime_tables", load_game)
+
+        self.assertIn("xor a\n    call vdu_font_select", startup)
+        self.assertLess(system_font, select_font)
+        self.assertLess(select_font, reset_sprites)
+        self.assertLess(reset_sprites, clear_buffers)
+        self.assertLess(clear_buffers, load_font)
+        self.assertLess(load_font, load_ui)
+        self.assertLess(load_ui, load_game)
+        self.assertLess(load_game, initialize_tables)
+        self.assertEqual(startup.count("call vdu_clear_all_buffers"), 1)
+        self.assertNotIn("@assets_loaded", startup)
+
+    def test_process_entry_captures_mode_once_and_exit_releases_vdp_state(self) -> None:
+        source = read_asm("nurples.asm")
+        entry = block(source, "main", "main_loop")
+        runtime_init = entry.index("call runtime_process_init")
+        get_mode = entry.index("call vdu_get_screen_mode")
+        save_mode = entry.index("ld (original_screen_mode),a")
+
+        self.assertLess(runtime_init, get_mode)
+        self.assertLess(get_mode, save_mode)
+        self.assertNotIn("call vdu_clear_all_buffers", entry)
+        self.assertEqual(source.count("call vdu_get_screen_mode"), 1)
+
+        shutdown = routine(source, "main_end", "; end main")
+        system_font = shutdown.index("ld hl,65535")
+        select_font = shutdown.index("call vdu_font_select", system_font)
+        reset_sprites = shutdown.index("call vdu_sprite_reset", select_font)
+        clear_buffers = shutdown.index(
+            "call vdu_clear_all_buffers",
+            reset_sprites,
+        )
+        restore_mode = shutdown.index(
+            "ld a,(original_screen_mode)",
+            clear_buffers,
+        )
+        self.assertLess(system_font, select_font)
+        self.assertLess(select_font, reset_sprites)
+        self.assertLess(reset_sprites, clear_buffers)
+        self.assertLess(clear_buffers, restore_mode)
+
+    def test_process_init_resets_all_cross_run_state(self) -> None:
+        source = read_asm("runtime_init.inc")
+        initialization = routine(
+            source,
+            "runtime_process_init",
+            "; end runtime_process_init",
+        )
+        all_includes = "".join(
+            path.read_text() for path in sorted(ASM_DIR.glob("*.inc"))
+        )
+        declared_faults = set(
+            re.findall(
+                r"(?m)^([a-z_]+_fault_flags):\s+db\b",
+                all_includes,
+            )
+        )
+        expected_faults = {
+            "game_fault_flags",
+            "enemies_fault_flags",
+            "player_fault_flags",
+            "sprite_fault_flags",
+            "tile_fault_flags",
+            "timer_fault_flags",
+            "vdu_timing_fault_flags",
+        }
+        self.assertEqual(declared_faults, expected_faults)
+        for symbol in sorted(expected_faults):
+            with self.subTest(symbol=symbol):
+                self.assertIn(f"ld ({symbol}),a", initialization)
+
+        for symbol in (
+            "game_exit_requested",
+            "player_event",
+            "seekers_count",
+            "sprite_screen_edge",
+            "oldTimeStamp",
+        ):
+            with self.subTest(symbol=symbol):
+                self.assertIn(f"ld ({symbol}),a", initialization)
+
+        for pointer, handler in (
+            ("game_state", "game_init"),
+            ("enemies_state", "enemies_alive"),
+            ("player_state", "player_alive"),
+        ):
+            with self.subTest(pointer=pointer):
+                self.assertIn(
+                    f"ld hl,{handler}\n    ld ({pointer}),hl",
+                    initialization,
+                )
+
+        self.assertIn("ld (seed1),hl", initialization)
+        self.assertIn("ld (seed2),hl", initialization)
+        self.assertIn("ld a,$50\n    ld (r_seed),a", initialization)
+        self.assertIn("call timestamp_init", initialization)
+
     def test_font_breadcrumb_follows_successful_creation(self) -> None:
         fonts = read_asm("fonts.inc")
         create = fonts.index("call vdu_font_create")
@@ -203,17 +322,23 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("call vdu_scroll_down", scroll)
         self.assertIn("call bg_plot", scroll)
 
-    def test_shield_maximum_is_loaded_at_byte_width(self) -> None:
-        source = read_asm("player_shields.inc")
-        init = routine(source, "init_bar_shields", "; end init_bar_shields")
-        self.assertNotIn("ld hl,(player_shields_max)", init)
-        self.assertIn(
-            "ld hl,0\n"
-            "    ld a,(player_shields_max)\n"
-            "    ld l,a\n"
-            "    ld (ix+bar_val),hl",
-            init,
+    def test_bar_maxima_are_zero_extended_into_24_bit_values(self) -> None:
+        cases = (
+            ("player_shields.inc", "init_bar_shields", "player_shields_max"),
+            ("player_laser.inc", "init_bar_laser", "laser_power_max"),
+            ("player_fuel.inc", "init_bar_fuel", "player_fuel_max"),
         )
+        for filename, label, maximum in cases:
+            with self.subTest(bar=label):
+                init = routine(read_asm(filename), label, f"; end {label}")
+                self.assertNotIn(f"ld hl,({maximum})", init)
+                self.assertIn(
+                    "ld hl,0\n"
+                    f"    ld a,({maximum})\n"
+                    "    ld l,a\n"
+                    "    ld (ix+bar_val),hl",
+                    init,
+                )
 
     def test_unimplemented_game_states_are_deterministic_noops(self) -> None:
         source = read_asm("state.inc")
@@ -239,9 +364,16 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("ld (game_exit_requested),a", exit_state)
         self.assertNotIn("jp exit_game", exit_state)
 
+        initialization = routine(
+            read_asm("runtime_init.inc"),
+            "runtime_process_init",
+            "; end runtime_process_init",
+        )
+        request_clear = initialization.index("ld (game_exit_requested),a")
+        state_start = initialization.index("ld (game_state),hl")
+
         main = routine(read_asm("nurples.asm"), "main", "; end main")
-        request_clear = main.index("ld (game_exit_requested),a")
-        state_start = main.index("ld (game_state),hl")
+        self.assertIn("call runtime_process_init", main)
         dispatch = main.index("call do_game")
         request_read = main.index("ld a,(game_exit_requested)", dispatch)
         vblank = main.index("call vdu_vblank")
@@ -297,6 +429,8 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertLess(score_reset, level_init)
         self.assertLess(starting_score_reset, level_init)
         self.assertIn("call reset_runtime_tables", game_init)
+        self.assertIn("ld hl,BUF_BG_STARS_0", game_init)
+        self.assertIn("ld (bg_bufferId),hl", game_init)
 
         player_dead = routine(
             read_asm("player_state.inc"),
@@ -306,6 +440,39 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("call reset_runtime_tables", player_dead)
         self.assertNotIn("ld (player_state)", game_init)
         self.assertNotIn("ld (player_state)", player_dead)
+
+    def test_player_init_owns_gameplay_timer_resets(self) -> None:
+        player_init = routine(
+            read_asm("player_state.inc"),
+            "player_init",
+            "; end player_init",
+        )
+        self.assertIn(
+            "ld a,(charge_laser_timer_max)\n"
+            "    ld (charge_laser_timer),a",
+            player_init,
+        )
+        self.assertIn(
+            "ld a,(discharge_fuel_timer_max)\n"
+            "    ld (discharge_fuel_timer),a",
+            player_init,
+        )
+        self.assertNotIn(
+            "discharge_fuel_timer",
+            routine(
+                read_asm("player_fuel.inc"),
+                "init_bar_fuel",
+                "; end init_bar_fuel",
+            ),
+        )
+        self.assertNotIn(
+            "charge_laser_timer",
+            routine(
+                read_asm("player_laser.inc"),
+                "init_bar_laser",
+                "; end init_bar_laser",
+            ),
+        )
 
     def test_defaults_copy_only_initialized_definition_bytes(self) -> None:
         sprites = read_asm("sprites.inc")
@@ -849,11 +1016,21 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("pop ix\n    pop de\n    pop bc", vblank)
 
         timer = read_asm("timer.inc")
+        timestamp = routine(timer, "timestamp_init", "; end timestamp_init")
+        self.assertIn("MOSCALL mos_sysvars", timestamp)
+        self.assertIn("ld hl,(ix+sysvar_time)", timestamp)
+        self.assertIn("ld (timestamp_now),hl", timestamp)
+        self.assertIn("ld (timestamp_old),hl", timestamp)
+        self.assertIn("ld hl,0\n    ld (timestamp_chg),hl", timestamp)
+
         delay = block(
             timer,
             "multiPurposeDelay",
             "timer_fault_delay_timeout",
         )
+        phase_capture = delay.index("ld (oldTimeStamp),a")
+        wait_loop = delay.index("waitLoop:")
+        self.assertLess(phase_capture, wait_loop)
         self.assertIn("ld a,32", delay)
         self.assertIn("ld b,0\n    ld d,0", delay)
         self.assertIn("dec d\n    jp nz,waitLoop\n    djnz waitLoop", delay)

@@ -37,11 +37,11 @@ bar_laser:
     dl 304-64 ; y-plot coordinate
 
 init_bar_laser:
-    ld a,(charge_laser_timer_max)
-    ld (charge_laser_timer),a
     ld ix,bar_laser
+    ld hl,0
     ld a,(laser_power_max)
-    ld (ix+bar_val),a
+    ld l,a
+    ld (ix+bar_val),hl
     call bar_update_v
     ret
 ; end init_bar_laser

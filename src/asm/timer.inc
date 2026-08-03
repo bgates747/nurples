@@ -294,6 +294,18 @@ timestamp_now: dl 0
 timestamp_old: dl 0
 timestamp_chg: dl 0
 
+; Establish a restart-safe baseline before the first timestamp_tick. Without
+; this, a second MOS RUN computes its first delta from the prior invocation.
+timestamp_init:
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
+    ld (timestamp_now),hl
+    ld (timestamp_old),hl
+    ld hl,0
+    ld (timestamp_chg),hl
+    ret
+; end timestamp_init
+
 ; update the global timestamp from the system clock
 ; inputs: none
 ; returns: hl = time elapsed in 1/120ths of a second
@@ -381,6 +393,12 @@ multiPurposeDelay:
     ld d,0
     ld a,$08
     RST.LIL	08h                 ; get IX pointer to sysvars               
+
+; oldTimeStamp is per-call scratch, not persistent process state. Seed it from
+; the requested clock bit so every call waits for a real transition.
+    ld a,(ix + 0)
+    and e
+    ld (oldTimeStamp),a
 
 waitLoop:
 

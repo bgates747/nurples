@@ -80,14 +80,16 @@ exit:
     include "tile_pad_small.inc"
     include "tile_turret_fireball.inc"
     include "debug.inc"
+    include "runtime_init.inc"
 
 ; --- MAIN PROGRAM FILE ---
 main:
-; start a new game
-    xor a
-    ld (game_exit_requested),a
-    ld hl,game_init
-    ld (game_state),hl
+; Establish a new process lifetime. MOS RUN does not reload initialized data.
+    call runtime_process_init
+; Capture the caller's display mode exactly once, before game_init changes VDP
+; state. In-process restarts must not replace this with the gameplay mode.
+    call vdu_get_screen_mode
+    ld (original_screen_mode),a
 main_loop:
 ; update the global timestamp
     call timestamp_tick
@@ -109,6 +111,13 @@ main_loop:
     jp main_loop
 
 main_end:
+; Release application-owned VDP state. Select the permanent system font before
+; deleting the custom-font buffer, and detach sprites before their bitmaps.
+    ld hl,65535
+    xor a
+    call vdu_font_select
+    call vdu_sprite_reset
+    call vdu_clear_all_buffers
 ; restore original screen mode
     ld a,(original_screen_mode)
     call vdu_set_screen_mode

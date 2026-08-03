@@ -40,6 +40,10 @@ decisions are recorded in the dated development log.
   repeated seeker edge contact, level completion, player death at multiple
   heights, respawn, and game over. Inspect all new latched fault bytes after
   the run. Do not merge or push the repair copy before the Author accepts it.
+- [ ] **ASM-008 — Level-transition world reset:** define and implement a
+  level-scoped reset that removes live enemies, projectiles, explosions, and
+  active tiles at a natural level boundary without erasing the player record or
+  player-owned state. Qualify a transition with each actor type still live.
 - [x] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and

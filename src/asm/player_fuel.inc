@@ -8,11 +8,11 @@ bar_fuel:
     dl 48-64 ; x-plot coordinate
 
 init_bar_fuel:
-    ld a,(discharge_fuel_timer_max)
-    ld (discharge_fuel_timer),a
     ld ix,bar_fuel
+    ld hl,0
     ld a,(player_fuel_max)
-    ld (ix+bar_val),a
+    ld l,a
+    ld (ix+bar_val),hl
     call bar_update_h
     ret
 ; end init_bar_fuel

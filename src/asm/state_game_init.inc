@@ -1,17 +1,18 @@
 ; hello_world: asciz "Welcome to Purple Nurples!"
 ; loading_time: asciz "Loading time:"
 loading_complete: asciz "Press any key to continue."
-game_assets_loaded: db 0 ; non-zero when assets are loaded
 original_screen_mode: db 0
 
 game_init:
-; check whether assets are loaded
-    ld a,(game_assets_loaded)
-    or a
-    jp nz,@assets_loaded
-; get current screen mode and save it so we can return to it on exit
-    call vdu_get_screen_mode
-    ld (original_screen_mode),a
+; The VDP alone owns the truth about its resource registries. Never infer that
+; assets survived a prior game or MOS RUN from application RAM. Select the
+; permanent system font before deleting the custom-font buffer, detach sprites
+; from their bitmap pointers, then rebuild every runtime VDP resource.
+    ld hl,65535
+    xor a
+    call vdu_font_select
+    call vdu_sprite_reset
+    call vdu_clear_all_buffers
 ; print ascii art splash screen
     call vdu_cls
     call printInline
@@ -20,8 +21,6 @@ game_init:
     call printString
     call printInline
     asciz "Loading UI...\r\n"
-; clear all buffers
-    call vdu_clear_all_buffers
 ; load fonts
 	call printInline
 	asciz "Loading font: "
@@ -70,8 +69,6 @@ game_init:
     call load_game_images
     jp nz,@agnb_load_error
 ; print loading complete message and wait for user keypress
-    ld a,1
-    ld (game_assets_loaded),a
     call vdu_cls
     call printInline
     asciz "Press any key to continue."
@@ -100,7 +97,42 @@ game_init:
     call vdu_plot_bmp
 ; draw player cockpit
     call draw_player_cockpit
-    jp @assets_loaded
+; set gfx origin and viewport to playing field window
+    call set_gfx_playing_field
+    call init_bg ; plot the starry background
+; VDU 28, left, bottom, right, top: Set text viewport **
+    ld c,0 ; left
+    ld d,0 ; top
+    ld e,62 ; right
+    ld b,48; bottom
+    call vdu_set_txt_viewport
+; initialize the global timestamp
+    call timestamp_tick
+; initialize new-session values before init_level displays them
+    ld hl,0
+    ld (player_score),hl
+    ld (player_starting_score),hl
+    ld a,(player_ships_max)
+    ld (player_ships),a
+; a new session starts from the canonical background selection
+    ld hl,BUF_BG_STARS_0
+    ld (bg_bufferId),hl
+; initialize runtime tables and the first level
+    call reset_runtime_tables
+    ld a,tiles_dg
+    call init_tileset
+; initialize player
+    call draw_player_ships
+    call player_init
+    ret nc ; retry game_init next frame rather than publishing an invalid player
+; set the game state to playing
+    ld hl,game_playing
+    ld (game_state), hl
+; set game playing substates
+    ld hl,enemies_alive
+    ld (enemies_state), hl
+; done initializing
+    ret
 
 @font_load_error:
     call printNewLine
@@ -127,40 +159,6 @@ game_init:
     call waitKeypress
     ld a,1
     ld (game_exit_requested),a
-    ret
-@assets_loaded:
-; set gfx origin and viewport to playing field window
-    call set_gfx_playing_field
-    call init_bg ; plot the starry background
-; VDU 28, left, bottom, right, top: Set text viewport **
-    ld c,0 ; left
-    ld d,0 ; top
-    ld e,62 ; right
-    ld b,48; bottom
-    call vdu_set_txt_viewport
-; initialize the global timestamp
-    call timestamp_tick
-; initialize new-session values before init_level displays them
-    ld hl,0
-    ld (player_score),hl
-    ld (player_starting_score),hl
-    ld a,(player_ships_max)
-    ld (player_ships),a
-; initialize runtime tables and the first level
-    call reset_runtime_tables
-    ld a,tiles_dg
-    call init_tileset
-; initialize player
-    call draw_player_ships
-    call player_init
-    ret nc ; retry game_init next frame rather than publishing an invalid player
-; set the game state to playing
-    ld hl,game_playing
-    ld (game_state), hl
-; set game playing substates
-    ld hl,enemies_alive
-    ld (enemies_state), hl
-; done initializing
     ret
 ; end game_init
 
