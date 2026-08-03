@@ -278,12 +278,11 @@ cos168:
 ; destroys: f, hl
 sin168:
     push de
-; handle negative angles appropriately
-    call hlu_abs
-    jp p,@F
-    ld de,-256*256
-    add hl,de
-@@:
+; H already contains the integer angle modulo 256. This is also the correct
+; lookup index for a negative two's-complement angle: for example, -64 is
+; represented by an integer byte of 192, whose table entry is -1. Taking the
+; absolute value here loses that quadrant and incorrectly turns sin(-x) into
+; sin(x).
     ld l,3 ; multiply by 3 to get our lookup index
     mlt hl
     ld de,0 ; MLT leaves HLU unchanged, so copy only the 16-bit product

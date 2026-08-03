@@ -272,15 +272,22 @@ class AssemblySafetyTests(unittest.TestCase):
             tile_table,
         )
 
-        sine = routine(read_asm("fixed168.inc"), "sin168", "polar_to_cartesian:")
-        self.assertIn(
-            "mlt hl\n"
-            "    ld de,0 ; MLT leaves HLU unchanged, so copy only the 16-bit product\n"
-            "    ld d,h\n"
-            "    ld e,l\n"
-            "    ld hl,sin_lut_168",
-            sine,
+        sine_sources = (
+            ("runtime", read_asm("fixed168.inc")),
+            ("standalone", (PROJECT_ROOT / "fixed168/fixed168.inc").read_text()),
         )
+        for name, source in sine_sources:
+            with self.subTest(source=name):
+                sine = routine(source, "sin168", "polar_to_cartesian:")
+                self.assertNotIn("call hlu_abs", sine)
+                self.assertIn(
+                    "mlt hl\n"
+                    "    ld de,0 ; MLT leaves HLU unchanged, so copy only the 16-bit product\n"
+                    "    ld d,h\n"
+                    "    ld e,l\n"
+                    "    ld hl,sin_lut_168",
+                    sine,
+                )
 
     def test_tile_activation_table_covers_every_accepted_id(self) -> None:
         source = read_asm("tiles_active.inc")

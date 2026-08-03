@@ -116,41 +116,41 @@ lead_angle: dl 0x000000 ; lead angle
 ;           player position and velocities correctly set
 ; Outputs:  uh.l is the 16.8 fixed firing angle256
 ;           ub.c and ud.e are the 16.8 fixed x,y component projectile velocities
+; Law-of-sines derivation and NanoLinearTargeting small-angle approximation:
 ; https://old.robowiki.net/cgi-bin/robowiki?LinearTargeting
+; Archived mirror:
+; https://robowiki.net/wiki/Linear_Targeting/Archived_Talk_20071111
 targeting_computer:
     ld ix,player_begin
-; ; compute target velocity from x,y component velocities
-;     ld bc,(ix+sprite_xvel) 
-;     ld de,(ix+sprite_yvel)
-;     ld hl,-1*256 ; account for vertical ground movement
-;     add hl,de
-;     ex de,hl ; ud.e = player_yvel-1
-;     call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
-;     ld (Heading_t),hl ; PASSES
-;     ld (Vt),de ; PASSES
-; ; Bearing_t should have been set by prerequisite call to orientation_to_player
-; ; compute Heading_t-Bearing_t PASSES
-;     ld de,(Bearing_t)
-;     and a ; clear carry
-;     sbc hl,de ; Uh.l = Heading_t-Bearing_t
-; ; compute sin(Heading_t-Bearing_t)
-;     call sin168 ; uh.l = sin(Heading_t-Bearing_t)
-; ; compute (Vt*sin(Heading_t-Bearing_t))
-;     ld de,(Vt)
-;     call smul168 ; uh.l = (Vt*sin(Heading_t-Bearing_t))
-; ; compute (Vt * sin(Heading_t-Bearing_t)) / Vp
-;     ld de,(Vp)
-;     call sdiv168 ; ud.e = (Vt*sin(Heading_t-Bearing_t)) / Vp
-;     ex de,hl ; uh.l = (Vt*sin(Heading_t-Bearing_t)) / Vp
-; ; answer is in radians, convert to degrees256
-;     ld de,0x0028BE ; 40.74 = 57.29578*256/360
-;     call smul168 ; uh.l = angle in degrees256 
-;     ld (lead_angle),hl ; TODO: fix this
-; ; add lead angle to target bearing
-;     ld de,(Bearing_t)
-;     add hl,de ; h.l = lead angle+target bearing
-
-    ld hl,(Bearing_t) ; TODO: fix this
+; compute target speed and heading from its component velocities
+    ld bc,(ix+sprite_xvel)
+    ld de,(ix+sprite_yvel)
+    ld hl,-1*256 ; account for vertical ground movement
+    add hl,de
+    ex de,hl ; ud.e = player y velocity - ground scroll velocity
+    call cartesian_to_polar_sm ; uh.l = Heading_t, ud.e = Vt
+    ld (Heading_t),hl
+    ld (Vt),de
+; B = target heading - bearing to target
+    ld de,(Bearing_t)
+    or a ; clear carry
+    sbc hl,de
+; numerator = Vt * sin(B), the target's lateral velocity
+    call sin168
+    ld de,(Vt)
+    call smul168
+; sin(A) = Vt * sin(B) / Vp
+    ld de,(Vp)
+    call sdiv168 ; quotient is returned in ud.e, remainder in uh.l
+    ex de,hl
+; NanoLinearTargeting drops asin and treats its argument as radians. Convert
+; that small-angle result to angle256: 256/(2*pi) = 40.743665...
+    ld de,0x0028BE ; 40.7421875 in 16.8 fixed
+    call smul168
+    ld (lead_angle),hl
+; projectile heading = bearing + lead angle
+    ld de,(Bearing_t)
+    add hl,de
 
     push hl
 
