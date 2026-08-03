@@ -1,0 +1,21 @@
+schema = 1
+project = "nurples-dev"
+default_profile = "/home/smith/Agon/mystuff/agon-dev-env/emulators/nurples-repair"
+default_sd_mount = "/media/smith/AGON"
+expected_sd_label = "AGON"
+
+[bundles.nurples]
+collection = "apps"
+source = "tgt"
+files = ["nurples.bin", "nurples.symbols", "game.agnb", "ui.agnb", "fonts"]
+destination = "mystuff/nurples-dev/apps/nurples"
+require = ["nurples.bin", "game.agnb", "ui.agnb"]
+entry = "nurples.bin"
+
+[bundles.map-tests]
+collection = "tests"
+source = "tgt"
+files = ["nurples-map-tests.bin", "nurples-map-tests.symbols", "game.agnb", "ui.agnb", "fonts"]
+destination = "mystuff/nurples-dev/tests/map-tests"
+require = ["nurples-map-tests.bin", "game.agnb", "ui.agnb"]
+entry = "nurples-map-tests.bin"

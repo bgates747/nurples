@@ -209,3 +209,31 @@ passes, and host-side span/negative-build checks enforce the fixture's immutable
 table cardinalities. `ASM-001B` is therefore complete. `ASM-001A` remains open
 only for the previously documented runtime baseline traces; the next migration
 boundary is `ASM-001C`, the single-owner outer scheduler.
+
+## Standardized deployment qualification
+
+The project now declares two copied runtime bundles through root `deploy.py`
+and `deploy.toml` under the separate `nurples-dev` project identity: the main
+application at `/mystuff/nurples-dev/apps/nurples` and the standalone map suite
+at `/mystuff/nurples-dev/tests/map-tests`. Building remains a separate explicit
+operation; deployment consumes and validates the already-built contents of
+`tgt`.
+
+The obsolete bespoke-emulator launch path was retired after exact inspection.
+Its `mystuff/nurples/tgt` live symlink and matching three-line autoexec sequence
+were removed without following the link or changing the repository's real
+`tgt`. The main bundle was then copied to both the bespoke emulator and the
+mounted FAT/`AGON` card with ownership records and complete size/hash
+verification. The emulator owns a managed `run` block; the card owns a managed
+`load`-only block. The Author verified both emulator and physical-hardware
+deployments. Fresh assembly, `tgt`, emulator, and card copies all matched binary
+SHA-256 `e56f725dbf5a7c32c9496560bce6a6ab925e66cfbd4cb6c4dfa69da435245ccd`.
+
+One external firmware-compatibility observation is recorded for the affine
+matrix-transform project only. With that custom firmware installed, the
+software sprites for the player ship, fireballs, and seekers do not render, and
+the player laser does not work. The game does not crash and continues to
+register hits on the invisible player, showing that gameplay/collision logic
+continues while the sprite rendering path fails. This is not a Purple Nurples
+regression or actionable project TODO; qualification and remediation belong
+strictly to the custom matrix-transform firmware project.
