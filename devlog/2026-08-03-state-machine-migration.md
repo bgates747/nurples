@@ -45,3 +45,16 @@ spread across frames, removing the old same-frame pool burst.
 
 This is not yet a proven emulator change and must not be committed as accepted
 runtime behavior before the Author's visual gate.
+
+## Authoritative roadmap
+
+`TODO.md` now decomposes `ASM-001` into stable stages `ASM-001A` through
+`ASM-001M`. Each stage names a concrete migration boundary and its acceptance
+evidence. The order deliberately establishes telemetry and qualifies the inert
+coordinator before connecting it to the outer scheduler, then migrates global
+and actor ownership incrementally. Integrated deterministic regression and the
+Author's visual gate precede retirement of legacy paths; stylistic convergence
+remains a separately reviewed final stage.
+
+This devlog records why the roadmap was selected. The checkboxes in `TODO.md`
+remain the sole authoritative statement of unfinished work.

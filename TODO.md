@@ -16,6 +16,90 @@ decisions are recorded in the dated development log.
   state, unintended branch, or is the reviewed boundary being migrated. After
   the new architecture is proven working, conduct a separately reviewed
   stylistic-consistency pass across legacy and migrated dispatch idioms.
+
+  Ordered migration stages and acceptance gates:
+
+  - [ ] **ASM-001A — Observable baseline:** publish a stable, documented RAM
+    telemetry block for global phase, actor states, pending events, transition
+    serials, state ages, and latched faults. Produce binary-matched symbols and
+    record baseline traces for startup, ordinary play, level completion,
+    player death, respawn, and game over. Acceptance: the same build yields
+    repeatable symbol addresses and each trace identifies its terminal outcome
+    without interpreting writable code pointers.
+  - [ ] **ASM-001B — Coordinator core qualification:** extract the generic
+    numeric-ID dispatcher, legal-edge validation, event arbitration, policy
+    publication, and actor-controller primitives from `state_new.inc` into a
+    buildable fixture with inert callbacks. Acceptance: deterministic tests
+    cover every legal edge, invalid current/target recovery, first-request
+    conflict behavior, reentrancy rejection, event snapshotting, and actor
+    reconciliation before ENTER or UPDATE.
+  - [ ] **ASM-001C — Single-owner outer scheduler:** make the main loop the
+    only owner of input snapshotting, one coordinator tick, actor/world cadence,
+    rendering, one VBlank, and orderly exit. No state or actor callback may
+    wait for VBlank or advance another subsystem. Acceptance: instrumentation
+    records exactly one scheduler frame and at most one committed global
+    transition per iteration through both ordinary play and a state change.
+  - [ ] **ASM-001D — Bounded startup lifecycle:** migrate BOOT, LOADING, TITLE,
+    NEW_GAME, LEVEL_ENTER, and COUNTDOWN to numeric phases whose callbacks
+    perform bounded work and return. Asset loading may advance in explicit
+    chunks while preserving breadcrumb feedback. Acceptance: startup reaches
+    PLAYING, Escape remains observable between steps, the countdown advances
+    by frame age, and two consecutive MOS `RUN` cycles start from identical
+    initialized state.
+  - [ ] **ASM-001E — Playing coordinator and event priority:** migrate PLAYING
+    without allowing the coordinator to write actor-local states. Define the
+    priority and consumption rules for simultaneous QUIT, fault, player-death,
+    level-complete, pause, and victory events. Acceptance: table-driven tests
+    exercise every single event and relevant simultaneous pair, including the
+    player-death/level-complete collision, with exactly one documented result
+    and no stale event on the following frame.
+  - [ ] **ASM-001F — Cooperative player-death sequence:** qualify the bounded
+    INITIAL, DELAY, FINALE, and FINISH implementation introduced at `566acc0`.
+    Acceptance: deaths at multiple heights keep passive and active tiles,
+    enemies, projectiles, explosions, HUD, Escape polling, and VBlank advancing
+    once per outer frame; pool exhaustion does not alter the first tile record;
+    respawn and final-life game over both complete with no fault latch.
+  - [ ] **ASM-001G — Player-owned controller:** migrate INACTIVE, READY,
+    ACTIVE, DYING, and DEAD to validated local IDs. The player's reconciliation
+    callback must read global phase/policy before every local handler and own
+    all player-state changes; player events may request later global action.
+    Acceptance: corrupt local IDs recover safely, ENTER/EXIT occur once per
+    transition, global transitions never directly assign player state, and all
+    player lifecycle scenarios preserve accepted behavior.
+  - [ ] **ASM-001H — Global transition lifecycles:** migrate PAUSED,
+    LEVEL_TRANSITION, RESPAWN, GAME_OVER, VICTORY, EXIT, and FAULT, incorporating
+    the level-scoped reset from `ASM-008`. Acceptance: every phase is bounded,
+    every legal incoming and outgoing edge is exercised, illegal edges fail
+    closed, and transitions never resume work from the obsolete phase.
+  - [ ] **ASM-001I — Enemy-owned controller:** replace the enemy-domain raw
+    state pointer with validated local IDs and actor-owned reconciliation.
+    Preserve individual seeker and fireball strategy callbacks unless a
+    demonstrated defect requires migration. Acceptance: enemies reconcile
+    correctly across PLAYING, player death, level transition, respawn, game
+    over, and fault; invalid state cannot become an indirect jump.
+  - [ ] **ASM-001J — Sprite and active-tile strategy boundary:** validate
+    strategy identity and ownership at the remaining per-record indirect
+    dispatch boundaries without mechanically rewriting proven callbacks.
+    Acceptance: every current sprite and active-tile type dispatches only to a
+    permitted callback, invalid type/program data fails closed with a latched
+    diagnostic, and qualification maps exercise each implemented strategy.
+  - [ ] **ASM-001K — Integrated deterministic regression:** run the complete
+    standalone map suite from fresh machine state with scripted input and RAM
+    assertions. Acceptance: repeated runs produce the same ordered phase/event
+    trace; startup, pause/resume, level completion, death/respawn, game over,
+    restart, and injected corrupt-state recovery meet their oracles with no
+    unexpected fault bits or timeout.
+  - [ ] **ASM-001L — Human acceptance and legacy retirement:** perform the
+    Author's emulator play-through, compare visual/audio behavior, and remove
+    only legacy state machinery made unreachable by the proven replacement.
+    Acceptance: the Author approves runtime behavior, no obsolete writable
+    state pointers remain on reachable paths, cold-start documentation matches
+    the final architecture, and a local fallback commit precedes cleanup.
+  - [ ] **ASM-001M — Separately reviewed idiom pass:** only after `ASM-001L`,
+    review legacy and migrated dispatch, naming, register contracts, and table
+    idioms for consistency. Acceptance: the proposed style changes are reviewed
+    independently, assemble cleanly, and pass the full `ASM-001K` regression
+    without changing accepted gameplay.
 - [x] **ASM-002 — Player-death memory corruption:** repair and regression-test
   the position-dependent but readily reproducible explosion-pool exhaustion
   path in `player_dying`, which writes through `IX == table_end` into the first
