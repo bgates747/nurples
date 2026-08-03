@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 
 FONT_BUFFER_BASE = 64_000
 FONT_DIR = "fonts"
+RUNTIME_FONT_NAMES = ("Lat38-VGA8_8x8.font",)
 
 
 @dataclass(frozen=True)
@@ -33,20 +34,12 @@ def _metadata_values(metadata_path: Path) -> dict[str, str]:
 
 def discover_fonts(source_dir: Path) -> list[FontAsset]:
     source_dir = source_dir.resolve()
-    font_paths = sorted(
-        source_dir.glob("*.font"), key=lambda path: path.name.casefold()
-    )
-    if not font_paths:
-        raise ValueError(f"no vendored fonts found in {source_dir}")
-
-    metadata_paths = set(source_dir.glob("*.font.xml"))
-    expected_metadata_paths = {Path(f"{font_path}.xml") for font_path in font_paths}
-    if metadata_paths != expected_metadata_paths:
-        missing = sorted(expected_metadata_paths - metadata_paths)
-        extra = sorted(metadata_paths - expected_metadata_paths)
-        details = [*(f"missing metadata: {path.name}" for path in missing)]
-        details.extend(f"orphaned metadata: {path.name}" for path in extra)
-        raise ValueError("; ".join(details))
+    font_paths = [source_dir / name for name in RUNTIME_FONT_NAMES]
+    missing = [path.name for path in font_paths if not path.is_file()]
+    metadata_paths = [Path(f"{font_path}.xml") for font_path in font_paths]
+    missing.extend(path.name for path in metadata_paths if not path.is_file())
+    if missing:
+        raise ValueError(f"missing runtime font assets: {', '.join(missing)}")
 
     if FONT_BUFFER_BASE + len(font_paths) > 65_536:
         raise ValueError("vendored fonts exceed the 16-bit buffer ID range")

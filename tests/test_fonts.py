@@ -15,11 +15,10 @@ FONT_SOURCE = PROJECT_ROOT / "assets/fonts"
 
 
 class FontBuildTests(unittest.TestCase):
-    def test_vendored_font_set_is_complete(self) -> None:
+    def test_runtime_font_set_contains_only_the_game_font(self) -> None:
         fonts = discover_fonts(FONT_SOURCE)
-        self.assertEqual(len(fonts), 29)
-        self.assertEqual(fonts[0].path.name, "amiga_forever_16x16.font")
-        self.assertEqual(fonts[-1].path.name, "wendy_neue_6x6.font")
+        self.assertEqual(len(fonts), 1)
+        self.assertEqual(fonts[0].path.name, "Lat38-VGA8_8x8.font")
 
     def test_manifest_uses_runtime_font_directory(self) -> None:
         manifest = render_fonts_manifest(discover_fonts(FONT_SOURCE))
@@ -27,6 +26,8 @@ class FontBuildTests(unittest.TestCase):
             'fn_Lat38_VGA8_8x8: db "fonts/Lat38-VGA8_8x8.font",0',
             manifest,
         )
+        self.assertIn("Lat38_VGA8_8x8: equ 64000", manifest)
+        self.assertNotIn("amiga_forever", manifest)
         self.assertNotIn('db "fontsLat38', manifest)
 
     def test_build_and_check_are_deterministic(self) -> None:

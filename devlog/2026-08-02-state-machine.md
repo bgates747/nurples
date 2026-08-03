@@ -288,6 +288,115 @@ safety repairs:
 No architectural migration has been started. Runtime emulator qualification is
 recorded as ASM-007 and awaits Author review of this checkpoint.
 
+### Temporary countdown-bypass diagnostic
+
+The tested state before this experiment is tagged locally as
+`debug/pre-countdown-bypass-20260802` at commit `595d5ba`. The next uncommitted
+build uses an explicit jump in `init_level` to bypass
+`start_level_countdown`. This is diagnostic isolation, not a production
+lifecycle change, and must remain uncommitted until the Author reports the
+visual result.
+
+### Post-keypress freeze trace
+
+The emulator debugger stopped at `0x048834`, the first instruction after
+`waitKeypress`, proving that the key wait returns normally. The stop occurs
+before the screen-mode change, so that diagnostic breakpoint intentionally
+left the loading splash visible.
+
+Static and listing review then found a pre-existing frame-count mismatch in
+`init_enemy_fireballs`: each of four fireball sprites was assigned 128 frames,
+but the asset set and sprite metadata define only two 32-orientation animation
+banks. The extra 64 assignments per sprite consumed unrelated buffers 334
+through 397 and sent 256 unnecessary frame-add commands to the VDP at the exact
+post-starfield point where the apparent freeze occurs. The loop now assigns the
+declared 64 frames, and a source invariant guards the count. This repair remains
+uncommitted pending emulator qualification.
+
+Fab's verbose VDP log localized the hard stop more precisely. The VDP consumed
+the sprite reset and all 20 temporary crater-frame definitions, then entered
+`VDU 23,27,7,20` and never returned from sprite activation. Both the default
+Platform firmware and an explicit Console8 firmware A/B run stopped at the same
+command; the eZ80 subsequently filled the 64-byte VDP input queue and waited
+forever for CTS in MOS.
+
+The legacy initializer activated those temporary sprites and then cleared and
+rebuilt every active sprite. That order contradicts both the documented VDP
+creation sequence and the current VDP implementation's own contract. The
+temporary crater pass is redundant because the player, laser, seeker, fireball,
+and explosion initializers together define the complete contiguous 0--19 set.
+It has therefore been removed; the finalized set is now activated exactly once
+after all real frames are attached. This is a bounded protocol correction, not
+a state-machine migration.
+
+### ADL packet-width audit
+
+An exhaustive included-source audit inventoried 581 unsuffixed wide memory
+accesses across 52 assembly files. The 58 high-confidence apparent writes past
+a word-sized field are all self-modifying VDU packet templates. On the startup
+through sprite-activation path, every upper byte either lands in an explicit
+byte of unsent padding or in a packet field which is written back before the
+packet is sent. The image, sprite, tile, and cockpit records reached indirectly
+on this path use three-byte fields. No unbuffered 24-bit store into live 16-bit
+application storage was found on the failing path.
+
+### Controlled activation qualification
+
+A temporary forwarding VDP module captured the exact eZ80-to-VDP byte stream.
+The corrected stream activates the finalized 20-sprite set and continues with
+hundreds of kilobytes of gameplay traffic. Replaying that exact prefix against
+a fresh Console8 VDP succeeds both with the one-font runtime and after replacing
+only the font section with all 29 valid historical font definitions. The font
+collection is therefore not, by itself, the activation failure.
+
+The old stream which activates 20 placeholder sprites before defining their
+real frames reproduces the stop at `VDU 23,27,7,20`. Current userspace FabGL
+also leaves primitive-processing controller fields uninitialized before
+`setSprites()` polls them, so heap layout can make that external emulator defect
+nondeterministic. Purple Nurples now follows the documented definition-before-
+activation protocol and no emulator source has been changed.
+
+The durable `nurples-repair` profile separately lacked the `RUN` command after
+`LOAD nurples.bin`; a cold launch therefore loaded the image without executing
+it. Its CRLF `autoexec.txt` now contains the complete `LOAD`/`RUN` sequence.
+This profile correction is external to the repair repository.
+
+### Runtime font scope correction
+
+The Author identified the 29-font runtime list as a forgotten font-gallery
+experiment. Static references show that the game selects only
+`Lat38-VGA8_8x8.font`. The deterministic font builder now selects that one
+vendored 2 KiB payload, assigns it buffer 64000, deploys only it and its
+metadata under `tgt/fonts`, and leaves the other vendored files as inactive
+historical source material. This cleanup is sensible application scope but is
+not presented as the root cause of sprite activation.
+
+### First responsive gameplay and death-tail observation
+
+The Author visually qualified startup, sprite activation, controls, continuous
+gameplay, and the player explosion sequence far enough to play until death.
+During that death sequence passive terrain stopped while active crater tiles
+continued moving and animating.
+
+That split exactly identifies the already-recorded death-versus-level boundary.
+`player_dying` monopolizes 313 internal VBlanks and calls `tiles_plot` followed
+independently by `move_tiles` on each one. A death beginning in approximately
+the final 20 map rows can latch `tiles_level_complete`; subsequent
+`tiles_plot` calls then return early while `move_tiles` continues. Passive
+terrain was explicitly intended to scroll during this legacy sequence.
+
+As a bounded visual repair, the latched path now scrolls the playing-field
+viewport and plots only background, without reading beyond `tiles_row_defs`,
+while continuing to return the latched completion result. This does not choose
+whether player death or level completion wins. Converting `player_dying` to one
+bounded actor update per global tick and centrally arbitrating those outcomes
+remains the reviewed ASM-001 architectural boundary. The refreshed emulator is
+awaiting Author confirmation of the passive-terrain behavior.
+
+The full local suite now contains 39 passing tests. The generated build
+assembles, Ruff passes, `pip check` reports no broken requirements, and the
+canonical `agonutils` native test passes.
+
 ## `state_new.inc` scaffold
 
 The standalone scaffold establishes these rules:

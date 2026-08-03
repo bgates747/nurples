@@ -135,7 +135,11 @@ init_level:
 ; print level number, score, and countdown to start
     call print_level
     call print_score
+; TEMPORARY DIAGNOSTIC: bypass the blocking countdown. Restore the tagged
+; debug/pre-countdown-bypass-20260802 state to return to the original path.
+    jp @countdown_bypassed
     call start_level_countdown
+@countdown_bypassed:
     ret
 ; end init_level
 

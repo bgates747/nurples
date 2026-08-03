@@ -88,7 +88,7 @@ init_enemy_fireballs:
     call vdu_sprite_select
     call vdu_sprite_clear_frames
     ld hl,BUF_FIREBALL_2_000
-    ld b,4*32 ; 4 animations * 32 orientations
+    ld b,2*32 ; 2 animations * 32 orientations
 @frames_loop:
     push bc
     push hl

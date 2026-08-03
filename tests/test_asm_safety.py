@@ -157,6 +157,26 @@ class AssemblySafetyTests(unittest.TestCase):
             read_asm("tiles.inc"),
         )
 
+    def test_completed_level_keeps_passive_terrain_scrolling_safely(self) -> None:
+        source = read_asm("tiles.inc")
+        plotter = routine(source, "tiles_plot", "; end tiles_plot")
+        scroll = routine(
+            source,
+            "tiles_scroll_background",
+            "; end tiles_scroll_background",
+        )
+
+        latched_path = plotter[
+            plotter.index("ld a,(tiles_level_complete)") :
+            plotter.index("@row_available:")
+        ]
+        self.assertEqual(plotter.count("call tiles_scroll_background"), 2)
+        self.assertIn("call tiles_scroll_background", latched_path)
+        self.assertIn("ld a,1", latched_path)
+        self.assertNotIn("(tiles_row_defs)", latched_path)
+        self.assertIn("call vdu_scroll_down", scroll)
+        self.assertIn("call bg_plot", scroll)
+
     def test_shield_maximum_is_loaded_at_byte_width(self) -> None:
         source = read_asm("player_shields.inc")
         init = routine(source, "init_bar_shields", "; end init_bar_shields")
@@ -698,6 +718,41 @@ class AssemblySafetyTests(unittest.TestCase):
         )
         self.assertNotIn("ld bc,3", initialization)
         self.assertIn("djnz @sprite_player_loop", initialization)
+
+    def test_sprites_are_defined_before_the_contiguous_set_is_activated(self) -> None:
+        initialization = routine(
+            read_asm("sprites.inc"),
+            "sprites_init",
+            "; end sprites_init",
+        )
+
+        self.assertNotIn("@sprite_loop", initialization)
+        self.assertNotIn("BUF_CRATER_0", initialization)
+        self.assertEqual(initialization.count("call vdu_sprite_activate"), 1)
+        self.assertLess(
+            initialization.index("call init_explosions"),
+            initialization.index("call vdu_sprite_activate"),
+        )
+        self.assertIn(
+            "ld a,table_num_records\n\tcall vdu_sprite_activate",
+            initialization,
+        )
+
+    def test_fireball_sprite_frames_match_declared_animation_banks(self) -> None:
+        source = read_asm("enemy_fireball.inc")
+        initialization = routine(
+            source,
+            "init_enemy_fireballs",
+            "; end init_enemy_fireballs",
+        )
+
+        self.assertIn("db 32                   ; num_orientations", source)
+        self.assertIn("db 2                    ; num_animations", source)
+        self.assertIn(
+            "ld b,2*32 ; 2 animations * 32 orientations",
+            initialization,
+        )
+        self.assertNotIn("ld b,4*32", initialization)
 
     def test_seeker_edge_collision_cannot_move_twice_in_one_frame(self) -> None:
         behavior = routine(

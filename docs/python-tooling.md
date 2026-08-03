@@ -48,9 +48,10 @@ explicit CLI entry point.
 
 ## Vendored fonts
 
-`assets/fonts` is the authoritative source for the 29 runtime font binaries and
-their conversion metadata. The build must not read fonts from an emulator SD
-tree, another checkout, or an Author-specific absolute path.
+`assets/fonts` preserves the vendored font collection and conversion metadata.
+The runtime selection in `nurples_tools/fonts.py` contains only the
+`Lat38-VGA8_8x8.font` face used by the game. The build must not read fonts from
+an emulator SD tree, another checkout, or an Author-specific absolute path.
 
 Build and verify the deployable `tgt/fonts` copies and
 `src/asm/fonts_list.inc` manifest with:

@@ -46,8 +46,9 @@ decisions are recorded in the dated development log.
   deployable asset references. Do not revive dormant experiments, alternate
   asset pipelines, demo applications, or historical Wolf/MapMaker
   stages unless the Author promotes them separately later. Canonical sprite
-  and tile output is visually accepted, runtime fonts are now vendored, and
-  the failed music experiment is intentionally excluded.
+  and tile output is visually accepted, the sole referenced runtime font
+  (`Lat38-VGA8_8x8.font`) is vendored, and the failed music experiment is
+  intentionally excluded.
 - [ ] **PY-002 — Safe standalone tools:** put the remaining import-time
   generators and broad edit/cleanup scripts behind explicit, project-scoped,
   dry-run-capable CLIs.

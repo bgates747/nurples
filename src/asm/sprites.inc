@@ -155,17 +155,6 @@ table_deactivate_sprite:
 sprites_init:
 ; initialize sprites
 	call vdu_sprite_reset ; clear sprite data in vdp
-	xor a ; loop counter / sprite id
-@sprite_loop:
-	push af ; save loop counter / sprite id
-	call vdu_sprite_select
-	ld hl,BUF_CRATER_0 ; can be anything, but why not a smoking hole in the ground?
-	call vdu_sprite_add_buff
-	pop af ; restore loop counter / sprite id
-    inc a
-    cp table_num_records
-    jp nz,@sprite_loop
-	call vdu_sprite_activate
 
 ; define player sprite
 	ld a,(player_begin+sprite_id)
@@ -191,6 +180,10 @@ sprites_init:
 
 ; define explosion sprites
     call init_explosions
+
+; activate only after every contiguous sprite has its final frame definitions
+    ld a,table_num_records
+	call vdu_sprite_activate
     ret
 ; end sprites_init
 

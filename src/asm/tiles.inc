@@ -13,26 +13,14 @@ tiles_y_plot: dl -15
 tiles_plot:
     ld a,(tiles_level_complete)
     or a
-    ret nz
-; set gfx origin to playing field window
-    ld bc,origin_left
-    ld de,origin_top
-    call vdu_set_gfx_origin
-; set gfx viewport to playing field window
-    call set_gfx_playing_field
-; move the background down one pixel
-    ld a,2 ; current gfx viewport
-    ld l,2 ; direction=down
-    ld h,1 ; speed=1 px
-    call vdu_scroll_down
-; set gfx viewport to one scanline to optimise plotting tiles
-    ld bc,0 ; leftmost x-coord
-    ld de,0 ; topmost y-coord
-    ld ix,255 ; rightmost x-coord
-    ld iy,0 ; bottommost y-coord
-    call vdu_set_gfx_viewport
-; plot the background
-    call bg_plot
+    jp z,@row_available
+; A blocking actor sequence may still be rendering after the final source row.
+; Keep the passive terrain moving without reading beyond the level definition.
+    call tiles_scroll_background
+    ld a,1 ; preserve the latched world result for a coordinating caller
+    ret
+@row_available:
+    call tiles_scroll_background
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -96,6 +84,29 @@ tiles_plot:
     ld (tiles_level_complete),a
     ret
 ; end tiles_plot
+
+tiles_scroll_background:
+; set gfx origin to playing field window
+    ld bc,origin_left
+    ld de,origin_top
+    call vdu_set_gfx_origin
+; set gfx viewport to playing field window
+    call set_gfx_playing_field
+; move the background down one pixel
+    ld a,2 ; current gfx viewport
+    ld l,2 ; direction=down
+    ld h,1 ; speed=1 px
+    call vdu_scroll_down
+; set gfx viewport to one scanline to optimise plotting tiles
+    ld bc,0 ; leftmost x-coord
+    ld de,0 ; topmost y-coord
+    ld ix,255 ; rightmost x-coord
+    ld iy,0 ; bottommost y-coord
+    call vdu_set_gfx_viewport
+; plot the background
+    call bg_plot
+    ret
+; end tiles_scroll_background
 
 do_active_tiles:
 ; initialize tiles loop
