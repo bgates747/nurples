@@ -176,6 +176,15 @@ post-start unresponsiveness.
 26. Dormant `game_exit` tail-jumps to a no-op helper and returns with the stored
     state unchanged, so reaching it repeats the exit state forever instead of
     returning control to the application's shutdown path.
+27. The first emulator qualification of checkpoint `73bc35f` reached the
+    post-load keypress, rendered the gameplay starfield, and then appeared to
+    freeze. The next initialization routine, `sprites_init`, loads `BC = 3`
+    before a `DJNZ` player-frame loop. In ADL mode that leaves `B = 0`, so the
+    three-frame loop executes 256 times and floods the selected VDP sprite's
+    frame list. The source now loads `B = 3` explicitly. Visual testing of that
+    correction still stalled after the starfield, so this was a definite defect
+    but not the complete cause of the post-keypress hang. The next diagnostic
+    build bypasses `start_level_countdown` from a tagged checkpoint.
 
 The current `CALL_HL` macro was checked against the assembler listing. Its
 synthetic return address points to the instruction after `jp (hl)`; the macro

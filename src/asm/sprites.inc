@@ -172,7 +172,7 @@ sprites_init:
 	call vdu_sprite_select
 	call vdu_sprite_clear_frames
 	ld hl,BUF_SHIP_0L
-	ld bc,3 ; three bitmaps for player ship
+	ld b,3 ; DJNZ consumes B; loading BC with 3 would put zero in B
 @sprite_player_loop:
 	push bc
 	push hl

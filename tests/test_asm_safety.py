@@ -685,6 +685,20 @@ class AssemblySafetyTests(unittest.TestCase):
             tables,
         )
 
+    def test_player_sprite_frame_loop_uses_the_djnz_register(self) -> None:
+        sprites = read_asm("sprites.inc")
+        initialization = routine(
+            sprites,
+            "sprites_init",
+            "; end sprites_init",
+        )
+        self.assertIn(
+            "ld b,3 ; DJNZ consumes B; loading BC with 3 would put zero in B",
+            initialization,
+        )
+        self.assertNotIn("ld bc,3", initialization)
+        self.assertIn("djnz @sprite_player_loop", initialization)
+
     def test_seeker_edge_collision_cannot_move_twice_in_one_frame(self) -> None:
         behavior = routine(
             read_asm("enemy_seeker.inc"),
