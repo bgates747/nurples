@@ -141,3 +141,71 @@ The Author playtested the committed build in the durable emulator profile on
 2026-08-03 and reported correct behavior with no crashes. This closes the
 `ASM-009` visual acceptance gate; exact arbitrary custom-font restoration
 remains outside the documented VDP interface as described above.
+
+## ASM-001B coordinator-core qualification
+
+The replacement scaffold now has a testable boundary instead of carrying its
+dispatcher, graph, fixture callbacks, and game integration seams in one file.
+`state_core.inc` owns the generic numeric-ID coordinator and actor-controller
+primitives, `state_graph.inc` owns Purple Nurples' legal global edges, and the
+still-disconnected `state_new.inc` supplies only game callbacks, policy, and
+immutable descriptor/class tables. The playable legacy scheduler remains
+unchanged by this stage.
+
+The extraction audit found and closed several concrete unsafe paths before any
+legacy integration:
+
+- terminal EXIT could previously request FAULT through a coordinator shortcut;
+- stale pending/candidate values could survive successful or recovery paths;
+- a callback could corrupt the global current ID, actor class, or actor current
+  ID before the next unchecked table lookup;
+- nested global, actor, and cross-domain dispatch was not uniformly rejected;
+- a numerically valid cross-class mutation and a configured zero-count class
+  could escape deterministic quarantine;
+- invalid-class initialization did not acknowledge the current global serial;
+- FAULT ENTER and actor ENTER/EXIT/UPDATE/RENDER callbacks lacked complete
+  post-callback context validation; and
+- repeated MOS `RUN` needed a distinct process bootstrap that discards retained
+  dispatch guards before calling the normally guarded initializer.
+
+The hardened core validates immutable global table spans before its first
+lookup, bounds every writable numeric ID before indirect dispatch, validates
+callback-owned context after return, clears all transition scratch on terminal
+paths, and quarantines an actor by assigning the invalid class sentinel so a
+later tick cannot dispatch through a different class. `state_new_process_init`
+is deliberately documented as a fresh-process-only entry; calling it from a
+callback would violate its bootstrap contract because it must clear retained
+guards.
+
+`tests/asm/state_core_fixture.asm` includes the exact live core and graph behind
+trace-only callbacks. Its independent bitmask oracle exhausts all 196 global
+`(current, requested)` pairs: 47 committed non-self transitions, 14 accepted
+self no-ops, and 135 illegal requests. Focused cases cover poisoned process
+state, invalid current/request/pending IDs, first-request conflicts, duplicate
+requests, event snapshot timing, QUIT arbitration, callback register poisoning,
+global/actor/cross-domain reentrancy, actor reconciliation before ENTER and
+UPDATE, local conflicts, recovery, valid cross-class corruption, invalid and
+zero-count classes, and render-time reconciliation.
+
+The pure-CPU ADL fixture establishes its own stack and has no MOS, VDP, file,
+timer, or keyboard dependency. Twenty consecutive executions through the
+stable AHT-004 direct runner produced the identical result:
+
+```text
+PASS state coordinator fixture: 20 deterministic runs
+PASS direct guest status 0x2a matched (pc=$042011, instructions=149604, cycles=591573)
+```
+
+The qualified source SHA-256 is
+`0e2084e1b2f71c3073603d37e689c39ca4b5cff2e83ba762607fa31619fd1ca3`;
+its assembled binary SHA-256 is
+`4f7ccad7f974f90f7766ba1ab64f5329af49b24893ee5a85aa5d82a4fb426b2f`.
+The included core and graph identities are respectively
+`375b02e15dc5fad44d28a4d07a4ec8386c0e8884407575929c0503f01cc269a4`
+and `90bc9e8f09723af9cb2dc77bc0b8ad9a72fa3105f17ac8cd281c04a638b0d6ee`.
+
+The normal game still assembles, the existing 40-test assembly-safety suite
+passes, and host-side span/negative-build checks enforce the fixture's immutable
+table cardinalities. `ASM-001B` is therefore complete. `ASM-001A` remains open
+only for the previously documented runtime baseline traces; the next migration
+boundary is `ASM-001C`, the single-owner outer scheduler.

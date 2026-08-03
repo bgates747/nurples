@@ -26,7 +26,7 @@ decisions are recorded in the dated development log.
     player death, respawn, and game over. Acceptance: the same build yields
     repeatable symbol addresses and each trace identifies its terminal outcome
     without interpreting writable code pointers.
-  - [ ] **ASM-001B — Coordinator core qualification:** extract the generic
+  - [x] **ASM-001B — Coordinator core qualification:** extract the generic
     numeric-ID dispatcher, legal-edge validation, event arbitration, policy
     publication, and actor-controller primitives from `state_new.inc` into a
     buildable fixture with inert callbacks. Acceptance: deterministic tests

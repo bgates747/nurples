@@ -113,11 +113,14 @@ belongs in canonical `agon-utils`. A project adapter may bridge Pillow objects
 to the canonical path API but must not duplicate its palette algorithms.
 
 New indirect state dispatch uses validated numeric IDs, fixed callback tables,
-and a real `call` followed by tail `jp (hl)`, as scaffolded in
-`src/asm/state_new.inc`. Do not mechanically rewrite legacy `CALL_HL` sites or
-other functioning legacy code for stylistic consistency. Change legacy code
-only when it causes a demonstrated unsafe state, unintended branch, or when a
-reviewed migration requires replacing that specific boundary.
+and a real `call` followed by tail `jp (hl)`. The qualified generic machinery
+is in `src/asm/state_core.inc`, the game graph is in `src/asm/state_graph.inc`,
+and `src/asm/state_new.inc` is the still-disconnected integration scaffold.
+Its deterministic qualification is documented in
+`docs/state-core-fixture.md`. Do not mechanically rewrite legacy `CALL_HL`
+sites or other functioning legacy code for stylistic consistency. Change
+legacy code only when it causes a demonstrated unsafe state, unintended branch,
+or when a reviewed migration requires replacing that specific boundary.
 
 Once the replacement architecture has reached a proven working state, a
 separately reviewed stylistic pass may standardize dispatch and related idioms

@@ -385,8 +385,12 @@ class AssemblySafetyTests(unittest.TestCase):
             with self.subTest(numeric_id=numeric_id):
                 self.assertIn(f"{numeric_id}:", state_ids)
 
-        self.assertNotIn("STATE_NEW_PLAYING:", read_asm("state_new.inc"))
-        self.assertIn("include state_ids.inc first", read_asm("state_new.inc"))
+        state_core = read_asm("state_core.inc")
+        state_scaffold = read_asm("state_new.inc")
+        self.assertNotIn("STATE_NEW_PLAYING:", state_core)
+        self.assertIn("include state_ids.inc first", state_core)
+        self.assertIn('include "state_core.inc"', state_scaffold)
+        self.assertIn('include "state_graph.inc"', state_scaffold)
 
     def test_legacy_startup_publishes_semantic_phases_without_actor_staleness(self) -> None:
         startup = routine(
