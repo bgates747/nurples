@@ -75,9 +75,12 @@ Never substitute system Python for `.venv/bin/python`. Verify with:
 Assemble without deploying or launching an emulator:
 
 ```bash
-cd src/asm
-ez80asm -l nurples.asm ../../tgt/nurples.bin
+.venv/bin/python build/scripts/build_00_all_the_things.py --assemble
 ```
+
+This publishes a binary-matched `tgt/nurples.symbols` alongside the binary.
+The stable runtime observation contract is documented in
+`docs/runtime-telemetry.md`.
 
 Launch the isolated profile through the canonical environment script:
 

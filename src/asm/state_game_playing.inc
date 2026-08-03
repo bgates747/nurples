@@ -7,6 +7,8 @@ game_playing:
     or a
     jp z,@tiles_ready
 ; level completion is a world result; only the global state selects the phase
+    ld a,STATE_NEW_EVENT_LEVEL_COMPLETE
+    call telemetry_post_events
     ld hl,game_level_transition
     ld (game_state),hl
     ret
@@ -23,6 +25,8 @@ game_playing:
 ; consume the actor outcome before any more work runs in the old playing frame
     xor a
     ld (player_event),a
+    ld a,STATE_NEW_EVENT_NO_LIVES
+    call telemetry_post_events
     ld hl,game_over
     ld (game_state),hl
     ret

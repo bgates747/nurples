@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 import shutil
 import subprocess
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from nurples_tools.current_assets import check_current_assets, write_current_assets
 from nurples_tools.fonts import build_fonts, check_fonts
@@ -36,12 +37,37 @@ def assemble() -> None:
         Path.home() / ".local/bin/ez80asm"
     )
     TARGET_DIR.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        [assembler, "-l", "nurples.asm", "../../tgt/nurples.bin"],
-        cwd=ASM_DIR,
-        check=True,
-    )
-    print("Generated tgt/nurples.bin")
+    with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
+        staged_asm = Path(temp_dir) / "asm"
+        shutil.copytree(ASM_DIR, staged_asm)
+        staged_binary = staged_asm / "nurples.bin"
+        staged_symbols = staged_asm / "nurples.symbols"
+        staged_binary.unlink(missing_ok=True)
+        staged_symbols.unlink(missing_ok=True)
+        subprocess.run(
+            [assembler, "-l", "-s", "nurples.asm", staged_binary.name],
+            cwd=staged_asm,
+            check=True,
+        )
+        if not staged_binary.is_file() or not staged_symbols.is_file():
+            raise RuntimeError("assembly did not produce a binary/symbol pair")
+        for staged, destination in (
+            (staged_binary, TARGET_DIR / "nurples.bin"),
+            (staged_symbols, TARGET_DIR / "nurples.symbols"),
+        ):
+            with NamedTemporaryFile(
+                dir=TARGET_DIR,
+                prefix=f".{destination.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as temporary_output:
+                publish_path = Path(temporary_output.name)
+            try:
+                shutil.copy2(staged, publish_path)
+                publish_path.replace(destination)
+            finally:
+                publish_path.unlink(missing_ok=True)
+    print("Generated tgt/nurples.bin and tgt/nurples.symbols")
 
 
 def main() -> None:

@@ -74,7 +74,6 @@ cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 table_init:
 ; clear the sprite table
     xor a ; write zeroes to sprite table
-    ld (sprite_fault_flags),a
     ld hl,table_base ; address to copy from
     ld bc,table_end-table_base ; number of bytes to clear
     call clear_mem

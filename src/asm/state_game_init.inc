@@ -2,8 +2,14 @@
 ; loading_time: asciz "Loading time:"
 loading_complete: asciz "Press any key to continue."
 original_screen_mode: db 0
+original_text_foreground: db c_white
+original_text_background: db c_black
+; bit 0 = foreground valid, bit 1 = background valid
+original_text_colours_valid: db 0
 
 game_init:
+    ld a,STATE_NEW_LOADING
+    call telemetry_publish_phase
 ; The VDP alone owns the truth about its resource registries. Never infer that
 ; assets survived a prior game or MOS RUN from application RAM. Select the
 ; permanent system font before deleting the custom-font buffer, detach sprites
@@ -69,12 +75,20 @@ game_init:
     call load_game_images
     jp nz,@agnb_load_error
 ; print loading complete message and wait for user keypress
+    ld a,STATE_NEW_EVENT_LOAD_COMPLETE
+    call telemetry_post_events
+    ld a,STATE_NEW_TITLE
+    call telemetry_publish_phase
     call vdu_cls
     call printInline
     asciz "Press any key to continue."
     call vdu_flip 
     call waitKeypress
 ; set up display for gameplay
+    ld a,STATE_NEW_EVENT_START
+    call telemetry_post_events
+    ld a,STATE_NEW_NEW_GAME
+    call telemetry_publish_phase
     ld a,20
     call vdu_set_screen_mode
     xor a
@@ -119,6 +133,8 @@ game_init:
     ld (bg_bufferId),hl
 ; initialize runtime tables and the first level
     call reset_runtime_tables
+    ld a,STATE_NEW_LEVEL_ENTER
+    call telemetry_publish_phase
     ld a,tiles_dg
     call init_tileset
 ; initialize player

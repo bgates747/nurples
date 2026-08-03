@@ -24,50 +24,18 @@
 ; - Global callbacks may destroy all registers. Actor callbacks receive IY as
 ;   the actor-controller pointer; the dispatcher restores IY after callbacks.
 ; - All stored code pointers are 24-bit `dl` values and all IDs are bytes.
+; - The including translation unit must include state_ids.inc first.
 
 ; ---------------------------------------------------------------------------
 ; Global game phases
 ; ---------------------------------------------------------------------------
-
-STATE_NEW_BOOT:                equ 0
-STATE_NEW_LOADING:             equ 1
-STATE_NEW_TITLE:               equ 2
-STATE_NEW_NEW_GAME:            equ 3
-STATE_NEW_LEVEL_ENTER:         equ 4
-STATE_NEW_COUNTDOWN:           equ 5
-STATE_NEW_PLAYING:             equ 6
-STATE_NEW_PAUSED:              equ 7
-STATE_NEW_LEVEL_TRANSITION:    equ 8
-STATE_NEW_RESPAWN:             equ 9
-STATE_NEW_GAME_OVER:           equ 10
-STATE_NEW_VICTORY:             equ 11
-STATE_NEW_EXIT:                equ 12
-STATE_NEW_FAULT:               equ 13
-STATE_NEW_COUNT:               equ 14
-STATE_NEW_NONE:                equ 255
 
 ; One outer-loop tick is expected per rendered frame. State age is the number
 ; of completed updates before the current callback, so a duration of N expires
 ; when age reaches N-1.
 STATE_NEW_COUNTDOWN_FRAMES:    equ 60*6
 
-; Events are posted into state_new_posted_events and latched at tick start.
-STATE_NEW_EVENT_START:         equ %00000001
-STATE_NEW_EVENT_LOAD_COMPLETE: equ %00000010
-STATE_NEW_EVENT_PAUSE:         equ %00000100
-STATE_NEW_EVENT_LEVEL_COMPLETE:equ %00001000
-STATE_NEW_EVENT_PLAYER_DEAD:   equ %00010000
-STATE_NEW_EVENT_NO_LIVES:      equ %00100000
-STATE_NEW_EVENT_VICTORY:       equ %01000000
-STATE_NEW_EVENT_QUIT:          equ %10000000
-
-; Global policy is published for the scheduler and actor controllers.
-STATE_NEW_POLICY_INPUT:        equ %00000001
-STATE_NEW_POLICY_ACTOR_UPDATE: equ %00000010
-STATE_NEW_POLICY_ACTOR_RENDER: equ %00000100
-STATE_NEW_POLICY_WORLD_UPDATE: equ %00001000
-STATE_NEW_POLICY_WORLD_RENDER: equ %00010000
-STATE_NEW_POLICY_STATE_RENDER: equ %00100000
+; Events and scheduler policy bits are defined in state_ids.inc.
 
 ; Dispatcher phases restrict when a transition may be requested.
 STATE_NEW_PHASE_IDLE:          equ 0
@@ -1215,12 +1183,6 @@ state_new_actor_error_phase:
 ; complete. Global RESPAWN then causes this actor's own reconcile callback to
 ; choose PLAYER_READY. No global handler writes this controller's state.
 
-STATE_NEW_PLAYER_INACTIVE:     equ 0
-STATE_NEW_PLAYER_READY:        equ 1
-STATE_NEW_PLAYER_ACTIVE:       equ 2
-STATE_NEW_PLAYER_DYING:        equ 3
-STATE_NEW_PLAYER_DEAD:         equ 4
-STATE_NEW_PLAYER_COUNT:        equ 5
 STATE_NEW_PLAYER_DYING_FRAMES: equ 60*2
 
 state_new_player_actor:

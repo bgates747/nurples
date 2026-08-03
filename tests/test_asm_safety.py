@@ -26,6 +26,15 @@ def block(source: str, label: str, next_label: str) -> str:
     return source[start:end]
 
 
+def read_symbol_addresses(path: Path) -> dict[str, int]:
+    addresses: dict[str, int] = {}
+    for line in path.read_text().splitlines():
+        match = re.fullmatch(r"([^ ]+) \$([0-9A-Fa-f]+)", line)
+        if match is not None:
+            addresses[match.group(1)] = int(match.group(2), 16)
+    return addresses
+
+
 class AssemblySafetyTests(unittest.TestCase):
     def test_current_game_assembles(self) -> None:
         assembler = shutil.which("ez80asm") or str(
@@ -36,11 +45,11 @@ class AssemblySafetyTests(unittest.TestCase):
             shutil.copytree(
                 ASM_DIR,
                 temp_asm,
-                ignore=shutil.ignore_patterns("*.lst"),
+                ignore=shutil.ignore_patterns("*.lst", "*.symbols"),
             )
             output = Path(temp_dir) / "nurples.bin"
             result = subprocess.run(
-                [assembler, "-l", "nurples.asm", str(output)],
+                [assembler, "-l", "-s", "nurples.asm", str(output)],
                 cwd=temp_asm,
                 capture_output=True,
                 check=False,
@@ -49,6 +58,30 @@ class AssemblySafetyTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertGreater(output.stat().st_size, 0)
+            symbols = read_symbol_addresses(temp_asm / "nurples.symbols")
+            telemetry_begin = symbols["telemetry_begin"]
+            expected_offsets = {
+                "telemetry_magic": 0x00,
+                "telemetry_version_major": 0x04,
+                "telemetry_version_minor": 0x05,
+                "telemetry_size": 0x06,
+                "telemetry_write_seq": 0x08,
+                "telemetry_flags": 0x09,
+                "telemetry_global_current": 0x10,
+                "telemetry_player_current": 0x16,
+                "telemetry_enemies_current": 0x1C,
+                "telemetry_total_frames": 0x20,
+                "telemetry_pending_events": 0x35,
+                "telemetry_fault_domains": 0x3C,
+                "telemetry_rows_remaining": 0x4D,
+                "telemetry_end": 0x50,
+            }
+            for symbol, expected_offset in expected_offsets.items():
+                with self.subTest(telemetry_symbol=symbol):
+                    self.assertEqual(
+                        symbols[symbol] - telemetry_begin,
+                        expected_offset,
+                    )
 
     def test_agnb_startup_uses_two_containers_and_exact_progress_count(self) -> None:
         images = read_asm("images.inc")
@@ -101,15 +134,22 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertEqual(startup.count("call vdu_clear_all_buffers"), 1)
         self.assertNotIn("@assets_loaded", startup)
 
-    def test_process_entry_captures_mode_once_and_exit_releases_vdp_state(self) -> None:
+    def test_process_entry_captures_display_state_and_exit_releases_vdp_state(self) -> None:
         source = read_asm("nurples.asm")
         entry = block(source, "main", "main_loop")
+        telemetry_init = entry.index("call telemetry_init")
         runtime_init = entry.index("call runtime_process_init")
         get_mode = entry.index("call vdu_get_screen_mode")
         save_mode = entry.index("ld (original_screen_mode),a")
+        get_foreground = entry.index("ld a,128", save_mode)
+        get_background = entry.index("ld a,129", get_foreground)
 
+        self.assertLess(telemetry_init, runtime_init)
         self.assertLess(runtime_init, get_mode)
         self.assertLess(get_mode, save_mode)
+        self.assertLess(save_mode, get_foreground)
+        self.assertLess(get_foreground, get_background)
+        self.assertEqual(entry.count("call vdu_get_text_colour"), 2)
         self.assertNotIn("call vdu_clear_all_buffers", entry)
         self.assertEqual(source.count("call vdu_get_screen_mode"), 1)
 
@@ -125,10 +165,51 @@ class AssemblySafetyTests(unittest.TestCase):
             "ld a,(original_screen_mode)",
             clear_buffers,
         )
+        text_cursor = shutdown.index("call vdu_select_text_cursor", restore_mode)
+        post_mode_system_font = shutdown.index("ld hl,65535", text_cursor)
+        black_background = shutdown.index("ld a,c_black+128", post_mode_system_font)
+        white_foreground = shutdown.index("ld a,c_white", black_background)
+        clear_screen = shutdown.index("call vdu_cls", white_foreground)
+        cursor_on = shutdown.index("call vdu_cursor_on", clear_screen)
+        farewell = shutdown.index('asciz "Thank you for playing\\r\\n"', cursor_on)
+        restore_background = shutdown.index(
+            "ld a,(original_text_background)",
+            farewell,
+        )
+        restore_foreground = shutdown.index(
+            "ld a,(original_text_foreground)",
+            restore_background,
+        )
         self.assertLess(system_font, select_font)
         self.assertLess(select_font, reset_sprites)
         self.assertLess(reset_sprites, clear_buffers)
         self.assertLess(clear_buffers, restore_mode)
+        self.assertLess(restore_mode, text_cursor)
+        self.assertLess(text_cursor, post_mode_system_font)
+        self.assertLess(post_mode_system_font, black_background)
+        self.assertLess(black_background, white_foreground)
+        self.assertLess(white_foreground, clear_screen)
+        self.assertLess(clear_screen, cursor_on)
+        self.assertLess(cursor_on, farewell)
+        self.assertLess(farewell, restore_background)
+        self.assertLess(restore_background, restore_foreground)
+
+    def test_text_colour_query_is_bounded_and_fail_closed(self) -> None:
+        query = routine(
+            read_asm("vdu.inc"),
+            "vdu_get_text_colour",
+            "; end vdu_get_text_colour",
+        )
+
+        self.assertIn("res 2,(ix+sysvar_vpd_pflags)", query)
+        self.assertIn("ld a,$94", query)
+        self.assertIn("ld bc,0 ; at most 65,536 polls", query)
+        self.assertIn("bit 2,(ix+sysvar_vpd_pflags)", query)
+        self.assertIn("ld a,(ix+sysvar_scrpixelIndex)", query)
+        self.assertIn("cp 64", query)
+        self.assertIn("set vdu_timing_fault_colour_query,(hl)", query)
+        self.assertIn("xor a ; deterministic failure value and carry clear", query)
+        self.assertIn("scf", query)
 
     def test_process_init_resets_all_cross_run_state(self) -> None:
         source = read_asm("runtime_init.inc")
@@ -216,12 +297,12 @@ class AssemblySafetyTests(unittest.TestCase):
         )
         self.assertIn(
             "call spawn_explosion_player\n"
-            "    jp nc,@animate_initial",
+            "    jp nc,@initial_spawned",
             player_dying,
         )
         self.assertIn(
             "call spawn_explosion_player\n"
-            "    jp nc,@next_finale_spawn",
+            "    jp nc,@finale_spawned",
             player_dying,
         )
 
@@ -242,9 +323,158 @@ class AssemblySafetyTests(unittest.TestCase):
             explosion_source,
         )
         self.assertIn(
-            "ld b,explosion_lifetime_updates",
+            "player_dying_finish_frames: equ explosion_lifetime_updates-1",
             read_asm("player_state.inc"),
         )
+        self.assertIn(
+            "cp player_dying_finish_frames",
+            read_asm("player_state.inc"),
+        )
+
+    def test_runtime_telemetry_uses_stable_ids_and_coherent_snapshots(self) -> None:
+        telemetry = read_asm("telemetry.inc")
+        state_ids = read_asm("state_ids.inc")
+        main = routine(read_asm("nurples.asm"), "main", "; end main")
+
+        self.assertIn('telemetry_magic:                    db "PNST" ; 00', telemetry)
+        self.assertIn(
+            "telemetry_size:                     dw telemetry_end-telemetry_begin ; 06",
+            telemetry,
+        )
+        self.assertIn("TELEMETRY_VERSION_MAJOR: equ 1", telemetry)
+        self.assertIn("TELEMETRY_VERSION_MINOR: equ 0", telemetry)
+        self.assertIn(
+            "telemetry_write_seq:                db 1 ; 08; invalid until",
+            telemetry,
+        )
+        self.assertIn("or 1\n    ld (telemetry_write_seq),a", telemetry)
+        self.assertIn("and %11111110\n    ld (telemetry_write_seq),a", telemetry)
+        self.assertLess(
+            main.index("call telemetry_init"),
+            main.index("call runtime_process_init"),
+        )
+        self.assertEqual(main.count("call telemetry_tick"), 2)
+        self.assertIn("call telemetry_publish_terminal", main)
+
+        public_end = telemetry.index("telemetry_end:")
+        for private_latch in (
+            "telemetry_event_latch:",
+            "telemetry_lifecycle_latch:",
+            "telemetry_forced_outcome:",
+            "telemetry_count_frame:",
+            "telemetry_legacy_phase:",
+        ):
+            with self.subTest(private_latch=private_latch):
+                self.assertGreater(telemetry.index(private_latch), public_end)
+        self.assertIn("ld (telemetry_count_frame),a", telemetry)
+        self.assertGreaterEqual(
+            telemetry.count("ld a,(telemetry_count_frame)"),
+            4,
+        )
+
+        for pointer in ("game_state", "player_state", "enemies_state"):
+            with self.subTest(pointer=pointer):
+                self.assertIn(f"ld hl,({pointer})", telemetry)
+        for numeric_id in (
+            "STATE_NEW_PLAYING",
+            "STATE_NEW_LEVEL_TRANSITION",
+            "STATE_NEW_PLAYER_ACTIVE",
+            "STATE_NEW_PLAYER_DYING",
+            "STATE_TELEMETRY_ENEMY_ACTIVE",
+        ):
+            with self.subTest(numeric_id=numeric_id):
+                self.assertIn(f"{numeric_id}:", state_ids)
+
+        self.assertNotIn("STATE_NEW_PLAYING:", read_asm("state_new.inc"))
+        self.assertIn("include state_ids.inc first", read_asm("state_new.inc"))
+
+    def test_legacy_startup_publishes_semantic_phases_without_actor_staleness(self) -> None:
+        startup = routine(
+            read_asm("state_game_init.inc"),
+            "game_init",
+            "; end game_init",
+        )
+        phases = (
+            "STATE_NEW_LOADING",
+            "STATE_NEW_TITLE",
+            "STATE_NEW_NEW_GAME",
+            "STATE_NEW_LEVEL_ENTER",
+        )
+        positions = []
+        for phase in phases:
+            marker = f"ld a,{phase}\n    call telemetry_publish_phase"
+            self.assertEqual(startup.count(marker), 1)
+            positions.append(startup.index(marker))
+        self.assertEqual(positions, sorted(positions))
+        self.assertLess(
+            startup.index("ld a,STATE_NEW_TITLE"),
+            startup.index("call waitKeypress"),
+        )
+        self.assertLess(
+            startup.index("ld a,STATE_NEW_EVENT_LOAD_COMPLETE"),
+            startup.index("ld a,STATE_NEW_TITLE"),
+        )
+        self.assertLess(
+            startup.index("call waitKeypress"),
+            startup.index("ld a,STATE_NEW_EVENT_START"),
+        )
+        self.assertLess(
+            startup.index("ld a,STATE_NEW_EVENT_START"),
+            startup.index("ld a,STATE_NEW_NEW_GAME"),
+        )
+        self.assertLess(
+            startup.index("ld a,STATE_NEW_LEVEL_ENTER"),
+            startup.index("call init_tileset"),
+        )
+
+        telemetry = read_asm("telemetry.inc")
+        self.assertIn("ld a,(telemetry_legacy_phase)", telemetry)
+        self.assertIn(
+            "bit TELEMETRY_FLAG_ACTORS_VALID,a\n"
+            "    jp nz,@map_pointer\n"
+            "    ld a,STATE_NEW_PLAYER_INACTIVE",
+            telemetry,
+        )
+        self.assertIn(
+            "cp STATE_NEW_PLAYING\n"
+            "    jp c,@startup\n"
+            "    ret nz ; later phases retain",
+            telemetry,
+        )
+        self.assertIn(
+            "bit TELEMETRY_FLAG_ACTORS_VALID,a\n"
+            "    jp nz,@map_pointer\n"
+            "    ld a,STATE_TELEMETRY_ENEMY_INACTIVE",
+            telemetry,
+        )
+
+    def test_runtime_events_are_captured_before_legacy_transitions(self) -> None:
+        playing = read_asm("state_game_playing.inc")
+        level_event = playing.index("ld a,STATE_NEW_EVENT_LEVEL_COMPLETE")
+        level_transition = playing.index("ld hl,game_level_transition")
+        no_lives_event = playing.index("ld a,STATE_NEW_EVENT_NO_LIVES")
+        game_over = playing.index("ld hl,game_over")
+        self.assertLess(level_event, level_transition)
+        self.assertLess(no_lives_event, game_over)
+
+        player_dying = routine(
+            read_asm("player_state.inc"),
+            "player_dying",
+            "; end player_dying",
+        )
+        dead_event = player_dying.index("ld a,STATE_NEW_EVENT_PLAYER_DEAD")
+        dead_lifecycle = player_dying.index(
+            "ld a,TELEMETRY_LIFECYCLE_PLAYER_DEAD"
+        )
+        dead_state = player_dying.index("ld hl,player_dead")
+        self.assertLess(dead_event, dead_state)
+        self.assertLess(dead_event, dead_lifecycle)
+        self.assertLess(dead_lifecycle, dead_state)
+
+        game_over = routine(read_asm("state.inc"), "game_over", "game_victory:")
+        restart_event = game_over.index("ld a,STATE_NEW_EVENT_START")
+        schedule_init = game_over.index("ld hl,game_init")
+        self.assertLess(restart_event, schedule_init)
 
     def test_adl_pointer_multiply_results_are_zero_extended(self) -> None:
         levels = read_asm("levels.inc")
@@ -387,7 +617,12 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertLess(request_clear, state_start)
         self.assertLess(dispatch, request_read)
         self.assertLess(request_read, vblank)
-        self.assertIn("or a\n    jp nz,main_end", main[request_read:vblank])
+        self.assertIn("or a\n    jp nz,@state_exit", main[request_read:vblank])
+        state_exit = main.index("@state_exit:", vblank)
+        telemetry = main.index("call telemetry_publish_terminal", state_exit)
+        main_end = main.index("jp main_end", telemetry)
+        self.assertLess(state_exit, telemetry)
+        self.assertLess(telemetry, main_end)
 
     def test_player_outcome_is_consumed_before_world_continues(self) -> None:
         player_source = read_asm("player_state.inc")
@@ -462,6 +697,17 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn(
             "ld a,(discharge_fuel_timer_max)\n"
             "    ld (discharge_fuel_timer),a",
+            player_init,
+        )
+        self.assertIn(
+            "xor a\n"
+            "    ld (laser_power_last),a\n"
+            "    ld (player_shields_last),a\n"
+            "    ld (player_fuel_last),a\n"
+            "; A live player must not expose stale diagnostics from the previous death.\n"
+            "    ld (player_dying_phase),a\n"
+            "    ld (player_dying_timer),a\n"
+            "    ld (player_dying_spawns),a",
             player_init,
         )
         self.assertNotIn(

@@ -50,7 +50,6 @@ tile_table_init:
 ; reset next tile id
     xor a
     ld (next_tile_id),a
-    ld (tile_fault_flags),a
 ; clear the tile stack
     xor a ; write zeroes to tile stack
     ld hl,tile_stack

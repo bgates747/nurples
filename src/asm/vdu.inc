@@ -22,6 +22,12 @@ vdu_cursor_off:
 	db 23,1,0
 @end:
 
+; VDU 4: Write subsequent text at the text cursor.
+vdu_select_text_cursor:
+    ld a,4
+	rst.lil $10
+    ret
+
 ; VDU 5: Write text at graphics cursor
 ; inputs: a is the character to write to the screen
 ; prerequisites: the graphics cursor at the intended position on screen
@@ -147,9 +153,63 @@ vdu_set_txt_viewport:
 @rt: 	dw 0x0000 ; set by de
 @end:   db 0x00	  ; padding
 
-; Wait for VBLANK interrupt
+; VDP query/timing fault bits
 vdu_timing_fault_vblank_timeout: equ 0
+vdu_timing_fault_colour_query:  equ 1
 vdu_timing_fault_flags: db 0
+
+; VDU 23, 0, &94, n: Read a current text colour through the MOS screen-pixel
+; result packet.
+; inputs:  a = 128 for text foreground, 129 for text background
+; outputs: carry set and a = logical colour 0..63 on success
+;          carry clear on timeout or an invalid response
+; preserves: bc, de, hl, ix
+vdu_get_text_colour:
+    push bc
+    push de
+    push hl
+    push ix
+    push af
+    MOSCALL mos_sysvars
+    pop af
+    ld l,a
+    res 2,(ix+sysvar_vpd_pflags)
+    ld a,23
+    rst.lil $10
+    xor a
+    rst.lil $10
+    ld a,$94
+    rst.lil $10
+    ld a,l
+    rst.lil $10
+    ld bc,0 ; at most 65,536 polls; never hang during process entry
+@wait:
+    bit 2,(ix+sysvar_vpd_pflags)
+    jp nz,@received
+    dec c
+    jp nz,@wait
+    djnz @wait
+    jp @failed
+@received:
+    ld a,(ix+sysvar_scrpixelIndex)
+    cp 64
+    jp c,@success
+@failed:
+    ld hl,vdu_timing_fault_flags
+    set vdu_timing_fault_colour_query,(hl)
+    xor a ; deterministic failure value and carry clear
+    jp @done
+@success:
+    scf
+@done:
+    pop ix
+    pop hl
+    pop de
+    pop bc
+    ret
+; end vdu_get_text_colour
+
+; Wait for VBLANK interrupt
 vdu_vblank:
     push bc
     push de

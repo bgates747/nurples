@@ -19,6 +19,7 @@ TARGET_DIR = PROJECT_ROOT / "tgt"
 CAMPAIGN_LEVELS = ASM_DIR / "levels_tileset_0.inc"
 DEFAULT_MANIFEST = PROJECT_ROOT / "tests/maps/dg/suite.toml"
 OUTPUT_BINARY = TARGET_DIR / "nurples-map-tests.bin"
+OUTPUT_SYMBOLS = TARGET_DIR / "nurples-map-tests.symbols"
 
 TABLE_RE = re.compile(
     r"(?ms)^(tileset_00_levels:\s*\n)"
@@ -102,31 +103,44 @@ def assemble(manifest_path: Path, start_map: int) -> Path:
             encoding="utf-8",
         )
         staged_binary = staged_asm / OUTPUT_BINARY.name
+        staged_symbols = staged_asm / "nurples.symbols"
+        staged_symbols.unlink(missing_ok=True)
         subprocess.run(
-            [assembler, "-l", "nurples.asm", staged_binary.name],
+            [assembler, "-l", "-s", "nurples.asm", staged_binary.name],
             cwd=staged_asm,
             check=True,
         )
-        if not staged_binary.is_file() or staged_binary.stat().st_size == 0:
-            raise RuntimeError("assembler did not produce the staged map-test binary")
+        if (
+            not staged_binary.is_file()
+            or staged_binary.stat().st_size == 0
+            or not staged_symbols.is_file()
+            or staged_symbols.stat().st_size == 0
+        ):
+            raise RuntimeError("assembler did not produce the staged map-test pair")
         if CAMPAIGN_LEVELS.read_bytes() != campaign_before:
             raise RuntimeError("campaign level include changed during isolated assembly")
 
-        with NamedTemporaryFile(
-            dir=TARGET_DIR,
-            prefix=f".{OUTPUT_BINARY.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as temporary_output:
-            publish_path = Path(temporary_output.name)
-        try:
-            shutil.copy2(staged_binary, publish_path)
-            publish_path.replace(OUTPUT_BINARY)
-        finally:
-            publish_path.unlink(missing_ok=True)
+        for staged, destination in (
+            (staged_binary, OUTPUT_BINARY),
+            (staged_symbols, OUTPUT_SYMBOLS),
+        ):
+            with NamedTemporaryFile(
+                dir=TARGET_DIR,
+                prefix=f".{destination.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as temporary_output:
+                publish_path = Path(temporary_output.name)
+            try:
+                shutil.copy2(staged, publish_path)
+                publish_path.replace(destination)
+            finally:
+                publish_path.unlink(missing_ok=True)
 
     if not OUTPUT_BINARY.is_file() or OUTPUT_BINARY.stat().st_size == 0:
         raise RuntimeError("map-test binary was not copied into tgt")
+    if not OUTPUT_SYMBOLS.is_file() or OUTPUT_SYMBOLS.stat().st_size == 0:
+        raise RuntimeError("map-test symbols were not copied into tgt")
     return OUTPUT_BINARY
 
 

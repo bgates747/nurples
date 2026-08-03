@@ -111,6 +111,8 @@ game_over:
     call multiPurposeDelay
     call waitKeypress
 ; initialize a new game
+    ld a,STATE_NEW_EVENT_START
+    call telemetry_post_events
     ld hl,game_init
     ld (game_state),hl
     ret

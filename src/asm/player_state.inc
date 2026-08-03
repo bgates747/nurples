@@ -25,6 +25,9 @@ player_dying_phase_initial: equ 0
 player_dying_phase_delay: equ 1
 player_dying_phase_finale: equ 2
 player_dying_phase_finish: equ 3
+; The finale spawn frame itself performs lifetime update one later in the
+; global loop; FINISH therefore waits only the remaining updates.
+player_dying_finish_frames: equ explosion_lifetime_updates-1
 player_dying_phase: db player_dying_phase_initial
 player_dying_timer: db 0
 player_dying_spawns: db 0
@@ -127,6 +130,10 @@ player_init:
     ld (laser_power_last),a
     ld (player_shields_last),a
     ld (player_fuel_last),a
+; A live player must not expose stale diagnostics from the previous death.
+    ld (player_dying_phase),a
+    ld (player_dying_timer),a
+    ld (player_dying_spawns),a
 ; set player sprite record with defaults
     ld ix,player_begin
     ld hl,player_defaults
@@ -207,8 +214,12 @@ player_dying:
     ld a,(player_dying_timer)
     inc a
     ld (player_dying_timer),a
-    cp explosion_lifetime_updates
+    cp player_dying_finish_frames
     ret c
+    ld a,STATE_NEW_EVENT_PLAYER_DEAD
+    call telemetry_post_events
+    ld a,TELEMETRY_LIFECYCLE_PLAYER_DEAD
+    call telemetry_post_lifecycle
     ld hl,player_dead
     ld (player_state),hl
     ret
@@ -304,6 +315,8 @@ player_dead:
     ld (player_event),a
     ret
 @respawn:
+    ld a,TELEMETRY_LIFECYCLE_RESPAWN
+    call telemetry_post_lifecycle
     call draw_player_ships
     call reset_runtime_tables
 ; ; reset player score to what it was at the start of the level
