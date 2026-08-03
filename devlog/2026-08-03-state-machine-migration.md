@@ -136,3 +136,8 @@ clears all VDP buffers on each launch, which also destroys any caller-owned
 custom font data. Other inspected Agon applications restore a mode and explicit
 defaults rather than recovering a caller font. `ASM-009` tracks emulator
 qualification of the achievable colour and cursor handoff.
+
+The Author playtested the committed build in the durable emulator profile on
+2026-08-03 and reported correct behavior with no crashes. This closes the
+`ASM-009` visual acceptance gate; exact arbitrary custom-font restoration
+remains outside the documented VDP interface as described above.

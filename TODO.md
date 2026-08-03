@@ -128,7 +128,7 @@ decisions are recorded in the dated development log.
   level-scoped reset that removes live enemies, projectiles, explosions, and
   active tiles at a natural level boundary without erasing the player record or
   player-owned state. Qualify a transition with each actor type still live.
-- [ ] **ASM-009 — MOS display-state handoff:** qualify bounded capture and
+- [x] **ASM-009 — MOS display-state handoff:** qualify bounded capture and
   restoration of the caller's text foreground/background colours around a
   system-font, white-on-black farewell in the restored screen mode. Acceptance:
   normal exit, Escape, asset-load failure, and repeated MOS `RUN` all return
