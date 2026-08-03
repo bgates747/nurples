@@ -21,6 +21,13 @@ player_event_game_over: equ 1
 player_event: db player_event_none
 player_fault_bad_state: equ 0
 player_fault_flags: db 0 ; latched fail-closed diagnostics
+player_dying_phase_initial: equ 0
+player_dying_phase_delay: equ 1
+player_dying_phase_finale: equ 2
+player_dying_phase_finish: equ 3
+player_dying_phase: db player_dying_phase_initial
+player_dying_timer: db 0
+player_dying_spawns: db 0
 player_ships: db 0
 player_ships_max: db 3
 player_speed: equ 3*256 ; pixels per frame 16.8 fixed
@@ -172,6 +179,10 @@ kill_player:
     ld b,seekers_max
     call change_sprite_group_move_program
 ; set player state to dying
+    xor a
+    ld (player_dying_phase),a
+    ld (player_dying_timer),a
+    ld (player_dying_spawns),a
     ld hl,player_dying
     ld (player_state),hl
     pop iy
@@ -182,65 +193,87 @@ kill_player:
 ; end kill_player
 
 player_dying:
-; spawn explosions at player location
-    ld b,16 ; loop counter
-@loop_explode:
-    push bc ; save loop counter
+; This actor update is deliberately bounded to one frame. The global playing
+; loop, not the actor, advances enemies, explosions, tiles, and VBlank.
+    call player_move_weapons
+    ld a,(player_dying_phase)
+    or a
+    jp z,@initial
+    cp player_dying_phase_delay
+    jp z,@delay
+    cp player_dying_phase_finale
+    jp z,@finale
+; Finish only after the finale explosions have had their full lifetime.
+    ld a,(player_dying_timer)
+    inc a
+    ld (player_dying_timer),a
+    cp explosion_lifetime_updates
+    ret c
+    ld hl,player_dead
+    ld (player_state),hl
+    ret
+
+@initial:
+; Preserve the old cadence: one rising explosion every sixteen outer frames.
+    ld a,(player_dying_timer)
+    or a
+    jp nz,@tick_initial
     call spawn_explosion_player
-    jp nc,@animate_initial ; never dereference IX after allocation failure
+    jp nc,@initial_spawned
     ld hl,0
     ld (ix+sprite_xvel),hl
     ld hl,1*256
     ld (ix+sprite_yvel),hl
-; move explosions for a few frames
-@animate_initial:
-    ld b,16 ; loop counter
-@loop_animate:
-    push bc
-    call @animate
-    pop bc
-    djnz @loop_animate
-    pop bc
-    djnz @loop_explode
-; delay until grand finale
-    ld b,16 ; loop counter
-@loop_delay:
-    push bc
-    call @animate
-    pop bc
-    djnz @loop_delay
-; set up the grand finale
-    ld b,explosions_max ; loop counter
-@loop_spawn_finale:
-    push bc
+@initial_spawned:
+    ld a,(player_dying_spawns)
+    inc a
+    ld (player_dying_spawns),a
+@tick_initial:
+    ld a,(player_dying_timer)
+    inc a
+    and 15
+    ld (player_dying_timer),a
+    ret nz
+    ld a,(player_dying_spawns)
+    cp 16
+    ret c
+    ld a,player_dying_phase_delay
+    ld (player_dying_phase),a
+    xor a
+    ld (player_dying_spawns),a
+    ret
+
+@delay:
+    ld a,(player_dying_timer)
+    inc a
+    ld (player_dying_timer),a
+    cp 16
+    ret c
+    xor a
+    ld (player_dying_timer),a
+    ld a,player_dying_phase_finale
+    ld (player_dying_phase),a
+    ret
+
+@finale:
+; Spread allocations across frames so pool pressure can never turn this actor
+; into a blocking burst. Allocation failure remains a harmless skipped effect.
     call spawn_explosion_player
-    jp nc,@next_finale_spawn ; IX is outside the explosion pool on failure
+    jp nc,@finale_spawned
     call @rand
     ld (ix+sprite_xvel),hl
     call @rand
     ld (ix+sprite_yvel),hl
-@next_finale_spawn:
-    pop bc
-    djnz @loop_spawn_finale
-    ld b,explosion_lifetime_updates ; clear just-spawned, then finish all frames
-@loop_finale_animate:
-    push bc
-    call @animate
-    pop bc
-    djnz @loop_finale_animate
-
-; set game state to player dead
-    ld hl,player_dead
-    ld (player_state),hl
-    ret
-@animate:
-    call tiles_plot
-    call set_gfx_playing_field
-    call player_move_weapons
-    call do_enemies
-    call move_explosions
-    call move_tiles
-    call vdu_vblank
+@finale_spawned:
+    ld a,(player_dying_spawns)
+    inc a
+    ld (player_dying_spawns),a
+    cp explosions_max
+    ret c
+    xor a
+    ld (player_dying_timer),a
+    ld a,player_dying_phase_finish
+    ld (player_dying_phase),a
     ret
 @rand:
     ld hl,0

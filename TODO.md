@@ -50,6 +50,11 @@ decisions are recorded in the dated development log.
   immediate activation wraps to 255 updates and makes spawn timing
   unexpectedly nondeterministic. Qualify initial and subsequent spawn cadence
   without changing the established actor-pool limits.
+- [ ] **TEST-001 — Autonomous qualification player:** after deterministic
+  full-machine input is available, implement a project-owned RAM-driven agent
+  that can complete the short qualification maps, emit a replayable input and
+  state trace, and distinguish completion, death, stall, and runtime faults.
+  Framebuffer-only play is a separate later experiment, not a prerequisite.
 - [x] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and

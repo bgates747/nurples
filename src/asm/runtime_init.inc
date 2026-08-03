@@ -12,6 +12,9 @@ runtime_process_init:
     xor a
     ld (game_exit_requested),a
     ld (player_event),a
+    ld (player_dying_phase),a
+    ld (player_dying_timer),a
+    ld (player_dying_spawns),a
 
 ; Diagnostic latches describe this invocation only.
     ld (game_fault_flags),a
