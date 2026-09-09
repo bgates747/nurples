@@ -79,6 +79,7 @@ game_init:
     call telemetry_post_events
     ld a,STATE_NEW_TITLE
     call telemetry_publish_phase
+    call choose_joystick
     call vdu_cls
     call printInline
     asciz "Press any key to continue."
@@ -177,6 +178,41 @@ game_init:
     ld (game_exit_requested),a
     ret
 ; end game_init
+
+; Use the existing one-line splash viewport; Y/N is case-insensitive.
+; Every visit chooses afresh, including a game restart without reloading RAM.
+choose_joystick:
+    call vdu_cls
+    call printInline
+    asciz "Enable joystick (y/n)?"
+    call vdu_flip
+@choice:
+    call waitKeypress
+    or 020h
+    cp 'y'
+    jr z,@yes
+    cp 'n'
+    jr nz,@choice
+    call player_joystick_disable
+    jr @release
+@yes:
+    call player_joystick_enable
+@release:
+; Do not let a held/repeating Y or N also consume the subsequent start prompt.
+; Read the held-key map, rather than the last-event-only vkeydown sysvar.
+    MOSCALL mos_getkbmap
+@scan:
+    push ix
+    pop hl
+    ld b,16
+    xor a
+@byte:
+    or (hl)
+    inc hl
+    djnz @byte
+    jr nz,@scan
+    ret
+; end choose_joystick
 
 ; Reset only shared runtime infrastructure. Session and level semantics remain
 ; with their respective callers.

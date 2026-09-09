@@ -1,4 +1,9 @@
-; UART ports for reading joystick input
+; Optional legacy GPIO joystick. These pins cannot also serve as Extender
+; UART signals: PC3 low (CTS ready) looks like joystick Down and cancels Up.
+; The splash alone patches two baked-in NOP pairs to JR when joystick is off.
+; Patching happens before gameplay, with byte stores only (ADL is 24-bit).
+; No per-direction option test may disturb A's sprite-frame accumulator.
+; GPIO ports for reading joystick input
 ; bit tests: 0 means actuated, 1 means not actuated
 portC: 	EQU 	$9E ; reads dpad input
 joy1_u: equ 1
@@ -29,9 +34,14 @@ player_input:
 ; check for keypresses and branch accordingly
     MOSCALL    mos_getkbmap ;ix = pointer to MOS virtual keys table
 ; do player directional input
+    ld d,0ffh ; all active-low joystick directions released if polling is skipped
+player_joystick_direction_gate:
+    nop
+    nop
     xor a ; clear flags
     in a,(portC) ; read dpad input
     ld d,a ; save dpad input
+player_keyboard_directions:
     ld a,1 ; set ship's default animation to center
 ; 26 Left: move player left
     bit 1,(ix+3)
@@ -100,13 +110,46 @@ player_input:
 ; process player laser fire
 ; do player fire button input
 ; read joystick fire button
+player_joystick_fire_gate:
+    nop
+    nop
     xor a ; clear flags
     in a,(portD) ; read joypad fire button input
     bit btn1_a,a
     jp z,player_spawn_laser
+player_keyboard_fire:
 ; 99 Space: fire main weapon
     bit 2,(ix+12)
     jp nz,player_spawn_laser
 ; no fire button pressed so go home
     ret
 ; end player_input
+
+; Called only while the splash owns execution, before any player input.
+; Restore every byte so a later game/MOS RUN can reverse the previous choice.
+; Destroys: af. Never changes GPIO configuration or UART ownership.
+player_joystick_enable:
+    xor a
+    ld (player_joystick_direction_gate),a
+    ld (player_joystick_direction_gate+1),a
+    ld (player_joystick_fire_gate),a
+    ld (player_joystick_fire_gate+1),a
+    ret
+
+player_joystick_disable:
+    ld a,player_keyboard_directions-player_joystick_direction_gate-2
+    ld (player_joystick_direction_gate+1),a
+    ld a,player_keyboard_fire-player_joystick_fire_gate-2
+    ld (player_joystick_fire_gate+1),a
+    ld a,018h ; JR rel8; NOP and JR both preserve flags and A
+    ld (player_joystick_direction_gate),a
+    ld (player_joystick_fire_gate),a
+    ret
+
+; Reject a skip outside JR's forward range if either block later grows.
+    .if [player_keyboard_directions-player_joystick_direction_gate-2] >> 7
+        dl joystick_direction_skip_out_of_range
+    .endif
+    .if [player_keyboard_fire-player_joystick_fire_gate-2] >> 7
+        dl joystick_fire_skip_out_of_range
+    .endif

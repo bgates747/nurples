@@ -19,3 +19,12 @@ files = ["nurples-map-tests.bin", "nurples-map-tests.symbols", "game.agnb", "ui.
 destination = "mystuff/nurples-dev/tests/map-tests"
 require = ["nurples-map-tests.bin", "game.agnb", "ui.agnb"]
 entry = "nurples-map-tests.bin"
+
+# Physical game-only layout requested by the Author; preserve development bundles.
+[bundles.nurples-runtime]
+collection = "apps"
+source = "tgt"
+files = ["nurples.bin", "game.agnb", "ui.agnb", "fonts/Lat38-VGA8_8x8.font"]
+destination = "mystuff/nurples"
+require = ["nurples.bin", "game.agnb", "ui.agnb", "fonts/Lat38-VGA8_8x8.font"]
+entry = "nurples.bin"
