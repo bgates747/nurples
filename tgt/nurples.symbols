@@ -92,8 +92,8 @@ BUF_TILE_PAD_1 $178
 tileset_00_levels $44f7c
 draw_laser $4671a
 telemetry_enemies_transition_serial $48893
-player_weapons_end $48f57
-player_weapons_end $48f57
+player_weapons_end $48f5b
+player_weapons_end $48f5b
 BUF_DG_007 $207
 BUF_DG_234 $2ea
 BUF_FIREBALL_2_248 $12d
@@ -170,7 +170,7 @@ BUF_FIREBALL_3_160 $142
 table_pointer $467eb
 telemetry_player_dying_phase $4887a
 telemetry_forced_outcome $488b3
-seekers_base $48f97
+seekers_base $48f9b
 ffs_dread $93
 sysvar_audioChannel $d
 sysvar_scrColours $15
@@ -204,7 +204,7 @@ BUF_CREDITS $8
 tile_fault_bad_move_program $1
 telemetry_publish_terminal $4896c
 telemetry_publish_terminal $4896c
-seekers_end $49057
+seekers_end $4905b
 mos_setrtc $13
 ffs_fdisk $a1
 ffs_fdisk $a1
@@ -279,7 +279,7 @@ tile_dim_y $1f
 tile_turret_fireball $5
 tile_turret_fireball $5
 dump_tile_record $48607
-table_base $48e57
+table_base $48e5b
 shl_hlu $40411
 shl_hlu $40411
 vdu_set_screen_mode $41500
@@ -302,7 +302,7 @@ tileset_ptrs_count $1
 sprite_frame_heading_animation $46ba4
 do_game $46bea
 do_game $46bea
-explosions_base $49157
+explosions_base $4915b
 hlu_abs $4046c
 check_sprite_group_collisions $449eb
 sin_sprite_heading $4680b
@@ -461,10 +461,10 @@ bitbuf2 $40437
 bitbuf2 $40437
 bitbuf2 $40437
 TELEMETRY_FLAG_LEVEL_VALID $2
-player_lasers_begin $48e57
-player_lasers_begin $48e57
-player_lasers_begin $48e57
-player_lasers_begin $48e57
+player_lasers_begin $48e5b
+player_lasers_begin $48e5b
+player_lasers_begin $48e5b
+player_lasers_begin $48e5b
 STATE_LEGACY_MAP $82
 BUF_DG_145 $291
 BUF_CRATER_0 $100
@@ -615,13 +615,13 @@ timestamp_now $412a6
 BUF_DG_055 $237
 laser_defaults $465ec
 laser_defaults $465ec
-main_end $48dd2
+main_end $48dd6
 prt_irq_handler $411f2
 BUF_FIREBALL_2_120 $11d
 BUF_FIREBALL_2_120 $11d
-enemy_sprites_end $49157
-enemy_sprites_end $49157
-enemy_sprites_end $49157
+enemy_sprites_end $4915b
+enemy_sprites_end $4915b
+enemy_sprites_end $4915b
 BUF_SEEKER_048 $159
 bar_update_v $463dd
 vdp_mode $86
@@ -810,7 +810,7 @@ ffs_flseek $84
 agnb_id_bhdr $41b81
 BUF_TURRET_120 $18e
 telemetry_player_dying_spawns $4887c
-table_end $49357
+table_end $4935b
 sysvar_keyrate $24
 hlu_div2 $40487
 hlu_div2 $40487
@@ -862,7 +862,7 @@ agnb_finalize_audio $44432
 BUF_LIGHTNING_H_1 $151
 BUF_SEEKER_120 $162
 enemy_air $1
-player_weapons_begin $48e57
+player_weapons_begin $48e5b
 fa_read $1
 fa_read $1
 fa_read $1
@@ -955,7 +955,7 @@ RTC_FREQ_SEL_1 $8
 kill_player $460eb
 field_right $ff
 telemetry_player_pending $48879
-player_begin $48f57
+player_begin $48f5b
 mos_fopen $a
 mos_fopen $a
 mos_fopen $a
@@ -1384,7 +1384,7 @@ agnb_state $41bb1
 BUF_FIREBALL_3_080 $138
 BUF_FIREBALL_3_080 $138
 BUF_FIREBALL_3_080 $138
-player_end $48f97
+player_end $48f9b
 mos_uputc $18
 BUF_DG_075 $24b
 BUF_DG_217 $2d9
@@ -1405,8 +1405,8 @@ BUF_DG_146 $292
 BUF_DG_248 $2f8
 BUF_CRATER_3 $103
 telemetry_fault_enemies $488a1
-fireballs_base $49057
-fireballs_base $49057
+fireballs_base $4905b
+fireballs_base $4905b
 vdu_jump_to_buffer $4188f
 speed_seeker $280
 telemetry_copy_runtime $48aa3
@@ -1421,7 +1421,7 @@ set_gfx_playing_field $467c8
 sprite_collisions $1d
 game_level_transition $46ca8
 telemetry_track_enemies $48a6a
-enemy_sprites_begin $48f97
+enemy_sprites_begin $48f9b
 ffs_stat $96
 ffs_stat $96
 ffs_stat $96
@@ -1536,8 +1536,8 @@ BUF_MFD_SIDEWINDER_1 $1e
 sprite_type $16
 sprite_type $16
 telemetry_legacy_phase $488b5
-fireballs_end $49157
-fireballs_end $49157
+fireballs_end $4915b
+fireballs_end $4915b
 BUF_DG_168 $2a8
 BUF_DG_168 $2a8
 joy1_u $1
@@ -1556,7 +1556,7 @@ panel_x1 $9
 screen_right $1ff
 DEBUG_PRINT_SHIELDS $482d3
 DEBUG_PRINT_SHIELDS $482d3
-explosions_end $49357
+explosions_end $4935b
 vdp_rtc $87
 sqrt24 $408ae
 PRT_IRQ_0 $0
@@ -1685,7 +1685,7 @@ r_seed $40528
 r_seed $40528
 init_enemy_seekers $44c9d
 BUF_FIREBALL_3_224 $14a
-player_lasers_end $48f57
+player_lasers_end $48f5b
 sysvar_spare $20
 add_bcd $404fe
 agnb_error_seek $3
@@ -1904,7 +1904,7 @@ BUF_TURRET_208 $199
 bar_laser $4660e
 tile_move_program $1a
 TELEMETRY_OUTCOME_RESPAWN $6
-tile_table_base $49357
+tile_table_base $4935b
 mos_copy $11
 mos_flseek $1c
 ffs_fforward $87
@@ -1995,7 +1995,7 @@ BUF_SEEKER_040 $158
 draw_fuel $464d8
 draw_fuel $464d8
 kill_pad_small $47d0f
-tile_table_end $4d357
+tile_table_end $4d35b
 vdp_keycode $81
 timestamp_old $412a9
 agnb_header $41be6

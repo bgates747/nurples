@@ -124,7 +124,9 @@ main_loop:
     ld a,(game_exit_requested)
     or a
     jp nz,@state_exit
-; wait for the next vblank mitigate flicker and for loop timing
+; BENCH-002: two distinct vblanks per game frame (30 fps at 60 Hz).
+; Deliberately slow frame-based gameplay; retain real-time timer semantics.
+    call vdu_vblank
     call vdu_vblank
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
