@@ -21,7 +21,7 @@ vendor `agonutils` in this repository.
 - Native image extension: `/home/smith/Agon/mystuff/agon-utils`.
 - Assembler: `~/.local/bin/ez80asm`.
 - Official Agon documentation: `/home/smith/Agon/agon-docs/docs`.
-- Isolated emulator profile: `agon-dev-env/emulators/nurples`.
+- Isolated emulator profile: `.emulator/nurples`.
 
 Only repositories below `/home/smith/Agon/mystuff` are user-owned. Treat the
 other checkouts directly below `/home/smith/Agon` as read-only references.
@@ -85,7 +85,8 @@ The stable runtime observation contract is documented in
 Launch the isolated profile through the canonical environment script:
 
 ```bash
-/home/smith/Agon/mystuff/agon-dev-env/scripts/run_emulator.sh nurples
+cd .emulator/nurples
+./fab-agon-emulator
 ```
 
 Any emulator-related change must remain uncommitted and unpushed until the

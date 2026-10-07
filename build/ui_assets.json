@@ -1,0 +1,329 @@
+[
+  {
+    "name": "bar_h_0",
+    "buffer_id": 0,
+    "width": 128,
+    "height": 8,
+    "source": "assets/img/orig/ui/bar_h_0.png"
+  },
+  {
+    "name": "bar_h_1",
+    "buffer_id": 1,
+    "width": 128,
+    "height": 8,
+    "source": "assets/img/orig/ui/bar_h_1.png"
+  },
+  {
+    "name": "bar_h_2",
+    "buffer_id": 2,
+    "width": 128,
+    "height": 8,
+    "source": "assets/img/orig/ui/bar_h_2.png"
+  },
+  {
+    "name": "bar_v_0",
+    "buffer_id": 3,
+    "width": 8,
+    "height": 128,
+    "source": "assets/img/orig/ui/bar_v_0.png"
+  },
+  {
+    "name": "bar_v_1",
+    "buffer_id": 4,
+    "width": 8,
+    "height": 128,
+    "source": "assets/img/orig/ui/bar_v_1.png"
+  },
+  {
+    "name": "bar_v_2",
+    "buffer_id": 5,
+    "width": 8,
+    "height": 128,
+    "source": "assets/img/orig/ui/bar_v_2.png"
+  },
+  {
+    "name": "bezel_l",
+    "buffer_id": 6,
+    "width": 128,
+    "height": 304,
+    "source": "assets/img/orig/ui/bezel_l_cel.png",
+    "prepare": true
+  },
+  {
+    "name": "bezel_r",
+    "buffer_id": 7,
+    "width": 128,
+    "height": 304,
+    "source": "assets/img/orig/ui/bezel_r_cel_v2.png",
+    "prepare": true
+  },
+  {
+    "name": "credits",
+    "buffer_id": 8,
+    "width": 16,
+    "height": 16,
+    "source": "assets/img/orig/ui/credits.png"
+  },
+  {
+    "name": "ctl_panel_l",
+    "buffer_id": 9,
+    "width": 128,
+    "height": 128,
+    "source": "assets/img/orig/ui/ctl_panel_l.png"
+  },
+  {
+    "name": "ctl_panel_navball_sm",
+    "buffer_id": 10,
+    "width": 39,
+    "height": 39,
+    "source": "assets/img/orig/ui/ctl_panel_navball_sm.png"
+  },
+  {
+    "name": "ctl_panel_r",
+    "buffer_id": 11,
+    "width": 128,
+    "height": 128,
+    "source": "assets/img/orig/ui/ctl_panel_r.png"
+  },
+  {
+    "name": "ctl_panel_top",
+    "buffer_id": 12,
+    "width": 352,
+    "height": 48,
+    "source": "assets/img/orig/ui/ctl_panel_top.png"
+  },
+  {
+    "name": "jerry_can",
+    "buffer_id": 13,
+    "width": 16,
+    "height": 16,
+    "source": "assets/img/orig/ui/jerry_can.png"
+  },
+  {
+    "name": "mfd_arms",
+    "buffer_id": 14,
+    "width": 36,
+    "height": 18,
+    "source": "assets/img/orig/ui/mfd_arms.png"
+  },
+  {
+    "name": "mfd_bezel",
+    "buffer_id": 15,
+    "width": 96,
+    "height": 96,
+    "source": "assets/img/orig/ui/mfd_bezel.png"
+  },
+  {
+    "name": "mfd_bg",
+    "buffer_id": 16,
+    "width": 64,
+    "height": 64,
+    "source": "assets/img/orig/ui/mfd_bg.png"
+  },
+  {
+    "name": "mfd_gun_0",
+    "buffer_id": 17,
+    "width": 1,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_gun_0.png"
+  },
+  {
+    "name": "mfd_gun_1",
+    "buffer_id": 18,
+    "width": 1,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_gun_1.png"
+  },
+  {
+    "name": "mfd_gun_2",
+    "buffer_id": 19,
+    "width": 1,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_gun_2.png"
+  },
+  {
+    "name": "mfd_gun_3",
+    "buffer_id": 20,
+    "width": 1,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_gun_3.png"
+  },
+  {
+    "name": "mfd_gun_4",
+    "buffer_id": 21,
+    "width": 1,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_gun_4.png"
+  },
+  {
+    "name": "mfd_gun_5",
+    "buffer_id": 22,
+    "width": 1,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_gun_5.png"
+  },
+  {
+    "name": "mfd_maverick_0",
+    "buffer_id": 23,
+    "width": 4,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_maverick_0.png"
+  },
+  {
+    "name": "mfd_maverick_1",
+    "buffer_id": 24,
+    "width": 4,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_maverick_1.png"
+  },
+  {
+    "name": "mfd_maverick_2",
+    "buffer_id": 25,
+    "width": 4,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_maverick_2.png"
+  },
+  {
+    "name": "mfd_maverick_3",
+    "buffer_id": 26,
+    "width": 4,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_maverick_3.png"
+  },
+  {
+    "name": "mfd_maverick_4",
+    "buffer_id": 27,
+    "width": 4,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_maverick_4.png"
+  },
+  {
+    "name": "mfd_maverick_5",
+    "buffer_id": 28,
+    "width": 4,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_maverick_5.png"
+  },
+  {
+    "name": "mfd_sidewinder_0",
+    "buffer_id": 29,
+    "width": 3,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_sidewinder_0.png"
+  },
+  {
+    "name": "mfd_sidewinder_1",
+    "buffer_id": 30,
+    "width": 3,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_sidewinder_1.png"
+  },
+  {
+    "name": "mfd_sidewinder_2",
+    "buffer_id": 31,
+    "width": 3,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_sidewinder_2.png"
+  },
+  {
+    "name": "mfd_sidewinder_3",
+    "buffer_id": 32,
+    "width": 3,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_sidewinder_3.png"
+  },
+  {
+    "name": "mfd_sidewinder_4",
+    "buffer_id": 33,
+    "width": 3,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_sidewinder_4.png"
+  },
+  {
+    "name": "mfd_sidewinder_5",
+    "buffer_id": 34,
+    "width": 3,
+    "height": 6,
+    "source": "assets/img/orig/ui/mfd_sidewinder_5.png"
+  },
+  {
+    "name": "mfd_sparrow_0",
+    "buffer_id": 35,
+    "width": 3,
+    "height": 7,
+    "source": "assets/img/orig/ui/mfd_sparrow_0.png"
+  },
+  {
+    "name": "mfd_sparrow_1",
+    "buffer_id": 36,
+    "width": 3,
+    "height": 7,
+    "source": "assets/img/orig/ui/mfd_sparrow_1.png"
+  },
+  {
+    "name": "mfd_sparrow_2",
+    "buffer_id": 37,
+    "width": 3,
+    "height": 7,
+    "source": "assets/img/orig/ui/mfd_sparrow_2.png"
+  },
+  {
+    "name": "mfd_sparrow_3",
+    "buffer_id": 38,
+    "width": 3,
+    "height": 7,
+    "source": "assets/img/orig/ui/mfd_sparrow_3.png"
+  },
+  {
+    "name": "mfd_sparrow_4",
+    "buffer_id": 39,
+    "width": 3,
+    "height": 7,
+    "source": "assets/img/orig/ui/mfd_sparrow_4.png"
+  },
+  {
+    "name": "mfd_sparrow_5",
+    "buffer_id": 40,
+    "width": 3,
+    "height": 7,
+    "source": "assets/img/orig/ui/mfd_sparrow_5.png"
+  },
+  {
+    "name": "power",
+    "buffer_id": 41,
+    "width": 16,
+    "height": 16,
+    "source": "assets/img/orig/ui/power.png"
+  },
+  {
+    "name": "shield",
+    "buffer_id": 42,
+    "width": 16,
+    "height": 16,
+    "source": "assets/img/orig/ui/shield.png"
+  },
+  {
+    "name": "ship_mfd",
+    "buffer_id": 43,
+    "width": 16,
+    "height": 16,
+    "source": "assets/img/orig/ui/ship_mfd.png"
+  },
+  {
+    "name": "splash_bg",
+    "buffer_id": 44,
+    "width": 320,
+    "height": 240,
+    "source": "assets/img/orig/ui/splash_bg_single_engine_cel.png",
+    "prepare": true
+  },
+  {
+    "name": "splash_logo",
+    "buffer_id": 45,
+    "width": 160,
+    "height": 106,
+    "source": "assets/img/orig/ui/splash_logo_cel_draft.png",
+    "prepare": true,
+    "remove_gray_background": true
+  }
+]

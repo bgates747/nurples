@@ -1,0 +1,10 @@
+Tool: built-in image_gen
+Output replaces: tiles/bg/starfield_cel_master.png
+
+Use case: precise-object-edit. Revise the provided square game starfield atlas with these changes:
+1. Approximately DOUBLE the NUMBER of small dot stars. Keep each dot the SAME size as existing ones, adding about one new dot between existing dots, irregular natural spacing.
+2. Approximately TRIPLE the NUMBER of larger FOUR-POINT SPARKLE STARS. There are about16 currently; aim for about48 total four-point sparkles, scattered across the entire image, same modest sizes as existing sparkle stars. This is a count increase, not a size increase.
+3. Replace all the black background with completely UNIFORM dark blue RGB(0,0,85), hex #000055, matching the original game's Agon64 background. No gradients, noise, clouds or glow. All empty space must be this exact flat blue.
+4. Preserve exactly the same THREE PLANETS in their existing locations, shapes, sizes and colors. No new planets or large orbs.
+Keep the crisp flat cel-animation style, pale cyan/white/pale yellow stars with a few pink ones. Still plenty of empty blue between individual stars; no dust or milky-way texture.
+This atlas is reduced to512x512 then sliced into four256x256 tiles at its center lines. Keep a narrow completely empty BLUE margin around all outside edges AND along the invisible horizontal and vertical midpoint lines, free of stars/planets so none get clipped. No visible grid or separator lines. Square composition, no text. Preserve the three planets exactly.

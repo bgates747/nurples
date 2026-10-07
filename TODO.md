@@ -3,6 +3,15 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **ART-002 — Sparse scrolling starfields:** generate one cel-style atlas,
+  slice it into the four existing square backgrounds with seams safe for the
+  game's random tile order, rebuild/deploy and obtain visual acceptance.
+
+- [ ] **ART-001 — Cel UI assets:** prepare the accepted splash, logo and two
+  bezels at their existing runtime dimensions and IDs using canonical Agon64
+  conversion; rebuild and verify the UI container, then deploy to the existing
+  local emulator for the Author's visual acceptance before committing.
+
 - [ ] **ASM-001 — Cooperative state-machine migration:** review and integrate
   `src/asm/state_new.inc` incrementally. The global coordinator must publish
   phase and policy without assigning actor-local states; every actor-owned mini

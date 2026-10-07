@@ -55,10 +55,67 @@ The current game build has four explicit actions:
 .venv/bin/python build/scripts/build_00_all_the_things.py --all
 ```
 
-`--assets` builds the one runtime font plus `ui.agnb` and `game.agnb` from the
-accepted RGBA2222 payloads under `assets/rgba2`. `--check` verifies generated
-metadata and every packed payload without writing. The orchestrator does not
-deploy files or launch an emulator.
+`--assets` first prepares the four accepted cel UI images and four starfield
+tiles, then builds the one
+runtime font plus `ui.agnb` and `game.agnb` from the RGBA2222 payloads under
+`assets/rgba2`. `--check` checks the source-to-payload conversion, decoded PNG
+previews, generated metadata and every packed payload without writing. The
+orchestrator does not deploy files or launch an emulator.
+
+### Cel UI artwork
+
+`build/ui_assets.json` explicitly fixes all 46 UI buffer IDs and runtime
+dimensions. Additional PNG variants in the original-art directory cannot
+enter the runtime catalog or shift IDs. Its four `prepare` entries select
+`bezel_l_cel.png`, `bezel_r_cel_v2.png`,
+`splash_bg_single_engine_cel.png`, and `splash_logo_cel_draft.png`.
+
+Prepare these images independently with:
+
+```bash
+.venv/bin/python build/scripts/build_ui_art.py
+.venv/bin/python build/scripts/build_ui_art.py --check
+```
+
+This stage uses Pillow Lanczos scaling to the existing 128x304 bezel,
+320x240 splash and 160x106 logo dimensions. Canonical `agonutils` performs
+nearest-RGB Agon64 conversion without dithering and RGBA2222 encoding through
+the local adapters. The payload names stay `bezel_l`, `bezel_r`, `splash_bg`
+and `splash_logo`; decoded previews replace their PNGs in `assets/img/proc/ui`.
+Both current asset-build entry points invoke this stage before packing AGNB.
+The standalone preparation command does not repack the containers.
+
+The logo draft has a painted gray checkerboard. Its source-specific alpha mask
+keeps pixels where both red and blue exceed green by more than 20, preserving
+purple ink and pink highlights while removing neutral gray. It is applied
+before premultiplied-alpha scaling; alpha is then thresholded at 128 for a
+clean opaque/transparent overlay. This mask is specific to this draft, not a
+general background-removal or palette-conversion algorithm. A future logo
+with neutral ink must supply its own alpha and disable this manifest flag.
+
+### Sparse scrolling backgrounds
+
+`tiles/bg/starfield_cel_master.png` is the single source atlas. The background
+stage scales it once to 512x512, then slices a 2x2 grid in reading order into
+the existing `bg_stars_0`, `bg_stars_3`, `bg_stars_4`, `bg_stars_6` names.
+These remain 256x256 images at IDs 1024 through 1027. The game starts with
+0 above 4, but later selects tiles randomly; each tile therefore has a uniform
+four-pixel opaque dark-blue border on all sides to support every adjacency and
+self-repetition. Objects are composed away from the atlas's dividing lines.
+The background and borders use RGB(0,0,85), sampled from the original tiles
+on `main`. The current design increases small stars and larger sparkles while
+retaining the same three planets.
+
+```bash
+.venv/bin/python build/scripts/build_starfields.py
+.venv/bin/python build/scripts/build_starfields.py --check
+```
+
+The Author authorized overwriting `tiles/bg/orig/bg_stars_*.png` with these
+slices. Canonical Agon64/RGB conversion without dithering writes the same
+RGBA2222 names under `assets/rgba2/bg`; canonical decoding writes previews to
+`tiles/bg/proc`. Both current build entry points prepare these before packing
+`game.agnb`, and their checks include atlas-to-tile reproducibility.
 
 The standalone gameplay-map suite has separate, non-destructive stages:
 

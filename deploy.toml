@@ -1,6 +1,6 @@
 schema = 1
 project = "nurples-dev"
-default_profile = "/home/smith/Agon/mystuff/agon-dev-env/emulators/nurples-repair"
+default_profile = ".emulator/nurples"
 default_sd_mount = "/media/smith/AGON"
 expected_sd_label = "AGON"
 

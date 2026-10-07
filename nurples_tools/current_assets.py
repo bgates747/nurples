@@ -9,6 +9,8 @@ from PIL import Image
 
 from nurples_tools.agnb import ImageRecord, build_container, validate_records
 from nurples_tools.agnb_verify import verify_container
+from nurples_tools.ui_art import check_ui_art, ui_manifest, write_ui_art
+from nurples_tools.starfields import check_starfields, write_starfields
 
 
 UI_BUFFER_BASE = 0
@@ -148,12 +150,14 @@ def build_catalogs(
 
     payload_root = project_root / "assets/rgba2"
     catalogs = {
-        "ui": _ordinary_family(
-            "ui",
-            project_root / "assets/img/orig/ui",
-            payload_root / "ui",
-            UI_BUFFER_BASE,
-        ),
+        "ui": [
+            ImageRecord(
+                family="ui", name=entry["name"], buffer_id=entry["buffer_id"],
+                width=entry["width"], height=entry["height"],
+                payload_path=payload_root / "ui" / f"{entry['name']}.rgba2",
+            )
+            for entry in ui_manifest(project_root)
+        ],
         "bg": _ordinary_family(
             "bg",
             project_root / "tiles/bg/orig",
@@ -263,10 +267,12 @@ def generate_outputs(project_root: Path, output_root: Path) -> dict[Path, bytes]
 def write_current_assets(project_root: Path) -> list[Path]:
     """Generate verified containers and assembly metadata in the repository."""
 
+    prepared = write_ui_art(project_root)
+    prepared.extend(write_starfields(project_root))
     outputs = generate_outputs(project_root, project_root)
     for path, data in outputs.items():
         _write_if_changed(path, data)
-    return sorted(outputs, key=str)
+    return sorted([*prepared, *outputs], key=str)
 
 
 def check_current_assets(project_root: Path) -> list[str]:
@@ -275,7 +281,8 @@ def check_current_assets(project_root: Path) -> list[str]:
     with TemporaryDirectory(prefix="nurples-assets-check-") as temp_dir:
         temp_root = Path(temp_dir)
         generated = generate_outputs(project_root, temp_root)
-        differences: list[str] = []
+        differences = check_ui_art(project_root)
+        differences.extend(check_starfields(project_root))
         for generated_path, wanted in generated.items():
             relative = generated_path.relative_to(temp_root)
             actual_path = project_root / relative
