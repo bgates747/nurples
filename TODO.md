@@ -3,6 +3,24 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **UART-001 — RC3 asynchronous render qualification:** integrate the
+  tagged Eirene MOS `3.1.0_uart0_rc_3` syscall-25h sender behind a controlled
+  game fixture. First compare an output-silent `move_sprite_group` cohort using
+  legacy fragmented synchronous output, packetized synchronous output, and the
+  byte-identical packetized asynchronous path. Use dedicated immutable static
+  packet buffers, a flag-only ADL callback, one outstanding submission, and an
+  explicit source/TEMT/receiver drain before ordinary output or exit. If that
+  integration proof passes, extend the same controls to a repeatable full-frame
+  scene with matched logical frame/input pacing. Record bytes and command-stream
+  equality, actor/collision telemetry, frame-time tails, retained foreground
+  work, input/quit latency, callbacks, timer drift, and clean repeated `RUN`.
+  RC3 is pinned at commit `97311c437093e416342a6c836cf9914f2ced027d`,
+  ROM CRC32 `B08C80B8`, 100879 bytes, SHA256
+  `d7a51147f3381cd68d56f3fbe4605434a897dfae1b049269afeba09ec2b7eb50`.
+  Preserve the original RFC image/results as historical evidence only; do not
+  use the affine-sprite firmware or begin hardware deployment without a
+  separate reviewed gate.
+
 - [ ] **ART-002 — Sparse scrolling starfields:** generate one cel-style atlas,
   slice it into the four existing square backgrounds with seams safe for the
   game's random tile order, rebuild/deploy and obtain visual acceptance.

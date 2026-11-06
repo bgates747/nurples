@@ -7,6 +7,9 @@ Read `/home/smith/Agon/mystuff/agon-dev-env/codex/AGENTS.md` first.
 Purple Nurples is an eZ80 assembly game for the Agon platform. Development
 resumed on 2026-08-02 after a dormant period. The current binary entry point is
 `src/asm/nurples.asm`; generated application data lives under `tgt/`.
+This `/home/smith/Agon/mystuff/nurples-repair` checkout is the canonical active
+workspace. The older sibling `nurples` checkout is a deprecated historical line
+and must not receive new development.
 
 The Python 3.14 build environment is current. Image tooling uses the canonical
 native `/home/smith/Agon/mystuff/agon-utils` checkout plus the thin
@@ -22,6 +25,9 @@ vendor `agonutils` in this repository.
 - Assembler: `~/.local/bin/ez80asm`.
 - Official Agon documentation: `/home/smith/Agon/agon-docs/docs`.
 - Isolated emulator profile: `.emulator/nurples`.
+- Experimental async MOS target: tagged Eirene fork release
+  `3.1.0_uart0_rc_3` at commit
+  `97311c437093e416342a6c836cf9914f2ced027d`.
 
 Only repositories below `/home/smith/Agon/mystuff` are user-owned. Treat the
 other checkouts directly below `/home/smith/Agon` as read-only references.
