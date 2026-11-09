@@ -3,29 +3,47 @@
 `FW-001` audited the current Purple Nurples production and test candidates
 against the Author-selected firmware defaults. This was a source, artifact,
 profile and retained-evidence audit only: it did not build, deploy, flash,
-launch an emulator or access a target.
+launch an emulator or access a target. On 2026-11-09 this record was refreshed
+against the Author-directed async-enabled amendment published under the same
+VDPlet release tag. The static compatibility conclusions did not change, but
+the current VDP binary, source identity and enabled-feature set did.
 
 ## Selected defaults and verified release artifacts
 
 The selected VDP on Alexe, Olimex and Console8 is
 [VDPlet v0.1.2-alpha](https://github.com/bgates747/agon-vdplet/releases/tag/v0.1.2-alpha),
-source commit `b6c7c58331bf4cbbd54dbc4a1301c124e5963622`. The retained release directory
-was compared with its published `SHA256SUMS`; all nine listed files passed.
-The files material to this audit are:
+selection `0.1.2-alpha-async-r1`, source commit
+`60e5b4ebafa3e1c8bb740e45260d78cdb6125e30`. The 13 official release assets
+were downloaded afresh; all 12 payloads listed by the published `SHA256SUMS`
+passed. The files material to this audit are:
 
 | Artifact | Bytes | SHA-256 |
 |---|---:|---|
-| `SHA256SUMS` | 810 | `6469f6d6717ede6acb68d9b7ce519db07a1d5a08a0ef7c765739dfe86658aa9d` |
-| `vdp-vdplet-0.1.2-alpha.bin` | 1,100,304 | `b004570b607b45bbd6e87a3c704b65b23d3221981db3aac6cf2578aa22d766e3` |
-| `release-manifest.json` | 3,019 | `63360b4151287875ed3b675140c1fc0d9fdc4bd6160894636e7266efc3281ef2` |
-| `firmware-uart-provider.json` | 1,529 | `12958ed750ffc50407d3e79468260910809712072b28737e1bba06fe42d9943c` |
+| `SHA256SUMS` | 1,081 | `52438920e70480cd1c0f0c9543fbf2e0f7771ce937b92f422ef2f6ea394f79ba` |
+| `vdp-vdplet-0.1.2-alpha.bin` | 1,115,568 | `dc43ecb8b1c324ffd1a032e6cc0c56d8c05dd33a355ce170c23adb35ffb533ab` |
+| `release-manifest.json` | 5,584 | `23036cfdd5d12c9ed54d197ab5184f2227dd635e4c09647a5c9efda95f129f5d` |
+| `firmware-release.json` | 450 | `1599d0dbb515a9e59dee2d97ebe2d11b341ebdb6200bdab1e96a7d94678ee651` |
+| `firmware-uart-provider.json` | 1,529 | `8e6c95c2a6fa221f54863687da7a07ad8d5b956421bd8e95b33b1a20067ab1d5` |
 
 The release manifest states that the public ABI and wire versions are
 unchanged. Pixels, the `text96` profile, borrowed colour rows, bounded
-`READ_BYTES`, and the UART receive-full recovery repair are enabled. The
-optional VDP async worker, counted return and PCM sink are disabled. The
-release itself records host/native verification but no execution of these
-exact versioned bits on hardware or an emulator at publication.
+`READ_BYTES`, the UART receive-full recovery repair, and the ordinary async
+OPEN/SUBMIT/PUBLISH/STATUS/STOP/CLOSE worker are enabled. The async table is
+ABI 1.7/capability 799 and permits exact 512- and 513-byte OPEN operations.
+Counted return, PCM wire support, the private overlap witness, quiet polling
+and admission diagnostics remain disabled. The release records 24 release,
+49 UART and 118 provider checks plus host/native inspection, but explicitly
+records no execution of these exact versioned bits on hardware or an emulator
+at publication.
+
+The amendment supersedes, but deliberately identifies, the pre-async image
+previously audited under this tag: source
+`b6c7c58331bf4cbbd54dbc4a1301c124e5963622`, 1,100,304-byte binary SHA-256
+`b004570b607b45bbd6e87a3c704b65b23d3221981db3aac6cf2578aa22d766e3`,
+and `SHA256SUMS` SHA-256
+`6469f6d6717ede6acb68d9b7ce519db07a1d5a08a0ef7c765739dfe86658aa9d`.
+That identity is historical evidence only and is not the current deployment
+or qualification pin.
 
 Alexe and Console8 use
 [Eirene MOS 3.1.0_uart0_rc_3](https://github.com/bgates747/eirene-mos/releases/tag/3.1.0_uart0_rc_3),
@@ -77,7 +95,7 @@ variant handles the selected EMOS admission contract.
 | Candidate | Exact identity | Compatibility disposition |
 |---|---|---|
 | Production game | `tgt/nurples.bin`, 36,439 bytes, `63c89d2676f6645631b2240f23002b8b68d45069979a4804ca7d14f34e720088` | **Statically compatible; runtime blocked.** No incompatible API use was found. It needs first qualification with the pinned VDP and target-appropriate MOS/EMOS. |
-| Production data | `game.agnb` `e06f127f6239fa435ccdf19f97a2cccfad9924f70b22a9035750c320388cdf98`, `ui.agnb` `655b3476bea1304b4ca8ea486d25e7e1e53cb8bdd9846a4139555d4b9947717b`, font `23321abb10437db6b8bc8f21907268b46615d409b38975f6a195eb9643065a69` | **Compatible inputs; runtime blocked with the executable.** They exercise existing buffer/bitmap/font paths, not disabled optional features. |
+| Production data | `game.agnb` `e06f127f6239fa435ccdf19f97a2cccfad9924f70b22a9035750c320388cdf98`, `ui.agnb` `655b3476bea1304b4ca8ea486d25e7e1e53cb8bdd9846a4139555d4b9947717b`, font `23321abb10437db6b8bc8f21907268b46615d409b38975f6a195eb9643065a69` | **Compatible inputs; runtime blocked with the executable.** They exercise existing synchronous buffer/bitmap/font paths and do not depend on the amended async feature. |
 | Historical two-VBlank bench game | commit `2f0f095` `tgt/nurples.bin`, 36,443 bytes, `e7850b78db8c3c5ae1a232836f58f68dcbd56af3066049be8ee335325909b3b0` | **Obsolete historical timing candidate.** It was separated under `/test/nurples`, is absent from current deployment bundles and must not replace the single-VBlank production game. Preserve prior evidence; do not use it for pinned-default qualification. |
 | Standalone map suite | `tgt/nurples-map-tests.bin`, 37,672 bytes, `129f5552d975f1446562a901946ebfca0dbfbc5eb30d6e940fcbc07fc4d0012a` | **Statically compatible; stale and blocked.** It shares the production interface surface but predates later production changes and has no pinned-default run. Rebuild only under its existing test gate before use. |
 | UART-001 narrow R01 | 37,983-byte historical artifact `9ef2f64e54c118d33715c77b87c552531b7dd00850eb6131cc47d3814b5dcd94` in retained profile | **Obsolete historical failure.** Preserve evidence; do not rerun. |
@@ -118,7 +136,7 @@ Alexe runtime representation rather than simply relabeling the old module.
 ### Olimex
 
 The selected standard is exact and locally retained: VDPlet
-`b004570b607b45bbd6e87a3c704b65b23d3221981db3aac6cf2578aa22d766e3`
+`dc43ecb8b1c324ffd1a032e6cc0c56d8c05dd33a355ce170c23adb35ffb533ab`
 plus integrated EMOS
 `a25f1612f4aaa542c5488cf3266d968ad3d1d61e9df3b5ce2c680650f5d7a2ca`.
 The last physical handback still recorded the older VDP application SHA-256
@@ -138,7 +156,7 @@ the selected EMOS rather than silently substituting RC3.
 ### Console8
 
 The correct proposed pair is VDPlet
-`b004570b607b45bbd6e87a3c704b65b23d3221981db3aac6cf2578aa22d766e3`
+`dc43ecb8b1c324ffd1a032e6cc0c56d8c05dd33a355ce170c23adb35ffb533ab`
 and RC3 MOS
 `d7a51147f3381cd68d56f3fbe4605434a897dfae1b049269afeba09ec2b7eb50`.
 No current installed-state receipt or Nurples execution under that exact pair

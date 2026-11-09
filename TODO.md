@@ -6,7 +6,8 @@ decisions are recorded in the dated development log.
 - [ ] **FW-002 — Pinned-default runtime qualification:** preserve the frozen
   historical emulator profiles, then prepare a separately reviewed Alexe
   profile whose VDP runtime representation is proven to match VDPlet
-  `v0.1.2-alpha` (`b004570b607b45bbd6e87a3c704b65b23d3221981db3aac6cf2578aa22d766e3`)
+  `v0.1.2-alpha`, selection `0.1.2-alpha-async-r1`
+  (`dc43ecb8b1c324ffd1a032e6cc0c56d8c05dd33a355ce170c23adb35ffb533ab`),
   and whose MOS is Eirene `3.1.0_uart0_rc_3`
   (`d7a51147f3381cd68d56f3fbe4605434a897dfae1b049269afeba09ec2b7eb50`).
   Qualify the current production bundle there before map or UART continuation.
