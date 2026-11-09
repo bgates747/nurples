@@ -3,6 +3,233 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **GAME-001 — Complete-game presentation and flow:** turn the existing
+  playable systems into a cohesive finished-game experience without regressing
+  the accepted splash/loading/start transition. Maintain the running design
+  notes in `devlog/2026-11-09-game-completion.md`, implement each sequence as a
+  bounded addition to the cooperative state architecture, and obtain visual
+  acceptance for each presentation slice before treating it as complete.
+
+  - [ ] **GAME-001A — Player death through restart:** stop background travel
+    when death begins while the damaged ship continues forward under an
+    erratic but controlled path. Preserve the last player-commanded
+    left/centre/right ship frame, then make the dying ship wiggle around that
+    frame. Preserve the existing explosion trail, which already follows behind
+    the damaged ship satisfactorily, and preserve the accepted terminal
+    explosion rather than redesigning either effect. Explosion particles that
+    reach any playfield boundary must deactivate instead of inheriting the
+    generic sprite mover's bounce. Reserve a top-of-field death runway that
+    ordinary player input cannot enter but the dying controller may use. Make
+    the path screen-position-sensitive: reaching either side must reverse the ship
+    toward the middle and sustain a broad zig-zag rather than jittering at the
+    boundary. Acceptance: the normal-play ceiling always leaves enough visible
+    forward travel for the complete death choreography; the background remains
+    spatially fixed; the ship remains visibly in motion and retains its
+    commanded pose; side-edge encounters produce an unmistakable inward sweep;
+    the accepted trailing and terminal explosion effects remain visually
+    intact; no explosion reverses direction at the top, bottom, left or right
+    boundary; and the complete sequence reaches respawn or game over without
+    blocking the outer scheduler or inheriting stale death state.
+
+  - [ ] **GAME-001B — Enemy death-phase behavior:** give the enemy controller
+    explicit PLAYER_DYING and PLAYER_DEAD policies. Seekers must stop attacking
+    and independently reconcile with the global death policy. Preserve
+    `move_enemy_seeker_orbit` as the non-hostile holding behavior. Each seeker
+    must retain a validated identity for the launch pad that spawned it rather
+    than searching for an interchangeable nearest pad. When told to retreat,
+    it returns to that active, visible `tile_pad_small`; if its own pad has
+    already scrolled off, been destroyed or been reused, it chooses the nearer
+    left or right screen edge, flies out through it and deactivates. During
+    GAME_OVER, pads may continue launching non-hostile seekers: each performs a
+    bounded few orbits before independently entering the same retreat path.
+    Acceptance: no seeker continues player-targeting or collision damage after
+    death begins; orbit count and completion are actor-owned and deterministic;
+    named per-seeker fields in the existing record hold its orbit and validated
+    pad association without a parallel side table; pad identity cannot alias a
+    recycled active-tile record; destroyed, inactive, reused or off-screen pads
+    are never selected; docking or edge exit releases the seeker record; the
+    GAME_OVER backdrop can repeat launch, orbit and retreat cycles without
+    exhausting the pool; and respawn starts without stale orbit,
+    pad-association or retreat state.
+
+  - [ ] **GAME-001C — Enemy movement variety:** retain
+    `move_enemy_seeker_orbit` as a reusable behavior for game phases or enemy
+    classes that need a holding pattern. Add enemy types whose movement is more
+    predictable and easier to intercept than the current seeker, while keeping
+    seekers as the dangerous evasive pressure enemy. Study the retained
+    Xevious maps/art experiments and the lawful reverse-engineered technical
+    references identified in `devlog/2026-11-09-game-completion.md`; extract
+    movement principles rather than copying unlicensed code or shipped art.
+    Acceptance: each new type has a visually distinct, learnable path; offers
+    recurring clear firing windows; owns its lifecycle and player-death
+    behavior; and can be mixed with seekers without every encounter collapsing
+    into continuous pursuit.
+
+  - [ ] **GAME-001D — Concealed Xevious mode:** design a playable Xevious-style
+    port within the Nurples executable, either as a normal campaign level or a
+    deliberately hidden Easter egg. Reuse the Nurples engine and clean-room
+    behavioral understanding rather than importing unlicensed ROM code; settle
+    the status of retained original-looking art before release. Acceptance:
+    the selected entry path is intentional and replayable; the mode has its own
+    coherent player, weapon, enemy-director and completion rules; entry and
+    exit cannot contaminate normal campaign state; and the result feels like a
+    compact playable game rather than a tileset demonstration.
+
+  - [ ] **GAME-001E — Player entrance and safe respawn:** replace the immediate
+    lower-left appearance with an actor-owned `player_spawning` phase. At level
+    start and after a mid-level death, use the same entrance animation to bring
+    the ship visibly into the horizontal centre and approximately the lower
+    third of the playfield. Mid-level death must preserve level/map progress
+    rather than restarting the level: before beginning the shared animation,
+    resolve its preferred endpoint to the nearest placement that is neither on
+    top of nor immediately behind a ground collidable. Keep the player
+    noncollidable during entry, then transition through a distinct
+    `player_grace` state that visibly blinks the ship after control begins.
+    The entrance is a banked rising swoop with eased acceleration and settling;
+    grace lasts one real-time second. Losing a ship retains the score earned so
+    far, matching the decision to retain level progress.
+    Acceptance: life reset, sprite preparation, entrance motion, collision
+    activation and ordinary play are distinct bounded steps; the ship never
+    pops into existence at the lower-left corner; initial level entry reads as
+    deliberate choreography; both contexts visibly use the same motion;
+    mid-level respawn cannot end inside a ground hazard or with inadequate
+    forward clearance; no death rewinds the level to its beginning; control
+    begins only after the entrance has visibly settled; collision remains
+    disabled throughout `player_grace`; and timer expiry explicitly transitions
+    the actor to `player_alive`. A mid-level death must not restore
+    `player_score` from `player_starting_score`.
+
+  - [ ] **GAME-001F — Victory and hyperwarp level transition:** replace the
+    immediate last-row-to-next-level jump with a bounded global
+    `LEVEL_TRANSITION` sequence. At normal scroll speed, stop admitting terrain
+    rows and let a blank starfield scroll in while the player performs an
+    automated banked victory loop. Disable victory-period player damage and new
+    hostile spawns, then bring the ship smoothly to screen centre. Ramp the
+    starfield from normal travel into a fast hyperwarp, hold briefly, and ease
+    it back to normal speed before admitting any row of the next level. Preserve
+    the optimized terrain scroller as a strictly one-scanline-per-frame path.
+    Add separate starfield-only warp code for the 256x256 background images;
+    that code resizes the exposed-strip graphics viewport to its current
+    multi-scanline displacement so fast scrolling does not redraw the full
+    field. Acceptance: no level data is read beyond its final
+    row; remaining terrain and active records leave cleanly; the victory path,
+    centring, acceleration, fast hold and deceleration are visibly distinct
+    bounded phases; bezel/cockpit art does not scroll; every newly exposed
+    scanline is painted without seams at every selected speed; the next level
+    cannot appear until speed is normal; and a one-level tileset loops through
+    the complete transition rather than restarting immediately. No transition
+    phase may attempt fast terrain scrolling or generalize the existing terrain
+    row-ingestion loop to multiple scanlines per frame.
+
+  - [ ] **GAME-001G — Original Z80 campaign level port:** retain the modern
+    Agon campaign as level zero and follow it with the recovered original
+    Z80 game's 255-row main level. Import only the old level definition and its
+    five passive tile images; do not import executable Z80 code. Map the old
+    landing-pad and laser-turret IDs to the modern `tile_pad_small` and
+    `tile_turret_fireball` IDs so current animation, spawning, firing,
+    destruction and crater behavior remain authoritative. Acceptance: the
+    checked-in TMX decodes all 255 original rows in their runtime order; its
+    mapped cells have the frozen expected digest; the passive art is rebuilt
+    reproducibly through Agon64 and canonical `agonutils`; the production map
+    manifest deterministically emits both levels; the complete asset build and
+    assembly pass; and an Author play-through confirms the old level's layout,
+    artwork, pads, turrets and crater transformations before this item closes.
+
+  - [ ] **GAME-001H — Fireball directional rendering:** make each turret
+    fireball's visual orientation come from the same launch heading that
+    produces its X/Y velocity. Apply the bitmap's half-turn artwork correction
+    only after choosing that launch heading. Select the correct directional
+    frame immediately when a pooled fireball is spawned or reused, then
+    alternate its two animation banks without losing the orientation.
+    Acceptance: stationary-target, moving-target lead, cardinal and diagonal
+    shots all point along their observed travel; no projectile appears on stale
+    frame zero for its first animation interval; the animation alternates both
+    banks while retaining direction; every selected frame stays within the
+    64-frame fireball set; and reuse cannot inherit heading, frame or timer
+    state from the previous occupant.
+
+  - [ ] **GAME-001I — Rate-limited turret tracking:** separate the targeting
+    computer's desired lead heading from each turret's physical barrel heading.
+    Advance the barrel by a tunable maximum angular step along the shortest
+    wrapped path instead of snapping whenever target position or velocity
+    changes. A fired projectile's velocity and displayed orientation must both
+    derive from the physical barrel heading at the instant of firing, so a
+    sufficiently close lateral pass can outrun the turret and cause a miss.
+    Preserve the current reload cadence initially: a ready turret fires along
+    its current barrel heading rather than silently substituting the ideal
+    solution or waiting indefinitely for perfect alignment. While the player
+    is DYING, DEAD, RESPAWNING or in GAME_OVER, disable turret fire and replace
+    player targeting with one shared search behavior: latch clockwise or
+    counter-clockwise motion for a bounded random duration, flip direction,
+    choose another duration and repeat through the same physical slew limiter.
+    Give desired heading, search direction and search duration explicit named
+    fields in the unused tail of each existing active-tile record; do not
+    overload unrelated legacy fields or create a parallel turret-state table.
+    Acceptance: motion is visibly bounded and continuous across the angle wrap;
+    changing between stationary and moving-target solutions never snaps the
+    barrel; close passes create a useful but risky tracking-rate defense;
+    ordinary distant targets remain threatening; shot motion and artwork agree;
+    search direction changes remain rate-limited; returning to live play does
+    not inherit a search timer as a reload timer or snap to the new solution;
+    and deterministic tests cover clockwise, counter-clockwise, equal-heading,
+    half-turn and wraparound cases. Keep the legacy internal laser/turret names
+    during stabilization; any terminology cleanup belongs to the later
+    reviewed consistency pass.
+
+  - [ ] **GAME-001J — Animated game-over sequence:** replace the blocking
+    text-mode `game_over` handler with a bounded `GAME_OVER` lifecycle. Keep the
+    playfield moving behind the overlay at exactly the ordinary one-scanline
+    scroll pace while a centred hardware-sprite composition presents a large,
+    stylized `GAME OVER` title whose colours alternate. Include a smaller
+    regular-font `Press any key to continue` notice in the composition and
+    flash it at a slower, independently legible cadence. On entry, remove the
+    player and hostile projectiles but make the remaining world non-hostile
+    rather than empty. Launch pads continue spawning harmless seekers; existing
+    and new seekers perform a few actor-owned orbits, then return to their own
+    still-visible spawn pad or leave through the nearer screen edge if that pad
+    has scrolled away. Visible laser turrets reuse the shared non-firing search
+    behavior already active during player death and respawn. Require a complete
+    key-up gate followed by a fresh keypress so the input associated with the
+    final death cannot skip the sequence. Acceptance: title animation, prompt
+    flash, seeker launch/orbit/retreat, turret search, input polling, one
+    terrain/background scroll step, active-scenery animation and one VBlank all
+    remain bounded to one outer frame; turret search never fires and never
+    snaps; the overlay stays fixed over the moving playfield without corrupting
+    the bezel; no actor can damage or score after game over; held input cannot
+    dismiss the sequence; continuation tears down every overlay resource and
+    enters clean new-game initialization without reloading already resident
+    assets; and repeated game-over/new-game cycles neither leak hardware sprites
+    nor inherit stale enemy, turret, timer or input state. Freeze and qualify
+    the exact hardware-sprite VDP API and required firmware before
+    implementation or deployment.
+
+  - [ ] **GAME-001K — Living attract mode:** replace the post-load static,
+    opaque text prompt and blocking `mos_getkey` wait with a bounded TITLE/
+    ATTRACT lifecycle. Preserve the accepted loader and begin attract mode only
+    after all resident assets are available. At minimum, present a continuously
+    moving starfield at the ordinary one-scanline pace with a fixed,
+    transparent, stylized hardware-sprite `Press any key to start` prompt.
+    Require key release followed by a fresh press, then tear down attract-only
+    resources and enter new-game initialization without reloading assets or
+    leaking attract state. Move the current blocking joystick choice out of the
+    autonomous attract update and give configuration its own bounded start-flow
+    boundary. Later, consume a deterministic replay captured by `TEST-001` so
+    the classical title/demo loop can show one of the autonomous player's
+    better complete games, return to the title after replay completion or
+    failure, and remain interruptible by player input on every frame.
+    Acceptance: the minimum attract screen never blocks, scrolls exactly once
+    and waits for one VBlank per outer frame, keeps the prompt fixed and
+    transparent over the moving playfield, cannot be skipped by a held loader
+    key, and starts an ordinary clean game repeatedly. Replay mode must pin the
+    exact build/map/seed and input trace, isolate demo score/lives/RNG from the
+    real session, detect completion/death/stall/fault, loop cleanly, and yield
+    immediately to a fresh human start input. Reuse the qualified overlay-
+    sprite ownership and cleanup conventions from `GAME-001J`. Stretch goal:
+    admit a live nondeterministic AI input provider through the same per-frame
+    control interface, with bounded decision time and the same interruption,
+    isolation and terminal watchdogs as replay mode; this is not a gate for the
+    minimum attract screen or deterministic replay.
+
 - [ ] **FW-002 — Pinned-default runtime qualification:** preserve the frozen
   historical emulator profiles, then prepare a separately reviewed Alexe
   profile whose VDP runtime representation is proven to match VDPlet
@@ -185,11 +412,82 @@ decisions are recorded in the dated development log.
   immediate activation wraps to 255 updates and makes spawn timing
   unexpectedly nondeterministic. Qualify initial and subsequent spawn cadence
   without changing the established actor-pool limits.
+- [ ] **ASM-011 — Actor-record schema and lifecycle audit:** review the complete
+  sprite and active-tile record framework before adding the GAME-001 actor
+  states. Preserve the Author's intended on-rails model: one shared 64-byte
+  record header, a schema declared in each actor type's own include, generic
+  allocation/spawn/transform/deactivation routines, and actor-owned
+  initialization plus validated behavior selection. Inventory every current
+  pool and actor type; map bytes 0 through 63 as shared, type-specific, unused
+  or accidentally overloaded; and trace every path that allocates, copies,
+  clears, reuses, transforms, activates, changes behavior or releases a record.
+  Document carry/index-register/table-pointer contracts, copy bounds, failure
+  behavior and which fields each layer owns. Identify stale-tail hazards,
+  semantically overloaded fields, unvalidated behavior pointers, duplicated
+  initialization and departures from the common framework without beginning a
+  broad rewrite. Acceptance: publish a canonical schema/lifecycle document and
+  machine-checked offset/bounds assertions; define the required per-type header
+  pattern and actor initializer/behavior-transition contracts; add sentinel
+  tests for fresh allocation, record reuse, pool exhaustion, cross-domain spawn
+  and in-place tile transformation; prove every current actor reaches a fully
+  initialized valid behavior or fails without exposing a record; and present a
+  separately reviewable remediation sequence that gates `ASM-001I`,
+  `ASM-001J`, `GAME-001B`, `GAME-001I` and `GAME-001J`. This is a correctness
+  and ownership audit, not the deferred stylistic rewrite in `ASM-001M`.
 - [ ] **TEST-001 — Autonomous qualification player:** after deterministic
   full-machine input is available, implement a project-owned RAM-driven agent
   that can complete the short qualification maps, emit a replayable input and
   state trace, and distinguish completion, death, stall, and runtime faults.
   Framebuffer-only play is a separate later experiment, not a prerequisite.
+- [ ] **AI-001 — Autonomous gameplay laboratory:** build a research layer on
+  the headless emulator without coupling experimental training to the stable
+  `TEST-001` qualification player.
+
+  - [ ] **AI-001A — Episode and step interface:** expose a versioned structured
+    RAM observation, normalized keyboard action, deterministic reset/seed/map
+    selection, bounded frame advance, snapshots, score delta, terminal reason
+    and fault state. The controller may inject input but must not patch gameplay
+    RAM. Acceptance: the same build, initial snapshot, seed and action trace
+    reproduce the same observations and score; parallel episodes cannot share
+    mutable state; and no-render fast-forward is byte-equivalent at admitted
+    observation boundaries to canonical headless execution.
+  - [ ] **AI-001B — Deliberative agent pilot:** let the development agent read
+    one structured game observation, explain its tactical assessment, choose a
+    keyboard action plus bounded hold duration, advance the emulator and repeat.
+    Preserve the complete observation/action/reasoning trace so play can be
+    reviewed and replayed without another model call. This explicitly realizes
+    “teach Codex to play Nurples”; it is a bounded interactive experiment, not
+    the mechanism used for millions of episodes.
+  - [ ] **AI-001C — Local mass-training bot:** benchmark and select a compact
+    policy/search representation, then run budgeted parallel headless episodes
+    locally with no language-model calls, network dependency or per-turn token
+    use. Train across an admitted map/seed curriculum while maintaining a raw-
+    score hall of fame. Episode limits and terminal oracles must reject hangs,
+    faults and unbounded score farming. Final ranking uses the game's actual
+    score; completion, progress, lives and elapsed frames are recorded as
+    tie-breakers rather than silently replacing the objective. Checkpoint the
+    trainer, policy, build identity and champion input trace so long searches
+    are resumable and auditable.
+  - [ ] **AI-001D — Champion qualification and promotion:** replay the maximum-
+    earning candidate on the canonical emulator with exact build/map/seed/
+    policy hashes, compare every admitted state checkpoint, and preserve its
+    run as a versioned artifact. Maintain a separate across-seed scorecard for
+    robust policies so a spectacular single-seed game is not mistaken for
+    general competence. After human review, export either the champion trace
+    for deterministic attract playback or a bounded compact policy for live
+    nondeterministic attract mode; hardware promotion remains a separate gate.
+  - [ ] **AI-001E — MechAgon portability proof:** coordinate the reusable
+    episode/training layer with MechAgon, whose ordinary gameplay is already
+    bot-driven. Keep reset/step orchestration, isolated parallel workers,
+    deterministic seeding, snapshots, checkpoints, policy provenance,
+    tournaments and champion storage game-neutral. Nurples and MechAgon each
+    retain their own observation adapter, action vocabulary, objectives and
+    terminal rules. Acceptance: one versioned runner contract executes admitted
+    episodes for both games without either importing the other's game logic;
+    deterministic traces reproduce independently; MechAgon can run bot-versus-
+    bot populations while Nurples can run score-maximizing single-player
+    populations; and fixes discovered by either consumer are regression-tested
+    against both adapters before the shared interface changes.
 - [x] **PY-001 — Current asset build orchestrator:** audit and rebuild
   `build_00_all_the_things.py` only for assets consumed by the current Purple
   Nurples game. Derive the required stages from the current source and
