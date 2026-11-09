@@ -1,3 +1,9 @@
+electrode_custom_begin: equ actor_record_custom
+electrode_custom_end: equ electrode_custom_begin
+    .if electrode_custom_end-electrode_custom_begin
+        dl electrode_custom_span_mismatch
+    .endif
+
 electrode_defaults:
     db tile_electrode       ; type
     dl BUF_TILE_BLANK       ; base_bufferId

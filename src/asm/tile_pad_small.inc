@@ -1,3 +1,9 @@
+pad_small_custom_begin: equ actor_record_custom
+pad_small_custom_end: equ pad_small_custom_begin
+    .if pad_small_custom_end-pad_small_custom_begin
+        dl pad_small_custom_span_mismatch
+    .endif
+
 pad_small_defaults:
     db tile_pad_small       ; type
     dl BUF_TILE_PAD_0       ; base_bufferId

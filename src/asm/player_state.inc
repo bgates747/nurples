@@ -1,3 +1,9 @@
+player_custom_begin: equ actor_record_custom
+player_custom_end: equ player_custom_begin
+    .if player_custom_end-player_custom_begin
+        dl player_custom_span_mismatch
+    .endif
+
 player_defaults:
     db player               ; type
     dl BUF_SHIP_0L          ; base_bufferId
@@ -180,11 +186,8 @@ kill_player:
 ; set player collision flag to dead
     ld ix,player_begin
     res sprite_alive,(ix+sprite_collisions)
-; change seeker move program to move_enemy_seeker_orbit
-    ld iy,seekers_base
-    ld hl,move_enemy_seeker_orbit
-    ld b,seekers_max
-    call change_sprite_group_move_program
+; ask each live seeker to enter its initialized orbit state
+    call seeker_group_enter_orbit
 ; set player state to dying
     xor a
     ld (player_dying_phase),a

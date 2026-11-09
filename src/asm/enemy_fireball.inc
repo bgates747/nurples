@@ -1,3 +1,9 @@
+fireball_custom_begin: equ actor_record_custom
+fireball_custom_end: equ fireball_custom_begin
+    .if fireball_custom_end-fireball_custom_begin
+        dl fireball_custom_span_mismatch
+    .endif
+
 speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
 fireballs_max: equ 4
 
@@ -26,8 +32,9 @@ enemy_spawn_fireball:
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
 ; ------------------------------------------------
-; copy sprite heading and component velocities from targeting_computer
-    ld hl,(Bearing_t)
+; Copy the final projectile heading and component velocities from the targeting
+; computer. Bearing_t points directly at the player; Heading_p includes lead.
+    ld hl,(Heading_p)
     ld de,128*256 ; rotate 128 degrees
     add hl,de
     ld (ix+sprite_heading),hl
@@ -44,6 +51,15 @@ enemy_spawn_fireball:
     ld de,(ix+sprite_yvel)
     add hl,de
     ld (ix+sprite_y),hl
+; select the heading-derived artwork immediately rather than exposing frame
+; zero for the first complete eight-tick animation interval
+    push ix
+    pop iy
+    call sprite_frame_heading_animation
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    ld a,(iy+sprite_frame)
+    call vdu_sprite_select_frame
     ret
 ; end enemy_spawn_fireball
 

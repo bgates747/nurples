@@ -1061,3 +1061,27 @@ a runner that supports MechAgon populations and Nurples single-player training
 without conditional game logic has earned that description. Cross-project
 implementation and repository placement should be coordinated with MechAgon's
 owner when `AI-001A` begins rather than improvised from this game checkout.
+
+## 20. First accepted implementation slice
+
+The actor-record audit remediation and `GAME-001H` fireball presentation repair
+were visually accepted on 2026-11-09. The accepted production behavior is:
+
+1. every new fireball receives its directional frame at spawn rather than
+   displaying pooled frame zero for the first eight-tick interval;
+2. its displayed heading uses `Heading_p`, the final lead-adjusted projectile
+   heading, before applying the artwork's required half-turn; and
+3. both animation banks retain that orientation as the projectile travels.
+
+The diagnostic Alexe fixture disabled seeker spawning and fireball/player
+collision, then shortened turret reloads from the production 24-55-frame range
+to 6-13 frames. This made moving-player lead shots easy to observe without
+changing production balance. The Author first confirmed that stationary shots
+were already correct and that only lead shots diverged, then accepted the
+corrected build. The fixture-only rate and collision changes were not copied
+back into the game.
+
+The same accepted slice makes explosions deactivate at all playfield edges and
+establishes the actor-tail generation, initialization and transition contracts
+needed for the next player, seeker and turret states. The Oryx checkout was
+released immediately after acceptance with fresh empty-host proof.

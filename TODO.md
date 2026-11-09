@@ -135,7 +135,7 @@ decisions are recorded in the dated development log.
     assembly pass; and an Author play-through confirms the old level's layout,
     artwork, pads, turrets and crater transformations before this item closes.
 
-  - [ ] **GAME-001H — Fireball directional rendering:** make each turret
+  - [x] **GAME-001H — Fireball directional rendering:** make each turret
     fireball's visual orientation come from the same launch heading that
     produces its X/Y velocity. Apply the bitmap's half-turn artwork correction
     only after choosing that launch heading. Select the correct directional

@@ -46,6 +46,7 @@ exit:
 
 ; APPLICATION INCLUDES
     include "state_ids.inc"
+    include "actor_record.inc"
     include "ascii.inc"
     include "collisions.inc"
     include "enemies.inc"

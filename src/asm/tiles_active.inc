@@ -172,6 +172,12 @@ draw_active_tile:
 ; inputs: hl = pointer to new sprite default settings, tile_table_pointer = current tile
 ;         ix = pointer to sprite group, b = number of records in sprite group
 spawn_sprite_from_tile: 
+; fail before allocation if the published source is stale or malformed
+    push hl
+    ld iy,(tile_table_pointer)
+    call tile_table_record_pointer_valid
+    pop hl
+    ret nc
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
     pop hl ; restore pointer to new sprite defaults
@@ -197,8 +203,10 @@ spawn_sprite_from_tile:
     ld (ix+sprite_vel),hl
     ld (ix+sprite_heading),hl
     ld (ix+sprite_orientation),hl
+; initialize the allocator-owned generation and complete actor custom tail
+    call actor_record_begin_lifetime_ix
 ; return to caller
-    set 7,(ix+sprite_type) ; set just spawned flag
+    set actor_type_just_spawned_bit,(ix+sprite_type)
     set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
@@ -207,13 +215,25 @@ spawn_sprite_from_tile:
 ; create a new tile at the same location as the current tile
 ; inputs: tile_table_pointer = current tile
 spawn_active_tile_from_tile:
+; validate the physical source before replacing any of its fields
+    push hl
+    ld iy,(tile_table_pointer)
+    call tile_table_record_pointer_valid
+    pop hl
+    ret nc
 ; copy default settings to new tile
     ld ix,(tile_table_pointer) ; get existing tile record
+; a type transformation starts a new logical lifetime and invalidates durable
+; references to the former actor while preserving world position and motion
+    push hl ; preserve destination defaults across tail initialization
+    call actor_record_begin_lifetime_ix
+    pop hl
     lea ix,ix+tile_definitions ; bump pointer to copy to
     push ix ; pointer to default tile settings
     pop de ; address to copy to
     ld bc,tile_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new tile record
     ld ix,(tile_table_pointer) ; restore pointer to new tile record
+    scf
     ret
 ; end spawn_active_tile_from_tile

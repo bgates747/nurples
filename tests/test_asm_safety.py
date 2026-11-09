@@ -787,6 +787,180 @@ class AssemblySafetyTests(unittest.TestCase):
             measured_defaults,
         )
 
+    def test_actor_record_schema_and_lifetime_boundaries_are_explicit(self) -> None:
+        contract = read_asm("actor_record.inc")
+        self.assertIn("actor_record_size:             equ 64", contract)
+        self.assertIn("actor_record_shared_end:       equ 41", contract)
+        self.assertIn("actor_record_generation:       equ 41", contract)
+        self.assertIn("actor_record_custom:           equ 42", contract)
+        self.assertIn(
+            "actor_record_custom_size:      equ actor_record_size-actor_record_custom",
+            contract,
+        )
+        begin = routine(
+            contract,
+            "actor_record_begin_lifetime_ix",
+            "; end actor_record_begin_lifetime_ix",
+        )
+        self.assertIn("inc a\n    jp nz,@generation_ready", begin)
+        self.assertIn("ld (ix+actor_record_generation),a", begin)
+        self.assertIn("lea hl,ix+actor_record_custom", begin)
+        self.assertIn("ld bc,actor_record_custom_size", begin)
+        self.assertIn("call clear_mem", begin)
+
+        schemas = {
+            "player_state.inc": ("player_custom_begin", "player_custom_end"),
+            "player_laser.inc": (
+                "player_laser_custom_begin",
+                "player_laser_custom_end",
+            ),
+            "enemy_seeker.inc": ("seeker_custom_begin", "seeker_custom_end"),
+            "enemy_fireball.inc": (
+                "fireball_custom_begin",
+                "fireball_custom_end",
+            ),
+            "explosion.inc": ("explosion_custom_begin", "explosion_custom_end"),
+            "tile_pad_small.inc": (
+                "pad_small_custom_begin",
+                "pad_small_custom_end",
+            ),
+            "tile_turret_fireball.inc": (
+                "turret_fireball_custom_begin",
+                "turret_fireball_custom_end",
+            ),
+            "tile_electrode.inc": (
+                "electrode_custom_begin",
+                "electrode_custom_end",
+            ),
+            "tile_lightning.inc": (
+                "lightning_custom_begin",
+                "lightning_custom_end",
+            ),
+            "tile_crater.inc": ("crater_custom_begin", "crater_custom_end"),
+        }
+        for name, (begin_symbol, end_symbol) in schemas.items():
+            with self.subTest(actor=name):
+                source = read_asm(name)
+                self.assertIn(f"{begin_symbol}: equ actor_record_custom", source)
+                self.assertRegex(source, rf"(?m)^{end_symbol}: equ .+$")
+                self.assertIn(f".if {end_symbol}-{begin_symbol}", source)
+
+        constructors = (
+            read_asm("sprites.inc")
+            + read_asm("tile_table.inc")
+            + read_asm("tiles_active.inc")
+        )
+        self.assertEqual(
+            constructors.count("call actor_record_begin_lifetime_ix"),
+            6,
+        )
+
+    def test_actor_spawn_sources_and_sprite_pools_fail_before_publication(self) -> None:
+        sprites = read_asm("sprites.inc")
+        pool = routine(sprites, "sprite_pool_valid", "; end sprite_pool_valid")
+        for base, count in (
+            ("player_lasers_begin", "player_lasers_max"),
+            ("player_begin", "1"),
+            ("seekers_base", "seekers_max"),
+            ("fireballs_base", "fireballs_max"),
+            ("explosions_base", "explosions_max"),
+        ):
+            with self.subTest(pool=base):
+                self.assertIn(f"ld de,{base}", pool)
+                self.assertIn(f"cp {count}", pool)
+
+        sprite_from_sprite = routine(
+            sprites,
+            "spawn_sprite_from_sprite",
+            "; end spawn_sprite_from_sprite",
+        )
+        self.assertLess(
+            sprite_from_sprite.index("call sprite_table_record_pointer_valid"),
+            sprite_from_sprite.index("call table_get_next_id"),
+        )
+
+        tile_table = read_asm("tile_table.inc")
+        tile_from_sprite = routine(
+            tile_table,
+            "spawn_active_tile_from_sprite",
+            "; end spawn_active_tile_from_sprite",
+        )
+        self.assertLess(
+            tile_from_sprite.index("call sprite_table_record_pointer_valid"),
+            tile_from_sprite.index("call tile_table_get_next_id"),
+        )
+
+        active = read_asm("tiles_active.inc")
+        sprite_from_tile = routine(
+            active,
+            "spawn_sprite_from_tile",
+            "; end spawn_sprite_from_tile",
+        )
+        self.assertLess(
+            sprite_from_tile.index("call tile_table_record_pointer_valid"),
+            sprite_from_tile.index("call table_get_next_id"),
+        )
+        transform = routine(
+            active,
+            "spawn_active_tile_from_tile",
+            "; end spawn_active_tile_from_tile",
+        )
+        self.assertLess(
+            transform.index("call tile_table_record_pointer_valid"),
+            transform.index("call actor_record_begin_lifetime_ix"),
+        )
+        self.assertLess(
+            transform.index("call actor_record_begin_lifetime_ix"),
+            transform.index("ldir"),
+        )
+
+    def test_seeker_behavior_transition_initializes_before_publication(self) -> None:
+        seeker = read_asm("enemy_seeker.inc")
+        transition = routine(
+            seeker,
+            "seeker_enter_orbit",
+            "; end seeker_enter_orbit",
+        )
+        publish = transition.index("ld (iy+sprite_move_program),hl")
+        for initialized_field in (
+            "ld (iy+seeker_orbit_origin_x),a",
+            "ld (iy+seeker_orbit_angle),a",
+            "ld (iy+seeker_state),a",
+        ):
+            self.assertLess(transition.index(initialized_field), publish)
+        self.assertIn("ld hl,move_enemy_seeker_orbit_stage1", transition)
+        self.assertNotIn(
+            "change_sprite_group_move_program",
+            read_asm("player_state.inc") + read_asm("sprites.inc"),
+        )
+        self.assertIn("call seeker_group_enter_orbit", read_asm("player_state.inc"))
+
+    def test_confirmed_actor_visual_defects_are_repaired_at_source(self) -> None:
+        explosion = routine(
+            read_asm("explosion.inc"),
+            "move_explosion",
+            "; end move_explosion",
+        )
+        self.assertIn(
+            "call move_sprite\n"
+            "; neg_hlu destroys A on a vertical collision; the published edge byte is the\n"
+            "; only reliable result of the generic mover\n"
+            "    ld a,(sprite_screen_edge)",
+            explosion,
+        )
+
+        fireball = routine(
+            read_asm("enemy_fireball.inc"),
+            "enemy_spawn_fireball",
+            "; end enemy_spawn_fireball",
+        )
+        heading_write = fireball.index("ld (ix+sprite_heading),hl")
+        initial_frame = fireball.index("call sprite_frame_heading_animation")
+        self.assertLess(heading_write, initial_frame)
+        self.assertIn("ld hl,(Heading_p)", fireball[:heading_write])
+        self.assertNotIn("ld hl,(Bearing_t)", fireball[:heading_write])
+        self.assertIn("call vdu_sprite_select_frame", fireball[initial_frame:])
+
     def test_crater_spawn_and_transform_have_separate_contexts(self) -> None:
         crater = read_asm("tile_crater.inc")
         activate = block(
@@ -1120,12 +1294,14 @@ class AssemblySafetyTests(unittest.TestCase):
         for handler in (
             "move_player_laser",
             "en_nav_seek_zag",
-            "move_enemy_seeker_orbit",
             "move_enemy_seeker_orbit_stage1",
             "move_enemy_fireball",
             "move_explosion",
         ):
             self.assertIn(f"ld de,{handler}", whitelist)
+        self.assertIn("cp seeker_state_seek", whitelist)
+        self.assertIn("cp seeker_state_orbit", whitelist)
+        self.assertNotIn("ld de,move_enemy_seeker_orbit\n", whitelist)
 
         mover = routine(source, "move_sprite_group", "; end move_sprite_group")
         self.assertLess(

@@ -1,3 +1,14 @@
+seeker_state_seek: equ 0
+seeker_state_orbit: equ 1
+seeker_custom_begin: equ actor_record_custom
+seeker_state: equ seeker_custom_begin
+seeker_orbit_origin_x: equ seeker_state+1
+seeker_orbit_angle: equ seeker_orbit_origin_x+1
+seeker_custom_end: equ seeker_orbit_angle+1
+    .if seeker_custom_end-seeker_custom_begin-3
+        dl seeker_custom_span_mismatch
+    .endif
+
 seekers_count: db 0
 seekers_max: equ 3
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
@@ -28,10 +39,16 @@ enemy_spawn_seeker:
 ; other specific initialization
     ld hl,speed_seeker
     ld (ix+sprite_vel),hl
+    ld a,seeker_state_seek
+    ld (ix+seeker_state),a
     ret
 ; end enemy_spawn_seeker
 
-move_enemy_seeker_orbit:
+; Enter orbit through an actor-owned initializer. Publish the legal callback
+; only after every field owned by the target state is ready.
+; inputs: iy = validated live seeker record
+; destroys: a,de,hl
+seeker_enter_orbit:
 ; compute x coordinate of orbit origin based on sprite id
     ld a,seeker_min_sprite_id
     sub (iy+sprite_id)
@@ -40,29 +57,32 @@ move_enemy_seeker_orbit:
     mlt hl
     ld a,64 ; 1/4 of the playing field width
     add a,l ; a = x coordinate of orbit origin
-    ld (iy+sprite_move_step),a ; as good a place as any to store it
-; initialize orbit angle
+    ld (iy+seeker_orbit_origin_x),a
+; initialize orbit angle and local state
     xor a
-    ld (iy+sprite_orientation),a
-; ; initialize move timer
-;     inc a ; set to 1
-;     ld (iy+sprite_move_timer),a
-; init done, so update move program
-    ld hl,move_enemy_seeker_orbit_stage1 ; update move program pointer
+    ld (iy+seeker_orbit_angle),a
+    ld a,seeker_state_orbit
+    ld (iy+seeker_state),a
+; publish the initialized target behavior last
+    ld hl,move_enemy_seeker_orbit_stage1
     ld (iy+sprite_move_program),hl
+    scf
+    ret
+; end seeker_enter_orbit
+
+; Compatibility entry for reviewed legacy callers. Stored callbacks use only
+; the persistent stage below.
+move_enemy_seeker_orbit:
+    call seeker_enter_orbit
 ; fall through to the persistent orbit behavior
 move_enemy_seeker_orbit_stage1:
-; ; check whether time to update orbit angle
-;     dec (iy+sprite_move_timer)
-;     jp nz,@F ; not time to change so simply movethe sprite on the current heading
-;     inc (iy+sprite_move_timer) ; reset timer to 1
 ; update the target coordinates based on orbit angle and radius
-    inc (iy+sprite_orientation) ; increment angle
+    inc (iy+seeker_orbit_angle)
     ld hl,0 ; clear hlu and l
-    ld h,(iy+sprite_orientation) ; uh.l = angle
+    ld h,(iy+seeker_orbit_angle) ; uh.l = angle
     ld de,128*256 ; ud.e = radius
     call polar_to_cartesian ; u.bc, u.de = x,y offsets
-    ld a,(iy+sprite_move_step) ; x coordinate of orbit origin
+    ld a,(iy+seeker_orbit_origin_x)
     add a,b ; add x offset
     ld bc,0 ; bcu and c
     ld b,a ; ub.c = x
@@ -77,6 +97,36 @@ move_enemy_seeker_orbit_stage1:
     call move_sprite ; move the sprite
     jp move_enemy_seeker
 ; end move_enemy_seeker_orbit
+
+; Transition every live seeker without accepting an arbitrary callback or
+; caller-supplied pool range.
+seeker_group_enter_orbit:
+    ld iy,seekers_base
+    ld b,seekers_max
+@loop:
+    push bc
+    call sprite_table_record_pointer_valid
+    jp nc,@bad_record
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@next
+    ld a,(iy+sprite_type)
+    and actor_type_mask
+    cp enemy_air
+    jp nz,@bad_record
+    call seeker_enter_orbit
+@next:
+    lea iy,iy+table_record_size
+    pop bc
+    djnz @loop
+    scf
+    ret
+@bad_record:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_record,(hl)
+    pop bc
+    xor a
+    ret
+; end seeker_group_enter_orbit
 
 move_enemy_seeker:
     ld ix,player_begin

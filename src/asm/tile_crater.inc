@@ -1,3 +1,9 @@
+crater_custom_begin: equ actor_record_custom
+crater_custom_end: equ crater_custom_begin
+    .if crater_custom_end-crater_custom_begin
+        dl crater_custom_span_mismatch
+    .endif
+
 crater_defaults:
     db tile_crater          ; type
     dl BUF_CRATER_A      ; base_bufferId

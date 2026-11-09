@@ -1,5 +1,5 @@
 ; ###### tile TABLE FIELD INDICES ######
-tile_table_record_size:         equ  64; bytes per tile record
+tile_table_record_size:         equ  actor_record_size; bytes per tile record
 tile_id:                 equ   0; 1 bytes ;unique tileId, zero-based
 ; tile state variables
 tile_state_variables:    equ   1; beginning of tile state variables
@@ -28,6 +28,16 @@ tile_points:             equ  38; 1 bytes ;points awarded for killing this tile 
 tile_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 tile_frame:              equ  40; 1 bytes ;current animation frame
 tile_definitions_size:   equ  tile_frame-tile_definitions+1
+tile_custom:             equ  actor_record_custom
+    .if tile_table_record_size-actor_record_size
+        dl tile_record_size_mismatch
+    .endif
+    .if [tile_definitions+tile_definitions_size]-actor_record_shared_end
+        dl tile_shared_header_span_mismatch
+    .endif
+    .if tile_custom-actor_record_custom
+        dl tile_custom_offset_mismatch
+    .endif
 
 ; ###### tile TABLE VARIABLES ######
 tile_stack: blkb 256*3,0 ; stack of pointers to tile records
@@ -322,9 +332,11 @@ spawn_active_tile:
     ld (ix+tile_orientation),hl
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
+; initialize the allocator-owned generation and complete actor custom tail
+    call actor_record_begin_lifetime_ix
 ; return to caller
-    set 7,(ix+sprite_type) ; set just spawned flag
-    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+    set actor_type_just_spawned_bit,(ix+tile_type)
+    set sprite_alive,(ix+tile_collisions) ; set tile alive flag
     scf ; set carry flag to indicate success
     ret
 ; end spawn_active_tile
@@ -336,6 +348,12 @@ spawn_active_tile:
 ; destroys: a,hl,bc,de,ix
 ; affects: on success, bumps num_active_tiles by one, adds a tile pointer to the top of the tile stack
 spawn_active_tile_from_sprite:
+; fail before allocation if the published source is stale or malformed
+    push hl
+    ld iy,(table_pointer)
+    call sprite_table_record_pointer_valid
+    pop hl
+    ret nc
     push hl ; back up pointer to new tile defaults
     call tile_table_get_next_id ; if available: a = new tile id, ix = pointer to new tile vars
     pop hl ; restore pointer to new tile defaults
@@ -362,9 +380,11 @@ spawn_active_tile_from_sprite:
     ld (ix+tile_orientation),hl
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
+; initialize the allocator-owned generation and complete actor custom tail
+    call actor_record_begin_lifetime_ix
 ; return to caller
-    set 7,(ix+sprite_type) ; set just spawned flag
-    set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
+    set actor_type_just_spawned_bit,(ix+tile_type)
+    set sprite_alive,(ix+tile_collisions) ; set tile alive flag
     scf ; set carry flag to indicate success
     ret
 ; end spawn_active_tile_from_sprite

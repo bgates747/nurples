@@ -1,3 +1,9 @@
+turret_fireball_custom_begin: equ actor_record_custom
+turret_fireball_custom_end: equ turret_fireball_custom_begin
+    .if turret_fireball_custom_end-turret_fireball_custom_begin
+        dl turret_fireball_custom_span_mismatch
+    .endif
+
 turret_fireball_defaults:
     db tile_turret_fireball ; type
     dl BUF_TURRET_000       ; base_bufferId

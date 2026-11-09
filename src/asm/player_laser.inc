@@ -174,3 +174,8 @@ draw_laser:
     ld (ix+bar_val),a ; TODO: this is redundant
     call bar_update_v
     ret
+player_laser_custom_begin: equ actor_record_custom
+player_laser_custom_end: equ player_laser_custom_begin
+    .if player_laser_custom_end-player_laser_custom_begin
+        dl player_laser_custom_span_mismatch
+    .endif

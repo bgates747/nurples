@@ -1,3 +1,9 @@
+explosion_custom_begin: equ actor_record_custom
+explosion_custom_end: equ explosion_custom_begin
+    .if explosion_custom_end-explosion_custom_begin
+        dl explosion_custom_span_mismatch
+    .endif
+
 explosions_max: equ 8
 explosion_animation_count: equ 5
 explosion_animation_ticks: equ 8
@@ -68,7 +74,10 @@ tile_spawn_explosion:
 move_explosion:
 ; run the movement program for the explosion
     call move_sprite
-    or a ; a will be non-zero if have scrolled off screen
+; neg_hlu destroys A on a vertical collision; the published edge byte is the
+; only reliable result of the generic mover
+    ld a,(sprite_screen_edge)
+    or a ; non-zero means the explosion has reached a screen edge
     jp nz,table_deactivate_sprite
 ; do the animations
     dec (iy+sprite_animation_timer)

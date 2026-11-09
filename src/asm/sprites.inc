@@ -9,7 +9,7 @@ player_air: equ 6
 player_ground: equ 7
 
 ; ###### SPRITE TABLE FIELD INDICES ######
-table_record_size:         equ  64; bytes per sprite record
+table_record_size:         equ  actor_record_size; bytes per sprite record
 sprite_id:                 equ   0; 1 bytes ;unique spriteId, zero-based
 ; sprite state variables
 sprite_state_variables:    equ   1; beginning of sprite state variables
@@ -38,6 +38,16 @@ sprite_points:             equ  38; 1 bytes ;points awarded for killing this spr
 sprite_shield_damage:      equ  39; 1 bytes ;shield points deducted for collision
 sprite_frame:              equ  40; 1 bytes ;current animation frame
 sprite_definitions_size:   equ  sprite_frame-sprite_definitions+1
+sprite_custom:             equ  actor_record_custom
+    .if table_record_size-actor_record_size
+        dl sprite_record_size_mismatch
+    .endif
+    .if [sprite_definitions+sprite_definitions_size]-actor_record_shared_end
+        dl sprite_shared_header_span_mismatch
+    .endif
+    .if sprite_custom-actor_record_custom
+        dl sprite_custom_offset_mismatch
+    .endif
 
 ; ###### SPRITE TABLE VARIABLES ######
 ; pointer to top address of current record, initialized to table_base
@@ -47,6 +57,7 @@ table_pointer: dl table_base
 sprite_screen_edge: db #00 
 sprite_fault_bad_record: equ 0
 sprite_fault_bad_move_program: equ 1
+sprite_fault_bad_pool: equ 2
 sprite_fault_flags: db 0 ; latched fail-closed diagnostics
 
 ; ######### COLLISION SPRITE PARAMETERS ##########
@@ -192,6 +203,8 @@ sprites_init:
 ;      otherwise, a = 0, carry reset, ix invalid and must not be dereferenced
 ; destroys: a,b,c,hl,ix
 table_get_next_id:
+    call sprite_pool_valid
+    jp nc,@bad_pool
 @loop:
     bit sprite_alive,(ix+sprite_collisions)
     jr z,@found
@@ -205,7 +218,73 @@ table_get_next_id:
     ld a,(ix+sprite_id)
     scf ; sets carry flag indicating we found a free sprite
     ret ; done
+@bad_pool:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_pool,(hl)
+    xor a
+    ret
 ; end table_get_next_id
+
+; Admit only the five compile-time sprite pools. This prevents a bad caller
+; from scanning or writing across an adjacent actor pool before dispatch-time
+; record validation can contain it.
+; inputs: ix = pool base, b = pool count
+; outputs: carry set only for an exact known base/count pair
+; destroys: a,de,hl
+sprite_pool_valid:
+    ld de,player_lasers_begin
+    call @base_matches
+    jp z,@player_lasers
+    ld de,player_begin
+    call @base_matches
+    jp z,@player
+    ld de,seekers_base
+    call @base_matches
+    jp z,@seekers
+    ld de,fireballs_base
+    call @base_matches
+    jp z,@fireballs
+    ld de,explosions_base
+    call @base_matches
+    jp z,@explosions
+    jp @invalid
+@player_lasers:
+    ld a,b
+    cp player_lasers_max
+    jp z,@valid
+    jp @invalid
+@player:
+    ld a,b
+    cp 1
+    jp z,@valid
+    jp @invalid
+@seekers:
+    ld a,b
+    cp seekers_max
+    jp z,@valid
+    jp @invalid
+@fireballs:
+    ld a,b
+    cp fireballs_max
+    jp z,@valid
+    jp @invalid
+@explosions:
+    ld a,b
+    cp explosions_max
+    jp nz,@invalid
+@valid:
+    scf
+    ret
+@invalid:
+    xor a
+    ret
+@base_matches:
+    push ix
+    pop hl
+    or a
+    sbc hl,de
+    ret
+; end sprite_pool_valid
 
 ; create a new sprite at the prescribed coordinates
 ; inputs: hl = pointer to new sprite default settings, ub.c, ud.e = x,y position 
@@ -240,8 +319,10 @@ spawn_sprite_from_coords:
     ld (ix+sprite_vel),hl
     ld (ix+sprite_heading),hl
     ld (ix+sprite_orientation),hl
+; initialize the allocator-owned generation and complete actor custom tail
+    call actor_record_begin_lifetime_ix
 ; return to caller
-    set 7,(ix+sprite_type) ; set just spawned flag
+    set actor_type_just_spawned_bit,(ix+sprite_type)
     set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
@@ -255,6 +336,12 @@ spawn_sprite_from_coords:
 ; returns: if new sprite available, a = sprite id, ix pointing to new sprite vars, carry set
 ;      otherwise, a = 0, carry reset, ix invalid and must not be dereferenced
 spawn_sprite_from_sprite: 
+; fail before allocation if the published source is stale or malformed
+    push hl
+    ld iy,(table_pointer)
+    call sprite_table_record_pointer_valid
+    pop hl
+    ret nc
     push hl ; back up pointer to new sprite defaults
     call table_get_next_id ; if available: a = new sprite id, ix = pointer to new sprite vars
     pop hl ; restore pointer to new sprite defaults
@@ -280,8 +367,10 @@ spawn_sprite_from_sprite:
     ld (ix+sprite_vel),hl
     ld (ix+sprite_heading),hl
     ld (ix+sprite_orientation),hl
+; initialize the allocator-owned generation and complete actor custom tail
+    call actor_record_begin_lifetime_ix
 ; return to caller
-    set 7,(ix+sprite_type) ; set just spawned flag
+    set actor_type_just_spawned_bit,(ix+sprite_type)
     set sprite_alive,(ix+sprite_collisions) ; set sprite alive flag
     scf ; set carry flag to indicate success
     ret
@@ -316,12 +405,18 @@ sprite_move_program_valid:
     ld a,(iy+sprite_type)
     cp enemy_air
     jp nz,@invalid
+    ld a,(iy+seeker_state)
+    cp seeker_state_seek
+    jp z,@seeker_seek
+    cp seeker_state_orbit
+    jp z,@seeker_orbit
+    jp @invalid
+@seeker_seek:
     ld de,en_nav_seek_zag
     call @matches
     jp z,@valid
-    ld de,move_enemy_seeker_orbit
-    call @matches
-    jp z,@valid
+    jp @invalid
+@seeker_orbit:
     ld de,move_enemy_seeker_orbit_stage1
     call @matches
     jp z,@valid
@@ -436,24 +531,6 @@ move_sprite_group:
     call table_deactivate_sprite
     jp @next_record
 ; end move_sprite_group
-
-; update behavior subroutines for a specified sprite group
-; inputs: hl = pointer to move program, iy = pointer to sprite group, b = number of records in sprite group
-change_sprite_group_move_program:
-@update_loop:
-; check sprite_alive bit to see if sprite is active
-    bit sprite_alive,(iy+sprite_collisions)
-    jp z,@next_record ; ... skip to next record
-; otherwise load the behavior subroutine address
-    ld (iy+sprite_move_program),hl
- ; clear just spawned flag
-    res 7,(iy+sprite_type)
-; fall through to @next_record
-@next_record:
-    lea iy,iy+table_record_size
-    djnz @update_loop ; loop until we've checked all the records
-    ret
-; end change_sprite_group_move_program
 
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly

@@ -1,3 +1,9 @@
+lightning_custom_begin: equ actor_record_custom
+lightning_custom_end: equ lightning_custom_begin
+    .if lightning_custom_end-lightning_custom_begin
+        dl lightning_custom_span_mismatch
+    .endif
+
 lightning_defaults:
     db tile_lightning       ; type
     dl BUF_LIGHTNING_H_0    ; base_bufferId
