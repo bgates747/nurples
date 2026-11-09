@@ -71,7 +71,7 @@ class AgnbContainerTests(unittest.TestCase):
         self.assertIn("ui_agnb_num_images: equ 46", container_counts)
         self.assertIn("game_num_images: equ 355", container_counts)
 
-    def test_target_contains_only_runtime_files(self) -> None:
+    def test_target_contains_only_supported_artifacts(self) -> None:
         files = {
             path.relative_to(PROJECT_ROOT / "tgt").as_posix()
             for path in (PROJECT_ROOT / "tgt").rglob("*")
@@ -84,6 +84,8 @@ class AgnbContainerTests(unittest.TestCase):
                 "game.agnb",
                 "nurples-map-tests.bin",
                 "nurples-map-tests.symbols",
+                "nurples-uart001.bin",
+                "nurples-uart001.symbols",
                 "nurples.bin",
                 "nurples.symbols",
                 "ui.agnb",
