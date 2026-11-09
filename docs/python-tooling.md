@@ -167,6 +167,13 @@ The runtime selection in `nurples_tools/fonts.py` contains only the
 `Lat38-VGA8_8x8.font` face used by the game. The build must not read fonts from
 an emulator SD tree, another checkout, or an Author-specific absolute path.
 
+The tracked `LodeRunner-Hybrid-8x8.font` is generated project-locally from the
+exact provenance-pinned A-Z rows in `nurples_tools.lode_font` plus the current
+Lat38 fallback cells. Both supported current-asset orchestrators generate and
+verify it before the runtime-font copy, even though it is not yet selected for
+deployment. See `docs/lode-runner-font.md` for source hashes and the no-resample
+contract.
+
 Build and verify the deployable `tgt/fonts` binary and
 `src/asm/fonts_list.inc` manifest with:
 

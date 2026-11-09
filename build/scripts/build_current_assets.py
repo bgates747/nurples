@@ -5,6 +5,7 @@ from pathlib import Path
 
 from nurples_tools.current_assets import check_current_assets, write_current_assets
 from nurples_tools.fonts import build_fonts, check_fonts
+from nurples_tools.lode_font import check_lode_font, write_lode_font
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -25,7 +26,8 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.check:
-        differences = check_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
+        differences = check_lode_font(PROJECT_ROOT)
+        differences.extend(check_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST))
         differences.extend(check_current_assets(PROJECT_ROOT))
         if differences:
             for difference in differences:
@@ -34,6 +36,8 @@ def main() -> None:
         print("Current deployable assets are deterministic and up to date.")
         return
 
+    for output in write_lode_font(PROJECT_ROOT):
+        print(f"Generated {output.relative_to(PROJECT_ROOT)}")
     build_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
     outputs = write_current_assets(PROJECT_ROOT)
     for output in outputs:

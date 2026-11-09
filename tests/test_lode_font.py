@@ -57,6 +57,16 @@ class LodeFontTests(unittest.TestCase):
         for relative, expected in outputs.items():
             self.assertEqual((ROOT / relative).read_bytes(), expected, relative)
 
+    def test_supported_asset_orchestrators_own_generation_and_check(self):
+        for relative in (
+            "build/scripts/build_00_all_the_things.py",
+            "build/scripts/build_current_assets.py",
+        ):
+            source = (ROOT / relative).read_text()
+            with self.subTest(relative=relative):
+                self.assertIn("write_lode_font(PROJECT_ROOT)", source)
+                self.assertIn("check_lode_font(PROJECT_ROOT)", source)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -8,6 +8,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from nurples_tools.current_assets import check_current_assets, write_current_assets
 from nurples_tools.fonts import build_fonts, check_fonts
+from nurples_tools.lode_font import check_lode_font, write_lode_font
 from nurples_tools.maps import check_map_include, write_map_include
 
 
@@ -21,6 +22,8 @@ CAMPAIGN_MANIFEST = PROJECT_ROOT / "maps/campaign.toml"
 
 
 def build_assets() -> None:
+    for output in write_lode_font(PROJECT_ROOT):
+        print(f"Generated {output.relative_to(PROJECT_ROOT)}")
     build_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
     for output in write_current_assets(PROJECT_ROOT):
         print(f"Generated {output.relative_to(PROJECT_ROOT)}")
@@ -29,7 +32,8 @@ def build_assets() -> None:
 
 
 def check_assets() -> None:
-    differences = check_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
+    differences = check_lode_font(PROJECT_ROOT)
+    differences.extend(check_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST))
     differences.extend(check_current_assets(PROJECT_ROOT))
     differences.extend(check_map_include(CAMPAIGN_MANIFEST))
     if differences:
