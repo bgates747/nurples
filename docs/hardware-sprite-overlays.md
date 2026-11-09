@@ -100,15 +100,55 @@ same frozen 8x8 bit rows used by the VDP font and expands pixels by integer
 replication. This keeps loading/status text and overlay lettering visibly one
 family while retaining a complete 256-character Agon font.
 
+## Exact feature-variable preservation design
+
+The official buffered-command API can preserve variable 2 without adding a
+CPU-side response protocol. Conditional call command 6 performs a true VDP
+variable-presence test, including the distinction between absent and present
+with value zero. Command 48 can then copy the variable's 16-bit value directly
+into another VDP buffer. The frozen transaction uses these currently unused
+IDs:
+
+| ID | Role |
+|---:|---|
+| 63984 | one-byte original-presence marker, initialized to zero |
+| 63985 | prepared `VDU 23,0,F8,2,value16` restore-set command |
+| 63986 | prepared `VDU 23,0,F9,2` restore-clear command |
+| 63987 | mark-present program: set marker to one, then read variable 2 into the restore-set value bytes |
+| 63988 | snapshot dispatcher: conditionally call 63987 only if variable 2 exists |
+| 63989 | restore dispatcher: call 63985 when the marker is nonzero, otherwise call 63986 |
+| 63990–63993 | two title and two prompt bitmap buffers |
+
+The production image manifests currently end at 2816, the sole runtime font is
+64000, and the existing loose-image temporary buffer is 65534. Startup already
+clears every VDP buffer before loading application assets, so these six control
+buffers do not need to preserve an earlier program's buffer contents. They do
+need to remain allocated until overlay teardown has restored the incoming
+feature-variable state.
+
+Overlay setup writes the marker, both restore commands, the mark-present
+program and both dispatchers, then calls the snapshot dispatcher. Only after
+that call returns may it set variable 2 and mark sprites 20/21 as hardware.
+Overlay teardown hides both sprites, restores the active prefix to 20, clears
+their frame lists, demotes them to software, releases their four bitmap
+buffers, calls the restore dispatcher, and finally clears control buffers
+63984–63989. It must not clear a dispatcher while that dispatcher is running.
+
+The standalone qualification fixture must begin from each of these incoming
+states and prove exact state after repeated setup/teardown: variable 2 absent,
+present with zero, and present with a nonzero sentinel such as `0xBEEF`. It
+must also prove the marker is reset for each new transaction, a prior present
+run cannot contaminate a later absent run, and every control/bitmap buffer is
+released after restoration. This is a frozen implementation design, not target
+evidence; it still requires pinned Alexe and real Console8 qualification.
+
 ## Remaining qualification gates
 
 1. **Feature-variable preservation.** Variable 2 is enabled by *presence*, even
-   when its value is zero. Clearing it does not demote existing sprites. The
-   production game has no qualified variable-readback helper today, so it must
-   not assume the incoming flag was absent. Add and qualify an exact
-   presence/value snapshot and restoration path, or establish a narrower
-   process-wide baseline explicitly. Unknown incoming state is not clean
-   handback.
+   when its value is zero, and clearing it does not demote existing sprites.
+   Implement the frozen VDP-resident transaction above and qualify all three
+   incoming-state cases. Unknown incoming state is not clean handback, and the
+   design alone is not permission to set the flag in production.
 2. **Runtime font and assets.** The 2,048-byte hybrid `.font`, metadata and
    16x16 proof atlas are generated and byte-tested. Make it the sole selected
    runtime font only after a loading/gameplay visual review. Add the four
