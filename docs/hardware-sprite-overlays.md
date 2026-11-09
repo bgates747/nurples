@@ -109,12 +109,12 @@ family while retaining a complete 256-character Agon font.
    presence/value snapshot and restoration path, or establish a narrower
    process-wide baseline explicitly. Unknown incoming state is not clean
    handback.
-2. **Runtime font and assets.** After the font extraction is accepted, generate
-   and verify the 2,048-byte hybrid `.font`, its metadata and a 16x16 proof
-   atlas. Make it the sole selected runtime font only after a loading/gameplay
-   visual review. Add the four immutable overlay RGBA2222 images to the ordinary
-   AGNB catalog with collision-free 16-bit buffer IDs. Keep their buffers alive
-   until both overlay sprites are detached.
+2. **Runtime font and assets.** The 2,048-byte hybrid `.font`, metadata and
+   16x16 proof atlas are generated and byte-tested. Make it the sole selected
+   runtime font only after a loading/gameplay visual review. Add the four
+   immutable overlay RGBA2222 images to the ordinary AGNB catalog with
+   collision-free 16-bit buffer IDs. Keep their buffers alive until both
+   overlay sprites are detached.
 3. **Standalone Alexe proof.** Before production integration, run a bounded
    fixture on the pinned Alexe profile in mode 20. It must show both title
    frames, each prompt frame, transparency over a moving background, immediate
