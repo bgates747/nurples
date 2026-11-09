@@ -16,7 +16,7 @@
   <SetNum>0</SetNum>
   <MapFile>tiles/dg/dg_0_map.csv</MapFile>
   <TilesFile>tiles/dg/dg_0_files.xml</TilesFile>
-  <FileCount>187</FileCount>
+  <FileCount>192</FileCount>
   <BaseBufferId>512</BaseBufferId>
   <Tiles>
     <Tile index="0">tiles/dg/0/000.png</Tile>
@@ -32,6 +32,11 @@
     <Tile index="10">tiles/dg/0/010.png</Tile>
     <Tile index="11">tiles/dg/0/011.png</Tile>
     <Tile index="16">tiles/dg/0/016.png</Tile>
+    <Tile index="17">tiles/dg/0/017.png</Tile>
+    <Tile index="18">tiles/dg/0/018.png</Tile>
+    <Tile index="19">tiles/dg/0/019.png</Tile>
+    <Tile index="20">tiles/dg/0/020.png</Tile>
+    <Tile index="21">tiles/dg/0/021.png</Tile>
     <Tile index="33">tiles/dg/0/033.png</Tile>
     <Tile index="34">tiles/dg/0/034.png</Tile>
     <Tile index="35">tiles/dg/0/035.png</Tile>

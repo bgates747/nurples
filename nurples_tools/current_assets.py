@@ -9,6 +9,7 @@ from PIL import Image
 
 from nurples_tools.agnb import ImageRecord, build_container, validate_records
 from nurples_tools.agnb_verify import verify_container
+from nurples_tools.legacy_tiles import check_legacy_tiles, write_legacy_tiles
 from nurples_tools.ui_art import check_ui_art, ui_manifest, write_ui_art
 from nurples_tools.starfields import check_starfields, write_starfields
 
@@ -22,7 +23,7 @@ EXPECTED_COUNTS = {
     "ui": 46,
     "bg": 4,
     "sprites": 159,
-    "tiles_dg": 187,
+    "tiles_dg": 192,
 }
 
 ROTATING_SPRITES = frozenset({"seeker", "turret", "fireball_2", "fireball_3"})
@@ -221,7 +222,7 @@ def _container_records(
 ) -> tuple[list[ImageRecord], list[ImageRecord]]:
     ui_records = catalogs["ui"]
     game_records = catalogs["bg"] + catalogs["sprites"] + catalogs["tiles_dg"]
-    if len(ui_records) != 46 or len(game_records) != 350:
+    if len(ui_records) != 46 or len(game_records) != 355:
         raise ValueError("UI/game AGNB record-count contract changed")
     return ui_records, game_records
 
@@ -269,6 +270,7 @@ def write_current_assets(project_root: Path) -> list[Path]:
 
     prepared = write_ui_art(project_root)
     prepared.extend(write_starfields(project_root))
+    prepared.extend(write_legacy_tiles(project_root))
     outputs = generate_outputs(project_root, project_root)
     for path, data in outputs.items():
         _write_if_changed(path, data)
@@ -283,6 +285,7 @@ def check_current_assets(project_root: Path) -> list[str]:
         generated = generate_outputs(project_root, temp_root)
         differences = check_ui_art(project_root)
         differences.extend(check_starfields(project_root))
+        differences.extend(check_legacy_tiles(project_root))
         for generated_path, wanted in generated.items():
             relative = generated_path.relative_to(temp_root)
             actual_path = project_root / relative

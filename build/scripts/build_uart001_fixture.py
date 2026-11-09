@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from hashlib import sha256
 from pathlib import Path
+import re
 import shutil
 import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -19,6 +20,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ASM_DIR = PROJECT_ROOT / "src" / "asm"
 FIXTURE = PROJECT_ROOT / "tests" / "asm" / "uart001_fixture.inc"
+FULL_FIXTURE = PROJECT_ROOT / "tests" / "asm" / "uart001_full_frame.inc"
 TARGET_DIR = PROJECT_ROOT / "tgt"
 OUTPUT_BINARY = TARGET_DIR / "nurples-uart001.bin"
 OUTPUT_SYMBOLS = TARGET_DIR / "nurples-uart001.symbols"
@@ -26,6 +28,15 @@ OUTPUT_SYMBOLS = TARGET_DIR / "nurples-uart001.symbols"
 INCLUDE_ANCHOR = '    include "runtime_init.inc"\n'
 PROCESS_INIT_ANCHOR = "    call runtime_process_init\n"
 DISPATCH_ANCHOR = "    call do_game\n"
+PLAYER_INPUT_ANCHOR = "    call player_input\n"
+ESCAPE_ANCHOR = "@escape:\n    call telemetry_request_exit\n"
+
+VDU_BLOCK_WRITE = re.compile(
+    r"(?im)^(?P<indent>[ \t]*)(?:rst\.lil)[ \t]+(?:\$18|18h)\b"
+)
+VDU_BYTE_WRITE = re.compile(
+    r"(?im)^(?P<indent>[ \t]*)(?:rst\.lil)[ \t]+(?:\$10|10h)\b"
+)
 
 
 def replace_once(source: str, old: str, new: str, description: str) -> str:
@@ -35,8 +46,34 @@ def replace_once(source: str, old: str, new: str, description: str) -> str:
     return source.replace(old, new, 1)
 
 
+def redirect_vdu_writes(staged_asm: Path) -> tuple[int, int]:
+    """Route staged VDU writes through the fixture's conditional collector."""
+
+    block_count = 0
+    byte_count = 0
+    for path in sorted((*staged_asm.glob("*.inc"), *staged_asm.glob("*.asm"))):
+        source = path.read_text(encoding="utf-8")
+        source, blocks = VDU_BLOCK_WRITE.subn(
+            r"\g<indent>call uart001_vdu_write", source
+        )
+        source, bytes_ = VDU_BYTE_WRITE.subn(
+            r"\g<indent>call uart001_vdu_write_a", source
+        )
+        if blocks or bytes_:
+            path.write_text(source, encoding="utf-8")
+        block_count += blocks
+        byte_count += bytes_
+    if block_count == 0 or byte_count == 0:
+        raise RuntimeError(
+            "fixture staging found no complete RST 18h/RST 10h VDU write set"
+        )
+    return block_count, byte_count
+
+
 def stage_fixture(staged_asm: Path) -> None:
+    redirect_vdu_writes(staged_asm)
     shutil.copy2(FIXTURE, staged_asm / FIXTURE.name)
+    shutil.copy2(FULL_FIXTURE, staged_asm / FULL_FIXTURE.name)
     entry = staged_asm / "nurples.asm"
     source = entry.read_text(encoding="utf-8")
     source = replace_once(
@@ -57,7 +94,23 @@ def stage_fixture(staged_asm: Path) -> None:
         "    call uart001_do_game\n",
         "main-loop game dispatch",
     )
+    source = replace_once(
+        source,
+        ESCAPE_ANCHOR,
+        "@escape:\n    call uart001_escape\n    call telemetry_request_exit\n",
+        "main-loop escape boundary",
+    )
     entry.write_text(source, encoding="utf-8")
+
+    player = staged_asm / "player_state.inc"
+    source = player.read_text(encoding="utf-8")
+    source = replace_once(
+        source,
+        PLAYER_INPUT_ANCHOR,
+        "    call uart001_player_input\n",
+        "player input dispatch",
+    )
+    player.write_text(source, encoding="utf-8")
 
 
 def publish(staged: Path, destination: Path) -> None:

@@ -8,6 +8,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from nurples_tools.current_assets import check_current_assets, write_current_assets
 from nurples_tools.fonts import build_fonts, check_fonts
+from nurples_tools.maps import check_map_include, write_map_include
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -16,17 +17,21 @@ TARGET_DIR = PROJECT_ROOT / "tgt"
 FONT_SOURCE = PROJECT_ROOT / "assets/fonts"
 FONT_TARGET = TARGET_DIR / "fonts"
 FONT_MANIFEST = ASM_DIR / "fonts_list.inc"
+CAMPAIGN_MANIFEST = PROJECT_ROOT / "maps/campaign.toml"
 
 
 def build_assets() -> None:
     build_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
     for output in write_current_assets(PROJECT_ROOT):
         print(f"Generated {output.relative_to(PROJECT_ROOT)}")
+    campaign_output = write_map_include(CAMPAIGN_MANIFEST)
+    print(f"Generated {campaign_output.relative_to(PROJECT_ROOT)}")
 
 
 def check_assets() -> None:
     differences = check_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
     differences.extend(check_current_assets(PROJECT_ROOT))
+    differences.extend(check_map_include(CAMPAIGN_MANIFEST))
     if differences:
         raise RuntimeError("\n".join(differences))
     print("Current deployable assets are deterministic and up to date.")

@@ -10,6 +10,12 @@ tiles_x_plot: dl 0
     db 0 ; padding for byte-shifting
 tiles_y_plot: dl -15
 
+; GAMEPLAY-ONLY TERRAIN PIPELINE.
+; This loop is deliberately synchronized to one scanline per frame and to the
+; 16x16 terrain-row admission/activation cadence below. Do not generalize it to
+; multi-scanline scrolling or reuse it for level-transition hyperwarp effects.
+; Level transitions must wait for terrain to clear, then use the separate
+; starfield-only transition scroller.
 tiles_plot:
     ld a,(tiles_level_complete)
     or a
@@ -86,6 +92,9 @@ tiles_plot:
 ; end tiles_plot
 
 tiles_scroll_background:
+; GAMEPLAY ONLY: this one-scanline scroll and one-scanline redraw are coupled to
+; tiles_plot's optimized terrain cadence. Do not pass a variable speed here and
+; do not call this helper for fast level-transition scrolling.
 ; set gfx origin to playing field window
     ld bc,origin_left
     ld de,origin_top

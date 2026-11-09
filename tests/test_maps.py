@@ -1,3 +1,4 @@
+import hashlib
 import runpy
 import unittest
 from pathlib import Path
@@ -12,6 +13,7 @@ from nurples_tools.maps import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SUITE_MANIFEST = PROJECT_ROOT / "tests/maps/dg/suite.toml"
+CAMPAIGN_MANIFEST = PROJECT_ROOT / "maps/campaign.toml"
 ACTIVE_GLYPHS = {1: "S", 5: "T", 9: "E", 10: "=", 11: "e", 16: "C"}
 BUILD_MAP_TESTS = runpy.run_path(
     str(PROJECT_ROOT / "build/scripts/build_map_tests.py")
@@ -397,6 +399,39 @@ class StandaloneMapSuiteTests(unittest.TestCase):
         rotated = rotate(source, resolve(levels, 8), len(levels))
         table = rotated.split("tileset_00_levels:\n", 1)[1]
         self.assertTrue(table.startswith("\tdl tileset_00_level_06\n"))
+
+
+class ProductionCampaignTests(unittest.TestCase):
+    def test_modern_campaign_is_followed_by_original_z80_main_level(self) -> None:
+        compiled = compile_map_manifest(CAMPAIGN_MANIFEST)
+
+        self.assertEqual(
+            [(level.name, level.height) for level in compiled.levels],
+            [
+                ("Modern Agon campaign", 256),
+                ("Original Z80 main level", 255),
+            ],
+        )
+        self.assertEqual(
+            compiled.output_path,
+            (PROJECT_ROOT / "src/asm/levels_tileset_0.inc").resolve(),
+        )
+        self.assertEqual(check_map_include(CAMPAIGN_MANIFEST), [])
+
+    def test_original_level_uses_only_mapped_art_and_modern_active_tiles(self) -> None:
+        level = compile_map_manifest(CAMPAIGN_MANIFEST).levels[1]
+        flattened = bytes(tile for row in level.runtime_rows for tile in row)
+
+        self.assertEqual(
+            set(flattened),
+            {0, 1, 5, 17, 18, 19, 20, 21},
+        )
+        self.assertEqual(flattened.count(1), 20)  # modern animated launch pads
+        self.assertEqual(flattened.count(5), 25)  # modern animated laser turrets
+        self.assertEqual(
+            hashlib.sha256(flattened).hexdigest(),
+            "0ba9dfa16c0489a0ac998c42962bb99322bd0b65253d9498d245f66b245197d2",
+        )
 
 
 if __name__ == "__main__":

@@ -31,8 +31,8 @@ class AgnbContainerTests(unittest.TestCase):
         self.assertEqual(len(self.ui_records), 46)
         self.assertEqual(len(self.catalogs["bg"]), 4)
         self.assertEqual(len(self.catalogs["sprites"]), 159)
-        self.assertEqual(len(self.catalogs["tiles_dg"]), 187)
-        self.assertEqual(len(self.game_records), 350)
+        self.assertEqual(len(self.catalogs["tiles_dg"]), 192)
+        self.assertEqual(len(self.game_records), 355)
         self.assertEqual(
             [record.family for record in self.game_records[:5]],
             ["bg", "bg", "bg", "bg", "sprites"],
@@ -54,7 +54,7 @@ class AgnbContainerTests(unittest.TestCase):
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
         self.assertEqual(len(ui), 246_844)
-        self.assertEqual(len(game), 367_168)
+        self.assertEqual(len(game), 368_688)
         verify_container(ui, self.ui_records)
         verify_container(game, self.game_records)
 
@@ -69,7 +69,7 @@ class AgnbContainerTests(unittest.TestCase):
             self.assertNotIn("fn_", rendered)
         container_counts = render_container_include(self.ui_records, self.game_records)
         self.assertIn("ui_agnb_num_images: equ 46", container_counts)
-        self.assertIn("game_num_images: equ 350", container_counts)
+        self.assertIn("game_num_images: equ 355", container_counts)
 
     def test_target_contains_only_runtime_files(self) -> None:
         files = {

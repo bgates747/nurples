@@ -55,12 +55,14 @@ The current game build has four explicit actions:
 .venv/bin/python build/scripts/build_00_all_the_things.py --all
 ```
 
-`--assets` first prepares the four accepted cel UI images and four starfield
-tiles, then builds the one
-runtime font plus `ui.agnb` and `game.agnb` from the RGBA2222 payloads under
-`assets/rgba2`. `--check` checks the source-to-payload conversion, decoded PNG
-previews, generated metadata and every packed payload without writing. The
-orchestrator does not deploy files or launch an emulator.
+`--assets` first prepares the four accepted cel UI images, four starfield
+tiles, and the five passive original-Z80 tiles, then builds the one runtime
+font plus `ui.agnb` and `game.agnb` from the RGBA2222 payloads under
+`assets/rgba2`. It also compiles the ordered production campaign manifest into
+`src/asm/levels_tileset_0.inc`. `--check` checks the source-to-payload
+conversion, decoded PNG previews, generated metadata, every packed payload and
+the campaign include without writing. The orchestrator does not deploy files
+or launch an emulator.
 
 ### Cel UI artwork
 
@@ -116,6 +118,29 @@ slices. Canonical Agon64/RGB conversion without dithering writes the same
 RGBA2222 names under `assets/rgba2/bg`; canonical decoding writes previews to
 `tiles/bg/proc`. Both current build entry points prepare these before packing
 `game.agnb`, and their checks include atlas-to-tile reproducibility.
+
+### Original Z80 level and passive artwork
+
+The production campaign is declared by `maps/campaign.toml` and can be built
+or checked independently:
+
+```bash
+.venv/bin/python build/scripts/build_campaign_maps.py
+.venv/bin/python build/scripts/build_campaign_maps.py --check
+```
+
+Level zero remains the modern 256-row Agon map. Level one is the recovered
+original Z80 game's 255-row main level. `tools/import_legacy_z80_level.py` is a
+strict, provenance-only importer that decodes the old row mask and packed tile
+nibbles into the checked-in `tiles/dg/nurples_z80_main.tmx`; the normal build
+does not depend on the recovered checkout or import executable code.
+
+The unchanged old passive sources live under `tiles/dg/legacy_z80`. The asset
+build converts them through Agon64 and canonical `agonutils`, publishes them as
+runtime tile IDs 17 through 21, and updates their Tiled atlas cells. Old tile
+ID 7 maps to modern active ID 1 and old ID 8 maps to modern active ID 5. This
+deliberately preserves the modern launch-pad and laser-turret animations and
+their in-place transformation to modern crater ID 16.
 
 The standalone gameplay-map suite has separate, non-destructive stages:
 

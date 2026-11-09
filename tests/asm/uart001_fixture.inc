@@ -69,6 +69,7 @@ uart001_process_init:
     ld hl,uart001_mode_elapsed
     ld bc,UART001_MODE_COUNT*3
     call clear_mem
+    call uart001_full_process_init
     ret
 ; end uart001_process_init
 
@@ -77,6 +78,9 @@ uart001_do_game:
     ld a,(uart001_halted)
     or a
     jp nz,uart001_recover_or_hold
+    ld a,(uart001_full_active)
+    or a
+    jp nz,uart001_full_tick
     ld a,(uart001_active)
     or a
     jp nz,uart001_tick
@@ -526,10 +530,7 @@ uart001_finish_mode:
     call uart001_begin_mode
     ret
 @complete:
-    ld a,1
-    ld (uart001_complete),a
-    ld (game_exit_requested),a
-    ret
+    jp uart001_full_begin
 @halt:
     ld a,1
     ld (uart001_halted),a
@@ -588,3 +589,5 @@ uart001_positions:
     dl 112*256,128*256
     dl 160*256,128*256
     dl 208*256,128*256
+
+    include "uart001_full_frame.inc"

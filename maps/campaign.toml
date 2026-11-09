@@ -1,0 +1,16 @@
+# Ordered production campaign. The compiler reverses each TMX's Tiled
+# top-to-bottom rows into the runtime's bottom-to-top ingestion order.
+
+format_version = 1
+symbol_prefix = "tileset_00"
+tileset = "../tiles/dg/dg0.tsx"
+tile_catalog = "../tiles/dg/dg_0_files.xml"
+output = "../src/asm/levels_tileset_0.inc"
+
+[[levels]]
+name = "Modern Agon campaign"
+source = "../tiles/dg/dg0_03.tmx"
+
+[[levels]]
+name = "Original Z80 main level"
+source = "../tiles/dg/nurples_z80_main.tmx"

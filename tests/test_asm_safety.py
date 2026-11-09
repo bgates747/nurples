@@ -90,7 +90,7 @@ class AssemblySafetyTests(unittest.TestCase):
 
         self.assertIn('ui_agnb_filename:   db "ui.agnb",0', images)
         self.assertIn('game_agnb_filename: db "game.agnb",0', images)
-        self.assertIn("game_num_images: equ 350", counts)
+        self.assertIn("game_num_images: equ 355", counts)
         self.assertIn("ld de,game_num_images*256", images)
         self.assertIn("ld hl,logo_y_end", images)
         self.assertIn("ld (game_load_callback_overflow),a", images)

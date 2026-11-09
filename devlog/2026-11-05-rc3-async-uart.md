@@ -218,3 +218,77 @@ The Author subsequently confirmed that a repeated `RUN` in the same emulator
 and MOS session also passes. This closes the fixture's restart-initialization
 acceptance item. After a fresh empty-host inspection, Nurples released Oryx
 generation 330 at 2026-11-06T05:15:56Z; no successor was queued.
+
+## Full-frame continuation
+
+The accepted sprite-only proof is now extended in source to the planned
+full-frame performance case. The isolated staging builder redirects every
+production block VDU write (`RST 18h`) and single-byte VDU write (`RST 10h`)
+through conditional fixture collectors. Collection remains dormant during
+startup, mode setup, fences and teardown. During a measured frame, fragmented
+mode both records and forwards each original write; packetized synchronous and
+asynchronous modes record the same bytes and emit the completed packet once.
+This boundary therefore includes passive tiles, active tiles, the player,
+lasers, seekers, fireballs, explosions, HUD/bar changes, score text and an
+explicit sprite-update tail without modifying the production helpers.
+
+Each control rebuilds the same real game scene and fixed seed, then executes
+1,200 logical frames with a 120-frame warm-up. A staged-only player-input seam
+uses a repeatable 128-frame left/neutral/right/neutral cycle and requests a
+laser every 32 frames; production movement, laser timers, collision handlers,
+actor behavior, tile activation and rendering remain in the path. Per-frame
+output length/hash and a compact actor/collision state hash are compared by
+logical frame against the fragmented reference. Exact byte-stream comparison
+remains a host-capture acceptance requirement rather than relying on the guest
+fingerprint alone.
+
+The asynchronous arm uses two 2,048-byte static packet buffers, one outstanding
+submission and the accepted flag-only callback. Packet N may remain in flight
+while the next outer scheduler iteration computes and builds N+1 in the other
+buffer. The next submit waits for source release but not TEMT; physical TEMT and
+a fresh ordered text-colour reply remain mode/quit teardown boundaries. The
+fixture exports per-mode measured elapsed ticks, timer drift, callback counts,
+bytes, maximum packet size, frame/update/send tails and missed deadlines, plus
+the first divergent logical frame and bounded Escape drain latency.
+
+Pi5 is `aarch64` and has no canonical `ez80asm`, so the standing compiler
+fallback routed the finite assembly to Oryx. Generation 332 assembled the first
+full-frame source in 0.02 seconds without launching an emulator, produced a
+55,212-byte binary and exported every required observation symbol. It was
+released with fresh empty-host evidence and handed Oryx to VDPlet. Static review
+then corrected three issues before runtime: preserve the caller's original AF
+through both collectors, initialize the mismatch sentinel as full 24-bit
+`FFFFFF`, and clear the upper byte before the mode-times-three `MLT`.
+
+Oryx generation 334 assembled that corrected R02 source in 0.02 seconds, again
+without launching an emulator. The verified outputs are:
+
+1. `tgt/nurples-uart001.bin` — 55,198 bytes, SHA256
+   `cb2f56cad1248be0b81560b37809351d5bd8650d013c85d99623120356d6015c`.
+2. `tgt/nurples-uart001.symbols` — 54,770 bytes, SHA256
+   `af9638d867e921ca8ba08337b13e257d3604e2dddb76b2972e5ac11b51ad8f1e`.
+
+The targeted fixture/profile suite passes all five tests. Generation 334 was
+released with fresh empty-host evidence and the queued successor was notified.
+No emulator profile or run has yet been created for this continuation.
+
+## Production-game Flexe observation: host-speed sensitivity and first-loss freeze
+
+The Author separately exercised the latest full production game under Flexe on
+Oryx. This was not the UART-001 fixture. The deployed `nurples.bin` is the
+36,439-byte production artifact from the current `dev` baseline, SHA256
+`63c89d2676f6645631b2240f23002b8b68d45069979a4804ca7d14f34e720088`.
+
+With Oryx's physical host CPU boost disabled, the game failed to load its assets
+on four consecutive attempts. After the Author enabled Oryx host CPU boost, the
+same production game loaded normally. The boosted run then froze at the first
+player-ship loss. These observations concern the Oryx host's CPU setting; the
+Flexe eZ80 `--unlimited_cpu` option was not enabled.
+
+This is a repeatable correlation, not yet a cause assignment. In particular,
+the observation does not by itself distinguish host scheduling/pacing trouble,
+an asset-loader timeout or race, or a game-state transition defect at player
+loss. The result has been forwarded to the Flexe owner for source/evidence
+assessment. No further boosted run is requested: the Author is turning Oryx
+CPU boost back off because sustained boosted Flexe operation is known to risk
+host overheating.
