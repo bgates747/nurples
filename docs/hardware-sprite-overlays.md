@@ -74,18 +74,19 @@ releases their backing buffers.
 
 The game runs in physical mode 20, 512x384. Its central playfield begins at
 physical `(128,48)` and is 256 pixels wide. A 240x64 title therefore centers at
-physical X=136; a 160x16 prompt centers at X=176. Their Y positions must not
+physical X=136; a 208x16 prompt centers at X=152. Their Y positions must not
 overlap, both to keep the wording legible and to ensure the scanline compositor
 sees at most one wide overlay on any row. Hardware sprites do not inherit the
 256-pixel graphics viewport, so code must validate the full physical extents
 before every placement.
 
-The current source masters are 240x64 and 160x16, exact Agon64 colors with
-binary alpha. Smith subsequently selected the original Lode Runner uppercase
-font; those masters remain a rollback until the 6502 agent supplies a
-provenance-pinned extraction. The replacement must preserve source pixels and
-use integer nearest-neighbor scaling only—never bilinear, bicubic, quadratic,
-antialiasing or palette reduction.
+The current source masters are 240x64 and 208x16, exact Agon64 colors with
+binary alpha. They use the provenance-pinned original Lode Runner uppercase
+font extracted by the 6502 project from the running game's RAM sprite table at
+`$AD00`. The verified 10x11 source carries three blank top rows and its eight
+art rows fit exactly in one byte for A-Z, so the 8x8 adaptation is a lossless
+crop rather than a resize. Enlarged overlay pixels use integer replication
+only—never bilinear, bicubic, quadratic, antialiasing or palette reduction.
 
 The extraction is also intended to become the game's canonical 8x8 runtime
 font, not merely private overlay geometry. Its Agon `.font` is exactly 256
@@ -118,7 +119,7 @@ family while retaining a complete 256-character Agon font.
    fixture on the pinned Alexe profile in mode 20. It must show both title
    frames, each prompt frame, transparency over a moving background, immediate
    move/show/hide behavior, correct higher-ID ordering, and clean repeated
-   setup/teardown. Inspect for scanline instability with each 240- and 160-pixel
+   setup/teardown. Inspect for scanline instability with each 240- and 208-pixel
    sprite separately; do not infer wide-sprite capacity from slot count.
 4. **Lifecycle proof.** Production qualification must repeat GAME OVER → new
    game and TITLE → new game cycles, proving the active prefix returns to 20,

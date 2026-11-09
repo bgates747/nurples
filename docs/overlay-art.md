@@ -6,13 +6,16 @@ tracked SVG masters under `assets/vector/overlays/` and exact-size transparent
 PNG previews under `assets/img/proc/overlays/`:
 
 - `game_over_0` and `game_over_1`: 240x64 alternating colour frames;
-- `press_any_key_to_continue`: 160x16 game-over prompt;
-- `press_any_key_to_start`: 160x16 attract-mode prompt.
+- `press_any_key_to_continue`: 208x16 game-over prompt;
+- `press_any_key_to_start`: 208x16 attract-mode prompt.
 
 Every visible channel value is one of 0, 85, 170 or 255 and alpha is binary.
-The drawings use no external fonts, antialiasing, resampling, palette reduction
+The drawings use the exact 8x8 Lode Runner uppercase rows documented in
+`docs/lode-runner-font.md`; those same rows build the prospective runtime font.
+They use no external font renderer, antialiasing, resampling, palette reduction
 or image transformer. SVG and PNG therefore share the same source geometry and
-the PNG files are already valid Agon64 artwork.
+the PNG files are already valid Agon64 artwork. Large letters are integer
+rectangles equivalent to nearest-neighbour expansion.
 
 Regenerate or verify them from the project environment:
 

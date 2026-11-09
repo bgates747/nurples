@@ -13,6 +13,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from nurples_tools.lode_font import LODE_UPPERCASE_ROWS
+
 
 RGBA = tuple[int, int, int, int]
 Point = tuple[int, int]
@@ -26,28 +28,6 @@ MAGENTA: RGBA = (255, 0, 255, 255)
 ORANGE: RGBA = (255, 170, 0, 255)
 PALE_YELLOW: RGBA = (255, 255, 85, 255)
 WHITE: RGBA = (255, 255, 255, 255)
-
-
-# A compact 5x7 drafting alphabet.  Only geometry needed by the selected
-# overlays is kept here; adding a phrase with a new letter fails loudly.
-GLYPHS = {
-    "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
-    "C": ("01111", "10000", "10000", "10000", "10000", "10000", "01111"),
-    "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
-    "G": ("01111", "10000", "10000", "10111", "10001", "10001", "01110"),
-    "I": ("11111", "00100", "00100", "00100", "00100", "00100", "11111"),
-    "K": ("10001", "10010", "10100", "11000", "10100", "10010", "10001"),
-    "M": ("10001", "11011", "10101", "10101", "10001", "10001", "10001"),
-    "N": ("10001", "11001", "10101", "10011", "10001", "10001", "10001"),
-    "O": ("01110", "10001", "10001", "10001", "10001", "10001", "01110"),
-    "P": ("11110", "10001", "10001", "11110", "10000", "10000", "10000"),
-    "R": ("11110", "10001", "10001", "11110", "10100", "10010", "10001"),
-    "S": ("01111", "10000", "10000", "01110", "00001", "00001", "11110"),
-    "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
-    "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
-    "V": ("10001", "10001", "10001", "10001", "10001", "01010", "00100"),
-    "Y": ("10001", "10001", "01010", "00100", "00100", "00100", "00100"),
-}
 
 
 @dataclass(frozen=True)
@@ -76,7 +56,7 @@ class Drawing:
 
 
 def _text_width(text: str, scale: int) -> int:
-    return (len(text) * 6 - 1) * scale
+    return len(text) * 8 * scale
 
 
 def _glyph_rectangles(
@@ -91,13 +71,13 @@ def _glyph_rectangles(
         if character == " ":
             continue
         try:
-            rows = GLYPHS[character]
+            rows = LODE_UPPERCASE_ROWS[character]
         except KeyError as error:
             raise ValueError(f"no vector glyph for {character!r}") from error
-        glyph_x = x + character_index * 6 * scale
+        glyph_x = x + character_index * 8 * scale
         for row, pixels in enumerate(rows):
-            for column, pixel in enumerate(pixels):
-                if pixel == "1":
+            for column in range(8):
+                if pixels & (0x80 >> column):
                     rectangles.append(Rectangle(
                         glyph_x + column * scale,
                         y + row * scale,
@@ -114,9 +94,9 @@ def game_over_drawing(frame: int) -> Drawing:
         raise ValueError("GAME OVER frame must be 0 or 1")
     width, height = 240, 64
     text = "GAME OVER"
-    scale = 4
+    scale = 3
     x = (width - _text_width(text, scale)) // 2
-    y = 17
+    y = 20
     face = PALE_YELLOW if frame == 0 else MAGENTA
     accent = MAGENTA if frame == 0 else ORANGE
     shadow = DARK_MAGENTA if frame == 0 else VIOLET
@@ -136,7 +116,7 @@ def game_over_drawing(frame: int) -> Drawing:
 
 
 def prompt_drawing(text: str) -> Drawing:
-    width, height = 160, 16
+    width, height = 208, 16
     scale = 1
     text_width = _text_width(text, scale)
     if text_width > width:

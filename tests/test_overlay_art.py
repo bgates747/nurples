@@ -53,9 +53,9 @@ class OverlayArtTests(unittest.TestCase):
         self.assertEqual((drawings["game_over_1"].width,
                           drawings["game_over_1"].height), (240, 64))
         self.assertEqual((drawings["press_any_key_to_continue"].width,
-                          drawings["press_any_key_to_continue"].height), (160, 16))
+                          drawings["press_any_key_to_continue"].height), (208, 16))
         self.assertEqual((drawings["press_any_key_to_start"].width,
-                          drawings["press_any_key_to_start"].height), (160, 16))
+                          drawings["press_any_key_to_start"].height), (208, 16))
 
     def test_game_over_frames_change_color_not_geometry(self):
         first = game_over_drawing(0)
