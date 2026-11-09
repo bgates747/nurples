@@ -3,6 +3,20 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **FW-001 — Pinned firmware-default compatibility audit:** inventory
+  every current Purple Nurples production binary, test fixture, emulator
+  profile, deployment bundle, and hardware candidate. Verify VDPlet
+  `v0.1.2-alpha` release artifacts against its published `SHA256SUMS`, and
+  verify Eirene MOS `3.1.0_uart0_rc_3` `mos-rc3.bin` as 100,879 bytes with
+  SHA256
+  `d7a51147f3381cd68d56f3fbe4605434a897dfae1b049269afeba09ec2b7eb50`.
+  Classify each candidate as compatible, blocked, obsolete, or an inherent
+  justified firmware exception for Alexe, Olimex, Console8, and applicable
+  emulator qualification. Record exact hashes, provenance, deployment/runtime
+  pins, missing evidence, and required remediation in the dated development
+  log before any further deployment or hardware qualification. Do not flash,
+  deploy, rebuild, or alter emulator profiles merely to complete the audit.
+
 - [ ] **UART-001 — RC3 asynchronous render qualification:** integrate the
   tagged Eirene MOS `3.1.0_uart0_rc_3` syscall-25h sender behind a controlled
   game fixture. First compare an output-silent `move_sprite_group` cohort using
