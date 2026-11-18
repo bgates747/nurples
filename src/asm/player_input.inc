@@ -98,11 +98,13 @@ player_keyboard_directions:
     ld (iy+sprite_yvel),hl
 @frame:
 ; a should land here loaded with the correct frame
+    ld (iy+sprite_frame),a ; retain the last commanded pose for damaged flight
     call vdu_sprite_select_frame
 ; draw player at updated position
     ld iy,player_begin
     ld (table_pointer),iy
     call move_sprite
+    call player_enforce_play_ceiling
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168

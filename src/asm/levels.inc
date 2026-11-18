@@ -144,6 +144,12 @@ init_level:
 ; end init_level
 
 init_bg:
+; Scroll commands expose the graphics background before the replacement
+; bitmap strip is plotted. Match that fill to the opaque starfield ground so
+; fast scrolling cannot flash black/violet seams between queued VDP commands.
+    xor a ; plotting mode 0
+    ld c,16+128 ; darkest blue, matching the starfield base
+    call vdu_gcol
 ; draw initial background tiles 
     ld hl,BUF_BG_STARS_0
     call vdu_buff_select

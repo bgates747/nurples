@@ -24,9 +24,9 @@ def read_symbols(path: Path) -> dict[str, int]:
 class StateCoreQualificationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.assembler = shutil.which("ez80asm") or str(
-            Path.home() / ".local/bin/ez80asm"
-        )
+        cls.assembler = shutil.which("ez80asm")
+        if cls.assembler is None:
+            raise unittest.SkipTest("ez80asm is not installed on this host")
 
     def stage_fixture(self, root: Path, fixture_source: str | None = None) -> Path:
         staged_asm = root / "src/asm"

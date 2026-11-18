@@ -111,7 +111,7 @@ uart001_full_setup_mode:
     call draw_player_cockpit
     call set_gfx_playing_field
     call init_bg
-    call player_init
+    call player_init_respawn
     ret nc
     ld hl,game_playing
     ld (game_state),hl

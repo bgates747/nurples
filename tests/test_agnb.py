@@ -25,6 +25,7 @@ class AgnbContainerTests(unittest.TestCase):
             cls.catalogs["bg"]
             + cls.catalogs["sprites"]
             + cls.catalogs["tiles_dg"]
+            + cls.catalogs["overlays"]
         )
 
     def test_catalog_contract_and_global_ids(self) -> None:
@@ -32,7 +33,8 @@ class AgnbContainerTests(unittest.TestCase):
         self.assertEqual(len(self.catalogs["bg"]), 4)
         self.assertEqual(len(self.catalogs["sprites"]), 159)
         self.assertEqual(len(self.catalogs["tiles_dg"]), 192)
-        self.assertEqual(len(self.game_records), 355)
+        self.assertEqual(len(self.catalogs["overlays"]), 4)
+        self.assertEqual(len(self.game_records), 359)
         self.assertEqual(
             [record.family for record in self.game_records[:5]],
             ["bg", "bg", "bg", "bg", "sprites"],
@@ -49,12 +51,16 @@ class AgnbContainerTests(unittest.TestCase):
             [record.buffer_id for record in self.catalogs["bg"]],
             list(range(1024, 1028)),
         )
+        self.assertEqual(
+            [record.buffer_id for record in self.catalogs["overlays"]],
+            list(range(63_990, 63_994)),
+        )
 
     def test_checked_in_containers_match_every_catalog_payload(self) -> None:
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
         self.assertEqual(len(ui), 246_844)
-        self.assertEqual(len(game), 368_688)
+        self.assertEqual(len(game), 406_256)
         verify_container(ui, self.ui_records)
         verify_container(game, self.game_records)
 
@@ -69,7 +75,7 @@ class AgnbContainerTests(unittest.TestCase):
             self.assertNotIn("fn_", rendered)
         container_counts = render_container_include(self.ui_records, self.game_records)
         self.assertIn("ui_agnb_num_images: equ 46", container_counts)
-        self.assertIn("game_num_images: equ 355", container_counts)
+        self.assertIn("game_num_images: equ 359", container_counts)
 
     def test_target_contains_only_supported_artifacts(self) -> None:
         files = {

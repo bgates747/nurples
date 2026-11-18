@@ -1,6 +1,3 @@
-; hello_world: asciz "Welcome to Purple Nurples!"
-; loading_time: asciz "Loading time:"
-loading_complete: asciz "Press any key to continue."
 original_screen_mode: db 0
 original_text_foreground: db c_white
 original_text_background: db c_black
@@ -58,7 +55,7 @@ game_init:
     call vdu_colour_text
 ; set gfx bg color
     xor a ; plotting mode 0
-    ld a,26+128 ; violet
+    ld c,26+128 ; violet
     call vdu_gcol
     call vdu_cls
 ; set the cursor off
@@ -74,81 +71,14 @@ game_init:
 ; load all backgrounds, sprites, and active DG tiles from one container
     call load_game_images
     jp nz,@agnb_load_error
-; print loading complete message and wait for user keypress
+; The loader is complete. Enter the bounded resident-asset attract lifecycle;
+; it owns the release-gated start prompt and the separate joystick-choice
+; boundary without another blocking wait or asset reload.
     ld a,STATE_NEW_EVENT_LOAD_COMPLETE
     call telemetry_post_events
     ld a,STATE_NEW_TITLE
     call telemetry_publish_phase
-    call choose_joystick
-    call vdu_cls
-    call printInline
-    asciz "Press any key to continue."
-    call vdu_flip 
-    call waitKeypress
-; set up display for gameplay
-    ld a,STATE_NEW_EVENT_START
-    call telemetry_post_events
-    ld a,STATE_NEW_NEW_GAME
-    call telemetry_publish_phase
-    ld a,20
-    call vdu_set_screen_mode
-    xor a
-    call vdu_set_scaling
-    call vdu_cursor_off
-; select font
-    ld hl,Lat38_VGA8_8x8
-    ld a,1 ; flags
-    call vdu_font_select
-; plot bezel art
-    ld hl,BUF_BEZEL_L
-    call vdu_buff_select
-    ld bc,0
-    ld de,0
-    call vdu_plot_bmp
-    ld hl,BUF_BEZEL_R
-    call vdu_buff_select
-    ld bc,384
-    ld de,0
-    call vdu_plot_bmp
-; draw player cockpit
-    call draw_player_cockpit
-; set gfx origin and viewport to playing field window
-    call set_gfx_playing_field
-    call init_bg ; plot the starry background
-; VDU 28, left, bottom, right, top: Set text viewport **
-    ld c,0 ; left
-    ld d,0 ; top
-    ld e,62 ; right
-    ld b,48; bottom
-    call vdu_set_txt_viewport
-; initialize the global timestamp
-    call timestamp_tick
-; initialize new-session values before init_level displays them
-    ld hl,0
-    ld (player_score),hl
-    ld (player_starting_score),hl
-    ld a,(player_ships_max)
-    ld (player_ships),a
-; a new session starts from the canonical background selection
-    ld hl,BUF_BG_STARS_0
-    ld (bg_bufferId),hl
-; initialize runtime tables and the first level
-    call reset_runtime_tables
-    ld a,STATE_NEW_LEVEL_ENTER
-    call telemetry_publish_phase
-    ld a,tiles_dg
-    call init_tileset
-; initialize player
-    call draw_player_ships
-    call player_init
-    ret nc ; retry game_init next frame rather than publishing an invalid player
-; set the game state to playing
-    ld hl,game_playing
-    ld (game_state), hl
-; set game playing substates
-    ld hl,enemies_alive
-    ld (enemies_state), hl
-; done initializing
+    call game_attract_begin
     ret
 
 @font_load_error:
@@ -178,6 +108,84 @@ game_init:
     ld (game_exit_requested),a
     ret
 ; end game_init
+
+; Prepare the reusable mode-20 presentation/playfield surface. This routine
+; owns no session, actor or level state and never loads or clears VDP assets.
+game_prepare_playfield:
+    ld a,20
+    call vdu_set_screen_mode
+    xor a
+    call vdu_set_scaling
+    call vdu_cursor_off
+; select font
+    ld hl,Lat38_VGA8_8x8
+    ld a,1 ; flags
+    call vdu_font_select
+; plot bezel art
+    ld hl,BUF_BEZEL_L
+    call vdu_buff_select
+    ld bc,0
+    ld de,0
+    call vdu_plot_bmp
+    ld hl,BUF_BEZEL_R
+    call vdu_buff_select
+    ld bc,384
+    ld de,0
+    call vdu_plot_bmp
+; draw player cockpit
+    call draw_player_cockpit
+; set gfx origin and viewport to playing field window
+    call set_gfx_playing_field
+; The resident RAM value may name the last level's background after an
+; in-process restart. Publish the canonical starfield before plotting it.
+    ld hl,BUF_BG_STARS_0
+    ld (bg_bufferId),hl
+    call init_bg ; plot the starry background
+; VDU 28, left, bottom, right, top: Set text viewport **
+    ld c,0 ; left
+    ld d,0 ; top
+    ld e,62 ; right
+    ld b,48; bottom
+    call vdu_set_txt_viewport
+; initialize the global timestamp
+    call timestamp_tick
+    ret
+; end game_prepare_playfield
+
+; Initialize one clean playable session from already resident assets.
+; outputs: carry set after publishing game_playing; carry clear on player init
+;          failure, with the caller's global state left in place for recovery
+game_new_session_init:
+    ld a,STATE_NEW_EVENT_START
+    call telemetry_post_events
+    ld a,STATE_NEW_NEW_GAME
+    call telemetry_publish_phase
+; initialize new-session values before init_level displays them
+    ld hl,0
+    ld (player_score),hl
+    ld (player_starting_score),hl
+    ld a,(player_ships_max)
+    ld (player_ships),a
+; initialize runtime tables and the first level
+    call reset_runtime_tables
+    ld a,STATE_NEW_LEVEL_ENTER
+    call telemetry_publish_phase
+    ld a,tiles_dg
+    call init_tileset
+; initialize player
+    call draw_player_ships
+    call player_init_level_entry
+    ret nc ; caller retains its state rather than publishing an invalid player
+; set the game state to playing
+    ld hl,game_playing
+    ld (game_state), hl
+; set game playing substates
+    ld hl,enemies_alive
+    ld (enemies_state), hl
+; done initializing
+    scf
+    ret
+; end game_new_session_init
 
 ; Use the existing one-line splash viewport; Y/N is case-insensitive.
 ; Every visit chooses afresh, including a game restart without reloading RAM.

@@ -1,8 +1,11 @@
 ; Game state variables
 game_state:  dl game_main_menu
 game_fault_bad_state: equ 0
+game_fault_presentation: equ 1
+game_fault_session_init: equ 2
 game_fault_flags: db 0 ; latched fail-closed diagnostics
 game_exit_requested: db 0 ; main-loop handoff; state handlers must return normally
+game_level_transition_active: db 0
 
 do_game:
     ld hl,(game_state)   ; Load the current game state
@@ -21,6 +24,12 @@ do_game:
 ; inputs/outputs: hl = candidate handler; carry set only for an exact match
 ; destroys: a,de
 game_state_pointer_valid:
+    ld de,game_attract
+    call @matches
+    jp z,@valid
+    ld de,game_start_config
+    call @matches
+    jp z,@valid
     ld de,game_main_menu
     call @matches
     jp z,@valid
@@ -85,37 +94,62 @@ game_paused:
     ret
 
 game_level_transition:
+    ld a,(game_level_transition_active)
+    or a
+    jp nz,@step
+; Publish the non-hostile actor phase before any transition-world update.
+    ld iy,player_begin
+    call player_victory_init
+    ld hl,player_victory
+    ld (player_state),hl
+    call seeker_group_enter_orbit
+    call level_transition_init
+    ld a,1
+    ld (game_level_transition_active),a
+@step:
+    call level_transition_step
+    jp c,@complete
+    ld a,(level_transition_frame_policy)
+    and LEVEL_TRANSITION_POLICY_TERRAIN
+    jp z,@starfield
+; The existing gameplay-only path remains exactly one line per frame. With the
+; level-complete latch set it scrolls pixels without reading another map row.
+    call tiles_plot
+    jp @world
+@starfield:
+    ld a,(level_transition_frame_speed)
+    call starfield_warp_scroll
+@world:
+    call do_player
+    call do_enemies
+    call move_explosions
+    call move_tiles
+    ld bc,0
+    ld de,0
+    call vdu_set_gfx_origin
+    call draw_shields
+    call draw_laser
+    call draw_fuel
+    ret
+@complete:
+    xor a
+    ld (game_level_transition_active),a
+; The loop has settled at centre and the warp has returned to speed one.
+; Admit the next level without clearing the resident world or score.
     call next_level
-    ld hl, game_playing
-    ld (game_state), hl
+    ld iy,player_begin
+    set sprite_alive,(iy+sprite_collisions)
+    ld hl,player_alive
+    ld (player_state),hl
+    call seeker_group_enter_seek
+    ld hl,game_playing
+    ld (game_state),hl
     ret
 
 game_over:
-; set text colors
-    ld a,16+128 ; darkest blue
-    call vdu_colour_text
-    ld a,58 ; dark orange
-    call vdu_colour_text
-; print game over and prompt
-    ld c,27 ; x
-    ld b,16 ; y
-    call vdu_move_cursor
-    call printInline
-    asciz "GAME OVER!"
-    ld c,19 ; x
-    ld b,17 ; y
-    call vdu_move_cursor
-    call printInline
-    asciz "Press any key to continue."
-    ld a,%00100000 ; wait just a tick before polling for input
-    call multiPurposeDelay
-    call waitKeypress
-; initialize a new game
-    ld a,STATE_NEW_EVENT_START
-    call telemetry_post_events
-    ld hl,game_init
-    ld (game_state),hl
-    ret
+; Retain the established global pointer while replacing its blocking legacy
+; body with the bounded hardware-overlay lifecycle.
+    jp game_over_bounded
 
 game_victory:
     ; Unimplemented legacy state: remain here deterministically.

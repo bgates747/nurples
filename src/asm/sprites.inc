@@ -410,6 +410,10 @@ sprite_move_program_valid:
     jp z,@seeker_seek
     cp seeker_state_orbit
     jp z,@seeker_orbit
+    cp seeker_state_retreat_pad
+    jp z,@seeker_retreat_pad
+    cp seeker_state_retreat_edge
+    jp z,@seeker_retreat_edge
     jp @invalid
 @seeker_seek:
     ld de,en_nav_seek_zag
@@ -418,6 +422,16 @@ sprite_move_program_valid:
     jp @invalid
 @seeker_orbit:
     ld de,move_enemy_seeker_orbit_stage1
+    call @matches
+    jp z,@valid
+    jp @invalid
+@seeker_retreat_pad:
+    ld de,move_enemy_seeker_retreat_pad
+    call @matches
+    jp z,@valid
+    jp @invalid
+@seeker_retreat_edge:
+    ld de,move_enemy_seeker_retreat_edge
     call @matches
     jp z,@valid
     jp @invalid

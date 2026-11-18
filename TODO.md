@@ -230,6 +230,53 @@ decisions are recorded in the dated development log.
     isolation and terminal watchdogs as replay mode; this is not a gate for the
     minimum attract screen or deterministic replay.
 
+- [ ] **MATH-001 — Review the production 16.8 trigonometry contract:** local
+  owner task for central survey `VDPL-037` identifiers `NUM-01`, `FUP-001`,
+  `FUP-004`, `WIRE-001`, `WIRE-002`, `WIRE-004` and `WIRE-005`; see
+  `/Agon/mystuff/agon-vdplet/docs/tasks/VDPL-037/NUMERIC-METHODS-SURVEY.md`.
+  Treat the survey finding as an unverified defect report and review
+  `src/asm/fixed168.inc` independently of `GAME-001`. In particular, determine
+  whether the active `sin168` path consumes the fractional angle byte or
+  overwrites it while constructing a three-byte table index, whether its
+  documented interpolation and endpoint samples are reachable, and whether
+  the behavior is intentional, defective or different from the intended or
+  historical implementation. Assume neither a winning method nor a repair.
+
+  **Execution hold:** this entry is task preparation only. Do not begin its
+  source inventory, audit, experiment, code change, build, test, benchmark,
+  reservation, device/firmware work, adoption or peer dispatch until Smith
+  discusses and directly releases the review. Existing retained evidence may
+  be named by the task, but it is not authority to refresh or extend it.
+
+  When released, freeze the exact current source, binary, generated listing,
+  lookup tables and calling conventions before analysis. Inventory every
+  active `sin168`, `cos168` and `atan2_168fast` caller and its input/output
+  representation, required precision, range, wrap/quadrant/negative-angle
+  semantics, register/flag ABI and conversion boundary. Record provenance and
+  licences for the current tables, any recovered historical implementation and
+  any candidate reusable method; comparison does not imply permission to copy.
+
+  Compare lookup-only execution with the intended interpolation and with
+  relevant central-survey candidates using actual generated eZ80 code and
+  complete caller costs. Accuracy evidence must cover the full angle domain or
+  an equivalently complete proof, cardinal and quadrant boundaries, negative
+  angles, wrap, discontinuities, rounding, overflow, upper-byte safety and
+  `atan2_168fast` zero-axis cases. Proposed matched measurements must keep
+  emulator correctness distinct from real-processor timing and account for
+  table/code bytes, cycles, conversions, caller frequency and any future
+  explicit angle256 wire encoding on both processors; isolated microkernel
+  timing cannot select a winner.
+
+  Failure controls: retain the frozen baseline; make no in-place production
+  replacement during review; fail closed on out-of-domain inputs or ABI drift;
+  require deterministic reference vectors and independent output comparison;
+  and keep any eventual migration separately reviewed and reversible. Return
+  to `VDPL-037` a concise source/evidence inventory, measured contract and
+  error/range results, provenance/licence findings, consumer-impact matrix,
+  reusable-method assessment, and repair/migration recommendation—or a finding
+  that no change is warranted. No production math code or consumer changes
+  before that return is reviewed.
+
 - [ ] **FW-002 — Pinned-default runtime qualification:** preserve the frozen
   historical emulator profiles, then prepare a separately reviewed Alexe
   profile whose VDP runtime representation is proven to match VDPlet
@@ -238,8 +285,9 @@ decisions are recorded in the dated development log.
   and whose MOS is Eirene `3.1.0_uart0_rc_3`
   (`d7a51147f3381cd68d56f3fbe4605434a897dfae1b049269afeba09ec2b7eb50`).
   Qualify the current production bundle there before map or UART continuation.
-  For Olimex, use Extender's exact standard selector and selected integrated
-  EMOS; do not run UART-001 there until a reviewed variant handles the EMOS
+  For Olimex procedures and current production baseline, use only the
+  [canonical bench guide](/Agon/mystuff/agon-extender/docs/operations/olimex-bench/README.md).
+  Do not run UART-001 there until a reviewed variant handles the EMOS
   syscall-25h admission result. For Console8, verify both installed release
   images before the separately authorized human run. Record exact profile,
   firmware, bundle and result identities; no older profile or prior hardware

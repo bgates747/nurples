@@ -1,7 +1,65 @@
 player_custom_begin: equ actor_record_custom
-player_custom_end: equ player_custom_begin
-    .if player_custom_end-player_custom_begin
+player_death_base_frame: equ player_custom_begin
+player_death_turn_timer: equ player_death_base_frame+1
+player_death_wiggle_timer: equ player_death_turn_timer+1
+player_entry_angle: equ player_death_wiggle_timer+1
+player_entry_timer: equ player_entry_angle+1
+player_grace_timer: equ player_entry_timer+1
+player_entry_warp_enabled: equ player_grace_timer+1
+player_entry_warp_stage: equ player_entry_warp_enabled+1
+player_entry_warp_timer: equ player_entry_warp_stage+1
+player_entry_warp_hold_timer: equ player_entry_warp_timer+1
+player_entry_amplitude: equ player_entry_warp_hold_timer+1
+player_entry_target_x_actor: equ player_entry_amplitude+1
+player_entry_target_y_actor: equ player_entry_target_x_actor+1
+player_entry_direction: equ player_entry_target_y_actor+1
+player_custom_end: equ player_entry_direction+1
+    .if player_custom_end-player_custom_begin-14
         dl player_custom_span_mismatch
+    .endif
+
+player_play_ceiling: equ 64
+player_entry_start_y: equ 320
+player_entry_target_x: equ 120
+player_entry_target_y: equ 224
+player_grace_frames: equ 60
+player_entry_fast_hold_frames: equ 56
+player_entry_warp_stage_frames: equ 7
+player_entry_warp_stage_count: equ 8
+player_entry_warp_total_frames: equ player_entry_warp_stage_frames*player_entry_warp_stage_count
+player_entry_total_frames: equ player_entry_fast_hold_frames+player_entry_warp_total_frames
+player_entry_initial_angle: equ 192
+player_entry_angle_step: equ 8
+player_entry_initial_amplitude: equ 112
+player_entry_y_velocity: equ -219 ; -0.855 px/frame; final residue is snapped
+player_entry_start_y_offset: equ 96
+player_death_lateral_speed: equ 1*256
+player_death_forward_speed: equ -64 ; -0.25 pixel/frame in 16.8 fixed
+
+; The level-start starfield holds maximum speed for one complete old-entrance
+; duration, then reaches gameplay's one-scanline pace over the next 56 frames.
+; Mid-level respawn uses the same ship path with this actor-owned effect
+; disabled, because scrolling the rasterized playfield would detach existing
+; terrain from its records.
+player_entry_warp_speeds:
+    db 16,12,8,6,4,3,2,1
+player_entry_warp_speeds_end:
+    .if player_entry_warp_speeds_end-player_entry_warp_speeds-player_entry_warp_stage_count
+        dl player_entry_warp_speed_count_mismatch
+    .endif
+    .if player_entry_fast_hold_frames-player_entry_warp_total_frames
+        dl player_entry_warp_duration_mismatch
+    .endif
+
+; The damped sine begins near the left edge and can never leave the actor's
+; horizontal runway. Its final subpixel vertical residue is snapped to the
+; reviewed endpoint before grace begins.
+player_entry_start_x: equ player_entry_target_x-player_entry_initial_amplitude
+    .if player_entry_start_x-8
+        dl player_entry_start_x_mismatch
+    .endif
+    .if player_entry_target_x+player_entry_initial_amplitude-232
+        dl player_entry_right_extent_mismatch
     .endif
 
 player_defaults:
@@ -26,6 +84,7 @@ player_event_none: equ 0
 player_event_game_over: equ 1
 player_event: db player_event_none
 player_fault_bad_state: equ 0
+player_fault_bad_entry_warp: equ 1
 player_fault_flags: db 0 ; latched fail-closed diagnostics
 player_dying_phase_initial: equ 0
 player_dying_phase_delay: equ 1
@@ -96,10 +155,19 @@ player_state_pointer_valid:
     ld de,player_alive
     call @matches
     jp z,@valid
+    ld de,player_spawning
+    call @matches
+    jp z,@valid
+    ld de,player_grace
+    call @matches
+    jp z,@valid
     ld de,player_dying
     call @matches
     jp z,@valid
     ld de,player_dead
+    call @matches
+    jp z,@valid
+    ld de,player_victory
     call @matches
     jp z,@valid
     xor a
@@ -115,11 +183,151 @@ player_state_pointer_valid:
     ret
 ; end player_state_pointer_valid
 
+; World components consume this published lifecycle policy themselves. The
+; coordinator continues calling them. Travel resumes with intangible grace so
+; the one-second safety state does not freeze the live world after entrance.
+; outputs: carry set while normal world travel is enabled
+player_world_travel_enabled:
+    ld hl,(player_state)
+    ld de,player_alive
+    or a
+    sbc hl,de
+    jp z,@travel
+    ld hl,(player_state)
+    ld de,player_grace
+    or a
+    sbc hl,de
+    jp z,@travel
+    ld hl,(player_state)
+    ld de,player_victory
+    or a
+    sbc hl,de
+    jp z,@travel
+; GAME OVER owns no player update, but its global presentation state explicitly
+; keeps the ordinary one-scanline terrain pipeline and active scenery moving.
+; The actor consults that published global phase; the scheduler does not rewrite
+; the actor's local dead state merely to obtain world travel.
+    ld hl,(game_state)
+    ld de,game_over
+    or a
+    sbc hl,de
+    jp nz,@paused
+@travel:
+    scf
+    ret
+@paused:
+    xor a
+    ret
+; end player_world_travel_enabled
+
+; Publish the actor-owned level-start starfield speed to the global renderer.
+; Mid-level respawn keeps this disabled so existing terrain pixels and records
+; remain spatially coherent. Carry set means A is a validated 1..16 speed.
+player_entry_starfield_speed:
+    ld hl,(player_state)
+    ld de,player_spawning
+    or a
+    sbc hl,de
+    jp nz,@inactive
+    ld iy,player_begin
+    ld a,(iy+player_entry_warp_enabled)
+    or a
+    jp z,@inactive
+    ld a,(iy+player_entry_warp_hold_timer)
+    or a
+    jp z,@decelerating
+    ld a,16
+    scf
+    ret
+@decelerating:
+    ld a,(iy+player_entry_warp_stage)
+    cp player_entry_warp_stage_count
+    jp c,@stage_valid
+; A malformed actor field degrades to ordinary one-scanline starfield travel.
+    ld hl,player_fault_flags
+    set player_fault_bad_entry_warp,(hl)
+    ld a,player_entry_warp_stage_count-1
+    ld (iy+player_entry_warp_stage),a
+@stage_valid:
+    ld hl,player_entry_warp_speeds
+    ld de,0
+    ld e,a
+    add hl,de
+    ld a,(hl)
+    scf
+    ret
+@inactive:
+    xor a
+    ret
+; end player_entry_starfield_speed
+
+; Hold maximum speed for 56 frames, then advance eight equal seven-frame
+; deceleration stages. The final stage deliberately holds speed one until
+; player_spawning publishes GRACE.
+player_entry_starfield_advance:
+    ld iy,player_begin
+    ld a,(iy+player_entry_warp_hold_timer)
+    or a
+    jp z,@decelerating
+    dec a
+    ld (iy+player_entry_warp_hold_timer),a
+    ret
+@decelerating:
+    dec (iy+player_entry_warp_timer)
+    ret nz
+    ld a,(iy+player_entry_warp_stage)
+    cp player_entry_warp_stage_count-1
+    jp nc,@hold_normal
+    inc a
+    ld (iy+player_entry_warp_stage),a
+    ld a,player_entry_warp_stage_frames
+    ld (iy+player_entry_warp_timer),a
+    ret
+@hold_normal:
+    ld a,player_entry_warp_stage_count-1
+    ld (iy+player_entry_warp_stage),a
+    ld a,1
+    ld (iy+player_entry_warp_timer),a
+    ret
+; end player_entry_starfield_advance
+
+; Reserve a visible runway above ordinary player input for damaged flight.
+; inputs: IY = player record
+player_enforce_play_ceiling:
+    ld hl,(iy+sprite_y)
+    ld de,player_play_ceiling*256
+    or a
+    sbc hl,de
+    ret p
+    ld hl,player_play_ceiling*256
+    ld (iy+sprite_y),hl
+    ld hl,0
+    ld (iy+sprite_yvel),hl
+    ret
+; end player_enforce_play_ceiling
+
+; Select whether the shared entrance owns a starfield-only fast approach.
+player_init_level_entry:
+    ld a,1
+    jp player_init
+; end player_init_level_entry
+
+player_init_respawn:
+    xor a
+    jp player_init
+; end player_init_respawn
+
 ; set initial player position
-; inputs: none,everything is hardcoded
+; inputs: A = nonzero only when no terrain has entered the playfield yet
 ; outputs: player_x/y set to bottom-left corner of screen
 ; destroys: pretty much everything
 player_init:
+    and 1
+    push af ; preserve the requested presentation policy through allocation/VDU setup
+; Resolve both level-start and respawn endpoints through the same bounded
+; active-tile query. An empty level naturally selects the canonical point.
+    call player_spawn_resolve_endpoint
+    jp nc,@resolution_failed
     ld a,(player_shields_max)
     ld (player_shields),a
     ld a,(laser_power_max)
@@ -143,11 +351,10 @@ player_init:
 ; set player sprite record with defaults
     ld ix,player_begin
     ld hl,player_defaults
-    ld bc,0*256
-    ld de,sprite_bottom*256
+    call player_entry_load_start_coords
     ld a,1
     call spawn_sprite_from_coords
-    ret nc ; IX is invalid when the one-record player pool is full
+    jp nc,@allocation_failed ; IX is invalid when the one-record player pool is full
     res 7,(ix+sprite_type)
 ; load sprite frames
     ld a,(ix+sprite_id)
@@ -160,16 +367,193 @@ player_init:
     ld hl,BUF_SHIP_2R
     call vdu_sprite_add_buff
 @draw:
-    ld bc,0*256
-    ld de,sprite_bottom*256
+    call player_entry_load_start_coords
     call vdu_sprite_move_abs168
     call vdu_sprite_show
-    ld hl,player_alive
+; The shared entrance owns first visibility and collision publication.
+    res sprite_alive,(ix+sprite_collisions)
+    ld a,(player_spawn_resolved_x)
+    ld (ix+player_entry_target_x_actor),a
+    ld a,(player_spawn_resolved_y)
+    ld (ix+player_entry_target_y_actor),a
+    ld a,(player_spawn_resolved_direction)
+    ld (ix+player_entry_direction),a
+    or a
+    ld a,2 ; positive-X entrances begin on the left, banking right
+    jp z,@entry_pose_ready
+    xor a ; negative-X entrances begin on the right, banking left
+@entry_pose_ready:
+    ld (ix+sprite_frame),a
+    call vdu_sprite_select_frame
+    ld a,(ix+player_entry_direction)
+    or a
+    ld a,player_entry_initial_angle
+    jp z,@entry_angle_ready
+    ld a,64
+@entry_angle_ready:
+    ld (ix+player_entry_angle),a
+    ld a,player_entry_total_frames
+    ld (ix+player_entry_timer),a
+    xor a
+    ld (ix+player_grace_timer),a
+    ld (ix+player_entry_warp_stage),a
+    pop af
+    ld (ix+player_entry_warp_enabled),a
+    ld a,player_entry_warp_stage_frames
+    ld (ix+player_entry_warp_timer),a
+    ld a,player_entry_fast_hold_frames
+    ld (ix+player_entry_warp_hold_timer),a
+    ld a,player_entry_initial_amplitude
+    ld (ix+player_entry_amplitude),a
+    ld hl,0
+    ld (ix+sprite_xvel),hl
+    ld hl,player_entry_y_velocity
+    ld (ix+sprite_yvel),hl
+    ld hl,player_spawning
     ld (player_state),hl
-    set sprite_alive,(ix+sprite_collisions)
     scf ; publish successful initialization to the caller
     ret
+@allocation_failed:
+    pop af
+    xor a
+    ret
+@resolution_failed:
+    pop af
+    xor a
+    ret
 ; end player_init
+
+; Reconstruct the resolved off-screen start in 16.8 coordinates.
+; outputs: BC = start X, DE = start Y
+player_entry_load_start_coords:
+    ld a,(player_spawn_resolved_x)
+    ld c,player_entry_initial_amplitude
+    ld hl,player_spawn_resolved_direction
+    bit 0,(hl)
+    jp nz,@from_right
+    sub c
+    jp @x_ready
+@from_right:
+    add a,c
+@x_ready:
+    ld bc,0
+    ld b,a
+    ld a,(player_spawn_resolved_y)
+    add a,player_entry_start_y_offset
+    ld de,0
+    ld d,a
+    ret
+; end player_entry_load_start_coords
+
+; Draw the player record after an actor-owned scripted update.
+; inputs: IY = player record
+player_draw_record:
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    ld bc,(iy+sprite_x)
+    ld de,(iy+sprite_y)
+    call vdu_sprite_move_abs168
+    ld a,(iy+sprite_frame)
+    call vdu_sprite_select_frame
+; Scripted player states pause terrain drawing, so no later plot is guaranteed
+; to flush queued sprite positions. Publish the move now; otherwise the VDP
+; holds every entrance/death update until grace resumes world drawing and the
+; ship appears to teleport to its final position.
+    call vdu_sprite_update
+    ret
+; end player_draw_record
+
+player_spawning:
+    ld iy,player_begin
+    ld (table_pointer),iy
+    call move_sprite
+    call player_entry_damped_swoop
+    call player_draw_record
+    call player_entry_starfield_advance
+    dec (iy+player_entry_timer)
+    ret nz
+; Snap the final subpixel residue to the shared, reviewed endpoint.
+    ld hl,0
+    ld h,(iy+player_entry_target_x_actor)
+    ld (iy+sprite_x),hl
+    ld hl,0
+    ld h,(iy+player_entry_target_y_actor)
+    ld (iy+sprite_y),hl
+    ld hl,0
+    ld (iy+sprite_xvel),hl
+    ld (iy+sprite_yvel),hl
+    ld a,1
+    ld (iy+sprite_frame),a
+    ld a,player_grace_frames
+    ld (iy+player_grace_timer),a
+    call player_draw_record
+    ld hl,player_grace
+    ld (player_state),hl
+    ret
+; end player_spawning
+
+; Damped sinusoidal approach shared by level entry and mid-level respawn.
+; The generic primitive owns only its math; this actor schema owns the evolving
+; angle, amplitude and bank frame. Amplitude falls one pixel per frame, so the
+; ship completes several broad weaves before settling naturally at centre.
+; inputs: IY = player record
+player_entry_damped_swoop:
+    ld a,(iy+player_entry_angle)
+    ld bc,0
+    ld b,(iy+player_entry_amplitude)
+    ld de,0
+    ld d,(iy+player_entry_target_x_actor)
+    call motion_damped_sine_position
+    ld (iy+sprite_x),hl
+; Bank in the direction of the sine derivative. Angle quadrants 3 and 0 move
+; right; quadrants 1 and 2 move left.
+    ld a,(iy+player_entry_angle)
+    cp 64
+    jp c,@bank_right
+    cp 192
+    jp c,@bank_left
+@bank_right:
+    ld a,2
+    jp @bank_ready
+@bank_left:
+    xor a
+@bank_ready:
+    ld (iy+sprite_frame),a
+    ld a,(iy+player_entry_angle)
+    add a,player_entry_angle_step
+    ld (iy+player_entry_angle),a
+    ld a,(iy+player_entry_amplitude)
+    or a
+    ret z
+    dec a
+    ld (iy+player_entry_amplitude),a
+    ret
+; end player_entry_damped_swoop
+
+player_grace:
+; Control begins only after the entrance settles. Collision remains disabled
+; for exactly one second at the game's 60 Hz outer-frame cadence.
+    call player_input
+    call player_move_weapons
+    ld iy,player_begin
+    dec (iy+player_grace_timer)
+    jp z,@finish
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    ld a,(iy+player_grace_timer)
+    bit 2,a
+    jp z,vdu_sprite_show
+    jp vdu_sprite_hide
+@finish:
+    ld a,(iy+sprite_id)
+    call vdu_sprite_select
+    call vdu_sprite_show
+    set sprite_alive,(iy+sprite_collisions)
+    ld hl,player_alive
+    ld (player_state),hl
+    call seeker_group_enter_seek
+    ret
+; end player_grace
 
 player_alive:
     call player_input
@@ -186,6 +570,24 @@ kill_player:
 ; set player collision flag to dead
     ld ix,player_begin
     res sprite_alive,(ix+sprite_collisions)
+; Preserve the commanded pose and initialize the actor-owned damaged flight.
+    ld a,(ix+sprite_frame)
+    ld (ix+player_death_base_frame),a
+    call rand_8
+    and %00011111
+    add a,24
+    ld (ix+player_death_turn_timer),a
+    ld a,1
+    ld (ix+player_death_wiggle_timer),a
+    call rand_8
+    and %00000001
+    ld hl,player_death_lateral_speed
+    jp z,@death_velocity_ready
+    call neg_hlu
+@death_velocity_ready:
+    ld (ix+sprite_xvel),hl
+    ld hl,player_death_forward_speed
+    ld (ix+sprite_yvel),hl
 ; ask each live seeker to enter its initialized orbit state
     call seeker_group_enter_orbit
 ; set player state to dying
@@ -228,6 +630,7 @@ player_dying:
     ret
 
 @initial:
+    call player_dying_move
 ; Preserve the old cadence: one rising explosion every sixteen outer frames.
     ld a,(player_dying_timer)
     or a
@@ -302,12 +705,67 @@ player_dying:
     ret
 ; end player_dying
 
+; Actor-owned damaged flight. Random changes are latched for a useful duration;
+; a side collision always commits to the generic mover's inward reflection.
+player_dying_move:
+    ld iy,player_begin
+    ld (table_pointer),iy
+    call move_sprite
+    ld a,(sprite_screen_edge)
+    and collide_left+collide_right
+    jp nz,@edge_turn
+    dec (iy+player_death_turn_timer)
+    jp nz,@wiggle
+    ld hl,(iy+sprite_xvel)
+    call neg_hlu
+    ld (iy+sprite_xvel),hl
+    call rand_8
+    and %00011111
+    add a,24
+    ld (iy+player_death_turn_timer),a
+    jp @wiggle
+@edge_turn:
+    ld a,32
+    ld (iy+player_death_turn_timer),a
+@wiggle:
+    dec (iy+player_death_wiggle_timer)
+    jp nz,@draw
+    call rand_8
+    and %00000011
+    add a,4
+    ld (iy+player_death_wiggle_timer),a
+    ld a,(iy+player_death_base_frame)
+    or a
+    jp z,@base_left
+    cp 2
+    jp z,@base_right
+; A centred command wiggles to either bank without losing the saved base pose.
+    call rand_8
+    and %00000001
+    jp z,@frame_left
+    ld a,2
+    jp @store_frame
+@frame_left:
+    xor a
+    jp @store_frame
+@base_left:
+    call rand_8
+    and %00000001 ; frames 0 or 1
+    jp @store_frame
+@base_right:
+    call rand_8
+    and %00000001
+    inc a ; frames 1 or 2
+@store_frame:
+    ld (iy+sprite_frame),a
+@draw:
+    call player_draw_record
+    ret
+; end player_dying_move
+
 get_ready: asciz "Get Ready!"
 
 player_dead:
-; reset player score to what it was at the start of the level
-    ld hl,(player_starting_score)
-    ld (player_score),hl
 ; decrement lives
     ld a,(player_ships)
     dec a
@@ -321,21 +779,17 @@ player_dead:
     ld a,TELEMETRY_LIFECYCLE_RESPAWN
     call telemetry_post_lifecycle
     call draw_player_ships
-    call reset_runtime_tables
-; ; reset player score to what it was at the start of the level
-;     ld hl,(player_starting_score)
-;     ld (player_score),hl
-; restart the level
-    call init_level
-; spawn player sprite at starting position
-    call player_init
+; Preserve score, terrain position, active tiles and the current enemy world.
+; The player alone begins a fresh logical lifetime and shared entrance.
+    call player_init_respawn
     jp c,@player_ready
 ; allocation should be impossible after table_init; recover without touching IX
     ld a,player_event_game_over
     ld (player_event),a
     ret
 @player_ready:
-; set game playing substates
+; Keep the enemy scheduler live; individual actors reconcile with the player
+; lifecycle and return from holding behavior when grace expires.
     ld hl,enemies_alive
     ld (enemies_state), hl
     ret

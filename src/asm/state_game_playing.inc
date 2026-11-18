@@ -2,7 +2,17 @@
 game_playing:
 ; Main gameplay loop
 
-; plot tiles
+; Level-start presentation scrolls only the blank starfield. The player actor
+; publishes its bounded speed; the global renderer owns the VDP operation and
+; never admits terrain through the multi-scanline path. The final seven entry
+; frames run at speed one, then GRACE falls through to the ordinary one-line
+; terrain pipeline on the following frame.
+    call player_entry_starfield_speed
+    jp nc,@terrain
+    call starfield_warp_scroll
+    jp @tiles_ready
+@terrain:
+; plot tiles through the gameplay-only one-scanline path
     call tiles_plot
     or a
     jp z,@tiles_ready

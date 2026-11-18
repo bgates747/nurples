@@ -144,8 +144,10 @@ The last physical handback still recorded the older VDP application SHA-256
 with the same EMOS. Thus the new VDP
 standard was selected but not yet installed or exercised. Production and map
 suite candidates are statically compatible but physically blocked pending the
-scheduler's normal standard preparation and a separately authorized Nurples
-run. No firmware exception is required for those two applications.
+[canonical bench procedure](/Agon/mystuff/agon-extender/docs/operations/olimex-bench/README.md)
+and a separately authorized Nurples run. This guide alone owns bench procedures
+and the current production baseline. No firmware exception was identified
+for those two applications in this historical audit.
 
 UART-001 is not approved for that pairing for the admission-contract reason
 above. Running bare RC3 on Olimex would be a firmware exception, but it is not
@@ -182,8 +184,8 @@ No pinned-default runtime pass exists yet. Follow-up is therefore discrete:
    existing emulator-change review gate; preserve frozen historical profiles.
 2. Produce a release-matched Alexe representation of VDPlet v0.1.2-alpha and
    verify its provenance before invoking production, map or UART candidates.
-3. Route any Olimex run through Extender's exact standard selector and physical
-   lease; do not assume selection means the VDP is already installed.
+3. Follow only the [canonical Olimex bench procedure](/Agon/mystuff/agon-extender/docs/operations/olimex-bench/README.md)
+   for any Olimex run.
 4. Verify the exact VDP/MOS images on Console8 before its separately authorized
    human run.
 5. Keep UART-001 off Olimex unless a reviewed fixture variant checks the EMOS

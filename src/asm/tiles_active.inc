@@ -39,9 +39,33 @@ tile_activation_routines_end:
 tile_activation_routines_count: equ [tile_activation_routines_end-tile_activation_routines]/3
 ; end tile_activation_routines
 
+; Shared active-tile launch countdown. Zero is an explicit ready state rather
+; than a value to decrement: this preserves an intentionally immediate random
+; first launch and prevents it wrapping to 255 frames. A value of one becomes
+; ready on this tick; larger values advance by exactly one tick.
+; inputs: IY = active-tile record
+; outputs: Z set when the caller should launch, NZ while still waiting
+; destroys: A
+active_tile_launch_timer_tick:
+    ld a,(iy+tile_move_timer)
+    or a
+    ret z
+    dec a
+    ld (iy+tile_move_timer),a
+    ret
+; end active_tile_launch_timer_tick
+
 activate_null_tile:
     ret ; dummy routine, do nothing
 move_active_tile:
+; Keep local animation/controllers running while spatial world travel is
+; paused. The actor remains active and visible at its current coordinate.
+    call player_world_travel_enabled
+    jp c,@travel
+    ld a,1
+    or a
+    ret
+@travel:
 ; y-axis movement
     ld hl,(iy+tile_y)
     ld de,(iy+tile_yvel)

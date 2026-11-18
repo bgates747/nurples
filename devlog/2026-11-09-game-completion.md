@@ -416,6 +416,41 @@ intentionally simple answer to surviving airborne actors, projectiles and
 marginal moving clearances, avoiding special threat-clearing or a complex
 respawn planner.
 
+### GAME-001AE Alexe review result and sprite-publication correction
+
+The first stopped Alexe review failed the visible entrance-motion gate. The
+ship appeared at the lower-left start position in its right-bank frame but did
+not move. After the bounded entrance timer expired it jumped directly to the
+centre endpoint, performed the flashing grace interval and entered ordinary
+play. The Author also reconfirmed Alexe's broader approximately one-half to
+one-quarter speed behavior, but other scene motion remained functional; that
+host-speed observation is separate from this deterministic player defect.
+
+The entrance controller was advancing its phase timer and 16.8 coordinates.
+The defect was the VDP publication boundary: sprite position commands remain
+queued until a drawing operation or explicit `VDU 23,27,15` sprite update.
+`player_spawning` deliberately pauses terrain drawing, so its successive
+absolute sprite moves had no operation to publish them. When entrance settled,
+`player_grace` resumed world travel and the first background drawing operation
+published only the already-final centre position, producing the observed
+teleport.
+
+`player_draw_record`, shared by entrance and damaged-flight choreography, now
+issues `vdu_sprite_update` after setting the scripted position and frame. This
+is intentionally local to scripted player states: normal gameplay already has
+subsequent drawing work, while both entrance and death pause the terrain path
+that previously supplied the implicit flush. The next visual gate must confirm
+continuous entrance travel and continuous damaged-flight motion; this failed
+candidate remains uncommitted.
+
+The corrected stopped review is Oryx generation 413, request
+`d07f7bf63061`, in `.emulator/game001ae-player-flow-r02`. Its 41,504-byte
+binary has SHA-256
+`ae8976d5503c6b7037c5afdd7f8afed82db1c289c6b71d4ae4a6d8c514c820d4`.
+FAT-image readback matches that binary, its symbols, both AGNB containers, the
+Lat38 font and the load-only autoexec byte-for-byte. All pinned runtime, MOS and
+firmware manifests verify; the profile is stopped pending Author review.
+
 This is a natural first real consumer of the scaffolded global
 `STATE_NEW_RESPAWN` phase, but the global coordinator should only publish the
 respawn policy and completion boundary. The player controller owns its local
@@ -1085,3 +1120,980 @@ The same accepted slice makes explosions deactivate at all playfield edges and
 establishes the actor-tail generation, initialization and transition contracts
 needed for the next player, seeker and turret states. The Oryx checkout was
 released immediately after acceptance with fresh empty-host proof.
+
+## 21. Player-flow implementation candidate R01
+
+The next bounded candidate implements the parts of `GAME-001A` and
+`GAME-001E` whose behavior is already explicit, without claiming visual
+acceptance or closing either task:
+
+1. Normal input is clamped below a 64-pixel death runway. The shared sprite
+   boundary remains unchanged for enemies and effects.
+2. A fatal hit saves the last commanded left/centre/right frame, clears player
+   collision and initializes a slow forward damaged-flight vector. Lateral
+   direction changes are random but latched for 24-55 frames; a side collision
+   accepts the generic mover's inward reflection and holds it for 32 frames.
+   The displayed frame wiggles around the saved commanded pose on its own
+   shorter random cadence.
+3. Only the existing long trailing-explosion phase advances damaged flight.
+   Its previously accepted trail cadence and terminal explosion allocation are
+   unchanged.
+4. Passive terrain and active-tile spatial movement independently consult the
+   published player lifecycle. They stop while the player is DYING, DEAD or
+   SPAWNING, while active-tile animation/controller callbacks keep receiving
+   one bounded update per outer frame. Ordinary travel resumes when the
+   entrance settles into GRACE, matching the accepted respawn policy.
+5. `player_dead` no longer restores `player_starting_score`, reinitializes the
+   level, or clears runtime actor/tile tables. It decrements the life count and
+   begins a new player-record lifetime in the existing world.
+6. Initial level entry and mid-level respawn share one 56-frame banked rising
+   swoop. Three fixed-point legs land exactly at X=120, Y=224: 16 frames at
+   (2,-1), 24 at (3,-2.5), then 16 at (1,-1.25) pixels per frame. Assembly-time
+   invariants reject one-sided timing/velocity changes that miss that endpoint.
+7. The settled ship enters a distinct 60-frame `player_grace` handler. Control
+   and weapons are enabled, collision remains disabled, and the sprite blinks.
+   Expiry explicitly shows the sprite, enables collision, publishes
+   `player_alive`, and asks each orbiting seeker to re-enter its initialized
+   seeking behavior.
+
+This candidate deliberately leaves the mid-level safe-endpoint search open.
+Grace prevents immediate collision during evaluation, but `GAME-001E` cannot
+close until the preferred endpoint is moved away from a ground collidable and
+its immediate wake. The larger seeker return-to-own-pad protocol, turret search
+and game-over behavior likewise remain separate actor slices.
+
+Static qualification passes 46 runnable safety tests and Ruff on the Pi host.
+The one assembly smoke test is unavailable there because `ez80asm` is absent.
+The first native Oryx compile exposed two defensive-assertion issues before any
+profile was staged: `sprite_bottom` is defined after `player_state.inc`, and
+ez80asm evaluates compound arithmetic strictly left-to-right rather than giving
+multiplication conventional precedence. The entrance now owns a named start-Y
+constant, `screen.inc` proves that it equals the ordinary sprite floor, and
+each product in the endpoint proof is isolated before the final sum. Focused
+tests pass and the native build now assembles without diagnostics.
+
+Oryx request `ce27bce496c3` checked out generation 411 with fresh empty-host
+evidence. The resulting review binary is 41,500 bytes with SHA-256
+`6d49b057fe83b5d0dbd3de4f84e4aea3f66a8af795216fc62521f1d451ee94dd`.
+It is staged, but not run, in the dedicated load-only Alexe profile
+`.emulator/game001ae-player-flow-r01`. SD-image readback matches the binary,
+symbols, both AGNB containers, Lat38 font and autoexec byte-for-byte. The
+profile retains pinned VDPlet `dc43ecb8...` and MOS RC3 `d7a51147...`; runtime,
+payload, launcher syntax and canonical executable-layout verification all
+pass. Human visual acceptance remains required before these gameplay changes
+may be committed.
+
+### Safe-endpoint follow-up contract
+
+The remaining `GAME-001E` endpoint resolver can stay entirely within the
+existing actor and active-tile frameworks:
+
+1. Run one deterministic resolver for both initial entry and mid-level
+   respawn. The initial empty active-tile set naturally accepts the canonical
+   point; no separate level-start animation is needed.
+2. Search 16-pixel-aligned endpoints centre-out. Try X=120, then alternating
+   left and right offsets of 16 pixels through the legal 0..240 sprite range.
+   For each X, try Y=224, 208, 192 and 176. This preserves the lower-third
+   composition while covering the entire useful horizontal field.
+3. Validate every dense-stack slot with `tile_stack_pointer_valid`, every
+   record with `tile_table_record_pointer_valid`, and require a live record.
+   Treat nonzero `tile_shield_damage` as the authoritative ground-collision
+   predicate because those are exactly the active tiles whose controllers can
+   collide with and damage the player today. Pads, turrets and craters remain
+   scenery or projectile sources rather than inventing new solid-body physics.
+4. Test a 16-by-80 rectangle at each candidate: the player's final 16-by-16
+   box plus a 64-pixel corridor immediately forward (toward decreasing Y).
+   Reuse `check_collision_box` through a bounded scratch collider rather than
+   duplicating its inclusive AABB rules.
+5. Store the accepted fixed-point target X/Y and the entrance direction in
+   named unused fields of the player actor record. An endpoint at or right of
+   centre starts 120 pixels to its left and uses the current positive-X swoop;
+   a left endpoint starts 120 pixels to its right and mirrors all X velocities
+   and bank frames. Y starts 96 pixels below the chosen endpoint. Thus every
+   candidate uses the same 56-frame curve with no terminal snap from an
+   unrelated path.
+6. The finite grid should always find a legal point in authored content. If it
+   does not, latch a dedicated player fault and retain collision suppression;
+   never silently publish an unsafe `player_alive` actor. Deterministic tests
+   must cover canonical acceptance, left/right mirroring, vertical fallback,
+   invalid stack/record rejection and the no-candidate fail-closed result.
+
+## 22. Provenance-pinned Lode Runner display font
+
+The 6502 workspace already contained a committed, reproducible extraction of
+Lode Runner's original status lettering. It comes from the running game's RAM
+sprite table at `$AD00`, not the Apple II character ROM or a screenshot. The
+extraction records the source RAM hash, the exact sprite mapping, and the
+annotated reverse-engineering reference. This resolves the provenance question
+without interrupting the 6502 agent's active performance lease.
+
+Nurples now has a deterministic 8x8 hybrid generator. The original 10x11
+letter cells contain three blank top rows; all eight remaining A-Z rows fit in
+the first storage byte. The adaptation therefore copies those eight rows
+exactly with no scaling or thresholding. It writes each letter into both its
+uppercase and lowercase ASCII slots so existing mixed-case strings deliberately
+render ALL CAPS. The current Lat38 font remains byte-for-byte authoritative for
+digits, punctuation, symbols and every other glyph.
+
+The same source rows now generate both alternating `GAME OVER` frames and the
+two prompt sprites. Their SVGs are integer rectangles and their transparent
+PNGs use exact Agon64 colours with binary alpha. The title remains 240x64; each
+longer original-font prompt is 208x16. Ten focused tests prove exact letter
+rows, uppercase/lowercase aliases, preservation of all 204 fallback glyphs,
+current generated outputs, overlay geometry, palette and alpha. Ruff passes.
+
+This is asset preparation, not runtime adoption. The generated 2,048-byte font
+is not yet named in `RUNTIME_FONT_NAMES`, copied to `tgt/fonts`, or selected by
+assembly. The existing Lat38 runtime therefore remains unchanged for the
+pending player-flow review. Runtime adoption and hardware-sprite integration
+retain their separate visual, lifecycle and feature-variable gates.
+
+## 23. GAME OVER and attract integration boundary
+
+The next presentation work has a narrow reusable seam, but production hardware
+sprites remain gated. The source audit found no need to invent another global
+state model: the replacement graph already owns distinct TITLE and GAME_OVER
+states and legal transitions to NEW_GAME. What remains is to replace the two
+legacy blocking handlers with bounded lifecycle callbacks after the standalone
+overlay protocol is qualified.
+
+The current implementation boundaries are:
+
+1. Legacy `game_over` prints opaque text, delays, blocks in `waitKeypress`, and
+   returns through `game_init`, which clears every VDP buffer and reloads all
+   resident assets. The replacement must instead use bounded ENTER/UPDATE/
+   RENDER/EXIT work and advance directly to clean session initialization.
+2. The existing title prompt and blocking joystick question are embedded in
+   `game_init` after both AGNB containers load but before gameplay display
+   setup. TITLE therefore needs to become the owner of the moving background,
+   overlay, input latch and teardown; joystick selection becomes its own later
+   bounded start-flow boundary rather than an attract-loop dependency.
+3. Both states require identical release-then-press semantics. A new isolated
+   `input_gate.inc` now implements that policy as a one-byte, caller-owned
+   state machine driven by a normalized any-key-down sample. It performs no MOS
+   call, delay or wait. Its pure-CPU fixture covers held entry input, arming on
+   release, one event per fresh press, repeated held samples, rearming and
+   explicit reset. It is not included in the production binary yet, and native
+   assembly/headless execution remain pending on a host with `ez80asm`.
+4. The first safe production dependency is still the standalone overlay
+   qualifier described in `docs/hardware-sprite-overlays.md`. It must prove
+   absent, present-zero and present-nonzero feature-variable restoration,
+   repeated cleanup, wide-sprite stability, transparency, ordering and both
+   title/prompt frame sets on the pinned Alexe firmware. Production must not
+   set feature variable 2 or activate sprite slots 20/21 before that result.
+5. After qualification, GAME OVER is the smaller first integration. It already
+   begins from a constructed playfield and can exercise overlay ownership,
+   one-scanline world scrolling, non-hostile actor policy, the shared key gate,
+   cleanup and asset-preserving NEW_GAME entry. TITLE then reuses the accepted
+   overlay/key ownership while moving post-load display setup out of the
+   blocking `game_init` boundary.
+
+The staged player-flow profile remains byte-frozen while this audit proceeds.
+None of the isolated gate source is linked into its binary or changes the
+pending visual review.
+
+The first source-only part of that qualifier is now prepared, likewise outside
+the production include graph. `hardware_overlay_feature.inc` builds the six
+frozen VDP-resident control buffers, snapshots true variable presence and the
+full 16-bit value, enables feature variable 2, then restores via SET or CLEAR
+before releasing its programs. Four host tests independently decode the exact
+command payloads, prove snapshot-before-enable and restore-before-clear order,
+and prove the module is not linked into `nurples.asm`. These tests pass, but
+native assembly and all Alexe/Console8 runtime gates remain open; source
+preparation is not evidence that the feature is safe to adopt.
+
+The vector generator now also emits canonical RGBA2222 payloads for all four
+overlays through the installed `agonutils` adapter. Payload sizes are exactly
+240x64 for each title and 208x16 for each prompt; regeneration and eleven
+focused art/protocol tests pass. They remain outside the production AGNB
+catalog, so the staged game binary and its runtime containers are unchanged.
+
+A standalone runtime fixture is source-complete for the eventual gate. It uses
+the real production sprite IDs: transparent software slots 0..19, a visible
+software ordering witness at 19, and hardware overlays at 20/21. For each of
+the absent, present-zero and present-`BEEF` incoming states it reloads the four
+loose test bitmaps, runs a moving striped background for 360 frames, alternates
+both title colours and both prompt frames, moves the title, hides/shows the
+prompt, then performs the frozen detach/prefix/demote/release/restore order.
+VDP-resident conditionals overwrite `FAIL` with `PASS` only when the exact
+post-teardown variable state matches the case. This fixture is not assembled,
+deployed or run yet: the Pi lacks `ez80asm`, the current Oryx lease is frozen
+for the separate player-flow review, and runtime qualification may not borrow
+that review's machine scope.
+
+The fixture now has a deterministic build-only packager. Its source check
+validates all four width-times-height payload sizes without an assembler; the
+native action will assemble `overlay.bin`, copy only the four qualifier
+payloads and load-only autoexec, then write `SHA256SUMS`. Three unit tests prove
+the exact source inventory, a self-verifying bundle and drift rejection through
+a fake finite assembler. The builder contains no profile deployment or process
+launch path, keeping build and emulator deployment separate.
+
+## 24. Isolated turret-slew prerequisite
+
+The turret tracking feature now has a source-level arithmetic primitive without
+changing any turret record or production callback. `heading_slew.inc` accepts
+current heading, desired heading and a tunable maximum step in the game's 16.8
+angle256 format. It discards poisoned ADL upper bytes, selects the shortest
+wrapped path, retains all eight fractional bits, snaps only when the remaining
+distance fits inside the step, and resolves an exact half-turn in the positive
+(clockwise compass) direction. A zero rate is stable without falsely reporting
+that the destination was reached.
+
+The accompanying pure-CPU fixture covers equal, sub-step, exact-step,
+clockwise, counter-clockwise, both wrap directions, fractional wrap, both
+half-turn orientations, zero rate and poisoned upper-byte inputs. It remains
+outside `nurples.asm`; therefore the frozen player-flow binary is unchanged.
+Native assembly/headless execution must wait for an appropriately scoped build
+lease because the Pi host has no `ez80asm` and the current Oryx checkout belongs
+exclusively to the pending human player-flow review. After that proof, the
+primitive can back `GAME-001I`'s record-local physical barrel heading while the
+targeting computer continues to supply only the desired lead heading.
+
+The next source-only layer now defines that record-local boundary. The turret's
+unused actor tail has explicit three-byte desired-heading, one-byte search-
+direction and one-byte search-duration fields. Live tracking advances the
+physical `tile_heading` at two angle256 degrees per frame through the wrapped
+slew primitive. Non-firing search latches a direction for 24-55 frames, flips
+it on expiry and uses the same limiter; its timer cannot alias the legacy reload
+timer. A separate shot-preparation routine converts the physical barrel heading
+to projectile components immediately before allocation, so the ideal lead
+solution cannot leak back into a fired shot. Five host tests cover wrap motion,
+half-turn policy, latched search, named field separation, physical-shot data
+flow and production isolation. Its six-case pure-CPU fixture is likewise ready
+for the later native build/headless lease.
+
+## 25. Isolated safe-respawn endpoint resolver
+
+The deterministic endpoint search from the `GAME-001E` follow-up contract is
+now implemented as a source-only module without changing the frozen player-flow
+binary. `player_spawn_resolver.inc` tries the canonical X=120 endpoint first,
+then alternates left and right in 16-pixel steps before checking the two legal
+screen-edge positions. At every X it tries Y=224, 208, 192 and 176. Its probe is
+the final 16-by-16 player box plus the complete 64-pixel forward wake, expressed
+as one 16-by-80 inclusive AABB extending toward decreasing Y.
+
+The resolver walks the existing dense active-tile stack rather than creating a
+second scenery index. Every stack address and record pointer passes the hardened
+validators, every referenced record must be alive, and only records with
+nonzero `tile_shield_damage` obstruct a candidate. It calls the production
+`check_collision_box` contract. Malformed stack state, malformed record state
+or an inactive dense-stack record aborts the whole resolution; exhaustion of
+all 68 candidates latches a separate no-candidate fault. Nothing can publish an
+unsafe fallback point.
+
+Five host tests prove the frozen search order, forward-wake geometry, horizontal
+and vertical fallback, non-collidable scenery handling, full-grid exhaustion,
+validator/collision dependencies and absence from the production include graph.
+The pure-CPU assembly fixture additionally defines nine cases for canonical,
+left, right, vertical, corrupt-stack, corrupt-record, inactive-record and
+no-candidate results. Host tests and Ruff pass. Native assembly and repeated
+headless execution remain pending because this host lacks `ez80asm` and the
+current Oryx lease is still exclusively the Author's player-flow review.
+
+After native qualification and visual acceptance of the current candidate, the
+production integration will copy the chosen fixed-point target and mirrored
+entrance direction into named fields in the player actor record. It will then
+derive the off-screen start point from that actor-owned result rather than from
+global resolver scratch.
+
+## 26. Isolated seeker launch identity and retreat policy
+
+The next `GAME-001B` prerequisite is source-complete without changing the
+frozen production binary. Every seeker can retain the one-byte physical record
+id and allocator generation of the exact small pad that launched it. Resolution
+reconstructs that record from the fixed tile table, then requires the hardened
+record validator, matching generation, live flag, `tile_pad_small` type and a
+body that still intersects the visible field. A recycled record can therefore
+never masquerade as the seeker's original pad.
+
+The same isolated module gives each seeker an actor-owned completed-orbit count.
+Two complete passes through the preserved orbit behavior enter retreat. A
+still-valid own pad selects a non-hostile homing callback and overlap docks by
+deactivating the seeker. A missing, destroyed, recycled or off-screen pad
+selects the nearer horizontal edge (with X=120 deterministically choosing the
+right), computes outward velocity once and deactivates on the first boundary
+crossing. Neither retreat callback calls player or weapon collision handlers.
+
+Five host tests cover identity reuse, type/alive/visibility rejection, the edge
+tie policy, named actor fields, non-hostile data flow and production isolation.
+A twelve-case pure-CPU assembly fixture additionally covers capture, exact
+resolution, both retreat publications, orbit completion, edge exit and pad
+docking. Native assembly/headless execution remains queued behind the current
+exclusive player-flow review; `seeker_retreat.inc` is not included by
+`nurples.asm` and cannot affect that staged binary.
+
+## 27. Isolated starfield-only hyperwarp scroller
+
+The existing terrain path already carries the required warning that its
+one-scanline loop is gameplay-only and must not be generalized for transitions.
+The separate `starfield_warp.inc` prerequisite now advances only the existing
+256-by-256 starfield stream by zero through sixteen scanlines in one outer
+frame. Every chunk scrolls the playfield viewport, resizes the exposed-strip
+viewport to exactly the chunk height, and plots the selected starfield bitmap
+at the existing `bg_y_plot` phase. Bezel and cockpit coordinates are never in
+the scroll viewport.
+
+A displacement that crosses a 256-line image seam is split into the exact tail
+of the old tile followed by the head of one newly selected tile. Because the
+maximum step is sixteen, the routine emits at most two bounded scroll/plot
+chunks per frame. It rejects larger inputs before VDU output, and restores the
+ordinary playfield viewport on every successful return. It does not call
+`tiles_plot`, `do_active_tiles` or the gameplay `bg_plot` stepper.
+
+Five host tests exhaustively cover all 256 phases and all seventeen legal
+displacements, proving exact displacement conservation, modulo phase, at most
+one tile change and at most two chunks. A four-case assembly fixture records
+the emitted chunk widths for first-tile, seam-crossing, maximum-speed, zero and
+invalid requests. Native assembly/headless execution and production inclusion
+remain pending behind the current human review. The victory loop, terrain-
+drain phases and acceleration schedule remain separate `GAME-001F` work; this
+slice provides only their exact starfield rendering primitive.
+
+## 28. Native prerequisite build batch
+
+The Pi's canonical `~/.local/bin/ez80asm` path is absent, but the user-owned
+agon-fsim qualification assets contain an existing aarch64 build at
+`agon-fsim/tests/0053-flight011-agon/ez80asm`, SHA-256
+`00f194d6e0d3b9906130a3f10e6bc05a3bc767a652ea9dfc687aae3c9559b46d`.
+It was used read-only for a finite native syntax build. The first pass caught an
+invalid fixture-only `add iy,hl`; replacing it with supported pointer transfer
+made the complete batch assemble without diagnostics.
+
+The native fixture binaries and SHA-256 results were:
+
+1. input gate: `dc3a8016b5543b05ffd32a6f84d07ef3351569f683a5319903d66f403ad76ad1`;
+2. wrapped heading slew: `c7a6179b5b7427621c6b04883a3148f2049406afc3d12278113a99a007d65c22`;
+3. safe spawn resolver: `ea8f8d404e444d128e462f88853a12bf371e289d2896c4c21f44e33b966649ff`;
+4. turret tracking/search: `90a1fa1617d5f3ed97a53433d946e84c5f715b792c69472bbe5253e6c5c79c98`;
+5. seeker identity/retreat: `c52d8a7dbab2a4ec1c56174c20adf700f4f42c8da7aaba4aab8c0b2f2d59a18f`;
+6. starfield warp: `baf8ad5016483541ba5677b08678fa2e0ee7fa81a967595fbff89f8f440851b3`;
+7. overlay feature transaction: `8e4a69485c6578b7e2d35711febe72e0aa81fc158ecc8e3500ad5e307dd5de90`;
+8. overlay runtime qualifier: `d5caada69760a6587b05c4de6e64efcb36382eecab1d6851c2c4a12d81b76c81`.
+
+The assembler's short filename limit required the two long-named overlay
+fixtures to be copied with short names into a disposable `/tmp` mirror; their
+source includes and resulting binaries were otherwise unchanged. These hashes
+identify ephemeral build evidence, not checked-in products. The headless-test
+repository/executable is not present on this Pi, and the current Oryx checkout
+is exclusively the Author's player-flow review, so repeated guest execution and
+the graphical overlay qualifier remain pending rather than borrowing that
+lease's scope.
+
+## 29. Isolated level-transition timing controller
+
+The starfield renderer now has a source-only bounded phase controller. It emits
+exactly 636 outer frames: 336 ordinary one-scanline terrain-drain frames, 90
+normal-speed victory-centering frames, eight 8-frame acceleration stages at
+speeds 1, 2, 3, 4, 6, 8, 12 and 16, a 90-frame speed-16 hold, then seven
+8-frame deceleration stages at 12, 8, 6, 4, 3, 2 and 1. Completion is published
+only after the final speed-1 frame, so the next level cannot enter while the
+starfield is still accelerated.
+
+The controller freezes each frame's speed and terrain-policy bit before it
+mutates the next phase. Consequently the global renderer receives exactly 336
+terrain-enabled frames and can route every later frame exclusively to the
+starfield warp primitive. It owns no VDU or actor calls and fails closed on an
+invalid phase. The victory-loop trajectory and integration remain separate.
+
+Host tests prove the 636-frame length, terrain boundary, speed histogram and
+absence of rendering/terrain calls. The native fixture assembled without
+diagnostics through the same pinned aarch64 tool; its ephemeral binary SHA-256
+is `ff989c77d4f12babe41e27b025a8ba34d60411c5bd61d61380db96a056d720e4`.
+Repeated guest execution remains pending with the other fixtures.
+
+## 30. Isolated player victory flight
+
+The actor side of `GAME-001F` now has a source-only bounded controller. It first
+homes at three pixels per frame to the existing safe lower-centre anchor
+(120,224), flies one 64-frame loop at four pixels per frame while its heading
+advances four angle256 degrees each update, then homes to the playfield centre
+(120,168) and publishes HOLD. The first half of the loop uses the left-bank
+ship frame and the second half the right-bank frame; gathering and centring bank
+toward their target and settle on the centre frame.
+
+Victory entry removes player collision and never polls ordinary input or calls
+hostile collision handlers. Both approach legs have 120-frame fail-closed
+timeouts; an impossible motion result latches an error and snaps to the safe
+phase endpoint rather than blocking the outer scheduler. HOLD zeros all motion
+before reporting ready, allowing the independent 636-frame transition schedule
+to keep the centred ship fixed during hyperwarp.
+
+Five host tests prove the complete heading cycle, 32/32 bank split, actor-owned
+field layout, collision/input isolation and centre-before-HOLD ordering. The
+native assembly fixture covers entry, gather, exactly 64 loop updates, centre,
+HOLD and corrupt-phase recovery. It assembled without diagnostics; the
+ephemeral binary SHA-256 is
+`86a82ff70b475bcc7029cc44d6ca5ac4b9ee7a7e9ff8ed8c0132ebaafd0a7db7`.
+It remains outside `nurples.asm` pending guest execution and later production
+integration.
+
+## 31. Shared attract/game-over presentation animator
+
+The device-independent part of `GAME-001J/K` now has one bounded controller.
+GAME OVER alternates its two title-colour frames every eight outer frames;
+both GAME OVER and attract mode toggle their one mode-specific prompt sprite
+visible/hidden every thirty frames. Each update clears and republishes explicit
+title/prompt dirty bits, then advances the shared release-before-fresh-press
+input gate. A held loader/death key therefore cannot dismiss either state.
+
+Enter validates the requested presentation mode, initializes all cadence and
+visibility state, marks both outputs dirty and resets the input gate. Exit
+clears volatile ownership only after the eventual hardware renderer has
+detached its resources. The controller contains no VDU, MOS, delay or blocking
+input call and deliberately does not select hardware sprite buffers.
+
+Four host tests prove the independent 8/30-frame cadences, shared input-gate
+dependency, device isolation and absence from production. Native assembly
+found and corrected two invalid direct-memory `DEC` instructions before the
+fixture passed. Its ephemeral binary SHA-256 is
+`4cc70ee32e95496e179d63c1309c8b6526683fb35d443edc00e1ccffff0d79e9`.
+Guest execution and hardware renderer integration remain behind their existing
+qualification gates.
+
+## 32. Durable device-free qualification batch
+
+`tests/run_completion_fixtures.py` now owns the next deterministic gate for all
+nine device-free prerequisites: input gating, heading slew, safe respawn,
+turret tracking, seeker retreat, starfield warp, transition timing, victory
+flight and presentation animation. It copies the assembly sources and fixtures
+to a temporary short-name mirror, avoiding the assembler's filename limit,
+then either assembles only or runs every binary repeatedly through
+`agon-headless-test run-direct` in ADL mode with exact guest status `0x2A`.
+
+Assembler and headless runner paths remain explicit overrides. Discovery first
+uses `PATH`, then the canonical local assembler location and the existing
+user-owned aarch64 qualification binary. The finite batch defaults to twenty
+runs per fixture (180 total), uses per-run instruction/cycle/wall limits, stops
+on the first failure and leaves no source-tree build products. Its
+`--assemble-only` mode passed all nine fixtures on this Pi. Actual headless
+execution remains deferred because that repository/runner is absent here and
+the Oryx emulator lease is still frozen for the Author's player-flow review.
+
+## 33. Accepted player flow and integrated level-start starfield approach
+
+The Author accepted the corrected GAME-001AE R02 visual review: the explicit
+sprite update restored continuous entrance motion on Alexe. Generation 413
+was released with fresh empty-host evidence. The player-flow slice remains
+uncommitted until the Author separately authorizes its commit.
+
+The initial level entrance now owns a 56-frame starfield-only deceleration
+matched exactly to the already accepted ship swoop. Eight seven-frame stages
+run at 16, 12, 8, 6, 4, 3, 2 and finally 1 scanline per outer frame. The last
+seven entrance frames therefore already use normal gameplay speed; only on the
+following GRACE frame does the ordinary one-scanline terrain pipeline admit
+its first row. Assembly-time invariants require the speed table to contain
+exactly eight entries and its total duration to equal the three entrance legs.
+
+The player record owns three named fields for whether this presentation is
+enabled, its current deceleration stage and its stage timer. The global
+gameplay renderer queries that actor-owned policy, selects the separate
+`starfield_warp_scroll` path, and bypasses `tiles_plot` for that frame. The
+multi-scanline routine remains absent from the gameplay terrain module and
+cannot admit or activate terrain.
+
+Fast scrolling is deliberately enabled only by `player_init_level_entry`.
+`player_init_respawn` uses the same banked ship trajectory with the starfield
+effect disabled: after a mid-level death, the playfield already contains
+rasterized terrain and active records, so scrolling the entire VDP viewport
+would move pixels without moving their collision state. That context split is
+an actor field, not a parallel table or inference from current tile position.
+
+The production game assembles. Fifty-three starfield and assembly-safety tests
+pass with the qualified aarch64 assembler, including native assembly of the
+starfield chunking fixture. The isolated headless runner remains unavailable
+on this Pi. The uncommitted candidate binary is 41,896 bytes with SHA-256
+`81704e4b108bd51f71509ccdc3bec4239d7a14133c7b94f97834be95c56f2f2f`;
+visual review is still required.
+
+The stopped Alexe review candidate is staged under Oryx FIFO generation 414 in
+`.emulator/game001ea-starfield-approach-r01`. Its private card image has
+SHA-256 `9af79a00e46e75364db10b0cef4174b846f21a48d58c5007fa691b829220223b`.
+The binary and 52,593-byte symbols file were extracted back out of that image
+and compared byte for byte with the payload; their SHA-256 values are
+`81704e4b108bd51f71509ccdc3bec4239d7a14133c7b94f97834be95c56f2f2f` and
+`4bbb80f4b8baa29a1e2106a05a7104cc7aba9d4157b4bc27b7d971c0ad24d391`
+respectively. All payload, runtime and MOS release manifests pass, as does the
+launcher syntax check. No emulator was launched by the agent.
+
+## 34. Starfield seam repair and damped-sine entrance R02
+
+The Author's R01 review found visible gaps at starfield tile boundaries and
+asked for a substantially longer maximum-speed approach followed by a
+sinusoidal ship weave whose amplitude decreases into the final position.
+
+The seam audit found a real register bug in the display setup: the intended
+graphics background colour was loaded into `A`, overwriting GCOL's plotting
+mode, instead of being supplied in `C`. Display setup now uses the documented
+register contract, and `init_bg` explicitly selects the starfield's darkest-
+blue ground as the scroll-fill colour. An initially added speculative guard
+scanline was removed after Author review: the fast renderer retains the exact
+minimal `0..chunk-1` viewport, matching the displacement without overdraw.
+
+The entrance is now exactly 112 outer frames. Starfield speed remains 16 for a
+new 56-frame hold, then follows the existing eight seven-frame stages at 16,
+12, 8, 6, 4, 3, 2 and 1. Consequently deceleration begins after 63 maximum-
+speed frames, and the final seven frames still run at normal gameplay speed
+before terrain is admitted.
+
+The player starts at `(8,320)` and rises toward `(120,224)` while an angle256
+phase advances eight units per frame and a 112-pixel horizontal amplitude
+falls by one pixel per frame. This yields three and one-half broad weaves whose
+envelope settles at centre; the bank frame follows the sign of the sine
+derivative. The generic `motion_damped_sine_position` primitive owns no actor,
+player or rendering state. The player schema owns its named phase and
+amplitude bytes, leaving the same math available for a later enemy movement
+program without a parallel attribute table.
+
+The production game assembles and all 55 focused starfield and assembly-safety
+tests pass, including native assembly of the starfield fixture. The uncommitted
+R02 binary is 41,954 bytes with SHA-256
+`28d5153b1896e4d4f75abd668adced49024c49250206c48a98b2dd90f848a8c5`.
+The stopped Alexe profile is
+`.emulator/game001ea-starfield-approach-r02`; its private card image has
+SHA-256 `14a20dc5139ef4fdc61c22b8e895a61716c75699d01f9ce56bf77a0807062796`.
+Binary and symbols were extracted from that image and compared byte for byte,
+and all payload/runtime/MOS manifests pass. No emulator was launched by the
+agent.
+
+After discussion, the Author explicitly rejected the speculative guard-line
+overdraw. R03 restores the fast viewport to exactly `0..chunk-1`; only the
+confirmed GCOL/register and scroll-fill correction remains. The production
+build and all 55 focused tests still pass. The R03 binary SHA-256 is
+`e9276423e8f30b885bbc5b10f48df4fa44fb672caefbc2c88277777846e04da2`.
+Its stopped Alexe profile is
+`.emulator/game001ea-starfield-approach-r03`, whose byte-read-back private card
+image has SHA-256
+`9632898136be8986821d27d759592556d59981f78f867fc6072540374333d439`.
+
+## 35. Native OBS evidence for R03 starfield discontinuity
+
+At the Author's request, the exact R03 minimal-viewport build was rerun in an
+isolated Alexe profile on Oryx generation 414. A private Xvfb display supplied
+only the emulator and OBS; keyboard automation issued `RUN`, answered the
+joystick prompt with `n`, then released the splash gate immediately after OBS
+started. Oryx CPU boost was not changed.
+
+The retained native crop is 1280x960 H.264 at 30 fps and 7.1 seconds long. It
+includes one second at the any-key gate followed by the fast entrance. Later
+frames clearly reproduce the horizontal exposed-strip discontinuity with the
+speculative guard scanline absent. Evidence is stored outside Git under
+`.emulator/captures/game001ea-starfield-r03/`:
+
+- `spawn-native-30fps.mp4`, SHA-256
+  `aa74987315c7f533bd86ef52cf0181ca2b14dd19eb1c155f47fba95f86e1c12b`;
+- `contact-5fps.png`, SHA-256
+  `86d8d35e7e1308f3722f5e6a39a36582655a908acc394295dddd401c2f9186eb`.
+
+All owned emulator, OBS and Xvfb processes were validated by exact executable
+path and stopped. Fresh whole-host inspection found no emulator processes, and
+generation 414 was released with no queued successor.
+
+Native-frame review established that the discontinuity is cumulative rather
+than a bad starfield tile seam. The first exposed row contains red/black
+cockpit artwork from immediately above the playfield. Every subsequent fast
+scroll pushes that row downward and exposes one more, so the band continues to
+grow through the deceleration stages until control returns to the ordinary
+one-scanline gameplay renderer. This is direct evidence that the fast bitmap
+plot must include the one-scanline VDP clipping guard. R04 therefore restores
+the guard only in `starfield_warp_render_chunk`; it does not alter the gameplay
+terrain viewport or its optimized redraw loop.
+
+All 55 focused starfield and assembly-safety tests pass with the qualified
+aarch64 assembler, including native assembly of the deterministic chunking
+fixture and the production game. The resulting 41,954-byte R04 binary has
+SHA-256 `28d5153b1896e4d4f75abd668adced49024c49250206c48a98b2dd90f848a8c5`.
+It is byte-for-byte the prior visually clean R02 candidate, which independently
+confirms that the guard line is the only code delta between R03's accumulating
+band and the earlier result.
+
+## 36. Integrated actor flow and level-transition checkpoint
+
+The previously isolated safe-respawn, turret-tracking, seeker-retreat,
+victory-flight and transition controllers are now connected to their existing
+actor and global-state boundaries. Respawn resolves a safe target before the
+player record is published, stores the selected target and entry direction in
+named player fields, and reuses the accepted swoop/grace sequence. Live turret
+aim now passes through the two-degree-per-frame physical barrel slew; both the
+projectile velocity and artwork use that physical heading. During every
+non-live player phase, turrets run their bounded alternating search motion and
+do not fire.
+
+Each seeker captures its exact launch-pad id and generation at spawn. In a
+non-live player phase it becomes harmless, completes two orbits, then returns
+to that same still-visible pad or leaves through the nearest horizontal edge.
+Launch pads continue their own animation and bounded spawn cadence during
+those phases, so newly created seekers enter the same harmless orbit policy.
+
+Level completion no longer jumps directly to the next map. The controller
+drains the final 336 scanlines through the original gameplay-only terrain
+renderer, gathers the collision-free player into a 64-frame victory loop,
+centres it, accelerates the separate starfield renderer to 16 scanlines per
+frame, holds, then decelerates through 12, 8, 6, 4, 3, 2 and 1 before admitting
+the next level. Score and resident game resources are preserved. The normal
+terrain renderer is not generalized to multi-scanline scrolling.
+
+Native assembly exposed and corrected one stale fixture schema boundary in the
+victory controller. The overlay tests and builder now use a short-name mirror
+because ez80asm rejects the original long fixture basenames; runtime bytes are
+unchanged. The complete host suite passes: 163 tests, with only the known
+device-free input test skipped because `agon-headless-test` is absent on this
+host. The production game assembles. The standalone hardware-overlay bundle
+also builds and verifies under `/tmp/nurples-overlay-runtime-r01`; it remains
+outside production pending the frozen Alexe visual qualification.
+
+## 37. Resident overlay assets and standalone Alexe gate
+
+The four frozen RGBA2222 overlay bitmaps now belong to the ordinary
+`game.agnb` catalog at IDs 63990 through 63993. The game container therefore
+holds 359 records and remains deterministic. Generated assembly names replace
+the renderer's private numeric literals. This asset-catalog change alone does
+not enable hardware sprites: the feature transaction, renderer, controller and
+lifecycle modules remain outside `nurples.asm` until the standalone visual gate
+passes.
+
+The dormant renderer owns hardware sprite slots 20 and 21 above the existing
+20-slot software prefix. It defines both slots before publishing a 22-slot
+prefix; teardown hides both, restores prefix 20, clears their frame lists,
+demotes both slots and then restores the exact incoming VDP variable-2 state.
+The three transactional control buffers are visit-owned and cleared after the
+restore program completes. The four AGNB bitmap buffers are instead immutable
+process-owned assets and remain resident across attract and GAME OVER visits.
+This is required to start a second game without reloading assets; the
+standalone loose-file fixture has a deliberately shorter buffer lifetime and
+still releases its own copies after every trial.
+
+A stopped pinned Alexe profile was staged on Oryx at
+`.emulator/game001jk-hw-overlay-r01` under FIFO generation 415, request
+`fa5c12e606f6`. Its card is load-only and its manifests prove VDPlet
+`dc43ecb8…` and Eirene MOS RC3 `d7a51147…`. The Author must visually accept
+three finite ABSENT/ZERO/BEEF trials—wide title and prompt animation,
+transparency, movement, ordering, teardown and exact restoration—before any
+production include is enabled. No agent-launched GUI is involved. The Author
+later revoked the idle generation-415 lease before launch so another queued
+worker could use Oryx. The manager released it without killing any process;
+the stopped profile and evidence remain preserved, but they are not an active
+checkout and must not be launched without a new reservation and fresh idle
+proof. No visual result was obtained, so the production gate remains open. A
+fresh non-preemptive request, `GAME-001JK-HW-OVERLAY-R02` / `49dd20da68fb`, is
+queued behind the current worker for the same Author-only finite review; it is
+only a reservation and confers no checkout or launch authority.
+
+The preceding worker later released Oryx with an empty-host snapshot. R02 then
+checked out generation 417 under lease `b97c5606a0a8477a88f373a1583415c2`
+using a fresh independent empty-host observation. Before review, every runtime
+file passed `.runtime.sha256`: VDPlet is exactly `dc43ecb8…`, MOS is exactly
+`d7a51147…`, and the wrapper/backend identities remain those frozen by the
+profile. Card readback confirms a load-only autoexec (`SET KEYBOARD 1`, change
+to `/apps/nurples-overlay`, `LOAD overlay.bin`) and byte-exact fixture plus four
+RGBA2222 payloads. No emulator was agent-launched; the checkout is being held
+at the Author-only GUI boundary.
+
+## 38. Source-only bounded presentation lifecycles
+
+Work continued below the hardware gate without changing production dispatch.
+`presentation_input_poll` takes one MOS sysvar snapshot and one held-key-map
+snapshot per frame, reducing them to any-key-down and normalized Y/N values.
+`start_choice_controller` applies the shared release-before-fresh-press gate;
+unrelated keys consume an edge but cannot become a later choice while held.
+This replaces the design dependency on blocking `mos_getkey` and the busy
+release loop without coupling MOS input to presentation policy.
+
+The dormant attract lifecycle advances the blank starfield at speed one,
+updates its fixed overlay and returns a bounded dismissal edge. It owns no
+terrain, actor or VBlank update. The dormant GAME OVER lifecycle acquires its
+overlay before mutating the world, hides the player, clears all player-laser
+and fireball records, advances terrain exactly once through the original
+one-scanline gameplay path, and continues seekers, explosions, active scenery
+and non-firing turret search. It never dispatches the player actor and never
+waits or issues VBlank. The player-owned world-travel policy now admits the
+published global GAME OVER phase without rewriting the player's local dead
+state; this has no effect on the still-blocking production handler until the
+lifecycle is integrated.
+
+Sixteen focused Python contract tests pass, with two expected native-fixture
+skips on the Pi because its documented local assembler path is absent. Both new
+fixtures were therefore assembled in an isolated Oryx temporary directory and
+the directory was removed after validation. Their SHA-256 values were
+`9631267fe8505fba05b83521d02ad9b7b787cbe51a3d26bae91c61ead3caf5ce`
+for the start-choice fixture and
+`e83dcc72199d18d56941a67c16b9c1bb6ce386ac664a1cefdaeb0fde8eac89c2`
+for the MOS input boundary. The current production include graph also assembles
+natively: 44,306 bytes, SHA-256
+`712b69c1ba7b55fcfffe248f2e6c3f2989df7990b485b8ff261fe96ccc3edb94`.
+The copied Oryx source and generated binaries were temporary validation inputs,
+not a deployment.
+
+## 39. One-time resources versus clean-session initialization
+
+The legacy `game_init` boundary is now mechanically split without yet changing
+its blocking title/configuration behavior. It remains the sole owner of the
+process-entry VDP reset and font/UI/game asset loads. After those loads it calls
+`game_prepare_playfield`, which selects mode 20, redraws bezel/cockpit, publishes
+the canonical starfield buffer before plotting it, and owns no actor/session or
+level state. It then calls `game_new_session_init`, which resets score, starting
+score, lives, runtime tables, tiles and player state before publishing
+`game_playing`. Neither reusable routine clears or reloads a VDP asset.
+
+Publishing `BUF_BG_STARS_0` before `init_bg` removes a real resident-RAM
+assumption: a prior level may have left `bg_bufferId` naming another background.
+The split also supplies the exact future boundaries needed by attract and GAME
+OVER: attract can prepare its empty playfield after the one-time load, while a
+continuation can call clean-session initialization directly without returning
+to `game_init`.
+
+The three affected assembly-safety contracts pass. Native Oryx assembly of the
+complete production include graph also passes; the refactored binary is 44,317
+bytes with SHA-256
+`087f8bd40870f765587d142915f5768ae979635adb18a2d9ea44413ab49cbf76`.
+The isolated copied source and generated binary were validated and removed; no
+deployment or emulator profile changed.
+
+## 40. Frozen presentation-flow transition layer
+
+The remaining global orchestration is now implemented off-production in
+`presentation_flow_states.inc`. Resource-complete startup prepares mode 20 and
+defines the ordinary 20-sprite prefix before acquiring the attract overlay.
+A fresh attract dismissal tears the overlay down and enters a separate bounded
+Y/N configuration state. That state takes one input snapshot per frame,
+applies the selected joystick policy, redraws the canonical playfield and calls
+`game_new_session_init` directly. GAME OVER uses the same configuration and
+resident-session path after its own release-gated dismissal.
+
+Neither path calls `game_init`, clears buffers, reloads assets, waits for input
+or issues VBlank. A failed overlay transaction or impossible session-init
+failure latches a distinct game fault and exits the invocation instead of
+retrying resource loading or entering an unbounded failure loop. The module and
+its lifecycle dependencies remain excluded from `nurples.asm` pending the
+standalone visual verdict.
+
+Six host contract tests cover ordering, state transitions, bounded input,
+resident-session reuse and fail-closed behavior. The native transition fixture
+exercises ATTRACT → CONFIG → YES → SESSION, GAME OVER → CONFIG, and overlay
+acquisition failure. It assembled on Oryx as a 680-byte binary with SHA-256
+`e3144b13565b867230d912542914f0998e15efd07f124e5f781d0d115f081d08`.
+The isolated validation directory was removed after hashing; no emulator or
+deployment state changed.
+
+A later exit-path audit found that Escape during ATTRACT or GAME OVER would
+otherwise reach `main_end` before the overlay feature transaction restored VDP
+variable 2. The off-production flow layer now supplies an idempotent process
+shutdown: detach/demote renderer sprites, restore an ordinary or orphaned
+feature transaction, clear overlay/input ownership, and only then permit the
+normal sprite reset and global buffer deletion. The revised native transition
+fixture observes this ordering and assembles to 785 bytes, SHA-256
+`f36143adabb62fa93258ec878f800ab1418bc614fb6b57990cf34188378f6cb8`.
+The prior 680-byte fixture hash remains historical evidence for the transition
+logic before the exit-restoration case was added.
+
+The complete device-free Python regression pass now covers 188 tests with 15
+expected skips. Three assembler-driven test methods were excluded because the
+Pi's documented `~/.local/bin/ez80asm` is absent; the current production graph,
+new input/choice fixtures and the presentation-flow transition fixture have
+already been assembled separately with Oryx's native toolchain. No device-free
+test failed.
+
+## 41. Isolated full-integration assembly proof
+
+The hardware visual gate still prevents changing the production include graph,
+but the exact post-gate integration was exercised in a disposable source
+mirror. That mirror enabled every real presentation module in dependency order,
+added ATTRACT and CONFIG to the validated pointer whitelist and telemetry map,
+replaced blocking startup with `game_attract_begin`, replaced blocking GAME
+OVER with `game_over_bounded`, initialized presentation RAM at process entry,
+and called presentation shutdown before the normal VDP resource teardown.
+
+Native Oryx assembly of that complete candidate passed and emitted the expected
+state/teardown symbols. The integrated binary was 45,816 bytes with SHA-256
+`db19a0766351ab31a03145787d4eda7dce05d06a5fcd83c011013751bbeb645a`.
+Both the local integration mirror and its Oryx copy/build were validated and
+removed after hashing, so the canonical `nurples.asm` remains outside the
+hardware gate and no profile or deployment changed.
+
+This integration audit also tightened process ownership: overlay feature
+process initialization is now RAM-only. It no longer clears control buffer IDs
+before the application has acquired and globally reset VDP resources. Each
+actual begin transaction still clears and reconstructs all three controls before
+snapshotting variable 2, preserving repeated-entry determinism without touching
+potential caller-owned buffers during early process setup.
+
+## 42. Deferred math review boundary
+
+A separate wide-ranging VDPlet code review reported a potential defect in the
+production 16.8 trigonometry implementation: the report says `sin168` may
+overwrite the fractional angle byte while constructing a three-byte sample
+index, leaving the documented interpolation path ineffective. This campaign
+does not validate that report and makes no math or consumer change in response.
+
+The independent review is now frozen as `MATH-001` in `TODO.md`. It requires a
+baseline, complete consumer inventory, deterministic numeric and ABI evidence,
+historical comparison, and a reviewed repair proposal before any production
+math routine changes. `GAME-001` continues against the current frozen math
+behavior so the possible defect cannot silently expand the presentation-flow
+scope.
+
+## 43. Completion-gate audit before overlay review
+
+The active campaign is not complete merely because its dormant modules compile.
+Current evidence separates into the following gates:
+
+1. **Visually qualified foundation:** the corrected player swoop and one-second
+   grace period were accepted in R02. The fast-starfield seam guard has native
+   OBS evidence identifying the missing scanline and R04 is byte-identical to
+   the previously clean R02 renderer. The fireball direction/frame correction,
+   explosion edge deactivation, retained death trail and terminal explosion
+   also have explicit Author acceptance.
+2. **Integrated and deterministically qualified, awaiting complete-game
+   exercise:** safe mid-level respawn placement, physical turret slew/search,
+   exact-pad seeker retreat, victory flight and the terrain-drain/hyperwarp
+   transition are in the production source graph. Their focused host models,
+   assembly contracts and native integration build pass, but that evidence does
+   not substitute for the final complete-game play-through.
+3. **Hardware foundation qualified:** the standalone two-hardware-sprite
+   renderer, exact VDP-variable transaction and teardown pass the pinned Alexe
+   R07 qualifier for absent, present-zero and present-BEEF incoming states.
+   The working production source now contains the qualified integration; its
+   full-game native build and Author review remain open.
+4. **Post-gate integration in review:** bounded ATTRACT, CONFIG and GAME OVER lifecycles,
+   fresh-press input, resident-session restart and process shutdown pass their
+   source, host and isolated native integration proofs. Gate 3 has now admitted
+   them to the canonical production include graph. The integrated full game
+   still requires a fresh native build and Author runtime review before any
+   commit.
+
+This matrix is the completion rule for the current goal. Passing the standalone
+overlay review authorizes the prepared production integration; it does not by
+itself close the campaign.
+
+## 44. Hardware-overlay crash and exact-state qualifier
+
+The first generation-417 runtime review rendered a green/scanline-corrupted
+frame and then panicked with `CORRUPT HEAP: Bad tail ... got 0xc4c4c4c4`.
+Pinned VDPlet source confirmed that the scanline compositor reads active sprite
+objects asynchronously. The renderer and fixture now deactivate the global
+sprite engine before mutating frame vectors or hardware/software flags, then
+reactivate only after the two overlay slots are complete. The same ordering is
+used during teardown. R02 and every later run completed without that panic.
+
+R02 also exposed a fixture-only stale-register defect: `vdu_clear_buffer`
+destroys HL, but the PASS/FAIL program writer reused HL without reloading the
+target buffer ID. The status programs were therefore written to buffer 163 and
+the intended buffers stayed empty. Reloading HL after each clear made the
+restore verdict visible. R03 then showed ABSENT FAIL, ZERO PASS and BEEF PASS.
+R04 disproved a buffered tail-call hypothesis. R05 and R06 added temporary
+diagnostics and established all of the following independently:
+
+- variable 2 was absent before asset loading;
+- it remained absent after all four overlay bitmaps were created;
+- neither marker-zero nor marker-one comparison succeeded;
+- the ordinary restore left variable 2 present;
+- a direct top-level `F9` clear restored absence successfully.
+
+The MOS→VDP capture contained the exact one-byte marker write, ruling out an
+assembly or transport omission. Inspection of the pinned VDPlet source then
+identified the defect in `VDUStreamProcessor::bufferConditional`: its 32-bit
+`sourceValue` starts at `-1`, and `readBufferBytes` overwrites only one byte for
+an ordinary 8-bit buffer comparison. Marker zero becomes `0xFFFFFF00`, marker
+one becomes `0xFFFFFF01`, and zero is consequently treated as nonzero. This is
+a firmware buffered-conditional defect, not a missing Nurples buffer.
+
+The exact references inspected were the official
+`/home/smith/Agon/agon-docs/docs/vdp/Buffered-Commands-API.md` specification and
+the pinned-release `video/vdu_buffered.h`, `video/buffers.h` and
+`video/vdp_variables.h` sources beneath
+`/home/smith/Agon/mystuff/agon-vdplet/build/vdpl041/release-012/firmware-src`.
+
+The final transaction avoids the defective operation and does not depend on
+its future repair. Buffer 63985 begins as a seven-byte CLEAR program with two
+NUL padding bytes. The true VDP-variable existence check in buffer 63988 calls
+63987 only when variable 2 exists; that program patches byte 2 from `F9` to
+`F8` and copies the original 16-bit value into bytes 5–6. Teardown calls 63985
+unconditionally, so the same program restores either exact absence or exact
+presence/value without any buffer-valued conditional. Only buffers 63985,
+63987 and 63988 are now transactional controls.
+
+The clean R07 fixture assembled to 2,665 bytes, SHA-256
+`5f58d3e020102f7f1d4994f7ab92405f155b593c7b8ef4086cae823ecc0a4728`.
+It used pinned VDPlet `dc43ecb8…` and Eirene MOS RC3 `d7a51147…`. Its OBS
+recording is SHA-256
+`66f299648bb61a139a5aa1a981b9509b8fdf8b386084bed8b6955cf5ae2da75b`.
+Visual review shows PASS for ABSENT, ZERO and BEEF restoration, both title
+frames and both prompt frames animate over the moving background, and the run
+returns to MOS without a heap panic. The corrected capture launcher also tracks
+the actual emulator binary rather than merely its shell wrapper; post-run Oryx
+inspection found no owned emulator, OBS, private X server or collector process.
+
+The generic firmware owner independently reconfirmed the same current-release
+partial-copy behavior as the existing `VDPL-020` root cause. A private firmware
+candidate already corrects and qualifies that behavior across 545 cases, but it
+has a different feature composition and is not the pinned shared default.
+Nurples therefore retains its R07-qualified application workaround; no firmware
+source, flash, release or default changed during this investigation.
+
+## 45. Qualified presentation flow enters the production graph
+
+After R07 passed, the previously isolated integration was applied to the real
+working source without changing its established state-pointer ABI:
+
+1. The input gate, bounded presentation sampler, joystick-choice controller,
+   overlay controller, exact feature transaction, hardware renderer, ATTRACT,
+   GAME OVER and flow coordinator are included in dependency order.
+2. Process entry initializes presentation ownership in RAM only. Process exit
+   shuts it down before the ordinary sprite reset and global buffer deletion.
+3. The one-time loader now enters bounded ATTRACT directly after all resident
+   assets load. The old blocking start prompt and blocking joystick choice are
+   no longer on the successful startup path.
+4. `game_over` retains its stable pointer identity but tail-jumps to the bounded
+   `game_over_bounded` lifecycle. ATTRACT and CONFIG are admitted to the exact
+   dispatcher whitelist and telemetry map as TITLE phases.
+5. Both ATTRACT and GAME OVER dismiss through the same release-gated CONFIG
+   state, redraw the resident playfield and start a clean session without
+   clearing or reloading assets.
+
+The focused production-integration suite passes 44 tests with seven expected
+assembler skips on the Pi host; the added dispatch/telemetry integration test
+also passes. Ruff and the hand-authored-source `git diff --check` pass. The full
+Pi discovery run now distinguishes that documented missing native assembler
+from a source failure: 201 tests pass with 17 expected assembler skips and no
+error. The already-qualified R07 fixture remains the hardware foundation. A
+fresh native production build, stopped Alexe profile and Author full-flow
+review are still required before these changes may be committed.
+
+Oryx generation 417 was released at 2026-11-09 18:49 EST after a fresh
+whole-host snapshot showed no emulator process. The queued `agon-6502` request
+was notified immediately; Nurples did not retain or preempt the machine for the
+pending production build.
+
+## 46. Zero-safe pad and turret launch countdown
+
+The explicit `ASM-010` underflow is repaired in the working candidate without
+changing either actor's record schema, pool limit or established post-launch
+range. Both launchers now call one generic active-tile countdown helper. A timer
+already at zero reports ready without decrementing; one decrements to zero and
+reports ready; larger values decrement once and continue waiting. Thus the
+initial random zero retains its intended immediate-launch meaning instead of
+wrapping to 255 frames.
+
+The pad's later 64–95-frame range and the turret's later 24–55-frame range are
+unchanged. Four new deterministic tests cover zero, one, ordinary nonzero
+values, check-before-decrement assembly ordering, both consumers and both reset
+ranges. They pass together with the 46 source-level assembly-safety tests; the
+only focused skip is the unavailable Pi-native assembler. `ASM-010` remains
+open until the queued native production assembly confirms the integrated code.
+
+## 47. Separate stopped-profile production staging
+
+`tools/stage_production_oryx.py` prepares the forthcoming production review as
+a deployment-only operation. It refuses an existing destination, verifies the
+pinned Flexe/VDPlet/MOS template, requires a complete nonempty regular-file game
+bundle, creates a fresh FAT image, reads every payload and load-only autoexec
+back by hash, verifies both runtime manifests and leaves the profile stopped.
+It cannot assemble or launch the game. The autoexec selects `nurples.bin` but
+does not run it.
+
+Three host tests cover recursive source/hash completeness, font-symlink refusal
+and the exact load-only autoexec. The full device-free suite now passes 201
+tests with 17 expected native-assembler skips. Actual FAT-image staging remains
+part of the queued Oryx operation because this Pi host lacks `mcopy`; the tool's
+first real use must retain its output and readback evidence before the profile
+is offered for Author review.

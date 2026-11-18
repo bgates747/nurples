@@ -17,6 +17,14 @@ tiles_y_plot: dl -15
 ; Level transitions must wait for terrain to clear, then use the separate
 ; starfield-only transition scroller.
 tiles_plot:
+; The terrain pipeline consumes the published player lifecycle itself. Death,
+; entrance and grace keep the existing field spatially fixed without teaching
+; the global scheduler how to rewrite tile state.
+    call player_world_travel_enabled
+    jp c,@travel
+    xor a
+    ret
+@travel:
     ld a,(tiles_level_complete)
     or a
     jp z,@row_available

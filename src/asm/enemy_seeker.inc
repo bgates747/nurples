@@ -37,10 +37,18 @@ enemy_spawn_seeker:
     call spawn_sprite_from_tile
     ret nc ; no carry means no free sprite slots, so we go home
 ; other specific initialization
+; spawn_sprite_from_tile leaves IY on the validated source pad
+    call seeker_capture_spawn_pad
     ld hl,speed_seeker
     ld (ix+sprite_vel),hl
-    ld a,seeker_state_seek
-    ld (ix+seeker_state),a
+    push ix
+    pop iy
+    ld hl,(player_state)
+    ld de,player_alive
+    or a
+    sbc hl,de
+    jp nz,seeker_enter_orbit
+    jp seeker_enter_seek
     ret
 ; end enemy_spawn_seeker
 
@@ -61,6 +69,7 @@ seeker_enter_orbit:
 ; initialize orbit angle and local state
     xor a
     ld (iy+seeker_orbit_angle),a
+    call seeker_retreat_reset_orbits
     ld a,seeker_state_orbit
     ld (iy+seeker_state),a
 ; publish the initialized target behavior last
@@ -70,6 +79,24 @@ seeker_enter_orbit:
     ret
 ; end seeker_enter_orbit
 
+; Return from a non-hostile hold through the same initialized-publication
+; contract. Preserve position and heading; reset every field owned by seeking.
+; inputs: IY = validated live seeker record
+seeker_enter_seek:
+    xor a
+    ld (iy+sprite_move_step),a
+    ld a,seeker_state_seek
+    ld (iy+seeker_state),a
+    call rand_8
+    and %00111111
+    set 3,a
+    ld (iy+sprite_move_timer),a
+    ld hl,en_nav_seek_zag
+    ld (iy+sprite_move_program),hl
+    scf
+    ret
+; end seeker_enter_seek
+
 ; Compatibility entry for reviewed legacy callers. Stored callbacks use only
 ; the persistent stage below.
 move_enemy_seeker_orbit:
@@ -78,6 +105,8 @@ move_enemy_seeker_orbit:
 move_enemy_seeker_orbit_stage1:
 ; update the target coordinates based on orbit angle and radius
     inc (iy+seeker_orbit_angle)
+    call seeker_orbit_note_step
+    ret c
     ld hl,0 ; clear hlu and l
     ld h,(iy+seeker_orbit_angle) ; uh.l = angle
     ld de,128*256 ; ud.e = radius
@@ -95,7 +124,14 @@ move_enemy_seeker_orbit_stage1:
     call sprite_compute_velocities
 @@:
     call move_sprite ; move the sprite
-    jp move_enemy_seeker
+; Orbit is a reusable holding pattern. It remains hostile only in live play;
+; death, respawn and presentation phases update artwork without collisions.
+    ld hl,(player_state)
+    ld de,player_alive
+    or a
+    sbc hl,de
+    jp z,move_enemy_seeker
+    jp seeker_draw_heading
 ; end move_enemy_seeker_orbit
 
 ; Transition every live seeker without accepting an arbitrary callback or
@@ -128,28 +164,60 @@ seeker_group_enter_orbit:
     ret
 ; end seeker_group_enter_orbit
 
+seeker_group_enter_seek:
+    ld iy,seekers_base
+    ld b,seekers_max
+@loop:
+    push bc
+    call sprite_table_record_pointer_valid
+    jp nc,@bad_record
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@next
+    ld a,(iy+sprite_type)
+    and actor_type_mask
+    cp enemy_air
+    jp nz,@bad_record
+    call seeker_enter_seek
+@next:
+    lea iy,iy+table_record_size
+    pop bc
+    djnz @loop
+    scf
+    ret
+@bad_record:
+    ld hl,sprite_fault_flags
+    set sprite_fault_bad_record,(hl)
+    pop bc
+    xor a
+    ret
+; end seeker_group_enter_seek
+
 move_enemy_seeker:
     ld ix,player_begin
     bit sprite_alive,(ix+sprite_collisions)
     jp z,@F ; player is dead so don't check for collisions
     call check_enemy_collision_player
-    jp z,@player
+    jp z,move_enemy_seeker_player
 @@:
     call check_enemy_collision_laser
-    jp z,@laser
+    jp z,move_enemy_seeker_laser
 ; change the animation frame to match heading
+    jp seeker_draw_heading
+move_enemy_seeker_laser:
+    call update_score
+    jp spawn_explosion
+move_enemy_seeker_player:
+    call update_shields
+    jp spawn_explosion
+; end move_enemy_seeker
+
+seeker_draw_heading:
     ld a,(iy+sprite_id)
     call vdu_sprite_select
     call sprite_frame_heading ; a, sprite_frame set to heading-based frame
     call vdu_sprite_select_frame
     ret
-@laser:
-    call update_score
-    jp spawn_explosion
-@player:
-    call update_shields
-    jp spawn_explosion
-; end move_enemy_seeker
+; end seeker_draw_heading
 
 ; contains the logic for how to move the enemy
 ; and then does the moving

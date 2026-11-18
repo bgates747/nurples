@@ -5,6 +5,7 @@ import unittest
 from PIL import Image
 
 from nurples_tools.overlay_art import (
+    drawing_to_rgba2,
     generate_overlay_art,
     game_over_drawing,
     overlay_drawings,
@@ -45,6 +46,20 @@ class OverlayArtTests(unittest.TestCase):
                     self.assertIn(green, (0, 85, 170, 255))
                     self.assertIn(blue, (0, 85, 170, 255))
                     self.assertIn(alpha, (0, 255))
+
+    def test_rgba2_payloads_match_dimensions_and_canonical_encoding(self):
+        drawings = overlay_drawings()
+        payloads = {
+            path: payload
+            for path, payload in generate_overlay_art().items()
+            if path.suffix == ".rgba2"
+        }
+        self.assertEqual(len(payloads), 4)
+        for name, drawing in drawings.items():
+            path = Path(f"assets/rgba2/overlays/{name}.rgba2")
+            payload = payloads[path]
+            self.assertEqual(len(payload), drawing.width * drawing.height)
+            self.assertEqual(payload, drawing_to_rgba2(drawing))
 
     def test_selected_dimensions_fit_the_320_by_240_playfield(self):
         drawings = overlay_drawings()

@@ -27,6 +27,7 @@ activate_turret_fireball:
     call spawn_active_tile
     ret nc ; no carry means no free active tile slots, so we go home
 ; other specific initialization
+    call turret_tracking_init
     call rand_8     ; snag a random number
     and %00011111 ; keep only 5 lowest bits (max 31)
     ld (ix+tile_move_timer),a ; when this hits zero,will spawn a fireball
@@ -38,22 +39,26 @@ move_turret_fireball:
     jp z,table_deactivate_tile
     call check_enemy_collision_laser
     jp z,kill_turret_fireball
+; Every non-live player phase uses the same harmless rate-limited search.
+; Search owns no reload state and cannot fire.
+    ld hl,(player_state)
+    ld de,player_alive
+    or a
+    sbc hl,de
+    jp nz,turret_fireball_search
 ; target player
     call tile_orientation_to_player
     ld hl,speed_fireball
     ld (Vp),hl ; param for targeting_computer
     call targeting_computer
-    ld (iy+tile_heading),hl ; save active tile heading
+    call turret_track_desired_heading
     call tile_frame_heading
     call draw_active_tile
-; check player alive
-    ld ix,player_begin
-    bit sprite_alive,(ix+sprite_collisions)
-    ret z ; player dead so nothing more to do
 ; check whether it is time to spawn a fireball      
-    dec (iy+tile_move_timer)
+    call active_tile_launch_timer_tick
     ret nz
-; spwan a fireball    
+; Fire from the physical barrel, never the ideal lead solution.
+    call turret_prepare_physical_shot
     call enemy_spawn_fireball
     ; fall through to reset move timer
 turret_fireball_reset_move_timer:
@@ -61,6 +66,12 @@ turret_fireball_reset_move_timer:
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,24 ; range is now 24-55
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
+    ret
+
+turret_fireball_search:
+    call turret_search_update
+    call tile_frame_heading
+    call draw_active_tile
     ret
 
 kill_turret_fireball:

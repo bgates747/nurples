@@ -10,9 +10,11 @@ from dataclasses import dataclass
 from html import escape
 from io import BytesIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from PIL import Image, ImageDraw
 
+from nurples_tools.images import img_to_rgba2
 from nurples_tools.lode_font import LODE_UPPERCASE_ROWS
 
 
@@ -168,7 +170,7 @@ def drawing_to_svg(drawing: Drawing, title: str) -> bytes:
     return ("\n".join(lines) + "\n").encode()
 
 
-def drawing_to_png(drawing: Drawing) -> bytes:
+def drawing_to_image(drawing: Drawing) -> Image.Image:
     image = Image.new("RGBA", (drawing.width, drawing.height), TRANSPARENT)
     painter = ImageDraw.Draw(image)
     for shape in drawing.shapes:
@@ -179,9 +181,27 @@ def drawing_to_png(drawing: Drawing) -> bytes:
             )
         else:
             painter.polygon(shape.points, fill=shape.color)
+    return image
+
+
+def drawing_to_png(drawing: Drawing) -> bytes:
+    image = drawing_to_image(drawing)
     output = BytesIO()
     image.save(output, format="PNG", optimize=False)
     return output.getvalue()
+
+
+def drawing_to_rgba2(drawing: Drawing) -> bytes:
+    """Encode exact source pixels through the canonical agonutils adapter."""
+    with TemporaryDirectory(prefix="nurples-overlay-rgba2-") as temp_dir:
+        output = Path(temp_dir) / "overlay.rgba2"
+        img_to_rgba2(
+            drawing_to_image(drawing),
+            output,
+            num_colors=64,
+            method="RGB",
+        )
+        return output.read_bytes()
 
 
 def generate_overlay_art() -> dict[Path, bytes]:
@@ -191,6 +211,9 @@ def generate_overlay_art() -> dict[Path, bytes]:
             drawing, name.replace("_", " ").upper()
         )
         outputs[Path(f"assets/img/proc/overlays/{name}.png")] = drawing_to_png(drawing)
+        outputs[Path(f"assets/rgba2/overlays/{name}.rgba2")] = drawing_to_rgba2(
+            drawing
+        )
     return outputs
 
 

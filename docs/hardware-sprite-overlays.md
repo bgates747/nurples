@@ -69,8 +69,10 @@ Overlay entry defines both slots while they are outside the active prefix,
 selects normal paint mode 0, marks them hardware, positions them in physical
 screen pixels, hides any sprite not yet ready, and only then activates 22
 sprites. Overlay exit hides both, restores the active prefix to 20, clears the
-two owned frame lists, demotes both owned slots to software, and only then
-releases their backing buffers.
+two owned frame lists, demotes both owned slots to software, and restores the
+incoming feature-variable state. The four immutable bitmap buffers belong to
+the process-wide AGNB asset lifetime, not to one overlay visit, and remain
+resident for the next attract or GAME OVER entry.
 
 The game runs in physical mode 20, 512x384. Its central playfield begins at
 physical `(128,48)` and is 256 pixels wide. A 240x64 title therefore centers at
@@ -106,69 +108,127 @@ The official buffered-command API can preserve variable 2 without adding a
 CPU-side response protocol. Conditional call command 6 performs a true VDP
 variable-presence test, including the distinction between absent and present
 with value zero. Command 48 can then copy the variable's 16-bit value directly
-into another VDP buffer. The frozen transaction uses these currently unused
+into another VDP buffer. The qualified transaction uses these currently unused
 IDs:
 
 | ID | Role |
 |---:|---|
-| 63984 | one-byte original-presence marker, initialized to zero |
-| 63985 | prepared `VDU 23,0,F8,2,value16` restore-set command |
-| 63986 | prepared `VDU 23,0,F9,2` restore-clear command |
-| 63987 | mark-present program: set marker to one, then read variable 2 into the restore-set value bytes |
+| 63985 | prepared seven-byte restore program: `CLEAR` plus two NULs, or patched `SET value16` |
+| 63987 | mark-present program: patch the restore opcode to `SET`, then read variable 2 into its value bytes |
 | 63988 | snapshot dispatcher: conditionally call 63987 only if variable 2 exists |
-| 63989 | restore dispatcher: call 63985 when the marker is nonzero, otherwise call 63986 |
 | 63990–63993 | two title and two prompt bitmap buffers |
 
 The production image manifests currently end at 2816, the sole runtime font is
 64000, and the existing loose-image temporary buffer is 65534. Startup already
-clears every VDP buffer before loading application assets, so these six control
+clears every VDP buffer before loading application assets, so these three control
 buffers do not need to preserve an earlier program's buffer contents. They do
 need to remain allocated until overlay teardown has restored the incoming
 feature-variable state.
 
-Overlay setup writes the marker, both restore commands, the mark-present
-program and both dispatchers, then calls the snapshot dispatcher. Only after
-that call returns may it set variable 2 and mark sprites 20/21 as hardware.
+Overlay setup writes the prepared restore program, mark-present program and
+snapshot dispatcher, then calls the snapshot dispatcher. The restore program
+defaults to `VDU 23,0,F9,2` followed by two harmless NUL commands. If variable
+2 exists, mark-present changes byte 2 from `F9` to `F8` and copies the complete
+16-bit incoming value into bytes 5–6, turning the same seven bytes into a SET
+command. Only after that call returns may setup set variable 2 and mark sprites
+20/21 as hardware.
 Overlay teardown hides both sprites, restores the active prefix to 20, clears
-their frame lists, demotes them to software, releases their four bitmap
-buffers, calls the restore dispatcher, and finally clears control buffers
-63984–63989. It must not clear a dispatcher while that dispatcher is running.
+their frame lists, demotes them to software, calls the prepared restore program,
+and finally clears control buffers 63985, 63987 and 63988. It must not clear a
+program while that program is running. The process-wide AGNB bitmap buffers are not
+cleared here; clearing them would force a forbidden asset reload before a
+second overlay visit.
 
 The standalone qualification fixture must begin from each of these incoming
 states and prove exact state after repeated setup/teardown: variable 2 absent,
 present with zero, and present with a nonzero sentinel such as `0xBEEF`. It
-must also prove the marker is reset for each new transaction, a prior present
-run cannot contaminate a later absent run, and every control/bitmap buffer is
-released after restoration. This is a frozen implementation design, not target
-evidence; it still requires pinned Alexe and real Console8 qualification.
+must also prove the prepared restore program is rebuilt for each new
+transaction, a prior present run cannot contaminate a later absent run, and
+every control/bitmap buffer is released after restoration.
+
+The earlier marker/restore-dispatch design is rejected. Pinned VDPlet source
+shows that `bufferConditional()` initializes a 32-bit source value to `-1` and
+then copies only one byte into it for ordinary buffer comparisons. A byte value
+of zero therefore becomes `0xFFFFFF00`, and one becomes `0xFFFFFF01`; zero is
+treated as nonzero and neither exact comparison succeeds. R05/R06 isolated this
+behavior after proving variable 2 remained absent before and after bitmap
+loading. The prepared-program design avoids all buffer-valued conditionals and
+remains correct if that firmware defect is later fixed.
+
+The exact references used for this diagnosis are the official buffered-command
+specification at `/home/smith/Agon/agon-docs/docs/vdp/Buffered-Commands-API.md`
+and the pinned release sources `video/vdu_buffered.h`, `video/buffers.h` and
+`video/vdp_variables.h` under
+`/home/smith/Agon/mystuff/agon-vdplet/build/vdpl041/release-012/firmware-src`.
 
 ## Remaining qualification gates
 
 1. **Feature-variable preservation.** Variable 2 is enabled by *presence*, even
    when its value is zero, and clearing it does not demote existing sprites.
-   Implement the frozen VDP-resident transaction above and qualify all three
-   incoming-state cases. Unknown incoming state is not clean handback, and the
-   design alone is not permission to set the flag in production.
+   The pinned Alexe R07 fixture passes absent, present-zero and present-BEEF
+   restoration without a panic. Production integration is now present in the
+   working source and still requires its own native build and Author review.
 2. **Runtime font and assets.** The 2,048-byte hybrid `.font`, metadata and
    16x16 proof atlas are generated and byte-tested. Make it the sole selected
    runtime font only after a loading/gameplay visual review. Add the four
    immutable overlay RGBA2222 images to the ordinary AGNB catalog with
    collision-free 16-bit buffer IDs. Keep their buffers alive until both
    overlay sprites are detached.
-3. **Standalone Alexe proof.** Before production integration, run a bounded
-   fixture on the pinned Alexe profile in mode 20. It must show both title
-   frames, each prompt frame, transparency over a moving background, immediate
-   move/show/hide behavior, correct higher-ID ordering, and clean repeated
-   setup/teardown. Inspect for scanline instability with each 240- and 208-pixel
-   sprite separately; do not infer wide-sprite capacity from slot count.
+3. **Standalone Alexe proof.** The bounded pinned-Alexe R07 fixture in mode 20
+   passed both title frames, each prompt frame, transparency over a moving
+   background, immediate move/show/hide behavior, correct higher-ID ordering,
+   and clean repeated setup/teardown. Its separate 240- and 208-pixel sprite
+   exercise showed no repeated scanline panic after the engine-mutation guard.
 4. **Lifecycle proof.** Production qualification must repeat GAME OVER → new
    game and TITLE → new game cycles, proving the active prefix returns to 20,
-   slots 20/21 are software with no frames after teardown, backing buffers are
-   released only after detachment, and feature variable 2 is restored exactly.
+   slots 20/21 are software with no frames after teardown, immutable AGNB
+   backing buffers remain valid across visits, the three transactional control
+   buffers are released only after restoration, and feature variable 2 is
+   restored exactly.
 5. **Target confidence.** Alexe is the first correctness gate. Real Console8
    confirmation remains necessary before declaring scanline capacity and
    cleanup portable to hardware.
 
-Until these gates pass, `GAME-001J` and `GAME-001K` may consume the artwork and
-this ID plan in design/tests, but the production game must keep its current
-20-sprite software prefix and must not set feature variable 2.
+The standalone R07 gate authorizes `GAME-001J` and `GAME-001K` to integrate the
+qualified renderer. The production working source now does so, but it remains
+uncommitted until a fresh native build and complete Author runtime review prove
+the full attract/configuration/game-over path rather than only the fixture.
+
+## Standalone qualifier bundle
+
+The unintegrated fixture source is
+`tests/asm/hardware_overlay_runtime_fixture.asm`. It deliberately uses the
+production ownership boundary—software sprites 0..19 and prospective hardware
+sprites 20/21—without including any of its code in `nurples.asm`. It runs three
+360-frame visual cases from incoming variable-2 states absent, present-zero and
+present-`BEEF`. Each case animates both title and prompt frames over a moving
+background, exercises immediate move/show/hide, overlaps a visible software
+sprite at ID 19 to prove higher-ID ordering, tears down in the frozen order and
+uses VDP-resident conditionals to display `PASS` only for an exact restoration.
+
+Source payloads can be checked on a host without the assembler:
+
+```bash
+.venv/bin/python build/scripts/build_hardware_overlay_fixture.py --source-check
+```
+
+On a host with `ez80asm`, build the finite load-only bundle with:
+
+```bash
+.venv/bin/python build/scripts/build_hardware_overlay_fixture.py \
+  --output-dir .build/hardware-overlay-runtime-r01
+.venv/bin/python build/scripts/build_hardware_overlay_fixture.py \
+  --output-dir .build/hardware-overlay-runtime-r01 --check
+```
+
+The builder writes only `overlay.bin`, the four loose RGBA2222 payloads, a
+load-only `autoexec.txt` and `SHA256SUMS`. It does not deploy, alter a profile or
+launch an emulator. A separate checked-out Alexe deployment must place those
+files in `/apps/nurples-overlay`, preserve the pinned firmware hashes and leave
+the profile stopped for the Author. The fixture ends by clearing variable 2;
+it is intended only for a fresh disposable profile, not as a general program
+that promises to preserve an unrelated caller's VDP state across its own three
+deliberately forced incoming-state trials. Unlike production, this standalone
+qualifier owns its four loose bitmap buffers and therefore releases them after
+each trial; that proves teardown order without redefining the game's resident
+AGNB asset lifetime.

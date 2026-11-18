@@ -48,12 +48,9 @@ move_pad_small:
     and %00000111 ; modulo 8
     ld (iy+tile_frame),a
     call draw_active_tile
-@@: ; check player alive
-    ld ix,player_begin
-    bit sprite_alive,(ix+sprite_collisions)
-    ret z ; player dead so nothing more to do
+@@:
 ; check whether it is time to spawn a seeker    
-    dec (iy+tile_move_timer)
+    call active_tile_launch_timer_tick
     ret nz
 ; spwan a seeker    
     call enemy_spawn_seeker
@@ -62,7 +59,7 @@ move_pad_small:
 pad_small_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
-    add a,64 ; range is now 64-127
+    add a,64 ; range is now 64-95
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 

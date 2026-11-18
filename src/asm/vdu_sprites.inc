@@ -263,6 +263,25 @@ vdu_sprite_set_gcol:
 @mode: db 0x00 
 @end:
 
+; VDU 23, 27, 19: Render the selected sprite through the hardware compositor.
+; Hardware sprites move/show/hide immediately and use physical screen pixels.
+vdu_sprite_mark_hardware:
+    ld hl,@cmd
+    ld bc,@end-@cmd
+    rst.lil $18
+    ret
+@cmd: db 23,27,19
+@end:
+
+; VDU 23, 27, 20: Return the selected sprite to the software compositor.
+vdu_sprite_mark_software:
+    ld hl,@cmd
+    ld bc,@end-@cmd
+    rst.lil $18
+    ret
+@cmd: db 23,27,20
+@end:
+
 ; VDU 23, 27, &26, n;: Add bitmap n as a frame to current sprite using a 16-bit buffer ID
 ; inputs: hl=bufferId
 ; prerequisites: vdu_sprite_select

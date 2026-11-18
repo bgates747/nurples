@@ -527,6 +527,10 @@ telemetry_load_policy:
     ret
 
 telemetry_game_state_map:
+    dl game_attract
+    db STATE_NEW_TITLE
+    dl game_start_config
+    db STATE_NEW_TITLE
     dl game_main_menu
     db STATE_NEW_TITLE
     dl game_paused
@@ -554,6 +558,10 @@ telemetry_game_state_count: equ [telemetry_game_state_map_end-telemetry_game_sta
 
 telemetry_player_state_map:
     dl player_alive
+    db STATE_NEW_PLAYER_ACTIVE
+    dl player_spawning
+    db STATE_NEW_PLAYER_READY
+    dl player_grace
     db STATE_NEW_PLAYER_ACTIVE
     dl player_dying
     db STATE_NEW_PLAYER_DYING

@@ -11,6 +11,7 @@ runtime_process_init:
 ; every MOS RUN instead of relying on their assembled DB values.
     xor a
     ld (game_exit_requested),a
+    ld (game_level_transition_active),a
     ld (player_event),a
     ld (player_dying_phase),a
     ld (player_dying_timer),a
@@ -46,5 +47,8 @@ runtime_process_init:
     ld a,$50
     ld (r_seed),a
     call timestamp_init
+; Presentation ownership is process-local. This is RAM-only: VDP control
+; buffers are not acquired or cleared until the post-load attract transaction.
+    call presentation_flow_process_init
     ret
 ; end runtime_process_init
