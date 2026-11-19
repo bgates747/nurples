@@ -1,9 +1,8 @@
 ; Bounded GAME OVER lifecycle.
 ;
 ; The global state owns orchestration only. Seekers and turrets continue their
-; existing actor-owned non-live-player behavior; this boundary removes the
-; player and both hostile projectile pools, advances the ordinary world once,
-; and delegates overlay cadence/input/rendering to their qualified owners.
+; actor-owned retreat/search behavior. This boundary removes the player and
+; projectiles; overlay and scenery animation continue on the frozen field.
 
 game_over_lifecycle_active: db 0
 game_over_dismiss_requested: db 0
@@ -40,6 +39,9 @@ game_over_lifecycle_enter:
     scf
     ret
 @acquire:
+    ld a,PLAYFIELD_CHECK_GAME_OVER
+    call playfield_display_verify
+    ret nc
     ld a,PRESENTATION_GAME_OVER
     call presentation_overlay_enter
     ret nc
@@ -58,6 +60,7 @@ game_over_lifecycle_enter:
     ld iy,fireballs_base
     ld b,fireballs_max
     call game_over_deactivate_sprite_pool
+    call seeker_group_enter_game_over_retreat
     xor a
     ld (game_over_dismiss_requested),a
     inc a
@@ -76,10 +79,11 @@ game_over_lifecycle_update:
     xor a
     ret
 @world:
-; player_world_travel_enabled admits this global phase, so the original
-; gameplay-only terrain path scrolls exactly one scanline and active tile
-; positions remain coherent with their rasterized images.
+; The one-scanline comparison uses the same travel policy for passive terrain
+; and active tiles. The production path leaves both sets of coordinates fixed.
+    .if GAME_OVER_REVIEW_SCROLL
     call tiles_plot
+    .endif
     call set_gfx_playing_field
     call do_enemies
     call move_explosions

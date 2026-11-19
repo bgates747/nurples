@@ -47,13 +47,13 @@ class PlayerVictoryTests(unittest.TestCase):
         self.assertLess(zero_x, report)
         self.assertLess(zero_y, report)
 
-    def test_victory_flight_is_integrated_as_a_player_state(self) -> None:
+    def test_victory_flight_remains_available_but_is_not_used_for_warp(self) -> None:
         production = PRODUCTION.read_text()
         state = (ROOT / "src" / "asm" / "state.inc").read_text()
         player = (ROOT / "src" / "asm" / "player_state.inc").read_text()
         self.assertIn('include "player_victory.inc"', production)
-        self.assertIn("call player_victory_init", state)
-        self.assertIn("ld hl,player_victory", state)
+        warp = state.split("game_level_transition:\n", 1)[1].split("game_over:\n", 1)[0]
+        self.assertNotIn("player_victory", warp)
         self.assertIn("ld de,player_victory", player)
 
     def test_fixture_assembles_when_toolchain_is_available(self) -> None:

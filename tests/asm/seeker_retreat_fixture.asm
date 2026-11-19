@@ -20,6 +20,7 @@ sprite_heading: equ 16
 sprite_type: equ 22
 sprite_move_program: equ 26
 sprite_collisions: equ 29
+sprite_dim_x: equ 30
 sprite_frame: equ 40
 tile_id: equ sprite_id
 tile_x: equ sprite_x
@@ -27,6 +28,8 @@ tile_y: equ sprite_y
 tile_type: equ sprite_type
 tile_collisions: equ sprite_collisions
 sprite_alive: equ 6
+sprite_just_died: equ 7
+table_record_size: equ actor_record_size
 
 seeker_state: equ actor_record_custom
 seeker_orbit_origin_x: equ seeker_state+1
@@ -36,9 +39,14 @@ seeker_custom_end: equ seeker_orbit_angle+1
 tile_pad_small: equ 1
 enemy_air: equ 1
 field_bottom: equ 335
+field_right: equ 255
+origin_left: equ 128
+screen_right: equ 511
+seekers_max: equ 1
 collide_left: equ %00000010
 collide_right: equ %00000001
 
+seekers_base:
 fixture_seeker: blkb actor_record_size,0
 tile_table_base:
 fixture_pads: blkb 2*tile_table_record_size,0
@@ -49,8 +57,12 @@ fixture_force_bad_record: db 0
 fixture_collision: db 0
 fixture_deactivated: db 0
 fixture_case: db 0
+game_level_transition: equ 1
+game_state: dl 0
+fixture_warp_collisions: db 0
 
     include "../../src/asm/seeker_retreat.inc"
+    include "../../src/asm/arith24.inc"
 
 FIXTURE_PASS: equ 02ah
 
@@ -123,7 +135,7 @@ fixture_start:
 
     ld a,6
     ld (fixture_case),a
-    ld hl,field_bottom*256
+    ld hl,[field_bottom+1]*256
     ld (fixture_pads+tile_table_record_size+tile_y),hl
     call seeker_resolve_spawn_pad
     jp c,fixture_fail
@@ -182,23 +194,40 @@ fixture_start:
     ld (fixture_case),a
     ld iy,fixture_seeker
     set sprite_alive,(iy+sprite_collisions)
+    ld (iy+sprite_dim_x),16
+    ld hl,-142*256
+    ld (iy+sprite_x),hl
+    ld hl,-1*256
+    ld (iy+sprite_xvel),hl
     xor a
-    ld (sprite_screen_edge),a
     ld (fixture_deactivated),a
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,0
-    ld a,collide_left
-    ld (sprite_screen_edge),a
+    CHECK24 fixture_seeker+sprite_x,-143*256
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,1
+
+; A retreat crosses the same path but only warp enables live collision checks.
+    ld a,16
+    ld (fixture_case),a
+    ld hl,0
+    ld (game_state),hl
+    ld (iy+sprite_x),hl
+    call move_enemy_seeker_retreat_edge
+    CHECK8 fixture_warp_collisions,0
+    ld hl,game_level_transition
+    ld (game_state),hl
+    call move_enemy_seeker_retreat_edge
+    CHECK8 fixture_warp_collisions,1
+    CHECK24 fixture_seeker+sprite_x,-144*256
 
     ld a,12
     ld (fixture_case),a
     call fixture_prepare_pad_one
     ld a,1
-    ld (fixture_seeker+seeker_spawn_pad_id),a
+    ld (fixture_seeker+seeker_retreat_pad_id),a
     ld a,7
-    ld (fixture_seeker+seeker_spawn_pad_generation),a
+    ld (fixture_seeker+seeker_retreat_pad_generation),a
     ld iy,fixture_seeker
     set sprite_alive,(iy+sprite_collisions)
     ld a,1
@@ -206,6 +235,56 @@ fixture_start:
     xor a
     ld (fixture_deactivated),a
     call move_enemy_seeker_retreat_pad
+    CHECK8 fixture_deactivated,1
+
+; The closer pad wins even when it is not the captured spawn pad.
+    ld a,13
+    ld (fixture_case),a
+    ld iy,fixture_pads
+    ld (iy+actor_record_generation),5
+    ld (iy+tile_type),tile_pad_small
+    set sprite_alive,(iy+tile_collisions)
+    ld hl,30*256
+    ld (iy+tile_x),hl
+    ld hl,310*256
+    ld (iy+tile_y),hl
+    ld iy,fixture_seeker
+    ld (iy+seeker_spawn_pad_id),1
+    ld (iy+seeker_spawn_pad_generation),7
+    ld hl,40*256
+    ld (iy+sprite_x),hl
+    ld hl,320*256
+    ld (iy+sprite_y),hl
+    call seeker_enter_nearest_pad_retreat
+    CHECK8 fixture_seeker+seeker_retreat_pad_id,0
+    CHECK8 fixture_seeker+seeker_retreat_pad_generation,5
+    CHECK8 fixture_seeker+seeker_spawn_pad_id,1
+
+; A recycled destination sends this actor to an edge; it must not use its
+; spawn pad or home to the new lifetime.
+    ld a,14
+    ld (fixture_case),a
+    ld a,6
+    ld (fixture_pads+actor_record_generation),a
+    ld iy,fixture_seeker
+    call move_enemy_seeker_retreat_pad
+    CHECK8 fixture_seeker+seeker_state,seeker_state_retreat_edge
+    CHECK24 fixture_seeker+sprite_heading,seeker_edge_heading_left
+
+; Right exit also stays live through the last visible pixel.
+    ld a,15
+    ld (fixture_case),a
+    ld iy,fixture_seeker
+    set sprite_alive,(iy+sprite_collisions)
+    ld hl,382*256
+    ld (iy+sprite_x),hl
+    ld hl,1*256
+    ld (iy+sprite_xvel),hl
+    xor a
+    ld (fixture_deactivated),a
+    call move_enemy_seeker_retreat_edge
+    CHECK8 fixture_deactivated,0
+    call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,1
 
     ld a,FIXTURE_PASS
@@ -261,6 +340,10 @@ tile_table_record_pointer_valid:
     xor a
     ret
 
+sprite_table_record_pointer_valid:
+    scf
+    ret
+
 polar_to_cartesian:
     ld a,h
     cp 192
@@ -301,6 +384,11 @@ move_sprite:
     ret
 
 sprite_frame_heading:
+    ret
+
+move_enemy_seeker:
+    ld hl,fixture_warp_collisions
+    inc (hl)
     ret
 
 table_deactivate_sprite:

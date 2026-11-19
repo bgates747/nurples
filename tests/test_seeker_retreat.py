@@ -34,7 +34,7 @@ def resolve_pad(identity: tuple[int, int], pads: tuple[Pad, ...]) -> Pad | None:
         return None
     if match.generation != generation or match.tile_type != 1 or not match.alive:
         return None
-    if match.y + 16 < 0 or match.y >= 335:
+    if match.y + 16 <= 0 or match.y > 335:
         return None
     return match
 
@@ -50,7 +50,9 @@ class SeekerRetreatTests(unittest.TestCase):
         self.assertIsNone(resolve_pad(identity, (Pad(1, 8),)))
         self.assertIsNone(resolve_pad(identity, (Pad(1, 7, tile_type=9),)))
         self.assertIsNone(resolve_pad(identity, (Pad(1, 7, alive=False),)))
-        self.assertIsNone(resolve_pad(identity, (Pad(1, 7, y=335),)))
+        self.assertIsNotNone(resolve_pad(identity, (Pad(1, 7, y=335),)))
+        self.assertIsNone(resolve_pad(identity, (Pad(1, 7, y=336),)))
+        self.assertIsNone(resolve_pad(identity, (Pad(1, 7, y=-16),)))
         self.assertIsNone(resolve_pad((0xFF, 0), (Pad(1, 7),)))
 
     def test_nearest_edge_tie_policy_is_deterministic(self) -> None:
@@ -59,7 +61,7 @@ class SeekerRetreatTests(unittest.TestCase):
         self.assertEqual(retreat_edge(120), ("right", 64))
         self.assertEqual(retreat_edge(240), ("right", 64))
 
-    def test_source_uses_record_fields_and_non_hostile_callbacks(self) -> None:
+    def test_source_uses_record_fields_and_only_warp_retreat_collides(self) -> None:
         source = SOURCE.read_text()
         self.assertIn("seeker_spawn_pad_id: equ seeker_custom_end", source)
         self.assertIn("seeker_spawn_pad_generation: equ seeker_spawn_pad_id+1", source)
@@ -70,6 +72,9 @@ class SeekerRetreatTests(unittest.TestCase):
         self.assertIn("call check_collision_box", source)
         self.assertNotIn("check_enemy_collision_player", source)
         self.assertNotIn("check_enemy_collision_laser", source)
+        policy = source.split("seeker_retreat_draw_or_collide:", 1)[1]
+        self.assertIn("ld de,game_level_transition", policy)
+        self.assertIn("jp z,move_enemy_seeker\n    jp sprite_frame_heading", policy)
 
     def test_retreat_is_integrated_through_actor_owned_transitions(self) -> None:
         production = PRODUCTION.read_text()

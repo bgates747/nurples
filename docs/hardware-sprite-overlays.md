@@ -107,34 +107,34 @@ family while retaining a complete 256-character Agon font.
 The official buffered-command API can preserve variable 2 without adding a
 CPU-side response protocol. Conditional call command 6 performs a true VDP
 variable-presence test, including the distinction between absent and present
-with value zero. Command 48 can then copy the variable's 16-bit value directly
-into another VDP buffer. The qualified transaction uses these currently unused
-IDs:
+with value zero. Command 48 copies the variable's 16-bit value directly into
+the SET command. The restore branches require the ordinary byte comparison
+fix in VDPlet v0.1.3-alpha. The transaction owns these IDs:
 
 | ID | Role |
 |---:|---|
-| 63985 | prepared seven-byte restore program: `CLEAR` plus two NULs, or patched `SET value16` |
-| 63987 | mark-present program: patch the restore opcode to `SET`, then read variable 2 into its value bytes |
+| 63985 | seven-byte `SET value16` program |
+| 63986 | five-byte `CLEAR` program |
+| 63987 | mark-present program: set the presence marker and save the full variable value |
 | 63988 | snapshot dispatcher: conditionally call 63987 only if variable 2 exists |
+| 63989 | one-byte presence marker, initialized to zero |
 | 63990–63993 | two title and two prompt bitmap buffers |
 
 The production image manifests currently end at 2816, the sole runtime font is
 64000, and the existing loose-image temporary buffer is 65534. Startup already
-clears every VDP buffer before loading application assets, so these three control
+clears every VDP buffer before loading application assets, so these control
 buffers do not need to preserve an earlier program's buffer contents. They do
 need to remain allocated until overlay teardown has restored the incoming
 feature-variable state.
 
-Overlay setup writes the prepared restore program, mark-present program and
-snapshot dispatcher, then calls the snapshot dispatcher. The restore program
-defaults to `VDU 23,0,F9,2` followed by two harmless NUL commands. If variable
-2 exists, mark-present changes byte 2 from `F9` to `F8` and copies the complete
-16-bit incoming value into bytes 5–6, turning the same seven bytes into a SET
-command. Only after that call returns may setup set variable 2 and mark sprites
-20/21 as hardware.
+Overlay setup writes the control buffers and calls the snapshot dispatcher.
+If variable 2 exists, mark-present changes the marker to one and copies the
+complete 16-bit incoming value into bytes 5–6 of the SET command. Only after
+that call returns may setup set variable 2 and mark sprites 20/21 as hardware.
 Overlay teardown hides both sprites, restores the active prefix to 20, clears
-their frame lists, demotes them to software, calls the prepared restore program,
-and finally clears control buffers 63985, 63987 and 63988. It must not clear a
+their frame lists, demotes them to software, then conditionally calls CLEAR for
+marker zero or SET for marker one. It clears controls 63985–63989 after the
+restore commands finish. It must not clear a
 program while that program is running. The process-wide AGNB bitmap buffers are not
 cleared here; clearing them would force a forbidden asset reload before a
 second overlay visit.
@@ -142,18 +142,19 @@ second overlay visit.
 The standalone qualification fixture must begin from each of these incoming
 states and prove exact state after repeated setup/teardown: variable 2 absent,
 present with zero, and present with a nonzero sentinel such as `0xBEEF`. It
-must also prove the prepared restore program is rebuilt for each new
+must also prove the presence marker is initialized for each new
 transaction, a prior present run cannot contaminate a later absent run, and
 every control/bitmap buffer is released after restoration.
 
-The earlier marker/restore-dispatch design is rejected. Pinned VDPlet source
+The marker/restore-dispatch design failed on the earlier VDPlet firmware. Its source
 shows that `bufferConditional()` initializes a 32-bit source value to `-1` and
 then copies only one byte into it for ordinary buffer comparisons. A byte value
 of zero therefore becomes `0xFFFFFF00`, and one becomes `0xFFFFFF01`; zero is
 treated as nonzero and neither exact comparison succeeds. R05/R06 isolated this
 behavior after proving variable 2 remained absent before and after bitmap
-loading. The prepared-program design avoids all buffer-valued conditionals and
-remains correct if that firmware defect is later fixed.
+loading. R07 qualified a temporary prepared-opcode workaround. VDPlet
+v0.1.3-alpha repairs the comparison, and the current source retires that
+workaround. The new transaction remains pending consumer qualification.
 
 The exact references used for this diagnosis are the official buffered-command
 specification at `/home/smith/Agon/agon-docs/docs/vdp/Buffered-Commands-API.md`

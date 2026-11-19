@@ -117,6 +117,8 @@ draw_player_ships:
     ld hl,BUF_SHIP_MFD
     call vdu_buff_select
     ld a,(player_ships) ; loop counter
+    or a
+    ret z ; terminal player state has no remaining ships
     ld bc,0 ; starting x-coordinate
 @loop:
     dec a ; we don't count the ship we're flying
@@ -188,6 +190,11 @@ player_state_pointer_valid:
 ; the one-second safety state does not freeze the live world after entrance.
 ; outputs: carry set while normal world travel is enabled
 player_world_travel_enabled:
+    ld hl,(game_state)
+    ld de,game_over
+    or a
+    sbc hl,de
+    jp z,@game_over
     ld hl,(player_state)
     ld de,player_alive
     or a
@@ -203,20 +210,17 @@ player_world_travel_enabled:
     or a
     sbc hl,de
     jp z,@travel
-; GAME OVER owns no player update, but its global presentation state explicitly
-; keeps the ordinary one-scanline terrain pipeline and active scenery moving.
-; The actor consults that published global phase; the scheduler does not rewrite
-; the actor's local dead state merely to obtain world travel.
-    ld hl,(game_state)
-    ld de,game_over
-    or a
-    sbc hl,de
-    jp nz,@paused
-@travel:
-    scf
-    ret
+    jp @paused
+@game_over:
+; Advance both terrain pixels and active-tile coordinates in the scroll control.
+    .if GAME_OVER_REVIEW_SCROLL
+    jp @travel
+    .endif
 @paused:
     xor a
+    ret
+@travel:
+    scf
     ret
 ; end player_world_travel_enabled
 
@@ -350,8 +354,8 @@ player_init:
     ld (player_dying_spawns),a
 ; set player sprite record with defaults
     ld ix,player_begin
-    ld hl,player_defaults
     call player_entry_load_start_coords
+    ld hl,player_defaults ; coordinate setup owns HL, not the allocator's defaults
     ld a,1
     call spawn_sprite_from_coords
     jp nc,@allocation_failed ; IX is invalid when the one-record player pool is full
@@ -423,7 +427,7 @@ player_init:
     ret
 ; end player_init
 
-; Reconstruct the resolved off-screen start in 16.8 coordinates.
+; Reconstruct the resolved bottom entrance in 16.8 coordinates.
 ; outputs: BC = start X, DE = start Y
 player_entry_load_start_coords:
     ld a,(player_spawn_resolved_x)
@@ -439,9 +443,12 @@ player_entry_load_start_coords:
     ld bc,0
     ld b,a
     ld a,(player_spawn_resolved_y)
-    add a,player_entry_start_y_offset
     ld de,0
     ld d,a
+; 224 + 96 = 320: carry must reach the upper integer byte, not wrap at 256.
+    ld hl,player_entry_start_y_offset*256
+    add hl,de
+    ex de,hl
     ret
 ; end player_entry_load_start_coords
 
@@ -551,7 +558,12 @@ player_grace:
     set sprite_alive,(iy+sprite_collisions)
     ld hl,player_alive
     ld (player_state),hl
-    call seeker_group_enter_seek
+; Warp retreat owns these seekers even if a respawn completes mid-warp.
+    ld hl,(game_state)
+    ld de,game_level_transition
+    or a
+    sbc hl,de
+    call nz,seeker_group_enter_seek
     ret
 ; end player_grace
 
@@ -588,8 +600,12 @@ kill_player:
     ld (ix+sprite_xvel),hl
     ld hl,player_death_forward_speed
     ld (ix+sprite_yvel),hl
-; ask each live seeker to enter its initialized orbit state
-    call seeker_group_enter_orbit
+; A warp collision may kill the player but must not cancel the seekers' exit.
+    ld hl,(game_state)
+    ld de,game_level_transition
+    or a
+    sbc hl,de
+    call nz,seeker_group_enter_orbit
 ; set player state to dying
     xor a
     ld (player_dying_phase),a

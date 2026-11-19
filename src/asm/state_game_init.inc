@@ -16,10 +16,11 @@ game_init:
     call vdu_font_select
     call vdu_sprite_reset
     call vdu_clear_all_buffers
+; Allocate the full playfield before resident assets consume VDP memory.
+    call playfield_display_select
+    jp nc,presentation_flow_fail
 ; print ascii art splash screen
     call vdu_cls
-    call printInline
-    asciz "Welcome to\r\n"
     ld hl,purple_nurples_ascii
     call printString
     call printInline
@@ -40,9 +41,7 @@ game_init:
     call load_ui_images
 	jp nz,@agnb_load_error
 	call printNewLine
-; set up the display
-    ld a,8;+128 ; 136   320   240   64    60hz double-buffered
-    call vdu_set_screen_mode
+; Set up the splash in the already-verified 64-colour display.
     xor a
     call vdu_set_scaling
 ; ; enable additional audio channels
@@ -71,14 +70,13 @@ game_init:
 ; load all backgrounds, sprites, and active DG tiles from one container
     call load_game_images
     jp nz,@agnb_load_error
-; The loader is complete. Enter the bounded resident-asset attract lifecycle;
-; it owns the release-gated start prompt and the separate joystick-choice
-; boundary without another blocking wait or asset reload.
+; Keep the splash visible for the bounded controller choice. Only a valid
+; choice enters the resident-asset attract state and its fresh start gate.
     ld a,STATE_NEW_EVENT_LOAD_COMPLETE
     call telemetry_post_events
     ld a,STATE_NEW_TITLE
     call telemetry_publish_phase
-    call game_attract_begin
+    call game_start_config_begin
     ret
 
 @font_load_error:
@@ -109,14 +107,25 @@ game_init:
     ret
 ; end game_init
 
-; Prepare the reusable mode-20 presentation/playfield surface. This routine
-; owns no session, actor or level state and never loads or clears VDP assets.
+; A = display checkpoint. Verify and redraw the existing playfield surface
+; without reallocating it. Carry clear on a rejected display.
 game_prepare_playfield:
-    ld a,20
-    call vdu_set_screen_mode
+    call playfield_display_verify
+    ret nc
+    ld a,26 ; reset text/graphics viewports and origin after loading/config
+    rst.lil 10h
+    call vdu_select_text_cursor
     xor a
     call vdu_set_scaling
     call vdu_cursor_off
+    ld a,c_black+128
+    call vdu_colour_text
+    ld a,c_white
+    call vdu_colour_text
+    xor a
+    ld c,c_black+128
+    call vdu_gcol
+    call vdu_cls
 ; select font
     ld hl,Lat38_VGA8_8x8
     ld a,1 ; flags
@@ -149,6 +158,7 @@ game_prepare_playfield:
     call vdu_set_txt_viewport
 ; initialize the global timestamp
     call timestamp_tick
+    scf
     ret
 ; end game_prepare_playfield
 

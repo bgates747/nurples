@@ -11,7 +11,7 @@ sprite_top: equ field_top
 sprite_bottom: equ field_bottom-15
 sprite_left: equ field_left
 sprite_right: equ field_right-15
-tile_bottom: equ screen_bottom+1
+tile_bottom: equ field_bottom+1 ; active-tile coordinates are relative to the field
 
 ; The highest supported safe endpoint plus the shared approach offset must
 ; remain exactly on the ordinary sprite floor.

@@ -8,20 +8,16 @@
 ui_agnb_filename:   db "ui.agnb",0
 game_agnb_filename: db "game.agnb",0
 
-; The 160x106 logo travels from just inside the lower edge to an 8-pixel top
-; margin. Keep these expressions unambiguous because ez80asm evaluates complex
-; arithmetic left-to-right.
-logo_y_start:    equ 224*256
-logo_y_end:      equ 8*256
-logo_y_distance: equ -216*256
-
-logo_xpos: dl 0
-logo_ypos: dl 0
-logo_yvel: dl 0
+; Author's two-line mockup anchor in physical Mode 20 pixels.
+SPLASH_TITLE_X: equ 28
+SPLASH_TITLE_Y: equ 47
+SPLASH_TITLE_PERIOD: equ 32 ; MOS clock centiseconds; checked at record boundaries
 
 game_load_index:             dl 0
 game_load_remaining:         dl 0
 game_load_callback_overflow: db 0
+splash_title_frame:          db 0
+splash_title_tick:           dl 0
 
 
 ; Print one completion breadcrumb at a safe record boundary. The canonical
@@ -33,28 +29,30 @@ img_load_agnb_breadcrumb:
     ret
 
 
-; Initialize exact 16.8 accumulated displacement for all game.agnb records.
+; Paint the single-buffered background once, after the UI container is ready.
 img_load_init:
     ld hl,0
-    ld (logo_xpos),hl
     ld (game_load_index),hl
     ld a,l
     ld (game_load_callback_overflow),a
-
-    ld hl,logo_y_start
-    ld (logo_ypos),hl
+    ld (splash_title_frame),a
 
     ld hl,game_num_images
     ld (game_load_remaining),hl
 
-    ld hl,logo_y_distance
-    ld de,game_num_images*256
-    call sdiv168 ; DE = signed 16.8 distance per completed bitmap
-    ld (logo_yvel),de
-    ret
+    ld hl,BUF_SPLASH_BG
+    call vdu_buff_select
+    ld bc,0
+    ld de,0
+    call vdu_plot_bmp
+    call splash_draw_title
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
+    ld (splash_title_tick),hl
+    jp splash_print_progress
 
 
-; Draw the splash and advance its marching logo after one complete game image.
+; Update the progress after one complete game image. Never clear the screen.
 ; The callback result is ignored by AGNB, so an impossible extra callback is
 ; latched for validation after the loader returns.
 img_load_agnb_progress:
@@ -75,17 +73,16 @@ img_load_agnb_progress:
     inc de
     ld (game_load_index),de
 
-; Clear before repainting because screen mode 8 is single-buffered.
-    call vdu_cls
-    ld hl,BUF_SPLASH_BG
-    call vdu_buff_select
+    call splash_update_title
+    call splash_print_progress
+    xor a
+    ret
+
+; printDec uses a fixed field width, so writing at the same cursor position
+; replaces the entire status line without clearing any background pixels.
+splash_print_progress:
     ld bc,0
-    ld de,0
-    call vdu_plot_bmp
-
-    call move_logo
-
-; Show deterministic record progress without retaining 350 pathname strings.
+    call vdu_move_cursor
     call printInline
     asciz "Loading images: "
     ld hl,(game_load_index)
@@ -93,36 +90,37 @@ img_load_agnb_progress:
     call printInline
     asciz "/"
     ld hl,game_num_images
-    call printDec
+    jp printDec
 
-    xor a
-    ret
-
-
-move_logo:
-; Snap the last callback to the exact endpoint so fixed-point division
-; remainder cannot accumulate into a visible shortfall.
-    ld hl,(game_load_remaining)
-    ld de,0
+; Use the same wrapping 24-bit MOS clock as the game timers. Repaint at most
+; once per period; don't wait for the clock or flip in the loader callback.
+splash_update_title:
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
+    ld de,(splash_title_tick)
     or a
     sbc hl,de
-    jr nz,@accumulate
-    ld hl,logo_y_end
-    jr @position_ready
-
-@accumulate:
-    ld hl,(logo_ypos)
-    ld de,(logo_yvel)
-    add hl,de
-
-@position_ready:
-    ld (logo_ypos),hl
-    ld hl,BUF_SPLASH_LOGO
+    ld de,SPLASH_TITLE_PERIOD
+    or a
+    sbc hl,de
+    ret c
+    ld hl,(ix+sysvar_time)
+    ld (splash_title_tick),hl
+    ld a,(splash_title_frame)
+    xor 1
+    ld (splash_title_frame),a
+; Equal binary-alpha footprints allow direct redraw without erasing the old title.
+splash_draw_title:
+    ld a,(splash_title_frame)
+    or a
+    ld hl,BUF_SPLASH_TITLE_0
+    jr z,@select
+    ld hl,BUF_SPLASH_TITLE_1
+@select:
     call vdu_buff_select
-    ld bc,(logo_xpos)
-    ld de,(logo_ypos)
-    call vdu_plot_bmp168
-    ret
+    ld bc,SPLASH_TITLE_X
+    ld de,SPLASH_TITLE_Y
+    jp vdu_plot_bmp
 
 
 ; Load the bootstrap graphics while reporting one dot per finalized bitmap.

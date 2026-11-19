@@ -1,7 +1,8 @@
-; Actor-owned launch-pad identity and non-hostile seeker retreat behavior.
+; Actor-owned launch-pad identity and seeker retreat behavior.
 ;
 ; Every seeker retains the exact launch-pad lifetime that created it. During
-; non-live player phases it orbits harmlessly, then docks or exits an edge.
+; death it orbits harmlessly, then docks or exits an edge. Game Over uses
+; the same flight callbacks with an immediately selected nearest destination.
 
 seeker_state_retreat_pad: equ 2
 seeker_state_retreat_edge: equ 3
@@ -9,17 +10,19 @@ seeker_state_retreat_edge: equ 3
 seeker_spawn_pad_id: equ seeker_custom_end
 seeker_spawn_pad_generation: equ seeker_spawn_pad_id+1
 seeker_completed_orbits: equ seeker_spawn_pad_generation+1
-seeker_retreat_custom_end: equ seeker_completed_orbits+1
+seeker_retreat_pad_id: equ seeker_completed_orbits+1
+seeker_retreat_pad_generation: equ seeker_retreat_pad_id+1
+seeker_retreat_custom_end: equ seeker_retreat_pad_generation+1
 
 SEEKER_PAD_NONE: equ 0ffh
 seeker_retreat_orbits: equ 2
 seeker_edge_heading_right: equ 64*256
 seeker_edge_heading_left: equ 192*256
 
-    .if seeker_retreat_custom_end-seeker_custom_end-3
+    .if seeker_retreat_custom_end-seeker_custom_end-5
         dl seeker_retreat_custom_span_mismatch
     .endif
-    .if actor_record_size-seeker_retreat_custom_end-16
+    .if actor_record_size-seeker_retreat_custom_end-14
         dl seeker_retreat_custom_capacity_mismatch
     .endif
 
@@ -63,8 +66,21 @@ seeker_resolve_spawn_pad:
     ld a,(ix+seeker_spawn_pad_id)
     cp SEEKER_PAD_NONE
     jp z,@invalid
+    ld c,a
+    ld a,(ix+seeker_spawn_pad_generation)
+    jp seeker_resolve_pad_identity
+@invalid:
+    xor a
+    ret
+; end seeker_resolve_spawn_pad
+
+; IX = seeker, C = record id, A = generation (zero means no record).
+seeker_resolve_pad_identity:
+    or a
+    ret z
+    push af
     ld hl,0
-    ld l,a
+    ld l,c
     ld h,tile_table_record_size
     mlt hl
     ld de,tile_table_base
@@ -72,25 +88,42 @@ seeker_resolve_spawn_pad:
     push hl
     pop iy
     call tile_table_record_pointer_valid
-    jp nc,@invalid
-    ld a,(ix+seeker_spawn_pad_generation)
-    or a
-    jp z,@invalid
+    jp nc,@bad_pointer
+    pop af
     cp (iy+actor_record_generation)
     jp nz,@invalid
+    jp seeker_pad_visible
+@bad_pointer:
+    pop af
+@invalid:
+    xor a
+    ret
+
+; IY = table record. Carry means an active pad overlaps the playfield.
+seeker_pad_visible:
     bit sprite_alive,(iy+tile_collisions)
     jp z,@invalid
     ld a,(iy+tile_type)
     and actor_type_mask
     cp tile_pad_small
     jp nz,@invalid
-; A pad is visible if some part of its 16-pixel body intersects the field.
+    ld hl,(iy+tile_x)
+    ld de,16*256
+    add hl,de
+    jp m,@invalid
+    jp z,@invalid
+    ld hl,(iy+tile_x)
+    ld de,[field_right+1]*256
+    or a
+    sbc hl,de
+    jp p,@invalid
     ld hl,(iy+tile_y)
     ld de,16*256
     add hl,de
     jp m,@invalid
+    jp z,@invalid
     ld hl,(iy+tile_y)
-    ld de,field_bottom*256
+    ld de,[field_bottom+1]*256
     or a
     sbc hl,de
     jp p,@invalid
@@ -99,7 +132,102 @@ seeker_resolve_spawn_pad:
 @invalid:
     xor a
     ret
-; end seeker_resolve_spawn_pad
+
+; Called once on Game Over or next-level warp entry. Actor code owns retreat
+; and can replace a seeker already in an orbit or a death-phase retreat.
+seeker_group_enter_game_over_retreat:
+seeker_group_enter_retreat:
+    ld iy,seekers_base
+    ld b,seekers_max
+@loop:
+    push bc
+    push iy
+    call sprite_table_record_pointer_valid
+    jp nc,@next
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@next
+    bit sprite_just_died,(iy+sprite_collisions)
+    jp nz,@next
+    ld a,(iy+sprite_type)
+    and actor_type_mask
+    cp enemy_air
+    call z,seeker_enter_nearest_pad_retreat
+@next:
+    pop iy
+    pop bc
+    lea iy,iy+table_record_size
+    djnz @loop
+    ret
+
+; Scan the fixed table in id order; the first record wins an exact tie.
+; Squared integer-pixel deltas fit in 24 bits over this field. Do not change
+; the seeker's original launch identity when choosing this alternate target.
+seeker_enter_nearest_pad_retreat:
+    push iy
+    pop ix
+    xor a
+    ld (ix+seeker_retreat_pad_generation),a
+    ld hl,0ffffffh
+    ld (seeker_best_pad_distance),hl
+    ld iy,tile_table_base
+@scan:
+    call seeker_pad_visible
+    jp nc,@advance
+    call tile_table_record_pointer_valid
+    jp nc,@advance
+    ld a,(iy+actor_record_generation)
+    or a
+    jp z,@advance
+    ld hl,(ix+sprite_x)
+    ld de,(iy+tile_x)
+    call seeker_pad_square_delta
+    push hl
+    ld hl,(ix+sprite_y)
+    ld de,(iy+tile_y)
+    call seeker_pad_square_delta
+    pop de
+    add hl,de
+    push hl
+    ld de,(seeker_best_pad_distance)
+    or a
+    sbc hl,de
+    pop hl
+    jp nc,@advance
+    ld (seeker_best_pad_distance),hl
+    ld a,(iy+tile_id)
+    ld (ix+seeker_retreat_pad_id),a
+    ld a,(iy+actor_record_generation)
+    ld (ix+seeker_retreat_pad_generation),a
+@advance:
+    lea iy,iy+tile_table_record_size
+    push iy
+    pop hl
+    ld de,tile_table_end
+    or a
+    sbc hl,de
+    jp c,@scan
+    ld a,(ix+seeker_retreat_pad_generation)
+    or a
+    jp z,seeker_enter_retreat_edge_ix
+    jp seeker_publish_pad_retreat
+
+; HL and DE are signed 16.8 coordinates. Square the absolute pixel distance.
+seeker_pad_square_delta:
+    or a
+    sbc hl,de
+    call m,neg24
+    ld (seeker_pad_delta),hl
+    ld hl,0
+    ld a,(seeker_pad_delta+1)
+    ld l,a
+    ld a,(seeker_pad_delta+2)
+    ld h,a
+    push hl
+    pop de
+    jp umul24
+
+seeker_best_pad_distance: dl 0
+seeker_pad_delta: dl 0
 
 ; Reset the deterministic orbit budget when entering a non-hostile hold.
 ; inputs: IY = seeker record
@@ -136,6 +264,11 @@ seeker_enter_retreat:
     pop ix
     call seeker_resolve_spawn_pad
     jp nc,seeker_enter_retreat_edge_ix
+    ld a,(ix+seeker_spawn_pad_id)
+    ld (ix+seeker_retreat_pad_id),a
+    ld a,(ix+seeker_spawn_pad_generation)
+    ld (ix+seeker_retreat_pad_generation),a
+seeker_publish_pad_retreat:
     push ix
     pop iy
     ld a,seeker_state_retreat_pad
@@ -147,10 +280,12 @@ seeker_enter_retreat:
 
 ; inputs: IX = seeker record
 seeker_enter_retreat_edge_ix:
-    ld a,(ix+sprite_x+1)
-    cp 120
+    ld hl,(ix+sprite_x)
+    ld de,120*256 ; 256-pixel field, 16-pixel seeker, tie goes right
+    or a
+    sbc hl,de
     ld hl,seeker_edge_heading_left
-    jp c,@heading_ready
+    jp m,@heading_ready
     ld hl,seeker_edge_heading_right
 @heading_ready:
     ld (ix+sprite_heading),hl
@@ -166,13 +301,15 @@ seeker_enter_retreat_edge_ix:
     ret
 ; end seeker_enter_retreat_edge_ix
 
-; Home to the captured pad without checking player or weapon collisions. A pad
-; that ceases to be the captured visible lifetime causes an edge retreat.
+; Home to the selected pad. If it ceases to be the same visible lifetime,
+; finish through the nearer edge.
 ; inputs: IY = seeker record, table_pointer already publishes it
 move_enemy_seeker_retreat_pad:
     push iy
     pop ix
-    call seeker_resolve_spawn_pad
+    ld c,(ix+seeker_retreat_pad_id)
+    ld a,(ix+seeker_retreat_pad_generation)
+    call seeker_resolve_pad_identity
     jp nc,@lost_pad
     call check_collision_box
     jp z,@docked
@@ -184,8 +321,7 @@ move_enemy_seeker_retreat_pad:
     ld (iy+sprite_heading),hl
     call sprite_compute_velocities
     call move_sprite
-    call sprite_frame_heading
-    ret
+    jp seeker_retreat_draw_or_collide
 @docked:
     push ix
     pop iy
@@ -195,15 +331,40 @@ move_enemy_seeker_retreat_pad:
     ret
 ; end move_enemy_seeker_retreat_pad
 
-; Fly to the selected edge. The generic mover may clamp/reflect at the first
-; crossing, but the actor deactivates in that same bounded update before the
-; reflected velocity can be observed on another frame.
+; VDP sprites use physical screen coordinates, independent of the plot
+; viewport. Bypass the bouncing mover and release only past the visible edge.
 ; inputs: IY = seeker record, table_pointer already publishes it
 move_enemy_seeker_retreat_edge:
-    call move_sprite
-    ld a,(sprite_screen_edge)
-    and collide_left+collide_right
-    jp nz,table_deactivate_sprite
-    call sprite_frame_heading
-    ret
+    ld hl,(iy+sprite_x)
+    ld de,(iy+sprite_xvel)
+    add hl,de
+    ld (iy+sprite_x),hl
+    bit 7,(iy+sprite_xvel+2)
+    jp z,@right
+    ld de,0
+    ld d,(iy+sprite_dim_x)
+    add hl,de
+    ld de,-origin_left*256
+    or a
+    sbc hl,de
+    jp m,table_deactivate_sprite
+    jp z,table_deactivate_sprite
+    jp seeker_retreat_draw_or_collide
+@right:
+    ld de,[screen_right+1-origin_left]*256
+    or a
+    sbc hl,de
+    jp p,table_deactivate_sprite
+    jp seeker_retreat_draw_or_collide
 ; end move_enemy_seeker_retreat_edge
+
+; Warp is live play: retreat changes heading and destination, not hit rules.
+; Player-death and Game Over retreats keep their existing harmless behavior.
+seeker_retreat_draw_or_collide:
+    ld hl,(game_state)
+    ld de,game_level_transition
+    or a
+    sbc hl,de
+    jp z,move_enemy_seeker
+    jp sprite_frame_heading
+; end seeker_retreat_draw_or_collide

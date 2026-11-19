@@ -11,6 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "asm" / "game_over_lifecycle.inc"
 PLAYER = ROOT / "src" / "asm" / "player_state.inc"
 PRODUCTION = ROOT / "src" / "asm" / "nurples.asm"
+PAD = ROOT / "src" / "asm" / "tile_pad_small.inc"
+INIT = ROOT / "src" / "asm" / "state_game_init.inc"
+VDU = ROOT / "src" / "asm" / "vdu.inc"
 
 
 def block(source: str, label: str) -> str:
@@ -27,13 +30,17 @@ def block(source: str, label: str) -> str:
 class GameOverLifecycleTests(unittest.TestCase):
     def test_entry_acquires_overlay_before_removing_hostiles(self) -> None:
         enter = block(SOURCE.read_text(), "game_over_lifecycle_enter")
+        verified_display = enter.index("call playfield_display_verify")
         acquire = enter.index("call presentation_renderer_enter")
         player = enter.index("ld iy,player_begin", acquire)
         lasers = enter.index("ld iy,player_lasers_begin", player)
         fireballs = enter.index("ld iy,fireballs_base", lasers)
+        retreat = enter.index("call seeker_group_enter_game_over_retreat", fireballs)
+        self.assertLess(verified_display, acquire)
         self.assertLess(acquire, player)
         self.assertLess(player, lasers)
         self.assertLess(lasers, fireballs)
+        self.assertLess(fireballs, retreat)
         self.assertNotIn("reset_runtime_tables", enter)
         self.assertNotIn("seeker_group_enter_orbit", enter)
 
@@ -53,9 +60,23 @@ class GameOverLifecycleTests(unittest.TestCase):
 
     def test_world_policy_reads_global_game_over_without_mutating_player(self) -> None:
         policy = block(PLAYER.read_text(), "player_world_travel_enabled")
-        self.assertIn("ld hl,(game_state)", policy)
-        self.assertIn("ld de,game_over", policy)
+        self.assertLess(policy.index("ld de,game_over"), policy.index("ld de,player_alive"))
+        self.assertIn(
+            "@game_over:\n"
+            "; Advance both terrain pixels and active-tile coordinates in the scroll control.\n"
+            "    .if GAME_OVER_REVIEW_SCROLL\n    jp @travel\n    .endif\n"
+            "@paused:\n    xor a\n    ret",
+            policy,
+        )
         self.assertNotIn("ld (player_state)", policy)
+
+    def test_pad_animation_precedes_the_game_over_launch_gate(self) -> None:
+        pad = PAD.read_text().split("move_pad_small:", 1)[1].split("kill_pad_small:")[0]
+        self.assertLess(pad.index("call draw_active_tile"), pad.index("ld de,game_over"))
+        self.assertLess(pad.index("ret z"), pad.index("call active_tile_launch_timer_tick"))
+        self.assertLess(
+            pad.index("call active_tile_launch_timer_tick"), pad.index("call enemy_spawn_seeker")
+        )
 
     def test_exit_orders_renderer_before_controller_and_retains_assets(self) -> None:
         exit_block = block(SOURCE.read_text(), "game_over_lifecycle_exit")
@@ -67,6 +88,32 @@ class GameOverLifecycleTests(unittest.TestCase):
 
     def test_qualified_lifecycle_is_in_production(self) -> None:
         self.assertIn('include "game_over_lifecycle.inc"', PRODUCTION.read_text())
+
+    def test_playfield_allocation_precedes_asset_load_and_redraw_does_not_reallocate(self) -> None:
+        source = INIT.read_text()
+        startup = block(source, "game_init")
+        check = startup.index("call playfield_display_select\n    jp nc,presentation_flow_fail")
+        self.assertLess(check, startup.index("call fonts_load"))
+        redraw = block(source, "game_prepare_playfield")
+        self.assertIn("call playfield_display_verify\n    ret nc", redraw)
+        self.assertNotIn("call vdu_set_screen_mode", redraw)
+
+    def test_mode_set_acknowledgement_is_separate_from_mode_query(self) -> None:
+        source = VDU.read_text()
+        setter = block(source, "vdu_set_mode_confirm")
+        query = block(source, "vdu_query_mode")
+        fence = block(source, "vdu_mode_reply_fence")
+        for request in (setter, query):
+            self.assertLess(
+                request.index("call vdu_mode_reply_fence"),
+                request.index("res 4,(ix+sysvar_vpd_pflags)"),
+            )
+            self.assertIn("ld d,vdp_pflag_mode", request)
+        self.assertIn("call vdu_set_screen_mode", setter)
+        self.assertNotIn("vdp_mode", setter)
+        self.assertIn("db 23,0,vdp_mode", query)
+        self.assertIn("db 23,0,vdp_cursor", fence)
+        self.assertNotIn("vdu_get_text_colour", fence)
 
 
 if __name__ == "__main__":

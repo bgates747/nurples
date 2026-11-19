@@ -39,7 +39,7 @@ payloads changed; the other 355 records, all metadata, the executable,
 its symbols and `ui.agnb` were unchanged. No code, deployment, or emulator
 changes were made. Visual confirmation is pending.
 
-### Build limitation
+### Initial build limitation (superseded below)
 
 Use the restored `tgt/game.agnb` as-is. An assembly-only build keeps it.
 To verify or repack from existing RGBA2222, use the existing
@@ -67,3 +67,45 @@ and dimensions. Keep the sparse atlas as archived art and leave all
 gameplay and assembly source unchanged. Compare the four rebuilt records
 against the historical source of truth and the remaining records and
 executable against the pre-rebuild baseline. No deployment or push.
+
+### Full-rebuild result
+
+Amendment frozen at `3c97457762aba475772c80170fb1a0d4c79c382c`.
+The build now reads the four original PNGs in `tiles/bg/orig`, rejects
+dimensions other than 256×256, and writes only encoded payloads and
+decoded previews. The archived sparse atlas is no longer a build input.
+A clean-generation regression uses the four source PNGs alone and checks
+their historical runtime hashes and that the sources were not edited.
+
+`build_00_all_the_things.py --all` completed asset generation, the normal
+asset checks, and native assembly under Pi compiler checkout 1054 (released).
+The rebuilt game container matched the verified rollback candidate exactly:
+the four original payloads and all other records were identical to that
+candidate. The UI container, executable, symbols, original PNGs, and all
+assembly source were unchanged. Ruff and diff checks passed; 216 tests ran
+with one headless-input test skipped because its runner was not installed.
+No deployment or visual test was performed.
+
+### Oryx comparison — Author requested
+
+Stage the rebuilt original-starfield bundle in separate stopped FAE and
+Alexe profiles, using one ordinary Oryx checkout. Reuse each engine's last
+qualified runtime/firmware (stock VDP for FAE; pinned VDPlet for Alexe),
+verify pinned Eirene RC3 and use the same raw card contents in both.
+Preserve the donors, verify the complete guest payload and load-only
+startup, then hand over launch commands. Smith runs the two profiles one
+at a time and can use `P` to pause for seam screenshots. No commit or push
+of emulator changes ahead of visual review.
+
+Staged stopped on Oryx under checkout 520 (request `a47fe97bf577`).
+The [readback receipt](../../../.build/art-001/original-starfield-rollback/oryx-r01/staging-receipt.txt)
+verifies both raw cards are byte-identical (SHA-256 `fda305f5…0005c`)
+and match the rebuilt game binary, assets, font, and load-only startup.
+FAE uses stock FAE 1.2.6 VDP; Alexe uses the same VDPlet firmware image as
+the earlier Alexe R03 review (`dc43ecb8…33ab`). Both use pinned Eirene RC3.
+No emulator process was running at handoff. Smith launches
+`./fab-agon-emulator` in `original-starfield-fae-r01` and
+`./flexe-agon-emulator` in `original-starfield-alexe-r01` under the
+Oryx project’s `.emulator` directory, then types `RUN` at each MOS prompt.
+Close the first before opening the second. Hold Oryx until review and
+emulator shutdown are confirmed.

@@ -1,8 +1,9 @@
 tiles_row_defs: dl 0x000000 ; pointer to current row tiles definitions
-tiles_row: dl 0 ; decrements each time a row is drawn. level is over when hits zero
+tiles_row: dl 0 ; decrements each time a source row is admitted
     ; initialize to zero for a maximum of 256 rows in a level
 tiles_cols: db 0 ; number of tile columns in the current level
-tiles_level_complete: db 0 ; latched until the global state consumes it
+tiles_level_complete: db 0 ; latched only once the last terrain is off screen
+tiles_drain_remaining: dl 0 ; remaining one-pixel scrolls after final row admission
 
 cur_baseBufferId: dl 0
     db 0 ; padding for byte-shifting
@@ -27,14 +28,12 @@ tiles_plot:
 @travel:
     ld a,(tiles_level_complete)
     or a
-    jp z,@row_available
-; A blocking actor sequence may still be rendering after the final source row.
-; Keep the passive terrain moving without reading beyond the level definition.
+    ret nz
     call tiles_scroll_background
-    ld a,1 ; preserve the latched world result for a coordinating caller
-    ret
-@row_available:
-    call tiles_scroll_background
+    ld hl,(tiles_drain_remaining)
+    ld a,h
+    or l ; bounded by the 336-pixel playfield, so H:L covers the counter
+    jp nz,@drain
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -90,8 +89,23 @@ tiles_plot:
 ; decrement tiles row counter
     ld hl,tiles_row
     dec (hl)
-    jp z,@level_complete
+    jp z,@begin_drain
     xor a ; no level-complete result this frame
+    ret
+@begin_drain:
+; The last row's top scanline is at Y=0. Count scrolls through Y=field_bottom
+; and one beyond it. Do not revisit the source row pointer while draining.
+    ld hl,field_bottom+1
+    ld (tiles_drain_remaining),hl
+    xor a
+    ret
+@drain:
+    dec hl
+    ld (tiles_drain_remaining),hl
+    ld a,h
+    or l
+    jp z,@level_complete
+    xor a
     ret
 @level_complete:
     ld a,1

@@ -293,12 +293,14 @@ tmr_test: ds 6 ; example of a buffer to hold timer data
 timestamp_now: dl 0
 timestamp_old: dl 0
 timestamp_chg: dl 0
+timestamp_raw: dl 0 ; MOS sample, kept separately from the pausable game clock
 
 ; Establish a restart-safe baseline before the first timestamp_tick. Without
 ; this, a second MOS RUN computes its first delta from the prior invocation.
 timestamp_init:
     MOSCALL mos_sysvars
     ld hl,(ix+sysvar_time)
+    ld (timestamp_raw),hl
     ld (timestamp_now),hl
     ld (timestamp_old),hl
     ld hl,0
@@ -313,15 +315,29 @@ timestamp_init:
 ;          ix = pointer to syvars table
 ; destroys: af,hl,de,ix
 timestamp_tick:
-    ld de,(timestamp_now)   ; get previous time
-    ld (timestamp_old),de   ; save previous time
     MOSCALL mos_sysvars     ; ix points to syvars table
     ld hl,(ix+sysvar_time)  ; get current time
-    ld (timestamp_now),hl   ; save current time
+    ld de,(timestamp_raw)
+    ld (timestamp_raw),hl
     xor a                   ; clear carry
-    sbc hl,de               ; hl = time elapsed
-    ld (timestamp_chg),hl   ; save elapsed time
+    sbc hl,de               ; elapsed MOS ticks, including 24-bit wrap
+    ld (timestamp_chg),hl
+    ld de,(timestamp_now)
+    ld (timestamp_old),de
+    add hl,de
+    ld (timestamp_now),hl
+    ex de,hl               ; DE = logical current time
+    ld hl,(timestamp_chg)
     ret
+; end timestamp_tick
+
+; Discard wall time before the first resumed frame without expiring game timers.
+timestamp_rebase:
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
+    ld (timestamp_raw),hl
+    ret
+; end timestamp_rebase
 
 ; set a countdown timer
 ; inputs: hl = time to set in 1/120ths of a second; iy = pointer to 3-byte buffer holding start time,iy+3 = pointer to 3-byte buffer holding timer set value

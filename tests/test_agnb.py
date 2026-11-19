@@ -29,7 +29,7 @@ class AgnbContainerTests(unittest.TestCase):
         )
 
     def test_catalog_contract_and_global_ids(self) -> None:
-        self.assertEqual(len(self.ui_records), 46)
+        self.assertEqual(len(self.ui_records), 47)
         self.assertEqual(len(self.catalogs["bg"]), 4)
         self.assertEqual(len(self.catalogs["sprites"]), 159)
         self.assertEqual(len(self.catalogs["tiles_dg"]), 192)
@@ -42,7 +42,7 @@ class AgnbContainerTests(unittest.TestCase):
         ids = [record.buffer_id for record in self.ui_records + self.game_records]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertNotIn(0xFFFF, ids)
-        self.assertEqual([record.buffer_id for record in self.ui_records], list(range(46)))
+        self.assertEqual([record.buffer_id for record in self.ui_records], list(range(47)))
         self.assertEqual(
             [record.buffer_id for record in self.catalogs["sprites"]],
             list(range(256, 415)),
@@ -59,7 +59,7 @@ class AgnbContainerTests(unittest.TestCase):
     def test_checked_in_containers_match_every_catalog_payload(self) -> None:
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
-        self.assertEqual(len(ui), 246_844)
+        self.assertEqual(len(ui), 386_220)
         self.assertEqual(len(game), 406_256)
         verify_container(ui, self.ui_records)
         verify_container(game, self.game_records)
@@ -74,7 +74,7 @@ class AgnbContainerTests(unittest.TestCase):
             self.assertNotIn("_image_list", rendered)
             self.assertNotIn("fn_", rendered)
         container_counts = render_container_include(self.ui_records, self.game_records)
-        self.assertIn("ui_agnb_num_images: equ 46", container_counts)
+        self.assertIn("ui_agnb_num_images: equ 47", container_counts)
         self.assertIn("game_num_images: equ 359", container_counts)
 
     def test_target_contains_only_supported_artifacts(self) -> None:

@@ -26,6 +26,7 @@ exit:
     ret
 
 ; API INCLUDES
+    include "game_over_review_config.inc"
     include "mos_api.inc"
     include "macros.inc"
     include "functions.inc"
@@ -75,6 +76,7 @@ exit:
     include "screen.inc"
     include "sprites.inc"
     include "input_gate.inc"
+    include "game_pause.inc"
     include "presentation_input.inc"
     include "start_choice_controller.inc"
     include "presentation_overlay_controller.inc"
@@ -82,6 +84,7 @@ exit:
     include "presentation_overlay_renderer.inc"
     include "attract_lifecycle.inc"
     include "game_over_lifecycle.inc"
+    include "playfield_display.inc"
     include "presentation_flow_states.inc"
     include "state.inc"
     include "state_game_init.inc"
@@ -135,6 +138,9 @@ main:
     ld (original_text_colours_valid),a
 @capture_complete:
 main_loop:
+; Freeze before the clock and state dispatch. VBlank/ESC still run below.
+    call game_pause_poll
+    jp c,@wait_frame
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
@@ -144,6 +150,7 @@ main_loop:
     or a
     jp nz,@state_exit
 ; Production pacing: one vblank. Two-vblank review lives in /test/nurples.
+@wait_frame:
     call vdu_vblank
 ; poll keyboard for escape keypress
     ld a, $08 ; code to send to MOS
@@ -151,6 +158,9 @@ main_loop:
     ld a, (ix + $05) ; get ASCII code of key pressed
     cp 27 ; check if 27 (ascii code for ESC)   
     jp z,@escape
+    ld a,(game_pause_active)
+    or a
+    jp nz,main_loop ; not a completed logical gameplay frame
     call telemetry_tick
 ; escape not pressed so loop
     jp main_loop
@@ -161,7 +171,13 @@ main_loop:
     jp main_end
 @escape:
     call telemetry_request_exit
+    ld a,(game_pause_active)
+    or a
+    jp nz,@pause_exit
     call telemetry_tick
+    jp main_end
+@pause_exit:
+    call telemetry_publish_terminal
     jp main_end
 
 main_end:
@@ -192,6 +208,7 @@ main_end:
     asciz "Thank you for playing\r\n"
     ld hl,purple_nurples_ascii
     call printString
+    call playfield_display_report
 ; Leave subsequent MOS text using the caller's logical colours when the VDP
 ; reported them. The already-rendered farewell remains white on black.
     ld a,(original_text_colours_valid)

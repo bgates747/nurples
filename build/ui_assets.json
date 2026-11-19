@@ -312,18 +312,25 @@
   {
     "name": "splash_bg",
     "buffer_id": 44,
-    "width": 320,
-    "height": 240,
-    "source": "assets/img/orig/ui/splash_bg_single_engine_cel.png",
+    "width": 512,
+    "height": 384,
+    "source": "assets/img/orig/ui/splash_sprite_faithful_v3_512x384.png",
     "prepare": true
   },
   {
-    "name": "splash_logo",
+    "name": "splash_title_0",
     "buffer_id": 45,
-    "width": 160,
-    "height": 106,
-    "source": "assets/img/orig/ui/splash_logo_cel_draft.png",
+    "width": 240,
+    "height": 76,
     "prepare": true,
-    "remove_gray_background": true
+    "loading_title_frame": 0
+  },
+  {
+    "name": "splash_title_1",
+    "buffer_id": 46,
+    "width": 240,
+    "height": 76,
+    "prepare": true,
+    "loading_title_frame": 1
   }
 ]

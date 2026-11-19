@@ -12,6 +12,8 @@ seeker_custom_end: equ seeker_orbit_angle+1
 seekers_count: db 0
 seekers_max: equ 3
 speed_seeker: equ 0x000280 ; 2.5 pixels per frame
+seeker_zag_heading_left: equ 160*256
+seeker_zag_heading_right: equ 96*256
 
 seeker_defaults:
     db enemy_air            ; type
@@ -48,9 +50,25 @@ enemy_spawn_seeker:
     or a
     sbc hl,de
     jp nz,seeker_enter_orbit
-    jp seeker_enter_seek
-    ret
+    jp seeker_enter_live_launch
 ; end enemy_spawn_seeker
+
+; Seed the first leg inward and down before arming its countdown. This entry
+; is only for a fresh live launch; returning from orbit keeps its old heading.
+seeker_enter_live_launch:
+    ld a,(iy+sprite_x+1)
+    cp 120 ; center of the legal top-left range for a 16-pixel seeker
+    ld a,0 ; left leg
+    ld hl,seeker_zag_heading_left
+    jp nc,@store
+    inc a ; right leg
+    ld hl,seeker_zag_heading_right
+@store:
+    ld (iy+sprite_heading),hl
+    ld (iy+sprite_move_step),a
+    call seeker_draw_heading ; show the right frame even before its first move
+    jp seeker_arm_zag
+; end seeker_enter_live_launch
 
 ; Enter orbit through an actor-owned initializer. Publish the legal callback
 ; only after every field owned by the target state is ready.
@@ -85,6 +103,7 @@ seeker_enter_orbit:
 seeker_enter_seek:
     xor a
     ld (iy+sprite_move_step),a
+seeker_arm_zag:
     ld a,seeker_state_seek
     ld (iy+seeker_state),a
     call rand_8
@@ -273,11 +292,11 @@ en_nav_seek_zag:
     ld (iy+sprite_move_step),a ; store it
     jp nz,@right ; zag right
 ;otherwise zag left
-    ld hl,160*256; southwest heading
+    ld hl,seeker_zag_heading_left
     ld (iy+sprite_heading),hl ; save sprite heading
     ret
 @right:
-    ld hl,96*256; southeast heading
+    ld hl,seeker_zag_heading_right
     ld (iy+sprite_heading),hl ; save sprite heading
     ret
 @zig_zag_no_switch:

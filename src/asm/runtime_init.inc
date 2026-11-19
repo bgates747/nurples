@@ -25,6 +25,8 @@ runtime_process_init:
     ld (tile_fault_flags),a
     ld (timer_fault_flags),a
     ld (vdu_timing_fault_flags),a
+    ld (playfield_display_status),a
+    ld (playfield_display_checkpoint),a
 
 ; Small persistent helpers that otherwise inherit their previous RUN values.
     ld (seekers_count),a
@@ -47,6 +49,7 @@ runtime_process_init:
     ld a,$50
     ld (r_seed),a
     call timestamp_init
+    call game_pause_process_init
 ; Presentation ownership is process-local. This is RAM-only: VDP control
 ; buffers are not acquired or cleared until the post-load attract transaction.
     call presentation_flow_process_init

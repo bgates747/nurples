@@ -1,4 +1,4 @@
-"""Contracts for the dormant cooperative presentation-flow state layer."""
+"""Contracts for the cooperative presentation-flow state layer."""
 
 from __future__ import annotations
 
@@ -39,32 +39,47 @@ class PresentationFlowStateTests(unittest.TestCase):
         self.assertLess(prefix, overlay)
         self.assertLess(overlay, publish)
 
-    def test_attract_and_game_over_transition_through_bounded_config(self) -> None:
+    def test_attract_and_game_over_start_with_the_selected_controller(self) -> None:
         source = SOURCE.read_text()
         attract = block(source, "game_attract")
         self.assertIn("call attract_lifecycle_update", attract)
         self.assertIn("call attract_lifecycle_exit", attract)
-        self.assertIn("jp game_start_config_begin", attract)
+        self.assertIn("jp game_start_session", attract)
         game_over = block(source, "game_over_bounded")
         self.assertIn("call game_over_lifecycle_enter", game_over)
         self.assertIn("call game_over_lifecycle_update", game_over)
         self.assertIn("call game_over_lifecycle_exit", game_over)
-        self.assertIn("jp game_start_config_begin", game_over)
+        self.assertIn("jp game_start_session", game_over)
+        self.assertNotIn("game_start_config_begin", attract + game_over)
 
     def test_configuration_is_nonblocking_and_uses_resident_session_boundary(self) -> None:
-        config = block(SOURCE.read_text(), "game_start_config")
+        source = SOURCE.read_text()
+        config = block(source, "game_start_config")
         self.assertEqual(config.count("call presentation_input_poll"), 1)
         self.assertEqual(config.count("call start_choice_update"), 1)
         self.assertIn("call player_joystick_enable", config)
         self.assertIn("call player_joystick_disable", config)
-        self.assertIn("call game_prepare_playfield", config)
-        self.assertIn("call game_new_session_init", config)
-        code = "\n".join(line.split(";", 1)[0] for line in config.splitlines())
+        self.assertIn("jp game_attract_begin", config)
+        self.assertNotIn("game_new_session_init", config)
+        session = block(source, "game_start_session")
+        self.assertIn("call game_prepare_playfield", session)
+        self.assertIn("call game_new_session_init", session)
+        code = "\n".join(line.split(";", 1)[0] for line in (config + session).splitlines())
         self.assertNotIn("game_init", code)
         self.assertNotIn("load_game_images", code)
         self.assertNotIn("vdu_clear_all_buffers", code)
         self.assertNotIn("waitKeypress", code)
         self.assertNotIn("vdu_vblank", code)
+
+    def test_controller_prompt_replaces_the_completed_progress_line(self) -> None:
+        prompt = block(SOURCE.read_text(), "game_start_config_begin")
+        self.assertIn("call start_choice_enter", prompt)
+        self.assertIn("ld bc,0\n    call vdu_move_cursor", prompt)
+        text = re.search(r'asciz "([^"]+)"', prompt).group(1)
+        self.assertEqual(text.rstrip(), "JOYSTICK (Y) OR KEYBOARD (N)?")
+        self.assertGreaterEqual(len(text), len("Loading images: ") + 8 + 1 + 8)
+        self.assertLess(len(text), 40)  # One-row viewport; no wrapping or scrolling.
+        self.assertNotIn("vdu_cls", prompt)
 
     def test_failures_exit_without_asset_reload_retry(self) -> None:
         source = SOURCE.read_text()
@@ -72,9 +87,9 @@ class PresentationFlowStateTests(unittest.TestCase):
         self.assertIn("set game_fault_presentation,(hl)", failure)
         self.assertIn("ld (game_exit_requested),a", failure)
         self.assertNotIn("game_init", failure)
-        config = block(source, "game_start_config")
-        self.assertIn("set game_fault_session_init,(hl)", config)
-        self.assertIn("ld (game_exit_requested),a", config)
+        session = block(source, "game_start_session")
+        self.assertIn("set game_fault_session_init,(hl)", session)
+        self.assertIn("ld (game_exit_requested),a", session)
         state = STATE.read_text()
         self.assertIn("game_fault_presentation: equ 1", state)
         self.assertIn("game_fault_session_init: equ 2", state)
@@ -100,8 +115,10 @@ class PresentationFlowStateTests(unittest.TestCase):
         self.assertLess(shutdown, sprite_reset)
         self.assertLess(sprite_reset, clear_buffers)
         init = (ROOT / "src" / "asm" / "state_game_init.inc").read_text()
-        self.assertIn("call game_attract_begin", init)
         game_init = block(init, "game_init")
+        self.assertGreater(game_init.index("call game_start_config_begin"),
+                           game_init.index("call load_game_images"))
+        self.assertNotIn("call game_attract_begin", game_init)
         self.assertNotIn('asciz "Press any key to continue."', game_init)
         self.assertNotIn("call waitKeypress", game_init.split("@font_load_error:", 1)[0])
         self.assertNotIn("call choose_joystick", game_init)

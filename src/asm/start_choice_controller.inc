@@ -1,8 +1,8 @@
 ; Frame-bounded start-flow configuration controller.
 ;
 ; Device code reduces one outer frame to an any-key-down sample and an optional
-; normalized Y/N choice. The controller requires a complete release after the
-; attract dismissal key, then accepts only a fresh Y or N press. Other fresh
+; normalized Y/N choice. The controller requires a complete release when the
+; loader hands off, then accepts only a fresh Y or N press. Other fresh
 ; keys are consumed and require another release; no routine blocks or polls.
 
 START_CHOICE_NONE: equ 0
@@ -13,8 +13,7 @@ start_choice_gate: db INPUT_GATE_WAIT_RELEASE
 start_choice_result: db START_CHOICE_NONE
 start_choice_sample: db START_CHOICE_NONE
 
-; Enter a new bounded choice. The prior session choice is deliberately not
-; inherited: every new game asks afresh, matching the legacy behavior.
+; Enter a new bounded choice after the initial asset load for a MOS RUN.
 start_choice_enter:
     xor a
     ld (start_choice_result),a

@@ -11,7 +11,7 @@ from nurples_tools.agnb import ImageRecord, build_container, validate_records
 from nurples_tools.agnb_verify import verify_container
 from nurples_tools.legacy_tiles import check_legacy_tiles, write_legacy_tiles
 from nurples_tools.overlay_art import check_overlay_art, write_overlay_art
-from nurples_tools.ui_art import check_ui_art, ui_manifest, write_ui_art
+from nurples_tools.ui_art import UI_ASSET_COUNT, check_ui_art, ui_manifest, write_ui_art
 from nurples_tools.starfields import check_starfields, write_starfields
 
 
@@ -22,7 +22,7 @@ BACKGROUND_BUFFER_BASE = 1024
 OVERLAY_BUFFER_BASE = 63_990
 
 EXPECTED_COUNTS = {
-    "ui": 46,
+    "ui": UI_ASSET_COUNT,
     "bg": 4,
     "sprites": 159,
     "tiles_dg": 192,
@@ -237,7 +237,7 @@ def _container_records(
         + catalogs["tiles_dg"]
         + catalogs["overlays"]
     )
-    if len(ui_records) != 46 or len(game_records) != 359:
+    if len(ui_records) != UI_ASSET_COUNT or len(game_records) != 359:
         raise ValueError("UI/game AGNB record-count contract changed")
     return ui_records, game_records
 

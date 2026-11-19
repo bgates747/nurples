@@ -35,9 +35,9 @@ OVERLAY_BUF_VERIFY:         equ 63997
 FIXTURE_CASE_ABSENT:        equ 0
 FIXTURE_CASE_ZERO:          equ 1
 FIXTURE_CASE_BEEF:          equ 2
-FIXTURE_CASE_COUNT:         equ 3
+FIXTURE_CASE_ABSENT_AGAIN:  equ 3
+FIXTURE_CASE_COUNT:         equ 4
 FIXTURE_CASE_FRAMES:        equ 360
-FIXTURE_STATUS_FRAMES:      equ 90
 
 start:
     push af
@@ -60,15 +60,32 @@ fixture_main:
     ld (fixture_original_mode),a
 
     call fixture_clear_all_buffers
+    ld a,(fixture_original_mode)
+    cp 20
+    jr z,@mode_ready
     ld a,20
     call fixture_set_mode
+    ld b,70
+@settle:
+    call fixture_vblank
+    djnz @settle
+    MOSCALL mos_sysvars
+    ld a,(ix+sysvar_scrMode)
+    cp 20
+    jp nz,@load_failed
+@mode_ready:
     xor a
     call fixture_set_scaling
     call fixture_cursor_off
 
     call fixture_create_dummy_bitmap
-    ret nc
+    jp nc,@load_failed
     call fixture_define_actor_prefix
+
+    call fixture_cls
+    ld hl,fixture_intro_message
+    call fixture_print_string
+    MOSCALL mos_getkey
 
     xor a
     ld (fixture_case),a
@@ -120,6 +137,8 @@ fixture_main:
 fixture_prepare_case_input:
     ld a,(fixture_case)
     or a
+    jp z,fixture_clear_external_feature
+    cp FIXTURE_CASE_ABSENT_AGAIN
     jp z,fixture_clear_external_feature
     cp FIXTURE_CASE_ZERO
     jp z,@zero
@@ -372,12 +391,16 @@ fixture_run_overlay:
 ; Print FAIL first, then let the VDP overwrite it with PASS only if the exact
 ; expected post-teardown variable condition succeeds.
 fixture_show_restore_result:
+    call fixture_cls
     ld c,10
     ld b,1
     call fixture_move_cursor
     ld a,(fixture_case)
     or a
     ld hl,fixture_case_absent_message
+    jp z,@case_ready
+    cp FIXTURE_CASE_ABSENT_AGAIN
+    ld hl,fixture_case_absent_again_message
     jp z,@case_ready
     cp FIXTURE_CASE_ZERO
     ld hl,fixture_case_zero_message
@@ -391,17 +414,13 @@ fixture_show_restore_result:
     call fixture_write_verifier
     ld hl,OVERLAY_BUF_VERIFY
     call vdu_call_buffer
-    ld hl,FIXTURE_STATUS_FRAMES
-    ld (fixture_frames_left),hl
-@wait:
-    call fixture_vblank
-    ld hl,(fixture_frames_left)
-    dec hl
-    ld (fixture_frames_left),hl
-    ld de,0
-    or a
-    sbc hl,de
-    jp nz,@wait
+    ld c,10
+    ld b,3
+    call fixture_move_cursor
+    ld hl,fixture_continue_message
+    call fixture_print_string
+    MOSCALL mos_getkey
+
     ld hl,OVERLAY_BUF_PASS
     call vdu_clear_buffer
     ld hl,OVERLAY_BUF_FAIL
@@ -430,6 +449,8 @@ fixture_write_verifier:
     ld a,(fixture_case)
     or a
     jp z,@absent
+    cp FIXTURE_CASE_ABSENT_AGAIN
+    jp z,@absent
     cp FIXTURE_CASE_ZERO
     jp z,@zero
     ld bc,fixture_verify_beef_end-fixture_verify_beef
@@ -446,14 +467,16 @@ fixture_write_verifier:
     ld hl,OVERLAY_BUF_VERIFY
     jp vdu_write_block_to_buffer
 
-; Cursor column 28, row 1; PASS and FAIL have equal width for overwrite.
-fixture_status_pass: db 31,28,1,17,10,"PASS"
+; Leave space for the longest case label before the four-column result.
+fixture_status_pass: db 31,34,1,17,10,"PASS"
 fixture_status_pass_end:
-fixture_status_fail: db 31,28,1,17,12,"FAIL"
+fixture_status_fail: db 31,34,1,17,12,"FAIL"
 fixture_status_fail_end:
 fixture_case_absent_message: db "ABSENT RESTORE",0
 fixture_case_zero_message: db "ZERO RESTORE",0
 fixture_case_beef_message: db "BEEF RESTORE",0
+fixture_case_absent_again_message: db "ABSENT AGAIN RESTORE",0
+fixture_continue_message: db 17,15,"Press a key for the next step.",0
 
 ; Variable-specific conditional calls. Equal comparisons are false for an
 ; absent variable, so the zero/nonzero cases prove both presence and value.
@@ -726,6 +749,13 @@ fixture_print_string:
     jp fixture_print_string
 
 fixture_complete_message: db "Overlay qualifier complete. Press any key.",13,10,0
+fixture_intro_message:
+    db 17,15,"NURPLES OVERLAY CHECK",13,10
+    db "Moving bands and a software sprite test layering.",13,10
+    db "The title changes colour. The prompt blinks.",13,10
+    db "Look for extra flicker while either is visible.",13,10
+    db "Each restore result waits for a key.",13,10
+    db "Press a key to begin.",0
 fixture_failed_message: db "Overlay qualifier failed to load. Press any key.",13,10,0
 
 ; ---------------------------------------------------------------------------

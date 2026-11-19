@@ -3,6 +3,12 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **GAME-001JK-OLIMEX — Verify overlay restoration on production Olimex.**
+  [Task and preparation evidence](docs/tasks/GAME-001JK-OLIMEX/TASK.md).
+
+- [ ] **GAME-001JK-INTEGRATED — Review Game Over in the full game.**
+  [Draft task](docs/tasks/GAME-001JK-INTEGRATED/TASK.md).
+
 - [ ] **GAME-001 — Complete-game presentation and flow:** turn the existing
   playable systems into a cohesive finished-game experience without regressing
   the accepted splash/loading/start transition. Maintain the running design
@@ -39,17 +45,16 @@ decisions are recorded in the dated development log.
     than searching for an interchangeable nearest pad. When told to retreat,
     it returns to that active, visible `tile_pad_small`; if its own pad has
     already scrolled off, been destroyed or been reused, it chooses the nearer
-    left or right screen edge, flies out through it and deactivates. During
-    GAME_OVER, pads may continue launching non-hostile seekers: each performs a
-    bounded few orbits before independently entering the same retreat path.
+    left or right screen edge, flies out through it and deactivates. GAME_OVER
+    shares the retreat flight and docking logic with its own destination and
+    immediate-entry policy under GAME-001J.
     Acceptance: no seeker continues player-targeting or collision damage after
     death begins; orbit count and completion are actor-owned and deterministic;
     named per-seeker fields in the existing record hold its orbit and validated
     pad association without a parallel side table; pad identity cannot alias a
     recycled active-tile record; destroyed, inactive, reused or off-screen pads
-    are never selected; docking or edge exit releases the seeker record; the
-    GAME_OVER backdrop can repeat launch, orbit and retreat cycles without
-    exhausting the pool; and respawn starts without stale orbit,
+    are never selected; docking or edge exit releases the seeker record;
+    and respawn starts without stale orbit,
     pad-association or retreat state.
 
   - [ ] **GAME-001C — Enemy movement variety:** retain
@@ -99,12 +104,11 @@ decisions are recorded in the dated development log.
     the actor to `player_alive`. A mid-level death must not restore
     `player_score` from `player_starting_score`.
 
-  - [ ] **GAME-001F — Victory and hyperwarp level transition:** replace the
-    immediate last-row-to-next-level jump with a bounded global
-    `LEVEL_TRANSITION` sequence. At normal scroll speed, stop admitting terrain
-    rows and let a blank starfield scroll in while the player performs an
-    automated banked victory loop. Disable victory-period player damage and new
-    hostile spawns, then bring the ship smoothly to screen centre. Ramp the
+  - [ ] **GAME-001F — Live hyperwarp level transition:** after admitting the
+    final map row, keep normal gameplay active until its terrain scrolls fully
+    off the bottom. Then enter bounded `LEVEL_TRANSITION` and send surviving
+    seekers into their existing retreat movement. Preserve player steering,
+    laser and fireball movement, and normal combat collision checks. Ramp the
     starfield from normal travel into a fast hyperwarp, hold briefly, and ease
     it back to normal speed before admitting any row of the next level. Preserve
     the optimized terrain scroller as a strictly one-scanline-per-frame path.
@@ -112,14 +116,15 @@ decisions are recorded in the dated development log.
     that code resizes the exposed-strip graphics viewport to its current
     multi-scanline displacement so fast scrolling does not redraw the full
     field. Acceptance: no level data is read beyond its final
-    row; remaining terrain and active records leave cleanly; the victory path,
-    centring, acceleration, fast hold and deceleration are visibly distinct
+    row; remaining terrain and active records leave before the warp;
+    starfield approach, acceleration, fast hold and deceleration remain distinct
     bounded phases; bezel/cockpit art does not scroll; every newly exposed
     scanline is painted without seams at every selected speed; the next level
     cannot appear until speed is normal; and a one-level tileset loops through
     the complete transition rather than restarting immediately. No transition
     phase may attempt fast terrain scrolling or generalize the existing terrain
-    row-ingestion loop to multiple scanlines per frame.
+    row-ingestion loop to multiple scanlines per frame. The automated player
+    victory flight remains available for another state but is not used here.
 
   - [ ] **GAME-001G — Original Z80 campaign level port:** retain the modern
     Agon campaign as level zero and follow it with the recovered original
@@ -177,31 +182,32 @@ decisions are recorded in the dated development log.
     reviewed consistency pass.
 
   - [ ] **GAME-001J — Animated game-over sequence:** replace the blocking
-    text-mode `game_over` handler with a bounded `GAME_OVER` lifecycle. Keep the
-    playfield moving behind the overlay at exactly the ordinary one-scanline
-    scroll pace while a centred hardware-sprite composition presents a large,
+    text-mode `game_over` handler with a bounded `GAME_OVER` lifecycle. Freeze
+    the starfield and terrain behind a centred hardware-sprite composition that presents a large,
     stylized `GAME OVER` title whose colours alternate. Include a smaller
     regular-font `Press any key to continue` notice in the composition and
     flash it at a slower, independently legible cadence. On entry, remove the
     player and hostile projectiles but make the remaining world non-hostile
-    rather than empty. Launch pads continue spawning harmless seekers; existing
-    and new seekers perform a few actor-owned orbits, then return to their own
-    still-visible spawn pad or leave through the nearer screen edge if that pad
-    has scrolled away. Visible laser turrets reuse the shared non-firing search
+    rather than empty. Suppress new launches and send existing seekers directly
+    into shared retreat. Each chooses the nearest active, visible launchpad
+    and despawns when it docks. If no usable pad remains, it flies through the
+    nearer horizontal edge and despawns once fully out of view.
+    Visible laser turrets reuse the shared non-firing search
     behavior already active during player death and respawn. Require a complete
     key-up gate followed by a fresh keypress so the input associated with the
     final death cannot skip the sequence. Acceptance: title animation, prompt
-    flash, seeker launch/orbit/retreat, turret search, input polling, one
-    terrain/background scroll step, active-scenery animation and one VBlank all
+    flash, seeker retreat, turret search, input polling,
+    active-scenery animation and one VBlank all
     remain bounded to one outer frame; turret search never fires and never
-    snaps; the overlay stays fixed over the moving playfield without corrupting
+    snaps; the overlay stays fixed over the frozen playfield without corrupting
     the bezel; no actor can damage or score after game over; held input cannot
     dismiss the sequence; continuation tears down every overlay resource and
     enters clean new-game initialization without reloading already resident
     assets; and repeated game-over/new-game cycles neither leak hardware sprites
     nor inherit stale enemy, turret, timer or input state. Freeze and qualify
     the exact hardware-sprite VDP API and required firmware before
-    implementation or deployment.
+    implementation or deployment. Retain a one-scanline scrolling diagnostic
+    comparison in [GAME-001JK-INTEGRATED](docs/tasks/GAME-001JK-INTEGRATED/TASK.md).
 
   - [ ] **GAME-001K — Living attract mode:** replace the post-load static,
     opaque text prompt and blocking `mos_getkey` wait with a bounded TITLE/
@@ -311,15 +317,13 @@ decisions are recorded in the dated development log.
   use the affine-sprite firmware or begin hardware deployment without a
   separate reviewed gate.
 
-- [ ] **ART-002 — Sparse scrolling starfields:** generate one cel-style atlas,
-  slice it into the four existing square backgrounds with seams safe for the
-  game's random tile order, rebuild/deploy and obtain visual acceptance.
-
 - [ ] **ART-001 — Cel UI assets:** prepare the accepted splash, logo and two
   bezels at their existing runtime dimensions and IDs using canonical Agon64
   conversion; rebuild and verify the UI container, then deploy to the existing
   local emulator for the Author's visual acceptance before committing.
   [Full-frame vector splash experiment](docs/tasks/ART-001/TASK.md).
+  See also the [original starfield rollback](docs/tasks/ART-001/original-starfield-rollback.md),
+  which supersedes the ART-002 sparse-starfield adoption.
 
 - [ ] **ASM-001 — Cooperative state-machine migration:** review and integrate
   `src/asm/state_new.inc` incrementally. The global coordinator must publish

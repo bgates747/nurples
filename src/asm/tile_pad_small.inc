@@ -49,12 +49,19 @@ move_pad_small:
     ld (iy+tile_frame),a
     call draw_active_tile
 @@:
-; check whether it is time to spawn a seeker    
+; Keep animating the pad during GAME OVER and hold its launch timer.
+    ld hl,(game_state)
+    ld de,game_over
+    or a
+    sbc hl,de
+    ret z
+; check whether it is time to spawn a seeker
     call active_tile_launch_timer_tick
     ret nz
-; spwan a seeker    
+; On success the spawn returns with IY on the seeker, not the launchpad.
+    push iy
     call enemy_spawn_seeker
-    ; ret ; DEBUG
+    pop iy
     ; fall through to reset move timer
 pad_small_reset_move_timer:
     call rand_8     ; snag a random number

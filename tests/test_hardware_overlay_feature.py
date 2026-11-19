@@ -18,6 +18,8 @@ CONSTANTS = {
     "OVERLAY_BUF_RESTORE_PROGRAM": 63985,
     "OVERLAY_BUF_MARK_PRESENT": 63987,
     "OVERLAY_BUF_SNAPSHOT_DISPATCH": 63988,
+    "OVERLAY_BUF_ORIGINAL_PRESENT": 63989,
+    "OVERLAY_BUF_RESTORE_CLEAR": 63986,
 }
 
 
@@ -81,19 +83,24 @@ class HardwareOverlayFeatureTests(unittest.TestCase):
 
     def test_exact_vdp_resident_transaction_payloads(self) -> None:
         cases = {
-            "overlay_restore_program": bytes([23, 0, 0xF9, 2, 0, 0, 0]),
+            "overlay_restore_program": bytes([23, 0, 0xF8, 2, 0, 0, 0]),
+            "overlay_restore_clear": bytes([23, 0, 0xF9, 2, 0]),
+            "overlay_restore_dispatch": bytes(
+                [23, 0, 0xA0, 0xF2, 0xF9, 6, 2, 0xF5, 0xF9, 0, 0, 0]
+                + [23, 0, 0xA0, 0xF1, 0xF9, 6, 2, 0xF5, 0xF9, 0, 0, 1]
+            ),
             "overlay_mark_present": bytes(
                 [
                     23,
                     0,
                     0xA0,
-                    0xF1,
+                    0xF5,
                     0xF9,
                     5,
                     2,
-                    2,
                     0,
-                    0xF8,
+                    0,
+                    1,
                     23,
                     0,
                     0xA0,
@@ -130,9 +137,7 @@ class HardwareOverlayFeatureTests(unittest.TestCase):
         self.assertLess(call_snapshot, enable)
         self.assertLess(enable, publish_active)
 
-    def test_restore_does_not_branch_on_an_ordinary_buffer_value(self) -> None:
-        self.assertNotIn("OVERLAY_BUF_ORIGINAL_PRESENT", self.source)
-        self.assertNotIn("overlay_restore_dispatch", self.source)
+    def test_capture_uses_variable_presence_not_variable_value(self) -> None:
         self.assertEqual(self.source.count("db 6,040h"), 1)
 
     def test_process_init_is_ram_only_before_vdp_resource_acquisition(self) -> None:
@@ -151,8 +156,8 @@ class HardwareOverlayFeatureTests(unittest.TestCase):
                 "; end overlay_feature_end"
             )
         ]
-        program = end.index("ld hl,OVERLAY_BUF_RESTORE_PROGRAM")
-        restore = end.index("call vdu_call_buffer", program)
+        program = end.index("ld hl,overlay_restore_dispatch")
+        restore = end.index("rst.lil 18h", program)
         clear = end.index("call overlay_feature_clear_control_buffers", restore)
         revoke_active = end.index("ld (overlay_feature_active),a", clear)
         self.assertLess(program, restore)

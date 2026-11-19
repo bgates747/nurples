@@ -40,7 +40,9 @@ presentation_flow_shutdown:
 ; sprite slots must be defined before the renderer publishes slots 20/21.
 ; outputs: carry set after publishing game_attract; carry clear on fail-closed
 game_attract_begin:
+    ld a,PLAYFIELD_CHECK_ATTRACT
     call game_prepare_playfield
+    jp nc,presentation_flow_fail
     call reset_runtime_tables
     call attract_lifecycle_enter
     jp nc,presentation_flow_fail
@@ -55,18 +57,17 @@ game_attract:
     call attract_lifecycle_update
     ret nc
     call attract_lifecycle_exit
-    jp game_start_config_begin
+    jp game_start_session
 ; end game_attract
 
-; Draw the temporary configuration boundary once. Opaque regular text is
-; deliberate here; the autonomous attract prompt has already been detached.
+; The loader leaves a one-line text viewport. Replace its completed progress
+; text with the controller choice without touching the title or background.
 game_start_config_begin:
     call start_choice_enter
-    ld c,21
-    ld b,24
+    ld bc,0
     call vdu_move_cursor
     call printInline
-    asciz "ENABLE JOYSTICK (Y/N)?"
+    asciz "JOYSTICK (Y) OR KEYBOARD (N)?       "
     ld a,1
     ld (game_start_config_active),a
     ld hl,game_start_config
@@ -96,10 +97,18 @@ game_start_config:
     call start_choice_exit
     xor a
     ld (game_start_config_active),a
+; Entering attract resets its independent release gate. The held Y/N key
+; cannot skip the pre-start message or start a session.
+    jp game_attract_begin
+; end game_start_config
+
 ; Redraw the canonical surface, then initialize the new session entirely from
 ; resident assets. Failure is terminal for this invocation; silently returning
 ; to game_init would violate the no-reload lifecycle and could loop forever.
+game_start_session:
+    ld a,PLAYFIELD_CHECK_START
     call game_prepare_playfield
+    jp nc,presentation_flow_fail
     call game_new_session_init
     ret c
     ld hl,game_fault_flags
@@ -108,7 +117,7 @@ game_start_config:
     ld (game_exit_requested),a
     xor a
     ret
-; end game_start_config
+; end game_start_session
 
 ; Replacement bounded GAME OVER state. Entry is idempotent so the state itself
 ; remains recoverable if a caller publishes it one frame before setup.
@@ -118,7 +127,8 @@ game_over_bounded:
     call game_over_lifecycle_update
     ret nc
     call game_over_lifecycle_exit
-    jp game_start_config_begin
+; Controller selection belongs to this invocation, not an individual game.
+    jp game_start_session
 ; end game_over_bounded
 
 ; Fail closed without reloading VDP resources or repeatedly retrying a hardware

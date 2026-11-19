@@ -90,6 +90,18 @@ def _glyph_rectangles(
     return rectangles
 
 
+def _display_title(
+    text: str, x: int, y: int, scale: int, face: RGBA, shadow: RGBA,
+) -> list[Rectangle]:
+    shapes = _glyph_rectangles(text, x + 3, y + 3, scale, BLACK)
+    shapes.extend(_glyph_rectangles(text, x + 2, y + 2, scale, shadow))
+    shapes.extend(_glyph_rectangles(text, x, y, scale, face))
+    # A single-pixel palette highlight gives the large blocks cockpit-like trim.
+    for rectangle in _glyph_rectangles(text, x, y, scale, WHITE):
+        shapes.append(Rectangle(rectangle.x, rectangle.y, 1, 1, rectangle.color))
+    return shapes
+
+
 def game_over_drawing(frame: int) -> Drawing:
     """Return one of the two deliberately alternating title treatments."""
     if frame not in (0, 1):
@@ -108,12 +120,20 @@ def game_over_drawing(frame: int) -> Drawing:
         Polygon(((3, 57), (37, 57), (45, 53), (37, 49), (3, 49), (11, 53)), accent),
         Polygon(((237, 57), (203, 57), (195, 53), (203, 49), (237, 49), (229, 53)), accent),
     ]
-    shapes.extend(_glyph_rectangles(text, x + 3, y + 3, scale, BLACK))
-    shapes.extend(_glyph_rectangles(text, x + 2, y + 2, scale, shadow))
-    shapes.extend(_glyph_rectangles(text, x, y, scale, face))
-    # A single-pixel palette highlight gives the large blocks cockpit-like trim.
-    for rectangle in _glyph_rectangles(text, x, y, scale, WHITE):
-        shapes.append(Rectangle(rectangle.x, rectangle.y, 1, 1, rectangle.color))
+    shapes.extend(_display_title(text, x, y, scale, face, shadow))
+    return Drawing(width, height, tuple(shapes))
+
+
+def loading_title_drawing(frame: int) -> Drawing:
+    """Two fixed-footprint color phases of the Mode 20 loading title."""
+    if frame not in (0, 1):
+        raise ValueError("Loading title frame must be 0 or 1")
+    width, height, scale = 240, 76, 4
+    face, shadow = (PALE_YELLOW, DARK_MAGENTA) if frame == 0 else (MAGENTA, VIOLET)
+    shapes = []
+    for word, y in (("PURPLE", 2), ("NURPLES", 39)):
+        x = (width - _text_width(word, scale)) // 2
+        shapes.extend(_display_title(word, x, y, scale, face, shadow))
     return Drawing(width, height, tuple(shapes))
 
 

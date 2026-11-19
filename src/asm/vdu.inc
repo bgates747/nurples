@@ -336,6 +336,88 @@ vdu_get_screen_mode:
     ret
 ; end vdu_get_screen_mode
 
+VDU_MODE_FENCE_TIMEOUT: equ 1
+VDU_MODE_ACK_TIMEOUT: equ 2
+VDU_MODE_QUERY_TIMEOUT: equ 3
+
+; VDU 23,0,&82 provides a distinct reply without relying on a palette lookup.
+; It fences earlier asynchronous mode reports (e.g. from font selection).
+; Carry set with IX = MOS sysvars; carry clear and A = error on timeout.
+vdu_mode_reply_fence:
+    MOSCALL mos_sysvars
+    res 0,(ix+sysvar_vpd_pflags)
+    push ix
+    ld hl,@command
+    ld bc,3
+    rst.lil 18h
+    pop ix
+    ld d,vdp_pflag_cursor
+    call vdu_wait_mode_protocol_flag
+    ret c
+    ld a,VDU_MODE_FENCE_TIMEOUT
+    ret
+@command: db 23,0,vdp_cursor
+; end vdu_mode_reply_fence
+
+; A = requested MODE. Check the actual MODE command's own acknowledgement.
+vdu_set_mode_confirm:
+    push af
+    call vdu_mode_reply_fence
+    jp nc,@fence_failed
+    pop af
+    res 4,(ix+sysvar_vpd_pflags)
+    push ix
+    call vdu_set_screen_mode
+    pop ix
+    ld d,vdp_pflag_mode
+    call vdu_wait_mode_protocol_flag
+    ret c
+    ld a,VDU_MODE_ACK_TIMEOUT
+    ret
+@fence_failed:
+    pop de ; discard the saved requested mode without changing carry or A
+    ret
+; end vdu_set_mode_confirm
+
+; VDU 23,0,&86 separately verifies the current surface at later checkpoints.
+vdu_query_mode:
+    call vdu_mode_reply_fence
+    ret nc
+    res 4,(ix+sysvar_vpd_pflags)
+    push ix
+    ld hl,@command
+    ld bc,3
+    rst.lil 18h
+    pop ix
+    ld d,vdp_pflag_mode
+    call vdu_wait_mode_protocol_flag
+    ret c
+    ld a,VDU_MODE_QUERY_TIMEOUT
+    ret
+@command: db 23,0,vdp_mode
+; end vdu_query_mode
+
+; IX = sysvars, D = reply flag mask. Allow mode allocation and its fallback
+; to complete. Use a finite CPU budget because VBlank may stop during MODE.
+vdu_wait_mode_protocol_flag:
+    ld e,32
+    ld bc,0
+@wait:
+    ld a,(ix+sysvar_vpd_pflags)
+    and d
+    jp nz,@received
+    dec c
+    jp nz,@wait
+    djnz @wait
+    dec e
+    jp nz,@wait
+    xor a
+    ret
+@received:
+    scf
+    ret
+; end vdu_wait_mode_protocol_flag
+
 ; VDU 23, 0, &C0, n: Turn logical screen scaling on and off *
 ; inputs: a is scaling mode, 1=on, 0=off
 ; note: default setting on boot is scaling ON

@@ -1,28 +1,22 @@
 ; Bounded phase/timing controller for GAME-001F.
 ;
-; It owns no VDU or actor calls: the global state consumes frame_speed and
-; frame_policy, runs the ordinary one-line terrain path only during DRAIN, and
-; uses starfield_warp_scroll afterward.
+; It owns no VDU or actor calls. Entry requires a drained playfield. The
+; global state consumes each speed with the separate starfield scroller.
 
-LEVEL_TRANSITION_DRAIN: equ 0
-LEVEL_TRANSITION_CENTER: equ 1
-LEVEL_TRANSITION_ACCEL: equ 2
-LEVEL_TRANSITION_HOLD: equ 3
-LEVEL_TRANSITION_DECEL: equ 4
-LEVEL_TRANSITION_COMPLETE: equ 5
+LEVEL_TRANSITION_APPROACH: equ 0
+LEVEL_TRANSITION_ACCEL: equ 1
+LEVEL_TRANSITION_HOLD: equ 2
+LEVEL_TRANSITION_DECEL: equ 3
+LEVEL_TRANSITION_COMPLETE: equ 4
 
-LEVEL_TRANSITION_POLICY_TERRAIN: equ %00000001
-
-level_transition_drain_frames: equ field_bottom+1
-level_transition_center_frames: equ 90
+level_transition_approach_frames: equ 90
 level_transition_speed_frames: equ 8
 level_transition_hold_frames: equ 90
 
-level_transition_phase: db LEVEL_TRANSITION_DRAIN
+level_transition_phase: db LEVEL_TRANSITION_APPROACH
 level_transition_timer: dl 0
 level_transition_speed: db 1
 level_transition_frame_speed: db 1
-level_transition_frame_policy: db LEVEL_TRANSITION_POLICY_TERRAIN
 level_transition_speed_index: db 0
 level_transition_error: db 0
 
@@ -35,7 +29,7 @@ level_transition_decel_speeds_end:
 
 level_transition_accel_count: equ level_transition_accel_speeds_end-level_transition_accel_speeds
 level_transition_decel_count: equ level_transition_decel_speeds_end-level_transition_decel_speeds
-level_transition_total_frames: equ level_transition_drain_frames+level_transition_center_frames+[level_transition_accel_count*level_transition_speed_frames]+level_transition_hold_frames+[level_transition_decel_count*level_transition_speed_frames]
+level_transition_total_frames: equ level_transition_approach_frames+[level_transition_accel_count*level_transition_speed_frames]+level_transition_hold_frames+[level_transition_decel_count*level_transition_speed_frames]
 
     .if level_transition_accel_count-8
         dl level_transition_accel_count_mismatch
@@ -43,7 +37,7 @@ level_transition_total_frames: equ level_transition_drain_frames+level_transitio
     .if level_transition_decel_count-7
         dl level_transition_decel_count_mismatch
     .endif
-    .if level_transition_total_frames-636
+    .if level_transition_total_frames-300
         dl level_transition_total_frames_mismatch
     .endif
 
@@ -55,17 +49,15 @@ level_transition_init:
     ld a,1
     ld (level_transition_speed),a
     ld (level_transition_frame_speed),a
-    ld a,LEVEL_TRANSITION_POLICY_TERRAIN
-    ld (level_transition_frame_policy),a
-    ld hl,level_transition_drain_frames
+    ld hl,level_transition_approach_frames
     ld (level_transition_timer),hl
     ret
 ; end level_transition_init
 
 ; Advance exactly one outer frame.
 ; outputs:
-;   carry clear, A = this frame's scroll speed, frame_policy frozen for caller
-;   carry set, A = 0 once all 636 transition frames have completed
+;   carry clear, A = this frame's scroll speed
+;   carry set, A = 0 once all 300 starfield transition frames have completed
 ; destroys: a,de,hl
 level_transition_step:
     ld a,(level_transition_phase)
@@ -73,23 +65,12 @@ level_transition_step:
     jp z,@complete
     cp LEVEL_TRANSITION_COMPLETE+1
     jp nc,@invalid
-; Freeze outputs before phase mutation so the final frame in every phase keeps
-; the old phase's speed and terrain policy; new values begin next frame.
+; Freeze speed before phase mutation so every phase keeps its full duration.
     ld a,(level_transition_speed)
     ld (level_transition_frame_speed),a
-    xor a
-    ld (level_transition_frame_policy),a
     ld a,(level_transition_phase)
-    cp LEVEL_TRANSITION_DRAIN
-    jp nz,@dispatch
-    ld a,LEVEL_TRANSITION_POLICY_TERRAIN
-    ld (level_transition_frame_policy),a
-@dispatch:
-    ld a,(level_transition_phase)
-    cp LEVEL_TRANSITION_DRAIN
-    jp z,@drain
-    cp LEVEL_TRANSITION_CENTER
-    jp z,@center
+    cp LEVEL_TRANSITION_APPROACH
+    jp z,@approach
     cp LEVEL_TRANSITION_ACCEL
     jp z,@accel
     cp LEVEL_TRANSITION_HOLD
@@ -97,16 +78,7 @@ level_transition_step:
 ; Only DECEL remains after the validated range check above.
     jp @decel
 
-@drain:
-    call level_transition_tick_timer
-    jp nz,@return_frame
-    ld a,LEVEL_TRANSITION_CENTER
-    ld (level_transition_phase),a
-    ld hl,level_transition_center_frames
-    ld (level_transition_timer),hl
-    jp @return_frame
-
-@center:
+@approach:
     call level_transition_tick_timer
     jp nz,@return_frame
     ld a,LEVEL_TRANSITION_ACCEL

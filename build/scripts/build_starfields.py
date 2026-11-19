@@ -1,4 +1,4 @@
-"""Scale/slice the sparse starfield master and encode the four runtime tiles."""
+"""Encode the four original starfield tiles without resizing or changing their art."""
 
 import argparse
 from pathlib import Path

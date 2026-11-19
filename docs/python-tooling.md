@@ -55,7 +55,7 @@ The current game build has four explicit actions:
 .venv/bin/python build/scripts/build_00_all_the_things.py --all
 ```
 
-`--assets` first prepares the four accepted cel UI images, four starfield
+`--assets` first prepares the cel UI artwork, four starfield
 tiles, and the five passive original-Z80 tiles, then builds the one runtime
 font plus `ui.agnb` and `game.agnb` from the RGBA2222 payloads under
 `assets/rgba2`. It also compiles the ordered production campaign manifest into
@@ -66,11 +66,11 @@ or launch an emulator.
 
 ### Cel UI artwork
 
-`build/ui_assets.json` explicitly fixes all 46 UI buffer IDs and runtime
+`build/ui_assets.json` explicitly fixes all 47 UI buffer IDs and runtime
 dimensions. Additional PNG variants in the original-art directory cannot
-enter the runtime catalog or shift IDs. Its four `prepare` entries select
-`bezel_l_cel.png`, `bezel_r_cel_v2.png`,
-`splash_bg_single_engine_cel.png`, and `splash_logo_cel_draft.png`.
+enter the runtime catalog or shift IDs. Its `prepare` entries select
+`bezel_l_cel.png`, `bezel_r_cel_v2.png`, the hand-edited
+`splash_sprite_faithful_v3_512x384.png`, and the two generated title phases.
 
 Prepare these images independently with:
 
@@ -79,45 +79,46 @@ Prepare these images independently with:
 .venv/bin/python build/scripts/build_ui_art.py --check
 ```
 
-This stage uses Pillow Lanczos scaling to the existing 128x304 bezel,
-320x240 splash and 160x106 logo dimensions. Canonical `agonutils` performs
-nearest-RGB Agon64 conversion without dithering and RGBA2222 encoding through
-the local adapters. The payload names stay `bezel_l`, `bezel_r`, `splash_bg`
-and `splash_logo`; decoded previews replace their PNGs in `assets/img/proc/ui`.
+This stage uses Pillow Lanczos scaling to prepare the 128x304 bezels. The
+512x384 splash background arrives at its final size and
+palette, so the hand-edited export is preserved pixel for pixel. Canonical
+`agonutils` performs nearest-RGB Agon64 conversion without dithering and
+RGBA2222 encoding through the local adapters. Decoded previews replace their
+PNGs in `assets/img/proc/ui`.
 Both current asset-build entry points invoke this stage before packing AGNB.
 The standalone preparation command does not repack the containers.
 
-The logo draft has a painted gray checkerboard. Its source-specific alpha mask
-keeps pixels where both red and blue exceed green by more than 20, preserving
-purple ink and pink highlights while removing neutral gray. It is applied
-before premultiplied-alpha scaling; alpha is then thresholded at 128 for a
-clean opaque/transparent overlay. This mask is specific to this draft, not a
-general background-removal or palette-conversion algorithm. A future logo
-with neutral ink must supply its own alpha and disable this manifest flag.
+The 240x76 `splash_title_0` and `splash_title_1` stack `PURPLE` above `NURPLES`
+using the same exact Lode Runner glyph rows, block shadows, and single-pixel
+highlights as GAME OVER, at 4x.
+The generator writes editable SVGs to `assets/vector/ui` and produces
+identical binary-alpha footprints. The loader plots them at the reviewed
+Mode 20 anchor `(28, 47)` and changes colors only at completed-record
+boundaries. The background is painted once; the existing fixed-width status
+text is overwritten in place on every record. After the last record, a
+keyboard/joystick question replaces that line before the pre-start screen.
+The old checkerboard logo is archival artwork outside the runtime catalog.
 
-### Sparse scrolling backgrounds
+### Starfield tiles
 
-`tiles/bg/starfield_cel_master.png` is the single source atlas. The background
-stage scales it once to 512x512, then slices a 2x2 grid in reading order into
-the existing `bg_stars_0`, `bg_stars_3`, `bg_stars_4`, `bg_stars_6` names.
-These remain 256x256 images at IDs 1024 through 1027. The game starts with
-0 above 4, but later selects tiles randomly; each tile therefore has a uniform
-four-pixel opaque dark-blue border on all sides to support every adjacency and
-self-repetition. Objects are composed away from the atlas's dividing lines.
-The background and borders use RGB(0,0,85), sampled from the original tiles
-on `main`. The current design increases small stars and larger sparkles while
-retaining the same three planets.
+The four hand-retouched 256×256 PNGs in `tiles/bg/orig` are the current sources. The
+asset stage checks their dimensions, encodes them without scaling or
+border edits, and packs them at the same IDs (1024–1027). The sparse atlas
+remains archived artwork and is not a build input. See the
+[rollback record](tasks/ART-001/original-starfield-rollback.md) for the
+historical assets and byte-for-byte verification.
+The untouched originals remain available as a
+[separate control](tasks/ART-001/starfield-join-review/original).
 
 ```bash
 .venv/bin/python build/scripts/build_starfields.py
 .venv/bin/python build/scripts/build_starfields.py --check
 ```
 
-The Author authorized overwriting `tiles/bg/orig/bg_stars_*.png` with these
-slices. Canonical Agon64/RGB conversion without dithering writes the same
-RGBA2222 names under `assets/rgba2/bg`; canonical decoding writes previews to
-`tiles/bg/proc`. Both current build entry points prepare these before packing
-`game.agnb`, and their checks include atlas-to-tile reproducibility.
+Canonical Agon64/RGB conversion without dithering writes RGBA2222 files in
+`assets/rgba2/bg`; canonical decoding writes previews to `tiles/bg/proc`.
+Both asset build entry points prepare these before packing `game.agnb`.
+The standalone command prepares or checks the tiles but does not repack.
 
 ### Original Z80 level and passive artwork
 

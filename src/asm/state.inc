@@ -97,51 +97,23 @@ game_level_transition:
     ld a,(game_level_transition_active)
     or a
     jp nz,@step
-; Publish the non-hostile actor phase before any transition-world update.
-    ld iy,player_begin
-    call player_victory_init
-    ld hl,player_victory
-    ld (player_state),hl
-    call seeker_group_enter_orbit
+; Terrain already cleared during ordinary gameplay. Set the seekers on their
+; departure routes without taking input or collision state from the player.
+    call seeker_group_enter_retreat
     call level_transition_init
     ld a,1
     ld (game_level_transition_active),a
 @step:
     call level_transition_step
     jp c,@complete
-    ld a,(level_transition_frame_policy)
-    and LEVEL_TRANSITION_POLICY_TERRAIN
-    jp z,@starfield
-; The existing gameplay-only path remains exactly one line per frame. With the
-; level-complete latch set it scrolls pixels without reading another map row.
-    call tiles_plot
-    jp @world
-@starfield:
-    ld a,(level_transition_frame_speed)
     call starfield_warp_scroll
-@world:
-    call do_player
-    call do_enemies
-    call move_explosions
-    call move_tiles
-    ld bc,0
-    ld de,0
-    call vdu_set_gfx_origin
-    call draw_shields
-    call draw_laser
-    call draw_fuel
-    ret
+    jp game_update_live_world
 @complete:
     xor a
     ld (game_level_transition_active),a
-; The loop has settled at centre and the warp has returned to speed one.
-; Admit the next level without clearing the resident world or score.
+; The warp has returned to speed one. Keep player position and lifecycle;
+; a hit during warp can still be resolving its ordinary death or respawn.
     call next_level
-    ld iy,player_begin
-    set sprite_alive,(iy+sprite_collisions)
-    ld hl,player_alive
-    ld (player_state),hl
-    call seeker_group_enter_seek
     ld hl,game_playing
     ld (game_state),hl
     ret

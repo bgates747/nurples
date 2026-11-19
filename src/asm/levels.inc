@@ -119,6 +119,8 @@ init_level:
     ld (tiles_row),a
     xor a
     ld (tiles_level_complete),a
+    ld hl,0
+    ld (tiles_drain_remaining),hl
 ; set cur_baseBufferId
     ld hl,(ix+4)
     ld (cur_baseBufferId),hl

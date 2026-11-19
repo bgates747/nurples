@@ -58,8 +58,11 @@ move_turret_fireball:
     call active_tile_launch_timer_tick
     ret nz
 ; Fire from the physical barrel, never the ideal lead solution.
+; Restore the turret record before rearming, regardless of allocation result.
+    push iy
     call turret_prepare_physical_shot
     call enemy_spawn_fireball
+    pop iy
     ; fall through to reset move timer
 turret_fireball_reset_move_timer:
     call rand_8     ; snag a random number

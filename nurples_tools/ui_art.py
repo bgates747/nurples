@@ -1,4 +1,4 @@
-"""Prepare the four cel UI replacements without changing their runtime ABI."""
+"""Prepare the cel UI bitmaps and palette-native loading title."""
 
 from io import BytesIO
 import json
@@ -8,14 +8,19 @@ from tempfile import TemporaryDirectory
 from PIL import Image, ImageChops
 
 from nurples_tools.images import img_to_rgba2, rgba2_to_img
+from nurples_tools.overlay_art import drawing_to_image, drawing_to_svg, loading_title_drawing
+
+
+UI_ASSET_COUNT = 47
 
 
 def ui_manifest(project_root: Path) -> list[dict]:
     """Explicit IDs prevent source-art variants from entering the runtime catalog."""
     entries = json.loads((project_root / "build/ui_assets.json").read_text())
-    if len(entries) != 46 or sorted(e["buffer_id"] for e in entries) != list(range(46)):
-        raise ValueError("UI manifest must retain exactly buffer IDs 0 through 45")
-    if len({e["name"] for e in entries}) != 46:
+    if (len(entries) != UI_ASSET_COUNT
+            or sorted(e["buffer_id"] for e in entries) != list(range(UI_ASSET_COUNT))):
+        raise ValueError("UI manifest must retain exactly buffer IDs 0 through 46")
+    if len({e["name"] for e in entries}) != UI_ASSET_COUNT:
         raise ValueError("duplicate UI asset name")
     return sorted(entries, key=lambda e: e["buffer_id"])
 
@@ -61,10 +66,19 @@ def generate_ui_art(project_root: Path) -> dict[Path, bytes]:
                 continue
             name = entry["name"]
             size = (entry["width"], entry["height"])
-            image = prepare_image(
-                project_root / entry["source"], size,
-                logo=entry.get("remove_gray_background", False),
-            )
+            if "loading_title_frame" in entry:
+                drawing = loading_title_drawing(entry["loading_title_frame"])
+                if (drawing.width, drawing.height) != size:
+                    raise ValueError(f"manifest dimensions disagree with {name} geometry")
+                image = drawing_to_image(drawing)
+                outputs[Path(f"assets/vector/ui/{name}.svg")] = drawing_to_svg(
+                    drawing, "PURPLE NURPLES"
+                )
+            else:
+                image = prepare_image(
+                    project_root / entry["source"], size,
+                    logo=entry.get("remove_gray_background", False),
+                )
             raw = Path(temporary) / f"{name}.rgba2"
             # Canonical native conversion: nearest Agon64 RGB, no dithering.
             img_to_rgba2(image, raw, num_colors=64, method="RGB")

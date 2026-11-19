@@ -91,14 +91,25 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn('ui_agnb_filename:   db "ui.agnb",0', images)
         self.assertIn('game_agnb_filename: db "game.agnb",0', images)
         self.assertIn("game_num_images: equ 359", counts)
-        self.assertIn("ld de,game_num_images*256", images)
-        self.assertIn("ld hl,logo_y_end", images)
+        self.assertIn("ld hl,game_num_images\n    ld (game_load_remaining),hl", images)
+        self.assertIn("SPLASH_TITLE_X: equ 28", images)
+        self.assertIn("SPLASH_TITLE_Y: equ 47", images)
         self.assertIn("ld (game_load_callback_overflow),a", images)
         self.assertIn("call load_ui_images", startup)
         self.assertIn("call load_game_images", startup)
         self.assertNotIn("call load_backgrounds", startup)
         self.assertNotIn("call load_sprite_images", startup)
         self.assertNotIn("call load_tilesets", startup)
+
+        init = routine(images, "img_load_init", "img_load_agnb_progress:")
+        progress = routine(images, "img_load_agnb_progress", "splash_print_progress:")
+        self.assertIn("BUF_SPLASH_BG", init)
+        self.assertNotIn("BUF_SPLASH_BG", progress)
+        self.assertNotIn("vdu_cls", images)
+        self.assertNotIn("vdu_flip", images)
+        self.assertIn("call splash_update_title\n    call splash_print_progress", progress)
+        self.assertIn("call vdu_move_cursor", images)
+        self.assertIn('asciz "Loading images: "', images)
 
     def test_game_init_unconditionally_rebuilds_all_vdp_resources(self) -> None:
         active_source = read_asm("nurples.asm") + "".join(
@@ -121,7 +132,7 @@ class AssemblySafetyTests(unittest.TestCase):
         load_font = startup.index("call fonts_load", clear_buffers)
         load_ui = startup.index("call load_ui_images", load_font)
         load_game = startup.index("call load_game_images", load_ui)
-        begin_attract = startup.index("call game_attract_begin", load_game)
+        begin_config = startup.index("call game_start_config_begin", load_game)
 
         self.assertIn("xor a\n    call vdu_font_select", startup)
         self.assertLess(system_font, select_font)
@@ -130,7 +141,7 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertLess(clear_buffers, load_font)
         self.assertLess(load_font, load_ui)
         self.assertLess(load_ui, load_game)
-        self.assertLess(load_game, begin_attract)
+        self.assertLess(load_game, begin_config)
         flow = read_asm("presentation_flow_states.inc")
         attract = routine(flow, "game_attract_begin", "; end game_attract_begin")
         prepare_playfield = attract.index("call game_prepare_playfield")
@@ -139,8 +150,10 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertLess(prepare_playfield, reset_tables)
         self.assertLess(reset_tables, enter_attract)
         config = routine(flow, "game_start_config", "; end game_start_config")
-        redraw = config.index("call game_prepare_playfield")
-        initialize_session = config.index("call game_new_session_init", redraw)
+        self.assertIn("jp game_attract_begin", config)
+        start_session = routine(flow, "game_start_session", "; end game_start_session")
+        redraw = start_session.index("call game_prepare_playfield")
+        initialize_session = start_session.index("call game_new_session_init", redraw)
         self.assertLess(redraw, initialize_session)
         session = routine(
             read_asm("state_game_init.inc"),
@@ -439,7 +452,7 @@ class AssemblySafetyTests(unittest.TestCase):
         )
         self.assertLess(
             startup.index("ld a,STATE_NEW_TITLE"),
-            startup.index("call game_attract_begin"),
+            startup.index("call game_start_config_begin"),
         )
         self.assertLess(
             startup.index("ld a,STATE_NEW_EVENT_LOAD_COMPLETE"),
@@ -448,8 +461,8 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertNotIn("call waitKeypress", startup.split("@font_load_error:", 1)[0])
         self.assertNotIn("call game_new_session_init", startup)
         flow = read_asm("presentation_flow_states.inc")
-        config = routine(flow, "game_start_config", "; end game_start_config")
-        self.assertIn("call game_new_session_init", config)
+        start_session = routine(flow, "game_start_session", "; end game_start_session")
+        self.assertIn("call game_new_session_init", start_session)
         self.assertLess(
             session.index("ld a,STATE_NEW_EVENT_START"),
             session.index("ld a,STATE_NEW_NEW_GAME"),
@@ -507,9 +520,9 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("jp game_over_bounded", game_over)
         flow = read_asm("presentation_flow_states.inc")
         bounded = routine(flow, "game_over_bounded", "; end game_over_bounded")
-        self.assertIn("jp game_start_config_begin", bounded)
-        config = routine(flow, "game_start_config", "; end game_start_config")
-        self.assertIn("call game_new_session_init", config)
+        self.assertIn("jp game_start_session", bounded)
+        start_session = routine(flow, "game_start_session", "; end game_start_session")
+        self.assertIn("call game_new_session_init", start_session)
         session = routine(
             read_asm("state_game_init.inc"),
             "game_new_session_init",
@@ -591,14 +604,19 @@ class AssemblySafetyTests(unittest.TestCase):
             "; end tiles_scroll_background",
         )
 
-        latched_path = plotter[
-            plotter.index("ld a,(tiles_level_complete)") :
-            plotter.index("@row_available:")
-        ]
-        self.assertEqual(plotter.count("call tiles_scroll_background"), 2)
-        self.assertIn("call tiles_scroll_background", latched_path)
-        self.assertIn("ld a,1", latched_path)
-        self.assertNotIn("(tiles_row_defs)", latched_path)
+        self.assertEqual(plotter.count("call tiles_scroll_background"), 1)
+        self.assertLess(plotter.index("call tiles_scroll_background"),
+                        plotter.index("jp nz,@drain"))
+        self.assertLess(plotter.index("jp nz,@drain"), plotter.index("ld hl,(tiles_row_defs)"))
+        begin_drain = plotter[plotter.index("@begin_drain:"):plotter.index("@drain:")]
+        self.assertIn("ld hl,field_bottom+1", begin_drain)
+        self.assertNotIn("(tiles_level_complete)", begin_drain)
+        drain = plotter[plotter.index("@drain:"):plotter.index("@level_complete:")]
+        self.assertIn("dec hl\n    ld (tiles_drain_remaining),hl", drain)
+        self.assertIn("jp z,@level_complete", drain)
+        self.assertNotIn("(tiles_row_defs)", drain)
+        self.assertIn("tile_bottom: equ field_bottom+1", read_asm("screen.inc"))
+        self.assertIn("ld (tiles_drain_remaining),hl", read_asm("levels.inc"))
         self.assertIn("call vdu_scroll_down", scroll)
         self.assertIn("call bg_plot", scroll)
 
@@ -680,7 +698,8 @@ class AssemblySafetyTests(unittest.TestCase):
         enemy_tick = playing.index("call do_enemies")
         self.assertLess(player_tick, event_read)
         self.assertLess(event_read, enemy_tick)
-        self.assertIn("ld hl,game_over\n    ld (game_state),hl\n    ret", playing)
+        self.assertIn("ld hl,game_over\n    ld (game_state),hl\n    scf\n    ret", playing)
+        self.assertIn("jp nz,game_route_terminal_player_event", playing)
 
     def test_level_completion_returns_to_the_global_state(self) -> None:
         tiles = routine(read_asm("tiles.inc"), "tiles_plot", "; end tiles_plot")
@@ -701,6 +720,28 @@ class AssemblySafetyTests(unittest.TestCase):
         )
         self.assertIn("call next_level", transition)
         self.assertNotIn("call load_next_level", transition)
+        self.assertLess(playing.index("call game_update_live_world"),
+                        playing.index("ld a,STATE_NEW_EVENT_LEVEL_COMPLETE"))
+        self.assertIn("call seeker_group_enter_retreat", transition)
+        self.assertIn("jp game_update_live_world", transition)
+        self.assertNotIn("player_victory", transition)
+        self.assertNotIn("(player_state)", transition)
+        self.assertNotIn("seeker_group_enter_seek", transition)
+
+    def test_warp_runs_the_ordinary_ship_laser_and_enemy_collision_paths(self) -> None:
+        playing = read_asm("state_game_playing.inc")
+        world = routine(playing, "game_update_live_world", "; end game_update_live_world")
+        self.assertIn("call do_player", world)
+        self.assertIn("call do_enemies", world)
+        pilot = routine(read_asm("player_state.inc"), "player_alive", "; end player_alive")
+        self.assertIn("call player_input\n    call player_move_weapons", pilot)
+        fireball = read_asm("enemy_fireball.inc")
+        movement = routine(fireball, "move_enemy_fireball", "; end move_enemy_fireball")
+        self.assertLess(movement.index("call move_sprite"),
+                        movement.index("call check_enemy_collision_player"))
+        seeker = read_asm("enemy_seeker.inc")
+        collisions = routine(seeker, "move_enemy_seeker", "; end move_enemy_seeker")
+        self.assertIn("call check_enemy_collision_laser", collisions)
 
     def test_new_session_values_precede_level_display(self) -> None:
         source = read_asm("state_game_init.inc")
@@ -802,6 +843,15 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("player_entry_initial_amplitude: equ 112", player)
         self.assertIn("player_entry_start_x: equ player_entry_target_x-player_entry_initial_amplitude", player)
 
+        setup = routine(player, "player_init", "; end player_init")
+        self.assertLess(setup.index("call player_entry_load_start_coords"),
+                        setup.index("ld hl,player_defaults"))
+        self.assertLess(setup.index("ld hl,player_defaults"),
+                        setup.index("call spawn_sprite_from_coords"))
+        coords = routine(player, "player_entry_load_start_coords", "; end player_entry_load_start_coords")
+        self.assertIn("ld hl,player_entry_start_y_offset*256\n    add hl,de\n    ex de,hl", coords)
+        self.assertNotIn("add a,player_entry_start_y_offset", coords)
+
         screen = read_asm("screen.inc")
         self.assertIn(
             ".if [player_entry_target_y+player_entry_start_y_offset]-sprite_bottom",
@@ -865,7 +915,7 @@ class AssemblySafetyTests(unittest.TestCase):
         weapon_tick = grace.index("call player_move_weapons")
         collision_on = grace.index("set sprite_alive,(iy+sprite_collisions)")
         publish_alive = grace.index("ld hl,player_alive")
-        seek_resume = grace.index("call seeker_group_enter_seek")
+        seek_resume = grace.index("call nz,seeker_group_enter_seek")
         self.assertLess(input_tick, collision_on)
         self.assertLess(input_tick, weapon_tick)
         self.assertLess(weapon_tick, collision_on)
@@ -1146,8 +1196,8 @@ class AssemblySafetyTests(unittest.TestCase):
             "change_sprite_group_move_program",
             read_asm("player_state.inc") + read_asm("sprites.inc"),
         )
-        self.assertIn("call seeker_group_enter_orbit", read_asm("player_state.inc"))
-        self.assertIn("call seeker_group_enter_seek", read_asm("player_state.inc"))
+        self.assertIn("call nz,seeker_group_enter_orbit", read_asm("player_state.inc"))
+        self.assertIn("call nz,seeker_group_enter_seek", read_asm("player_state.inc"))
 
     def test_confirmed_actor_visual_defects_are_repaired_at_source(self) -> None:
         explosion = routine(

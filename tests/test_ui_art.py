@@ -37,12 +37,13 @@ class UiArtTests(unittest.TestCase):
                 self.assertGreater(r, 240)
                 self.assertGreater(b, 240)
 
-    def test_replacements_preserve_runtime_slots_and_dimensions(self):
+    def test_prepared_ui_has_expected_runtime_slots_and_dimensions(self):
         prepared = [entry for entry in ui_manifest(ROOT) if entry.get("prepare")]
         self.assertEqual(
             [(e["name"], e["buffer_id"], e["width"], e["height"]) for e in prepared],
             [("bezel_l", 6, 128, 304), ("bezel_r", 7, 128, 304),
-             ("splash_bg", 44, 320, 240), ("splash_logo", 45, 160, 106)],
+             ("splash_bg", 44, 512, 384),
+             ("splash_title_0", 45, 240, 76), ("splash_title_1", 46, 240, 76)],
         )
         for entry in prepared:
             path = ROOT / f"assets/rgba2/ui/{entry['name']}.rgba2"
@@ -53,11 +54,35 @@ class UiArtTests(unittest.TestCase):
             for r, g, b, a in colors:
                 self.assertTrue({r, g, b} <= {0, 85, 170, 255})
                 self.assertIn(a, (0, 255))
-            if entry["name"] == "splash_logo":
+            if "loading_title_frame" in entry:
                 self.assertEqual(decoded.getpixel((0, 0))[3], 0)
                 self.assertIn(255, set(decoded.getchannel("A").get_flattened_data()))
             else:
                 self.assertEqual(decoded.getchannel("A").getextrema(), (255, 255))
+
+    def test_loading_title_phases_change_color_with_identical_alpha(self):
+        title_dir = ROOT / "assets/rgba2/ui"
+        first = rgba2_to_img(title_dir / "splash_title_0.rgba2", 240, 76)
+        second = rgba2_to_img(title_dir / "splash_title_1.rgba2", 240, 76)
+        mask = first.getchannel("A")
+        self.assertEqual(mask.tobytes(), second.getchannel("A").tobytes())
+        self.assertNotEqual(first.tobytes(), second.tobytes())
+        first_word = mask.crop((0, 0, 240, 37)).getbbox()
+        second_word = mask.crop((0, 39, 240, 76)).getbbox()
+        self.assertIsNotNone(first_word)
+        self.assertIsNotNone(second_word)
+        self.assertIsNone(mask.crop((0, 37, 240, 39)).getbbox())
+        for left, _, right, _ in [first_word, second_word]:
+            self.assertGreater(left, 0)
+            self.assertLess(right, 240)
+            self.assertLess(abs(left + right - 240), 8)
+
+    def test_mode20_splash_preserves_the_authored_pixels(self):
+        entry = next(entry for entry in ui_manifest(ROOT) if entry["name"] == "splash_bg")
+        with Image.open(ROOT / entry["source"]) as source:
+            expected = source.convert("RGBA")
+        decoded = rgba2_to_img(ROOT / "assets/rgba2/ui/splash_bg.rgba2", 512, 384)
+        self.assertEqual(decoded.tobytes(), expected.tobytes())
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-; Native transition fixture for the dormant cooperative presentation states.
+; Native transition fixture for the cooperative presentation states.
 
     assume adl=1
     org 040000h
@@ -9,6 +9,8 @@ STATE_NEW_NEW_GAME: equ 2
 STATE_NEW_LEVEL_ENTER: equ 3
 game_fault_presentation: equ 1
 game_fault_session_init: equ 2
+PLAYFIELD_CHECK_ATTRACT: equ 2
+PLAYFIELD_CHECK_START: equ 3
 
 game_state: dl 0
 game_fault_flags: db 0
@@ -18,7 +20,7 @@ attract_dismiss_requested: db 0
 game_over_lifecycle_active: db 0
 game_over_dismiss_requested: db 0
 fixture_attract_enter_ok: db 1
-fixture_attract_dismiss: db 0
+fixture_attract_gate: db INPUT_GATE_WAIT_RELEASE
 fixture_game_over_enter_ok: db 1
 fixture_game_over_dismiss: db 0
 fixture_input_down: db 0
@@ -50,36 +52,33 @@ fixture_start:
     or a
     jp nz,fixture_fail
 
-; Resource-complete handoff prepares the field/prefix before publishing ATTRACT.
-    call game_attract_begin
+; Loading hands off to controller choice while the splash is still present.
+    call game_start_config_begin
     jp nc,fixture_fail
-    ld hl,(game_state)
-    ld de,game_attract
-    or a
-    sbc hl,de
-    jp nz,fixture_fail
-    ld a,(fixture_prepare_calls)
-    cp 1
-    jp nz,fixture_fail
-    ld a,(fixture_reset_calls)
-    cp 1
-    jp nz,fixture_fail
-
-; A bounded dismiss edge leaves ATTRACT and enters the separate config state.
-    ld a,1
-    ld (fixture_attract_dismiss),a
-    call game_attract
     ld hl,(game_state)
     ld de,game_start_config
     or a
     sbc hl,de
     jp nz,fixture_fail
+    ld a,(fixture_prepare_calls)
+    or a
+    jp nz,fixture_fail
+
+; The MOS entry key is held: the configuration gate must ignore it until up.
+    ld a,1
+    ld (fixture_input_down),a
+    ld a,START_CHOICE_YES
+    ld (fixture_input_choice),a
+    call game_start_config
+    ld a,(fixture_joystick)
+    or a
+    jp nz,fixture_fail
     ld a,(game_start_config_active)
     cp 1
     jp nz,fixture_fail
 
-; Entry begins disarmed. One all-up frame arms; fresh Y enables joystick and
-; initializes a resident clean session exactly once.
+; A released then fresh Y configures joystick and prepares ATTRACT. It does
+; not initialize gameplay.
     xor a
     ld (fixture_input_down),a
     ld (fixture_input_choice),a
@@ -92,6 +91,33 @@ fixture_start:
     ld a,(fixture_joystick)
     cp 1
     jp nz,fixture_fail
+    ld hl,(game_state)
+    ld de,game_attract
+    or a
+    sbc hl,de
+    jp nz,fixture_fail
+    ld a,(fixture_prepare_calls)
+    cp 1
+    jp nz,fixture_fail
+    ld a,(fixture_reset_calls)
+    cp 1
+    jp nz,fixture_fail
+
+; The choice key is still down at ATTRACT entry. Only the next released then
+; fresh edge initializes a new session.
+    call game_attract
+    ld a,(fixture_session_calls)
+    or a
+    jp nz,fixture_fail
+    xor a
+    ld (fixture_input_down),a
+    call game_attract
+    ld a,(fixture_session_calls)
+    or a
+    jp nz,fixture_fail
+    inc a
+    ld (fixture_input_down),a
+    call game_attract
     ld a,(fixture_session_calls)
     cp 1
     jp nz,fixture_fail
@@ -101,14 +127,37 @@ fixture_start:
     sbc hl,de
     jp nz,fixture_fail
 
-; GAME OVER uses the same bounded config handoff.
+; GAME OVER continues directly with the already selected controller.
     ld a,1
     ld (fixture_game_over_dismiss),a
     call game_over_bounded
     ld hl,(game_state)
-    ld de,game_start_config
+    ld de,fixture_game_playing
     or a
     sbc hl,de
+    jp nz,fixture_fail
+    ld a,(fixture_session_calls)
+    cp 2
+    jp nz,fixture_fail
+    ld a,(fixture_joystick)
+    cp 1
+    jp nz,fixture_fail
+
+; A new entry also permits N for keyboard mode.
+    call game_start_config_begin
+    xor a
+    ld (fixture_input_down),a
+    call game_start_config
+    ld a,1
+    ld (fixture_input_down),a
+    ld a,START_CHOICE_NO
+    ld (fixture_input_choice),a
+    call game_start_config
+    ld a,(fixture_joystick)
+    or a
+    jp nz,fixture_fail
+    ld a,(fixture_session_calls)
+    cp 2
     jp nz,fixture_fail
 
 ; A failed overlay acquisition is terminal and never publishes ATTRACT.
@@ -163,6 +212,7 @@ presentation_overlay_exit:
 game_prepare_playfield:
     ld hl,fixture_prepare_calls
     inc (hl)
+    scf
     ret
 
 reset_runtime_tables:
@@ -174,15 +224,15 @@ attract_lifecycle_enter:
     ld a,(fixture_attract_enter_ok)
     or a
     ret z
+    ld iy,fixture_attract_gate
+    call input_gate_reset
     scf
     ret
 
 attract_lifecycle_update:
-    ld a,(fixture_attract_dismiss)
-    or a
-    ret z
-    scf
-    ret
+    ld a,(fixture_input_down)
+    ld iy,fixture_attract_gate
+    jp input_gate_update
 
 attract_lifecycle_exit:
     ret

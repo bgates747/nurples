@@ -1,7 +1,6 @@
 ; Exact feature-variable transaction for prospective hardware-sprite overlays.
 ;
-; The production game includes this only after the standalone Alexe R07 gate.
-; It implements the qualified transaction in docs/hardware-sprite-overlays.md.
+; The restore branches require VDPlet v0.1.3-alpha or a compatible fix.
 ; The VDP itself snapshots both the presence and 16-bit value of variable 2, so
 ; no CPU-side response packet is required.
 ;
@@ -12,13 +11,15 @@ OVERLAY_FEATURE_VARIABLE:          equ 2
 OVERLAY_BUF_RESTORE_PROGRAM:       equ 63985
 OVERLAY_BUF_MARK_PRESENT:          equ 63987
 OVERLAY_BUF_SNAPSHOT_DISPATCH:     equ 63988
+OVERLAY_BUF_ORIGINAL_PRESENT:      equ 63989
+OVERLAY_BUF_RESTORE_CLEAR:         equ 63986
 
 overlay_feature_active: db 0
 
 ; App-process initialization is RAM-only. Process entry has not yet acquired
 ; or globally cleared the VDP registry, so it must not touch buffer IDs that
 ; could still belong to the caller. Every begin transaction clears and rebuilds
-; the three application-owned controls after resource ownership is established.
+; the application-owned controls after resource ownership is established.
 overlay_feature_process_init:
     xor a
     ld (overlay_feature_active),a
@@ -41,6 +42,16 @@ overlay_feature_begin:
     ld de,overlay_restore_program
     call vdu_write_block_to_buffer
 
+    ld hl,OVERLAY_BUF_ORIGINAL_PRESENT
+    ld bc,1
+    ld de,overlay_initial_presence
+    call vdu_write_block_to_buffer
+
+    ld hl,OVERLAY_BUF_RESTORE_CLEAR
+    ld bc,overlay_restore_clear_end-overlay_restore_clear
+    ld de,overlay_restore_clear
+    call vdu_write_block_to_buffer
+
     ld hl,OVERLAY_BUF_MARK_PRESENT
     ld bc,overlay_mark_present_end-overlay_mark_present
     ld de,overlay_mark_present
@@ -51,8 +62,7 @@ overlay_feature_begin:
     ld de,overlay_snapshot_dispatch
     call vdu_write_block_to_buffer
 
-; The prepared program defaults to CLEAR. If variable 2 exists, the dispatcher
-; patches its opcode to SET and copies the complete 16-bit incoming value.
+; If variable 2 exists, latch presence and copy its full value into SET.
     ld hl,OVERLAY_BUF_SNAPSHOT_DISPATCH
     call vdu_call_buffer
 
@@ -80,8 +90,9 @@ overlay_feature_end:
     or a
     ret z
 ; Buffered calls complete before following clear commands release the program.
-    ld hl,OVERLAY_BUF_RESTORE_PROGRAM
-    call vdu_call_buffer
+    ld hl,overlay_restore_dispatch
+    ld bc,overlay_restore_dispatch_end-overlay_restore_dispatch
+    rst.lil 18h
     call overlay_feature_clear_control_buffers
     xor a
     ld (overlay_feature_active),a
@@ -96,27 +107,34 @@ overlay_feature_clear_control_buffers:
     call vdu_clear_buffer
     ld hl,OVERLAY_BUF_SNAPSHOT_DISPATCH
     call vdu_clear_buffer
+    ld hl,OVERLAY_BUF_ORIGINAL_PRESENT
+    call vdu_clear_buffer
+    ld hl,OVERLAY_BUF_RESTORE_CLEAR
+    call vdu_clear_buffer
     ret
 ; end overlay_feature_clear_control_buffers
 
-; Buffer 63985: seven-byte prepared restore program. It begins as a five-byte
-; CLEAR command followed by two harmless NULs. If the incoming variable exists,
-; overlay_mark_present changes byte 2 to F8 (SET) and fills bytes 5..6 with the
-; original 16-bit value, making the same seven bytes a complete SET command.
+; The SET program receives the original value only when it was present.
 overlay_restore_program:
-    db 23,0,0f9h
+    db 23,0,0f8h
     dw OVERLAY_FEATURE_VARIABLE
     dw 0
 overlay_restore_program_end:
 
-; Buffer 63987: patch the prepared opcode to SET, then copy the complete 16-bit
-; incoming variable value into bytes 5..6 of the prepared restore command.
+overlay_restore_clear:
+    db 23,0,0f9h
+    dw OVERLAY_FEATURE_VARIABLE
+overlay_restore_clear_end:
+
+overlay_initial_presence: db 0
+
+; Latch presence separately and copy the incoming value into SET bytes 5..6.
 overlay_mark_present:
     db 23,0,0a0h
-    dw OVERLAY_BUF_RESTORE_PROGRAM
+    dw OVERLAY_BUF_ORIGINAL_PRESENT
     db 5,2
-    dw 2
-    db 0f8h
+    dw 0
+    db 1
     db 23,0,0a0h
     dw OVERLAY_BUF_RESTORE_PROGRAM
     db 48,080h
@@ -132,6 +150,20 @@ overlay_snapshot_dispatch:
     db 6,040h
     dw OVERLAY_FEATURE_VARIABLE
 overlay_snapshot_dispatch_end:
+
+; Ordinary byte equality selects exactly one restore branch.
+overlay_restore_dispatch:
+    db 23,0,0a0h
+    dw OVERLAY_BUF_RESTORE_CLEAR
+    db 6,2
+    dw OVERLAY_BUF_ORIGINAL_PRESENT,0
+    db 0
+    db 23,0,0a0h
+    dw OVERLAY_BUF_RESTORE_PROGRAM
+    db 6,2
+    dw OVERLAY_BUF_ORIGINAL_PRESENT,0
+    db 1
+overlay_restore_dispatch_end:
 
 overlay_feature_enable:
     db 23,0,0f8h
@@ -151,4 +183,7 @@ overlay_feature_enable_end:
     .endif
     .if overlay_feature_enable_end-overlay_feature_enable-7
         dl overlay_feature_enable_size_mismatch
+    .endif
+    .if overlay_restore_dispatch_end-overlay_restore_dispatch-24
+        dl overlay_restore_dispatch_size_mismatch
     .endif

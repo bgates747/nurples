@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Purple Nurples | Mode 20 splash review</title>
+<style>
+  :root { color-scheme: dark; --zoom: 1; }
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; max-width: 105rem; padding: 1.25rem;
+         background: #100e19; color: #f2e9ff; font: 1rem/1.5 system-ui, sans-serif; }
+  h1, p { margin: 0 0 .75rem; }
+  a { color: #c7b2ff; }
+  nav { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem;
+        padding: .75rem 0; }
+  button, select { font: inherit; padding: .25rem .5rem; }
+  button[aria-pressed="true"] { color: #140924; background: #d4baff; }
+  main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  figure { margin: 0; background: #1d182b; padding: .65rem; min-width: 0; }
+  figcaption, .artifacts { padding: .25rem 0 .5rem; }
+  figcaption > span { color: #c8bcd8; }
+  .viewport { overflow: auto; background: #0a0810; }
+  img { display: block; width: calc(var(--w) * var(--zoom) * 1px);
+        height: calc(var(--h) * var(--zoom) * 1px); image-rendering: pixelated; }
+  @media (max-width: 740px) { main { grid-template-columns: minmax(0, 1fr); } }
+</style>
+<header>
+  <h1>Purple Nurples: Mode 20 splash review</h1>
+  <p>Full-frame editable tracing, exact Agon64 fills, no dithering.</p>
+</header>
+<nav aria-label="Comparison controls">
+  <div>
+    Zoom:
+    <button type="button" data-zoom="1" aria-pressed="true">1×</button>
+    <button type="button" data-zoom="2" aria-pressed="false">2×</button>
+    <button type="button" data-zoom="4" aria-pressed="false">4×</button>
+  </div>
+  <label>Left <select id="left-choice"></select></label>
+  <label>Right <select id="right-choice"></select></label>
+</nav>
+<main>
+  <figure id="left">
+    <figcaption>Author’s GIMP finish · <span>320×240</span></figcaption>
+    <div class="viewport"><img src="gimp-finish.png" alt="Author’s GIMP finish"
+         style="--w: 320; --h: 240"></div>
+  </figure>
+  <figure id="right">
+    <figcaption>Vector candidate · <span>512×384</span></figcaption>
+    <div class="viewport"><img src="vector.png" alt="Undithered vector candidate"
+         style="--w: 512; --h: 384"></div>
+  </figure>
+</main>
+<p class="artifacts">
+  <a href="splash.svg">Editable SVG</a> · <a href="vector.png">Indexed PNG</a> ·
+  <a href="splash.rgba2">RGBA2222 payload</a> · <a href="verification.json">Verification and fill data</a>
+</p>
+<p>The untraced control uses the same Agon64 source masks as the vector pass.
+  The difference view marks changed pixels in pink. The Bayer trial comes from
+  a different source treatment, so it is not a registered pixel comparison.</p>
+<script>
+  const images = [
+    ['gimp-finish.png', 'Author’s GIMP finish', 320, 240],
+    ['vector.png', 'Vector candidate', 512, 384],
+    ['flat.png', 'Untraced flat-color control', 512, 384],
+    ['bayer.png', 'Previous Bayer trial', 512, 384],
+    ['source.png', 'Unrestricted cel master preview', 512, 384],
+    ['difference.png', 'Vector vs. control: changed pixels', 512, 384],
+  ];
+  for (const [side, start] of [['left', 0], ['right', 1]]) {
+    const choice = document.getElementById(`${side}-choice`);
+    const pane = document.getElementById(side);
+    images.forEach(([, name], index) => choice.add(new Option(name, index)));
+    choice.value = start;
+    choice.addEventListener('change', () => {
+      const [src, name, width, height] = images[Number(choice.value)];
+      const caption = pane.querySelector('figcaption');
+      const dimensions = document.createElement('span');
+      dimensions.textContent = `${width}×${height}`;
+      caption.replaceChildren(`${name} · `, dimensions);
+      const image = pane.querySelector('img');
+      image.src = src;
+      image.alt = name;
+      image.style.setProperty('--w', width);
+      image.style.setProperty('--h', height);
+    });
+  }
+  const zoom = document.querySelectorAll('[data-zoom]');
+  for (const button of zoom) button.addEventListener('click', () => {
+    document.documentElement.style.setProperty('--zoom', button.dataset.zoom);
+    for (const option of zoom) option.setAttribute('aria-pressed', option === button);
+  });
+</script>
+</html>
