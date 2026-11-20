@@ -4,6 +4,8 @@
     org 040000h
     jp fixture_start
 
+    include "../../src/asm/game_over_review_config.inc"
+
 actor_record_size: equ 64
 actor_record_generation: equ 41
 actor_record_custom: equ 42
@@ -21,6 +23,7 @@ sprite_type: equ 22
 sprite_move_program: equ 26
 sprite_collisions: equ 29
 sprite_dim_x: equ 30
+sprite_dim_y: equ 31
 sprite_frame: equ 40
 tile_id: equ sprite_id
 tile_x: equ sprite_x
@@ -32,6 +35,7 @@ sprite_just_died: equ 7
 table_record_size: equ actor_record_size
 
 seeker_state: equ actor_record_custom
+seeker_state_seek: equ 0
 seeker_orbit_origin_x: equ seeker_state+1
 seeker_orbit_angle: equ seeker_orbit_origin_x+1
 seeker_custom_end: equ seeker_orbit_angle+1
@@ -40,8 +44,8 @@ tile_pad_small: equ 1
 enemy_air: equ 1
 field_bottom: equ 335
 field_right: equ 255
-origin_left: equ 128
-screen_right: equ 511
+field_left: equ 0
+field_top: equ 0
 seekers_max: equ 1
 collide_left: equ %00000010
 collide_right: equ %00000001
@@ -59,6 +63,9 @@ fixture_deactivated: db 0
 fixture_case: db 0
 game_level_transition: equ 1
 game_state: dl 0
+player_alive: equ 2
+player_dying: equ 3
+player_state: dl player_alive
 fixture_warp_collisions: db 0
 
     include "../../src/asm/seeker_retreat.inc"
@@ -189,13 +196,14 @@ fixture_start:
     CHECK8 fixture_seeker+seeker_completed_orbits,2
     CHECK8 fixture_seeker+seeker_state,seeker_state_retreat_edge
 
-; Edge exit and pad docking both release the seeker record.
+; Left edge permits a fully contained frame, then hides and frees the slot.
     ld a,11
     ld (fixture_case),a
     ld iy,fixture_seeker
     set sprite_alive,(iy+sprite_collisions)
     ld (iy+sprite_dim_x),16
-    ld hl,-142*256
+    ld (iy+sprite_dim_y),16
+    ld hl,1*256
     ld (iy+sprite_x),hl
     ld hl,-1*256
     ld (iy+sprite_xvel),hl
@@ -203,7 +211,7 @@ fixture_start:
     ld (fixture_deactivated),a
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,0
-    CHECK24 fixture_seeker+sprite_x,-143*256
+    CHECK24 fixture_seeker+sprite_x,0
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,1
 
@@ -212,6 +220,7 @@ fixture_start:
     ld (fixture_case),a
     ld hl,0
     ld (game_state),hl
+    ld hl,2*256
     ld (iy+sprite_x),hl
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_warp_collisions,0
@@ -219,7 +228,9 @@ fixture_start:
     ld (game_state),hl
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_warp_collisions,1
-    CHECK24 fixture_seeker+sprite_x,-144*256
+    CHECK24 fixture_seeker+sprite_x,0
+    call move_enemy_seeker_retreat_edge
+    CHECK8 fixture_warp_collisions,1 ; hidden edge crossing does not collide
 
     ld a,12
     ld (fixture_case),a
@@ -271,12 +282,12 @@ fixture_start:
     CHECK8 fixture_seeker+seeker_state,seeker_state_retreat_edge
     CHECK24 fixture_seeker+sprite_heading,seeker_edge_heading_left
 
-; Right exit also stays live through the last visible pixel.
+; Right exit permits the final legal raster X even from a fractional position.
     ld a,15
     ld (fixture_case),a
     ld iy,fixture_seeker
     set sprite_alive,(iy+sprite_collisions)
-    ld hl,382*256
+    ld hl,239*256+255
     ld (iy+sprite_x),hl
     ld hl,1*256
     ld (iy+sprite_xvel),hl
@@ -284,8 +295,78 @@ fixture_start:
     ld (fixture_deactivated),a
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,0
+    CHECK24 fixture_seeker+sprite_x,240*256+255
     call move_enemy_seeker_retreat_edge
     CHECK8 fixture_deactivated,1
+
+; Test the shared render guard at the top, bottom, and both corner thresholds.
+    ld a,17
+    ld (fixture_case),a
+    ld hl,240*256+255
+    ld (iy+sprite_x),hl
+    ld hl,320*256+255
+    ld (iy+sprite_y),hl
+    call seeker_within_playfield
+    jp nc,fixture_fail
+    ld hl,321*256
+    ld (iy+sprite_y),hl
+    call seeker_within_playfield
+    jp c,fixture_fail
+    ld hl,-1 ; one fractional unit above the field truncates to pixel -1
+    ld (iy+sprite_y),hl
+    call seeker_within_playfield
+    jp c,fixture_fail
+    ld hl,0
+    ld (iy+sprite_y),hl
+    ld (iy+sprite_x),hl
+    call seeker_within_playfield
+    jp nc,fixture_fail
+    ld hl,242*256 ; a skipped past-edge coordinate also fails
+    ld (iy+sprite_x),hl
+    call seeker_within_playfield
+    jp c,fixture_fail
+
+; Death uses the captured pad immediately, with no orbit update.
+    ld a,18
+    ld (fixture_case),a
+    call fixture_prepare_pad_one
+    ld iy,fixture_seeker
+    set sprite_alive,(iy+sprite_collisions)
+    ld (iy+sprite_type),enemy_air
+    ld (iy+seeker_state),seeker_state_seek
+    ld (iy+seeker_spawn_pad_id),1
+    ld (iy+seeker_spawn_pad_generation),7
+    ld hl,player_dying
+    ld (player_state),hl
+    call seeker_group_enter_death_retreat
+    CHECK8 fixture_seeker+seeker_state,seeker_state_retreat_pad
+    CHECK8 fixture_seeker+seeker_retreat_pad_id,1
+    CHECK24 fixture_seeker+sprite_move_program,move_enemy_seeker_retreat_pad
+
+; Death does not reroute a live warp exit even if a pad is still valid.
+    ld a,19
+    ld (fixture_case),a
+    ld iy,fixture_seeker
+    ld (iy+seeker_state),seeker_state_retreat_edge
+    ld hl,move_enemy_seeker_retreat_edge
+    ld (iy+sprite_move_program),hl
+    call seeker_group_enter_death_retreat
+    CHECK8 fixture_seeker+seeker_state,seeker_state_retreat_edge
+    CHECK24 fixture_seeker+sprite_move_program,move_enemy_seeker_retreat_edge
+
+; The retained warp retreat is harmless while the player is dying.
+    ld a,20
+    ld (fixture_case),a
+    ld iy,fixture_seeker
+    ld hl,0
+    ld (iy+sprite_y),hl
+    ld (iy+sprite_xvel),hl
+    ld hl,100*256
+    ld (iy+sprite_x),hl
+    ld hl,game_level_transition
+    ld (game_state),hl
+    call move_enemy_seeker_retreat_edge
+    CHECK8 fixture_warp_collisions,1 ; count from live warp test must not change
 
     ld a,FIXTURE_PASS
     out (0),a

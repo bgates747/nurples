@@ -49,12 +49,18 @@ move_pad_small:
     ld (iy+tile_frame),a
     call draw_active_tile
 @@:
-; Keep animating the pad during GAME OVER and hold its launch timer.
+; Keep animating the pad, but hold its launch timer during Game Over and
+; while the player is dying, dead, or still in entrance/grace.
     ld hl,(game_state)
     ld de,game_over
     or a
     sbc hl,de
     ret z
+    ld hl,(player_state)
+    ld de,player_alive
+    or a
+    sbc hl,de
+    ret nz
 ; check whether it is time to spawn a seeker
     call active_tile_launch_timer_tick
     ret nz

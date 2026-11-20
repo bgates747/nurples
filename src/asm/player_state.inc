@@ -6,10 +6,8 @@ player_entry_angle: equ player_death_wiggle_timer+1
 player_entry_timer: equ player_entry_angle+1
 player_grace_timer: equ player_entry_timer+1
 player_entry_warp_enabled: equ player_grace_timer+1
-player_entry_warp_stage: equ player_entry_warp_enabled+1
-player_entry_warp_timer: equ player_entry_warp_stage+1
-player_entry_warp_hold_timer: equ player_entry_warp_timer+1
-player_entry_amplitude: equ player_entry_warp_hold_timer+1
+; Keep the actor layout stable. Three old timing bytes are now unused.
+player_entry_amplitude: equ player_entry_warp_enabled+4
 player_entry_target_x_actor: equ player_entry_amplitude+1
 player_entry_target_y_actor: equ player_entry_target_x_actor+1
 player_entry_direction: equ player_entry_target_y_actor+1
@@ -23,11 +21,7 @@ player_entry_start_y: equ 320
 player_entry_target_x: equ 120
 player_entry_target_y: equ 224
 player_grace_frames: equ 60
-player_entry_fast_hold_frames: equ 56
-player_entry_warp_stage_frames: equ 7
-player_entry_warp_stage_count: equ 8
-player_entry_warp_total_frames: equ player_entry_warp_stage_frames*player_entry_warp_stage_count
-player_entry_total_frames: equ player_entry_fast_hold_frames+player_entry_warp_total_frames
+player_entry_total_frames: equ 112
 player_entry_initial_angle: equ 192
 player_entry_angle_step: equ 8
 player_entry_initial_amplitude: equ 112
@@ -35,21 +29,6 @@ player_entry_y_velocity: equ -219 ; -0.855 px/frame; final residue is snapped
 player_entry_start_y_offset: equ 96
 player_death_lateral_speed: equ 1*256
 player_death_forward_speed: equ -64 ; -0.25 pixel/frame in 16.8 fixed
-
-; The level-start starfield holds maximum speed for one complete old-entrance
-; duration, then reaches gameplay's one-scanline pace over the next 56 frames.
-; Mid-level respawn uses the same ship path with this actor-owned effect
-; disabled, because scrolling the rasterized playfield would detach existing
-; terrain from its records.
-player_entry_warp_speeds:
-    db 16,12,8,6,4,3,2,1
-player_entry_warp_speeds_end:
-    .if player_entry_warp_speeds_end-player_entry_warp_speeds-player_entry_warp_stage_count
-        dl player_entry_warp_speed_count_mismatch
-    .endif
-    .if player_entry_fast_hold_frames-player_entry_warp_total_frames
-        dl player_entry_warp_duration_mismatch
-    .endif
 
 ; The damped sine begins near the left edge and can never leave the actor's
 ; horizontal runway. Its final subpixel vertical residue is snapped to the
@@ -224,7 +203,7 @@ player_world_travel_enabled:
     ret
 ; end player_world_travel_enabled
 
-; Publish the actor-owned level-start starfield speed to the global renderer.
+; Consume one shared warp-controller frame for the initial entrance only.
 ; Mid-level respawn keeps this disabled so existing terrain pixels and records
 ; remain spatially coherent. Carry set means A is a validated 1..16 speed.
 player_entry_starfield_speed:
@@ -237,63 +216,19 @@ player_entry_starfield_speed:
     ld a,(iy+player_entry_warp_enabled)
     or a
     jp z,@inactive
-    ld a,(iy+player_entry_warp_hold_timer)
-    or a
-    jp z,@decelerating
-    ld a,16
-    scf
-    ret
-@decelerating:
-    ld a,(iy+player_entry_warp_stage)
-    cp player_entry_warp_stage_count
-    jp c,@stage_valid
-; A malformed actor field degrades to ordinary one-scanline starfield travel.
+    call level_transition_step
+    jp nc,@frame_ready
+; Inconsistent phase must not admit terrain during the swoop.
     ld hl,player_fault_flags
     set player_fault_bad_entry_warp,(hl)
-    ld a,player_entry_warp_stage_count-1
-    ld (iy+player_entry_warp_stage),a
-@stage_valid:
-    ld hl,player_entry_warp_speeds
-    ld de,0
-    ld e,a
-    add hl,de
-    ld a,(hl)
+    ld a,1
+@frame_ready:
     scf
     ret
 @inactive:
     xor a
     ret
 ; end player_entry_starfield_speed
-
-; Hold maximum speed for 56 frames, then advance eight equal seven-frame
-; deceleration stages. The final stage deliberately holds speed one until
-; player_spawning publishes GRACE.
-player_entry_starfield_advance:
-    ld iy,player_begin
-    ld a,(iy+player_entry_warp_hold_timer)
-    or a
-    jp z,@decelerating
-    dec a
-    ld (iy+player_entry_warp_hold_timer),a
-    ret
-@decelerating:
-    dec (iy+player_entry_warp_timer)
-    ret nz
-    ld a,(iy+player_entry_warp_stage)
-    cp player_entry_warp_stage_count-1
-    jp nc,@hold_normal
-    inc a
-    ld (iy+player_entry_warp_stage),a
-    ld a,player_entry_warp_stage_frames
-    ld (iy+player_entry_warp_timer),a
-    ret
-@hold_normal:
-    ld a,player_entry_warp_stage_count-1
-    ld (iy+player_entry_warp_stage),a
-    ld a,1
-    ld (iy+player_entry_warp_timer),a
-    ret
-; end player_entry_starfield_advance
 
 ; Reserve a visible runway above ordinary player input for damaged flight.
 ; inputs: IY = player record
@@ -400,13 +335,10 @@ player_init:
     ld (ix+player_entry_timer),a
     xor a
     ld (ix+player_grace_timer),a
-    ld (ix+player_entry_warp_stage),a
     pop af
     ld (ix+player_entry_warp_enabled),a
-    ld a,player_entry_warp_stage_frames
-    ld (ix+player_entry_warp_timer),a
-    ld a,player_entry_fast_hold_frames
-    ld (ix+player_entry_warp_hold_timer),a
+    or a
+    call nz,level_transition_init_entrance
     ld a,player_entry_initial_amplitude
     ld (ix+player_entry_amplitude),a
     ld hl,0
@@ -476,7 +408,7 @@ player_spawning:
     call move_sprite
     call player_entry_damped_swoop
     call player_draw_record
-    call player_entry_starfield_advance
+    ld iy,player_begin
     dec (iy+player_entry_timer)
     ret nz
 ; Snap the final subpixel residue to the shared, reviewed endpoint.
@@ -558,7 +490,7 @@ player_grace:
     set sprite_alive,(iy+sprite_collisions)
     ld hl,player_alive
     ld (player_state),hl
-; Warp retreat owns these seekers even if a respawn completes mid-warp.
+; Only orbiters resume pursuit. Departing seekers finish their retreat.
     ld hl,(game_state)
     ld de,game_level_transition
     or a
@@ -600,12 +532,6 @@ kill_player:
     ld (ix+sprite_xvel),hl
     ld hl,player_death_forward_speed
     ld (ix+sprite_yvel),hl
-; A warp collision may kill the player but must not cancel the seekers' exit.
-    ld hl,(game_state)
-    ld de,game_level_transition
-    or a
-    sbc hl,de
-    call nz,seeker_group_enter_orbit
 ; set player state to dying
     xor a
     ld (player_dying_phase),a
@@ -613,6 +539,9 @@ kill_player:
     ld (player_dying_spawns),a
     ld hl,player_dying
     ld (player_state),hl
+; Publish death before notifying the seekers. The actor-owned entry preserves
+; any retreat already in flight, including during a live warp.
+    call seeker_group_enter_death_retreat
     pop iy
     pop ix
     pop bc

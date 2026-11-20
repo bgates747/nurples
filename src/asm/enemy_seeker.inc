@@ -49,7 +49,7 @@ enemy_spawn_seeker:
     ld de,player_alive
     or a
     sbc hl,de
-    jp nz,seeker_enter_orbit
+    jp nz,seeker_enter_death_retreat
     jp seeker_enter_live_launch
 ; end enemy_spawn_seeker
 
@@ -196,6 +196,9 @@ seeker_group_enter_seek:
     and actor_type_mask
     cp enemy_air
     jp nz,@bad_record
+    ld a,(iy+seeker_state)
+    cp seeker_state_orbit
+    jp nz,@next ; never turn an in-flight retreat back into pursuit
     call seeker_enter_seek
 @next:
     lea iy,iy+table_record_size

@@ -8,7 +8,7 @@ The standalone Olimex test rendered the title and prompt over moving test bands.
 
 Use the same splash, loading, start choices, level initialization, ship entrance, renderer, and assets as the current game. The hook belongs at the gameplay coordinator's first handoff to player input. The current code starts input in `player_grace`, after the spawn animation. In the test build, bypass that first call to player input, put the player actor in the terminal state expected by Game Over, and use the existing coordinator transition. Game Over owns player and projectile cleanup.
 
-Smith selected a frozen Game Over backdrop. Hold the starfield and terrain at their entry positions, stop new seeker launches, and let seekers already on screen enter harmless retreat immediately. Reuse the player-death retreat flight and docking logic. Choose the nearest active, visible launchpad. If there is no usable pad, or the selected pad becomes invalid, fly out through the nearer horizontal edge and release the actor only after its entire sprite leaves the visible screen. Sprite positions here use physical screen coordinates. Keep the orbit routine available for other states. The hardware overlays and non-firing turret search continue to animate.
+Smith selected a frozen Game Over backdrop. Hold the starfield and terrain at their entry positions, stop new seeker launches, and let seekers already on screen enter harmless retreat immediately. Reuse the player-death retreat flight and docking logic. Choose the nearest active, visible launchpad. If there is no usable pad, or the selected pad becomes invalid, head toward the nearer horizontal playfield edge and release the actor before its sprite would cross it, per GAME-001B-EDGE below. Keep the orbit routine available for other states. The hardware overlays and non-firing turret search continue to animate.
 
 Keep a scrolling comparison run at the ordinary one-scanline pace. Both arms use the same entry point, level, assets, overlays, launch suppression and retreat policy. Only scrolling differs, so the comparison can isolate whether scrolling contributes to visible-period flicker.
 
@@ -22,7 +22,7 @@ Build the hook only into a separately named review binary and bundle. Keep the o
 
 - JK-INT-003 [x] Commission and stage the immediate-frozen arm on production Olimex VDPlet v0.1.3-alpha. Both later comparison arms remain local until Smith finishes the first run.
 
-- JK-INT-004 [ ] Smith observes ordinary startup and spawn, automatic Game Over, and the animated title and blinking prompt over the real backdrop. Verify that the intended arm freezes scenery, stops new launches, and lets existing seekers dock or exit completely. Run the scrolling comparison from the same scene and record separately whether either overlay flickers during its visible periods. Verify continuation and clean exit to MOS.
+- JK-INT-004 [ ] Smith observes ordinary startup and spawn, automatic Game Over, and the animated title and blinking prompt over the real backdrop. Verify that the intended arm freezes scenery and stops new launches, and that existing seekers dock or disappear before crossing the playfield boundary. Run the scrolling comparison from the same scene if needed to separate rendering problems from motion. Verify continuation and clean exit to MOS.
 
 - JK-INT-005 [ ] Fix unchecked display mode negotiation exposed by the immediate-frozen run. Avoid a redundant playfield MODE request when the required surface is already active. Verify mode, dimensions, and color count from a fresh VDP response before drawing. Reject unexpected mode/depth with a readable report and normal MOS exit. Rebuild the immediate arm, commission a fresh packet, and request a new Olimex slot. The actual fallback mode and cause of the original failure remain open until target evidence confirms them.
 
@@ -85,3 +85,210 @@ Olimex handback first timed out with the game still active. After Smith returned
 Smith requested the authored 512x384 splash on Alexe first. The stopped Oryx review profile is `/home/smith/Agon/mystuff/nurples-repair/.emulator/mode20-splash-r01` under checkout 501, request `9bf5feb27b26`. The card readback matched the ordinary R03 game binary and updated UI container with the authored dither; SHA-256 of card `849f23aceb122be7987eb2ef1949b9a1b913213b40e9df72e037a861a891ad71`. The wrapper and runtime manifests verify against published VDPlet v0.1.3-alpha BIN/ELF and pinned Eirene RC3 MOS. Autoexec loads the game and leaves invocation to Smith. Review and release are pending.
 
 Smith reviewed the splash and preferred the older flatter cel finish to the Bayer treatment. On November 19 the fresh whole-host inspection showed no emulator processes, Oryx checkout 501 was released, and TRS-80 request `74f81499306b` was notified.
+
+## Next complete-game gate — last life to clean restart
+
+The entrance swoop and grace period, fireball presentation, accepted
+death effects, launcher cooldowns, pause, and retouched starfield now
+have Author observations. The current build includes moving attract,
+death/respawn, seeker retreat, turret tracking/search, live warp, and the
+recovered Z80 campaign level. Their presence is not a full acceptance run.
+Top/side-edge death, mid-level respawn with score and map progress kept,
+combat during hyperwarp, and the recovered level's hazards and crater
+transforms still need focused coverage. New enemy patterns, attract replay,
+and the Xevious mode are later work.
+
+- JK-INT-006 [ ] **FAE first:** rebuild the seeker-present / frozen review
+  arm against current `dev` and the accepted assets; preserve the ordinary
+  binary. Use pinned RC3 and stock VDP in a fresh Oryx profile under
+  `nurples/.emulator`. Enter via the normal start and ship entrance; trigger
+  Game Over only with a seeker already visible. Verify that terrain stops,
+  no new seekers are launched, turrets search without firing, and seekers
+  dock or disappear without crossing the playfield boundary. Report the
+  existing boundary defect separately if reviewing the baseline before its
+  fix. The title and prompt must be readable while visible. Held input must
+  not dismiss the screen; a fresh press must start a clean second game
+  without asset reload, stale actors, timers, or overlay resources. Repeat
+  once in the same run, then exit cleanly to MOS. The forced trigger does
+  not qualify the actual last-life transition; cover that once in the
+  ordinary build as well.
+
+- JK-INT-007 [ ] **Then production Olimex:** repeat the same seeker-present
+  frozen scene and verify the display remains at the required mode and
+  color depth. Check and record whether the slight scanout errors seen in
+  R03 recur, distinguishing intentional blinking from corruption while
+  visible. If needed, run the matched one-scanline scrolling arm as a
+  discriminator. Establish that result before choosing a different renderer.
+
+## Seeker boundary bug report
+
+Smith reports that seekers overlap the bezel or lower cockpit while
+leaving the playfield. Stock VDP does not provide playfield clipping for
+these sprites. A graphics viewport cannot be relied on to hide their
+overshoot. The current edge-retreat handler in `seeker_retreat.inc` checks
+against the physical screen, not the playfield, and can keep publishing
+the sprite after it has entered the bezel.
+
+The visibility contract is now **blink out before any pixel crosses the
+playfield boundary**, regardless of the seeker state. Judge the proposed
+rendered footprint using the playfield bounds and actual sprite dimensions,
+in one coordinate space. An edge-retreat seeker disappears and releases
+its slot on the first step that would cross; it does not fly behind the
+bezel or wait until its entire image is off the physical screen. Docking
+at an on-screen pad is unchanged, and harmless versus live collision
+policy remains as before within the field.
+
+Acceptance: on stock VDP, a fully contained seeker can still draw flush
+with a legal edge. A one-pixel or multi-pixel crossing must never publish an
+out-of-bounds frame. Check left and right retreat, plus top/bottom and
+corners wherever a seeker can approach them; look specifically at the
+lower cockpit artwork. Exercise ordinary play, death/Game Over and warp,
+and confirm a despawned slot can be reused without a ghost or bounce.
+Documentation only: no fix, build, or reservation in this tranche.
+
+### Edge fix and frozen FAE candidate R01
+
+Smith authorized implementation and staging, with human review later.
+The seeker footprint now uses the same integer pixels the VDP receives.
+The retreat path deactivates before collision handling or position
+publication if the next frame would cross the playfield. The shared
+seeker publication check also covers first show from a pad and other
+movement states; an ordinary clamped/bounced pose is still legal if its
+entire footprint fits. The review trigger now requires a published,
+fully contained seeker. No starfield or terrain scrolling code changed.
+
+Native assembly and asset preflight passed. The ordinary binary from the
+review builder matched the ordinary build. The suite ran 218 tests, one
+headless-input skip; the expanded eZ80 seeker fixture assembled but was not
+executed. It covers legal flush and fractional positions, both retreat
+directions, top/bottom/corners, and no out-of-field collision during warp.
+
+Staged only `seekers-frozen` at
+`/home/smith/Agon/mystuff/nurples/.emulator/game-over-seeker-edge-fae-r01`.
+The [SD readback](../../../.build/game-over-seeker-edge-fae-r01/staging-receipt.txt)
+matches binary `5c3b4418…fcab` and the current retouched assets under stock
+FAE 1.2.6/VDP and pinned Eirene RC3. The old Oryx profiles were untouched.
+Staging checkout 525 was released after confirming FAE was stopped; no
+successor was queued. Obtain a fresh ordinary Oryx checkout when Smith is
+ready. He starts the profile wrapper and types `RUN` at MOS, chooses his
+controller, and can leave controls neutral for the first visible seeker.
+Visual review and the separate ordinary-build last-life run remain open.
+
+November 20: Smith confirmed Oryx availability and requested the run.
+Human review checkout 526 (request `66a03a80ed0d`) is held after a fresh
+idle inspection. [Readiness verification](../../../.build/game-over-seeker-edge-fae-r01/human-ready-verification.txt)
+matched the staged card, guest executable, stock FAE/VDP and pinned RC3;
+CPU boost is off. FAE is stopped for Smith to launch. Release after Smith
+reports and closes the emulator.
+
+### Forced edge-exit arm — JK-INT-008
+
+Smith observed the seeker dock immediately after its launch in the frozen
+R01 fixture. That exercises docking, not the playfield boundary. Add a
+separately named seeker-present frozen arm for stock FAE. On Game Over entry,
+send the visible seeker toward the nearer horizontal playfield edge even
+though a valid pad exists. Use the production edge-retreat movement and
+hide/release rule. Keep the original docking arm, scroll comparison, and
+ordinary game behavior unchanged; verify the ordinary build byte for byte.
+Success is a visible retreat followed by disappearance before any sprite
+pixel crosses onto the bezel. Keep the clean-restart check in the same run.
+
+Built and staged `seekers-frozen-edge` under stock FAE 1.2.6/VDP and pinned
+RC3. The ordinary binary and all three earlier review arms are byte-identical
+to their pre-change builds. The suite ran 219 tests (one headless-input skip).
+Checkout 526 was released after Smith's docking observation and a fresh
+empty-host check; no successor was then queued. Checkout 527
+(`08cb247beca5`) now holds the stopped forced-edge review. The
+[SD readback](../../../.build/game-over-forced-edge-fae-r01/staging-receipt.txt)
+verified guest binary `180a722b…0700`, retained assets, and load-only startup.
+Smith launches on Oryx from
+`/home/smith/Agon/mystuff/nurples/.emulator/game-over-forced-edge-fae-r01`,
+types `RUN`, chooses the controller, and leaves controls neutral.
+
+- JK-INT-008 [x] **FAE forced-edge visual PASS — November 20.** Smith saw
+  the seeker blink out before it touched the bezel. Continuing from Game
+  Over started a second game without reloading assets. Smith confirmed
+  FAE was closed. This passes the forced horizontal retreat and
+  resident-assets restart checks; the ordinary last-life path and the
+  Olimex scanout comparison remain open.
+
+Oryx checkout 527 was [released](../../../.build/game-over-forced-edge-fae-r01/release.json)
+after a fresh whole-host inspection found no emulator processes. No
+successor was queued.
+
+### Ordinary playthrough — JK-INT-009
+
+Smith approved integrating the tested edge boundary into the ordinary
+app, retaining normal pad docking, and requested a full playthrough on
+Oryx. Build the real executable with all three review settings zero.
+Normal Game Over and warp prefer the nearest usable pad; the death retreat
+retains launch-pad identity. Fall back to the nearer horizontal playfield
+edge only without a usable destination. Do not force a transition or
+edge retreat. Stage the ordinary binary and accepted assets in a fresh
+stock FAE/RC3 profile. Keep both prior diagnostic profiles intact.
+
+Full build and deterministic asset check passed; 218 tests passed and one
+headless-input test was skipped. The deployable executable (`33551113…0c2b`)
+matches the isolated ordinary control, not the forced-edge fixture.
+Oryx checkout 528 (`09d291a72cab`) holds the stopped production-app
+profile at
+`/home/smith/Agon/mystuff/nurples/.emulator/game-over-ordinary-fae-r01`.
+The [SD readback](../../../.build/game-over-ordinary-fae-r01/staging-receipt.txt)
+matched the ordinary executable, accepted assets, and load-only startup.
+The previous profiles were not touched. Smith runs from MOS and plays
+normally: cover mid-level death/respawn, live warp if reached, and the
+ordinary last-life → Game Over → fresh-key restart without asset reload.
+No commit/push or Olimex run. Hold review custody until FAE closes.
+
+- JK-INT-009 [x] **Ordinary FAE playthrough PASS — November 20.** Smith
+  reported that Game Over triggered normally and a fresh keypress started
+  a new game without reloading assets. This was the ordinary build with
+  all review overrides disabled. This closes the normal Game Over
+  trigger and resident-assets restart gate on FAE; the production Olimex
+  scanout comparison remains open.
+
+Smith confirmed FAE was closed. Oryx checkout 528 was
+[released](../../../.build/game-over-ordinary-fae-r01/release.json) after
+a fresh whole-host check found no emulator processes. No successor was
+queued.
+
+### GAME-001B — Immediate seeker retreat on player death
+
+Smith clarified that retreat starts when the player begins dying, not after
+the old two-orbit hold. Take the existing launch-pad-or-nearer-edge route
+immediately. Preserve an already-running retreat, including during warp.
+Pause new pad launches until the player is fully alive again; an existing
+death retreat must not turn back into pursuit when grace ends. No new orbit
+behavior, visual effect, or scrolling changes. The orbit controller remains
+available for other phases. Game Over keeps its nearest-usable-pad policy.
+
+Implemented on `dev`. Death publishes the player phase before dispatching
+the actor-owned retreat; grace resumes pursuit only for orbiters, not
+retreaters. A death during warp preserves the current exit route but pause
+of pursuit includes collision checks while the player is not fully alive.
+The complete ordinary build, isolated review builds and asset check passed.
+The expanded eZ80 fixture assembled; the eZ80 cases have not yet been
+executed. The suite ran 221 tests with one headless-input skip. Pi compiler
+checkout 1067 was released. Ordinary binary `c457b77b…9d59`; no emulator
+staging, visual sign-off, commit, or push in this tranche.
+
+Smith later requested an ordinary FAE review. Checkout 529
+(`8cff65fb8814`) holds the stopped `seeker-death-retreat-fae-r01` profile
+under the canonical Oryx `nurples/.emulator` root. The
+[SD readback](../../../.build/seeker-death-retreat-r01/staging-receipt.txt)
+matched the ordinary binary, retouched assets, and load-only startup.
+All review overrides are disabled. In live play, lose a ship with a
+seeker visible and check that it immediately heads for its pad or an edge
+before respawn, with no holding orbit or new launches during death.
+Await Smith's review and emulator shutdown before releasing.
+
+- **FAE visual PASS — November 20.** In the ordinary build, Smith saw
+  seekers head for their launch pads as soon as the player died, with no
+  holding orbit. This confirms immediate pad retreat in live gameplay.
+  The forced-edge fixture has separate bezel clearance evidence; this
+  playtest did not separately establish the missing-pad fallback or
+  launch cooldown through respawn.
+
+Smith confirmed FAE was closed. Checkout 529 was
+[released](../../../.build/seeker-death-retreat-r01/release.json) after a
+fresh whole-host idle check. No successor was queued.

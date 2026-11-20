@@ -1,7 +1,7 @@
-; Bounded phase/timing controller for GAME-001F.
+; Bounded starfield timing for first entrance and between-level warp.
 ;
-; It owns no VDU or actor calls. Entry requires a drained playfield. The
-; global state consumes each speed with the separate starfield scroller.
+; The short opening and full warp never overlap. Both require a blank
+; playfield; the caller consumes each speed with the separate scroller.
 
 LEVEL_TRANSITION_APPROACH: equ 0
 LEVEL_TRANSITION_ACCEL: equ 1
@@ -13,8 +13,14 @@ level_transition_approach_frames: equ 90
 level_transition_speed_frames: equ 8
 level_transition_hold_frames: equ 90
 
+entrance_warp_approach_frames: equ 12
+entrance_warp_speed_frames: equ 4
+entrance_warp_hold_frames: equ 40
+
 level_transition_phase: db LEVEL_TRANSITION_APPROACH
 level_transition_timer: dl 0
+level_transition_stage_duration: dl level_transition_speed_frames
+level_transition_hold_duration: dl level_transition_hold_frames
 level_transition_speed: db 1
 level_transition_frame_speed: db 1
 level_transition_speed_index: db 0
@@ -30,6 +36,7 @@ level_transition_decel_speeds_end:
 level_transition_accel_count: equ level_transition_accel_speeds_end-level_transition_accel_speeds
 level_transition_decel_count: equ level_transition_decel_speeds_end-level_transition_decel_speeds
 level_transition_total_frames: equ level_transition_approach_frames+[level_transition_accel_count*level_transition_speed_frames]+level_transition_hold_frames+[level_transition_decel_count*level_transition_speed_frames]
+entrance_warp_total_frames: equ entrance_warp_approach_frames+[[level_transition_accel_count+level_transition_decel_count]*entrance_warp_speed_frames]+entrance_warp_hold_frames
 
     .if level_transition_accel_count-8
         dl level_transition_accel_count_mismatch
@@ -40,8 +47,26 @@ level_transition_total_frames: equ level_transition_approach_frames+[level_trans
     .if level_transition_total_frames-300
         dl level_transition_total_frames_mismatch
     .endif
+    .if entrance_warp_total_frames-112
+        dl entrance_warp_total_frames_mismatch
+    .endif
 
 level_transition_init:
+    ld hl,level_transition_approach_frames
+    ld bc,level_transition_speed_frames
+    ld de,level_transition_hold_frames
+    jp level_transition_init_profile
+; end level_transition_init
+
+level_transition_init_entrance:
+    ld hl,entrance_warp_approach_frames
+    ld bc,entrance_warp_speed_frames
+    ld de,entrance_warp_hold_frames
+; fall through with HL = approach, BC = frames per speed, DE = fast hold
+level_transition_init_profile:
+    ld (level_transition_timer),hl
+    ld (level_transition_stage_duration),bc
+    ld (level_transition_hold_duration),de
     xor a
     ld (level_transition_phase),a
     ld (level_transition_speed_index),a
@@ -49,15 +74,13 @@ level_transition_init:
     ld a,1
     ld (level_transition_speed),a
     ld (level_transition_frame_speed),a
-    ld hl,level_transition_approach_frames
-    ld (level_transition_timer),hl
     ret
-; end level_transition_init
+; end level_transition_init_profile
 
 ; Advance exactly one outer frame.
 ; outputs:
 ;   carry clear, A = this frame's scroll speed
-;   carry set, A = 0 once all 300 starfield transition frames have completed
+;   carry set, A = 0 once the selected starfield schedule has completed
 ; destroys: a,de,hl
 level_transition_step:
     ld a,(level_transition_phase)
@@ -86,7 +109,7 @@ level_transition_step:
     xor a
     ld (level_transition_speed_index),a
     call level_transition_load_accel_speed
-    ld hl,level_transition_speed_frames
+    ld hl,(level_transition_stage_duration)
     ld (level_transition_timer),hl
     jp @return_frame
 
@@ -99,7 +122,7 @@ level_transition_step:
     jp nc,@begin_hold
     ld (level_transition_speed_index),a
     call level_transition_load_accel_speed
-    ld hl,level_transition_speed_frames
+    ld hl,(level_transition_stage_duration)
     ld (level_transition_timer),hl
     jp @return_frame
 @begin_hold:
@@ -107,7 +130,7 @@ level_transition_step:
     ld (level_transition_phase),a
     ld a,16
     ld (level_transition_speed),a
-    ld hl,level_transition_hold_frames
+    ld hl,(level_transition_hold_duration)
     ld (level_transition_timer),hl
     jp @return_frame
 
@@ -119,7 +142,7 @@ level_transition_step:
     xor a
     ld (level_transition_speed_index),a
     call level_transition_load_decel_speed
-    ld hl,level_transition_speed_frames
+    ld hl,(level_transition_stage_duration)
     ld (level_transition_timer),hl
     jp @return_frame
 
@@ -132,7 +155,7 @@ level_transition_step:
     jp nc,@finish
     ld (level_transition_speed_index),a
     call level_transition_load_decel_speed
-    ld hl,level_transition_speed_frames
+    ld hl,(level_transition_stage_duration)
     ld (level_transition_timer),hl
     jp @return_frame
 @finish:

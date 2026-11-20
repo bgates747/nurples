@@ -38,24 +38,36 @@ decisions are recorded in the dated development log.
     blocking the outer scheduler or inheriting stale death state.
 
   - [ ] **GAME-001B — Enemy death-phase behavior:** give the enemy controller
-    explicit PLAYER_DYING and PLAYER_DEAD policies. Seekers must stop attacking
-    and independently reconcile with the global death policy. Preserve
-    `move_enemy_seeker_orbit` as the non-hostile holding behavior. Each seeker
+    explicit PLAYER_DYING and PLAYER_DEAD policies. On death entry, seekers
+    stop attacking and begin retreat immediately, with no holding orbits.
+    Hold pad launch timers through death, respawn and grace; surviving
+    retreaters finish their exit even when control resumes. Preserve
+    `move_enemy_seeker_orbit` for other phases that need a holding behavior.
+    Each seeker
     must retain a validated identity for the launch pad that spawned it rather
     than searching for an interchangeable nearest pad. When told to retreat,
     it returns to that active, visible `tile_pad_small`; if its own pad has
-    already scrolled off, been destroyed or been reused, it chooses the nearer
-    left or right screen edge, flies out through it and deactivates. GAME_OVER
+    already scrolled off, been destroyed or been reused, it heads for the nearer
+    left or right playfield edge and disappears before crossing it. GAME_OVER
     shares the retreat flight and docking logic with its own destination and
     immediate-entry policy under GAME-001J.
     Acceptance: no seeker continues player-targeting or collision damage after
-    death begins; orbit count and completion are actor-owned and deterministic;
+    death begins; the first death update does not spend a frame in orbit;
     named per-seeker fields in the existing record hold its orbit and validated
     pad association without a parallel side table; pad identity cannot alias a
     recycled active-tile record; destroyed, inactive, reused or off-screen pads
-    are never selected; docking or edge exit releases the seeker record;
+    are never selected; docking or reaching the playfield edge releases the
+    seeker record without drawing over the bezel or cockpit;
     and respawn starts without stale orbit,
     pad-association or retreat state.
+
+  - [ ] **GAME-001B-EDGE — Seeker sprites escape the playfield:** use the
+    entire rendered sprite footprint at the next position as the visibility
+    boundary, not the physical screen or the sprite's origin alone. Hide the
+    sprite before it would touch bezel/cockpit artwork; edge-retreat seekers
+    must also release their actor slot. This replaces the earlier
+    fully-off-screen rule. See the
+    [bug report and acceptance cases](docs/tasks/GAME-001JK-INTEGRATED/TASK.md#seeker-boundary-bug-report).
 
   - [ ] **GAME-001C — Enemy movement variety:** retain
     `move_enemy_seeker_orbit` as a reusable behavior for game phases or enemy
@@ -103,6 +115,10 @@ decisions are recorded in the dated development log.
     disabled throughout `player_grace`; and timer expiry explicitly transitions
     the actor to `player_alive`. A mid-level death must not restore
     `player_score` from `player_starting_score`.
+
+  - [ ] **GAME-001E-START-WARP — Opening starfield speed profile:** start at
+    normal speed, accelerate to fast scroll, then slow down before admitting
+    terrain. [Task and timing decision](docs/tasks/GAME-001E-START-WARP/TASK.md).
 
   - [ ] **GAME-001F — Live hyperwarp level transition:** after admitting the
     final map row, keep normal gameplay active until its terrain scrolls fully
@@ -191,7 +207,8 @@ decisions are recorded in the dated development log.
     rather than empty. Suppress new launches and send existing seekers directly
     into shared retreat. Each chooses the nearest active, visible launchpad
     and despawns when it docks. If no usable pad remains, it flies through the
-    nearer horizontal edge and despawns once fully out of view.
+    nearer horizontal playfield edge and despawns before its sprite would
+    cross into the cockpit or bezel (GAME-001B-EDGE).
     Visible laser turrets reuse the shared non-firing search
     behavior already active during player death and respawn. Require a complete
     key-up gate followed by a fresh keypress so the input associated with the

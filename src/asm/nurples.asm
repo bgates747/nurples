@@ -96,6 +96,9 @@ exit:
     include "tiles.inc"
     include "starfield_warp.inc"
     include "level_transition_controller.inc"
+    .if entrance_warp_total_frames-player_entry_total_frames
+        dl entrance_warp_must_fit_player_swoop
+    .endif
     include "tiles_active.inc"
     include "tile_crater.inc"
     include "tile_electrode.inc"

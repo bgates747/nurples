@@ -827,18 +827,13 @@ class AssemblySafetyTests(unittest.TestCase):
             "player_entry_timer",
             "player_grace_timer",
             "player_entry_warp_enabled",
-            "player_entry_warp_stage",
-            "player_entry_warp_timer",
-            "player_entry_warp_hold_timer",
             "player_entry_amplitude",
         ):
             self.assertIn(f"{field}:", player)
         self.assertIn("player_play_ceiling: equ 64", player)
         self.assertIn("player_entry_start_y: equ 320", player)
         self.assertIn("player_grace_frames: equ 60", player)
-        self.assertIn("player_entry_fast_hold_frames: equ 56", player)
-        self.assertIn("player_entry_warp_stage_frames: equ 7", player)
-        self.assertIn("db 16,12,8,6,4,3,2,1", player)
+        self.assertIn("player_entry_total_frames: equ 112", player)
         self.assertNotIn("[sprite_bottom*256", player)
         self.assertIn("player_entry_initial_amplitude: equ 112", player)
         self.assertIn("player_entry_start_x: equ player_entry_target_x-player_entry_initial_amplitude", player)
@@ -875,7 +870,8 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("ld hl,player_grace", spawning)
         self.assertIn("ld h,(iy+player_entry_target_x_actor)", spawning)
         self.assertIn("ld h,(iy+player_entry_target_y_actor)", spawning)
-        self.assertIn("call player_entry_starfield_advance", spawning)
+        self.assertNotIn("call level_transition_step", spawning)
+        self.assertIn("call player_draw_record\n    ld iy,player_begin\n    dec (iy+player_entry_timer)", spawning)
 
         level_entry = routine(
             player,
@@ -897,7 +893,8 @@ class AssemblySafetyTests(unittest.TestCase):
         )
         self.assertIn("ld de,player_spawning", starfield_speed)
         self.assertIn("ld a,(iy+player_entry_warp_enabled)", starfield_speed)
-        self.assertIn("ld hl,player_entry_warp_speeds", starfield_speed)
+        self.assertLess(starfield_speed.index("jp z,@inactive"), starfield_speed.index("call level_transition_step"))
+        self.assertIn("ld (ix+player_entry_warp_enabled),a\n    or a\n    call nz,level_transition_init_entrance", setup)
 
         scripted_draw = routine(
             player,
@@ -1196,7 +1193,7 @@ class AssemblySafetyTests(unittest.TestCase):
             "change_sprite_group_move_program",
             read_asm("player_state.inc") + read_asm("sprites.inc"),
         )
-        self.assertIn("call nz,seeker_group_enter_orbit", read_asm("player_state.inc"))
+        self.assertIn("call seeker_group_enter_death_retreat", read_asm("player_state.inc"))
         self.assertIn("call nz,seeker_group_enter_seek", read_asm("player_state.inc"))
 
     def test_confirmed_actor_visual_defects_are_repaired_at_source(self) -> None:

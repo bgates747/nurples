@@ -18,9 +18,7 @@ GAMEPLAY = ROOT / "src" / "asm" / "state_game_playing.inc"
 TERRAIN = ROOT / "src" / "asm" / "tiles.inc"
 PLAYER = ROOT / "src" / "asm" / "player_state.inc"
 MOTION = ROOT / "src" / "asm" / "motion_damped_sine.inc"
-ENTRY_WARP_SPEEDS = (16, 12, 8, 6, 4, 3, 2, 1)
-ENTRY_WARP_STAGE_FRAMES = 7
-ENTRY_FAST_HOLD_FRAMES = 56
+CONTROLLER = ROOT / "src" / "asm" / "level_transition_controller.inc"
 
 
 def warp_chunks(phase: int, displacement: int) -> tuple[list[int], int, int]:
@@ -73,23 +71,33 @@ class StarfieldWarpTests(unittest.TestCase):
         self.assertNotIn("tiles_plot", code)
         self.assertNotIn("do_active_tiles", code)
 
-    def test_level_start_decelerates_to_gameplay_speed_before_terrain(self) -> None:
-        deceleration = tuple(
-            speed
-            for speed in ENTRY_WARP_SPEEDS
-            for _frame in range(ENTRY_WARP_STAGE_FRAMES)
+    def test_level_start_reuses_both_speed_ladders_in_112_frames(self) -> None:
+        source = CONTROLLER.read_text()
+        approach, stage, hold = (
+            int(source.split(f"entrance_warp_{name}_frames: equ ", 1)[1].splitlines()[0])
+            for name in ("approach", "speed", "hold")
         )
-        schedule = (16,) * ENTRY_FAST_HOLD_FRAMES + deceleration
-        self.assertEqual(len(schedule), 112)
-        self.assertEqual(schedule[:63], (16,) * 63)
-        self.assertEqual(schedule[-7:], (1,) * 7)
-        self.assertTrue(all(left >= right for left, right in zip(schedule, schedule[1:])))
 
-        player = PLAYER.read_text()
-        self.assertIn("db 16,12,8,6,4,3,2,1", player)
-        self.assertIn("player_entry_fast_hold_frames: equ 56", player)
-        self.assertIn("player_entry_warp_stage_frames: equ 7", player)
-        self.assertIn("player_entry_warp_stage_count: equ 8", player)
+        def speeds(phase):
+            line = source.split(f"level_transition_{phase}_speeds:\n    db ", 1)[1].splitlines()[0]
+            return tuple(map(int, line.split(",")))
+
+        rising = speeds("accel")
+        falling = speeds("decel")
+        self.assertEqual(rising, (1, 2, 3, 4, 6, 8, 12, 16))
+        self.assertEqual(falling, rising[-2::-1])
+        schedule = (
+            (1,) * approach
+            + tuple(speed for speed in rising for _ in range(stage))
+            + (16,) * hold
+            + tuple(speed for speed in falling for _ in range(stage))
+        )
+        self.assertEqual(len(schedule), 112)
+        self.assertEqual(schedule[:16], (1,) * 16)
+        self.assertEqual(schedule[40:84], (16,) * 44)
+        self.assertEqual(schedule[-4:], (1,) * 4)
+        self.assertIn("entrance_warp_total_frames-player_entry_total_frames", PRODUCTION.read_text())
+        self.assertIn("call level_transition_step", PLAYER.read_text())
 
     def test_entry_uses_reusable_damped_sine_motion(self) -> None:
         player = PLAYER.read_text()

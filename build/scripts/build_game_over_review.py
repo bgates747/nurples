@@ -11,11 +11,17 @@ from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).resolve().parents[2]
 VARIANTS = {
-    "immediate-frozen": (1, 0),
-    "seekers-frozen": (2, 0),
-    "seekers-scrolling": (2, 1),
+    "immediate-frozen": (1, 0, 0),
+    "seekers-frozen": (2, 0, 0),
+    "seekers-scrolling": (2, 1, 0),
+    "seekers-frozen-edge": (2, 0, 1),
 }
 ASSETS = ("game.agnb", "ui.agnb", "fonts/Lat38-VGA8_8x8.font")
+SETTINGS = ("GAME_OVER_REVIEW_TRIGGER", "GAME_OVER_REVIEW_SCROLL", "GAME_OVER_REVIEW_EDGE")
+
+
+def review_config(values: tuple[int, int, int]) -> str:
+    return "".join(f"{name}: equ {value}\n" for name, value in zip(SETTINGS, values, strict=True))
 
 
 def assemble(assembler: Path, source: Path, binary: Path) -> None:
@@ -33,19 +39,16 @@ def build(assembler: Path, output: Path) -> None:
         shutil.copytree(ROOT / "src" / "asm", source)
         config = source / "game_over_review_config.inc"
         ordinary_config = config.read_bytes()
-        defaults = [line for line in ordinary_config.splitlines() if not line.startswith(b";")]
-        if defaults != [b"GAME_OVER_REVIEW_TRIGGER: equ 0", b"GAME_OVER_REVIEW_SCROLL: equ 0"]:
-            raise RuntimeError("ordinary builds must keep both review settings disabled")
+        defaults = [line.split(b";", 1)[0].strip() for line in ordinary_config.splitlines()]
+        if [line for line in defaults if line] != review_config((0, 0, 0)).encode().splitlines():
+            raise RuntimeError("ordinary builds must keep all review settings disabled")
         variant_binary = Path(temp) / "review.bin"
         ordinary = Path(temp) / "ordinary.bin"
         assemble(assembler, ROOT / "src" / "asm", ordinary)
-        for name, (trigger, scrolling) in VARIANTS.items():
+        for name, settings in VARIANTS.items():
             bundle = output / name
             bundle.mkdir()
-            config.write_text(
-                f"GAME_OVER_REVIEW_TRIGGER: equ {trigger}\n"
-                f"GAME_OVER_REVIEW_SCROLL: equ {scrolling}\n"
-            )
+            config.write_text(review_config(settings))
             assemble(assembler, source, variant_binary)
             shutil.copyfile(variant_binary, bundle / "nurples.bin")
             for relative in ASSETS:

@@ -4,8 +4,8 @@ game_playing:
 
 ; Level-start presentation scrolls only the blank starfield. The player actor
 ; publishes its bounded speed; the global renderer owns the VDP operation and
-; never admits terrain through the multi-scanline path. The final seven entry
-; frames run at speed one, then GRACE falls through to the ordinary one-line
+; never admits terrain through the multi-scanline path. The final entry
+; speed is one, then GRACE falls through to the ordinary one-line
 ; terrain pipeline on the following frame.
     call player_entry_starfield_speed
     jp nc,@terrain
@@ -102,19 +102,8 @@ game_over_review_should_trigger:
     jp z,@next
     bit sprite_just_died,(iy+sprite_collisions)
     jp nz,@next
-    ld hl,(iy+sprite_y)
-    ld de,[field_bottom+1]*256
-    or a
-    sbc hl,de
-    jp p,@next
-    ld hl,(iy+sprite_y)
-    ld de,0
-    ld d,(iy+sprite_dim_y)
-    add hl,de
-    jp m,@next
-    jp z,@next
-    scf
-    ret
+    call seeker_within_playfield
+    ret c
 @next:
     lea iy,iy+table_record_size
     djnz @scan

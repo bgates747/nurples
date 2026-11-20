@@ -61,6 +61,41 @@ class SeekerRetreatTests(unittest.TestCase):
         self.assertEqual(retreat_edge(120), ("right", 64))
         self.assertEqual(retreat_edge(240), ("right", 64))
 
+    def test_pose_is_checked_before_collisions_and_both_publication_paths(self) -> None:
+        source = SOURCE.read_text()
+        retreat = source.split("seeker_retreat_draw_or_collide:", 1)[1]
+        self.assertIn("call seeker_within_playfield\n    jp nc,table_deactivate_sprite", retreat)
+        edge = source.split("move_enemy_seeker_retreat_edge:", 1)[1]
+        edge = edge.split("; end move_enemy_seeker_retreat_edge", 1)[0]
+        self.assertIn("jp seeker_retreat_draw_or_collide", edge)
+        self.assertNotIn("screen_right", edge)
+        self.assertNotIn("origin_left", edge)
+
+        sprites = (ROOT / "src" / "asm" / "sprites.inc").read_text()
+        update = sprites.split("move_sprite_group:", 1)[1]
+        update, first_show = update.split("@reset_just_spawned:", 1)
+        guard = "call sprite_move_publication_allowed"
+        self.assertLess(update.index(guard), update.index("call vdu_sprite_move_abs168"))
+        self.assertLess(first_show.index(guard), first_show.index("call vdu_sprite_show"))
+
+    def test_forced_edge_diagnostic_is_scoped_to_game_over(self) -> None:
+        source = SOURCE.read_text()
+        arm = source.split(".if GAME_OVER_REVIEW_EDGE", 1)[1].split(".else", 1)[0]
+        self.assertIn("ld de,game_over\n    or a\n    sbc hl,de\n    jp nz,@nearest", arm)
+        self.assertIn("call seeker_enter_retreat_edge_ix", arm)
+        self.assertIn("@nearest:\n    call seeker_enter_nearest_pad_retreat", arm)
+
+    def test_death_publishes_direct_retreat_and_grace_does_not_reactivate_it(self) -> None:
+        player = (ROOT / "src" / "asm" / "player_state.inc").read_text()
+        death = player.split("kill_player:", 1)[1].split("; end kill_player", 1)[0]
+        self.assertLess(death.index("ld (player_state),hl"), death.index("call seeker_group_enter_death_retreat"))
+        self.assertNotIn("seeker_group_enter_orbit", death)
+        seeker = (ROOT / "src" / "asm" / "enemy_seeker.inc").read_text()
+        resume = seeker.split("seeker_group_enter_seek:", 1)[1].split("; end seeker_group_enter_seek", 1)[0]
+        self.assertIn("cp seeker_state_orbit\n    jp nz,@next", resume)
+        policy = SOURCE.read_text().split("seeker_retreat_draw_or_collide:", 1)[1]
+        self.assertIn("ld de,player_alive\n    or a\n    sbc hl,de\n    jp z,move_enemy_seeker", policy)
+
     def test_source_uses_record_fields_and_only_warp_retreat_collides(self) -> None:
         source = SOURCE.read_text()
         self.assertIn("seeker_spawn_pad_id: equ seeker_custom_end", source)

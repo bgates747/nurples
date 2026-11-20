@@ -490,6 +490,8 @@ move_sprite_group:
     push iy ; behavior callbacks do not own the traversal record pointer
     CALL_HL ; run the behavior subroutine
     pop iy
+    call sprite_move_publication_allowed
+    jp nc,@next_record
     ld a,(iy+sprite_id) ; get spriteId
     call vdu_sprite_select ; select sprite 
     ld a,(iy+sprite_frame)
@@ -514,6 +516,8 @@ move_sprite_group:
     bit 7,(iy+sprite_type) ; check if just spawned
     jp z,@F
     res 7,(iy+sprite_type) ; clear just spawned flag
+    call sprite_move_publication_allowed
+    jp nc,@F
     ld a,(iy+sprite_id)
     call vdu_sprite_select
     ld bc,(iy+sprite_x)
@@ -545,6 +549,26 @@ move_sprite_group:
     call table_deactivate_sprite
     jp @next_record
 ; end move_sprite_group
+
+; Only seekers acquire a playfield visibility limit. Check both position
+; publication and first show: stock VDP sprites ignore the graphics viewport.
+sprite_move_publication_allowed:
+    ld a,(iy+sprite_type)
+    and actor_type_mask
+    cp enemy_air
+    jp nz,@allowed
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@hidden
+    call seeker_within_playfield
+    ret c
+    call table_deactivate_sprite
+@hidden:
+    xor a
+    ret
+@allowed:
+    scf
+    ret
+; end sprite_move_publication_allowed
 
 ; compute a sprite's new position based on its component x,y velocities
 ; with screen boundary checking and update its sprite table record accordingly

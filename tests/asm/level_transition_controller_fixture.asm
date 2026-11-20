@@ -100,6 +100,50 @@ fixture_start:
     cp 1
     jp nz,fixture_fail
 
+; Opening reuses the controller. Qualify every emitted speed in sequence,
+; including the one-pixel frames on both sides of the fast hold.
+    ld a,4
+    ld (fixture_case),a
+    call level_transition_init_entrance
+    ld ix,fixture_expected_entrance
+@entrance_run:
+    ld c,(ix+0)
+    ld b,(ix+1)
+    ld a,b
+    or a
+    jp z,@entrance_end
+@entrance_frame:
+    call level_transition_step
+    jp c,fixture_fail
+    cp c
+    jp nz,fixture_fail
+    djnz @entrance_frame
+    lea ix,ix+2
+    jp @entrance_run
+@entrance_end:
+    call level_transition_step
+    jp nc,fixture_fail
+    ld a,(level_transition_error)
+    or a
+    jp nz,fixture_fail
+
+; A later ordinary transition must restore the full timing, not inherit the
+; short opening parameters or the completed phase.
+    ld a,5
+    ld (fixture_case),a
+    call level_transition_init
+    ld b,98
+@restored_opening:
+    call level_transition_step
+    jp c,fixture_fail
+    cp 1
+    jp nz,fixture_fail
+    djnz @restored_opening
+    call level_transition_step
+    jp c,fixture_fail
+    cp 2
+    jp nz,fixture_fail
+
     ld a,FIXTURE_PASS
     out (0),a
 
@@ -112,6 +156,9 @@ fixture_fail:
     out (0),a
 
 fixture_expected_mid_speeds: db 2,3,4,6,8,12
+fixture_expected_entrance:
+    db 1,16, 2,4, 3,4, 4,4, 6,4, 8,4, 12,4, 16,44
+    db 12,4, 8,4, 6,4, 4,4, 3,4, 2,4, 1,4, 0,0
 
 fixture_clear_counts:
     xor a

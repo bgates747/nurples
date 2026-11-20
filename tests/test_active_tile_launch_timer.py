@@ -103,18 +103,25 @@ class ActiveTileLaunchTimerTests(unittest.TestCase):
     def test_first_seeker_leg_is_armed_with_matching_heading_and_step(self) -> None:
         source = (ASM / "enemy_seeker.inc").read_text()
         spawn = routine(source, "enemy_spawn_seeker")
-        self.assertRegex(spawn, r"jp nz,seeker_enter_orbit\n\s+jp seeker_enter_live_launch")
+        self.assertRegex(spawn, r"jp nz,seeker_enter_death_retreat\n\s+jp seeker_enter_live_launch")
         live = routine(source, "seeker_enter_live_launch")
         self.assertRegex(
             live,
             r"cp 120[^\n]*\n\s+ld a,0[^\n]*\n\s+ld hl,seeker_zag_heading_left\n"
             r"\s+jp nc,@store\n\s+inc a[^\n]*\n\s+ld hl,seeker_zag_heading_right",
         )
+
         self.assertRegex(
             live,
             r"ld \(iy\+sprite_heading\),hl\n\s+ld \(iy\+sprite_move_step\),a\n"
             r"\s+call seeker_draw_heading[^\n]*\n\s+jp seeker_arm_zag",
         )
+
+    def test_pad_holds_cooldown_until_player_is_fully_alive(self) -> None:
+        move = routine((ASM / "tile_pad_small.inc").read_text(), "move_pad_small")
+        live_check = "ld de,player_alive\n    or a\n    sbc hl,de\n    ret nz"
+        self.assertLess(move.index("call draw_active_tile"), move.index(live_check))
+        self.assertLess(move.index(live_check), move.index("call active_tile_launch_timer_tick"))
 
 
 if __name__ == "__main__":

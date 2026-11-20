@@ -1,7 +1,7 @@
 ; Actor-owned launch-pad identity and seeker retreat behavior.
 ;
 ; Every seeker retains the exact launch-pad lifetime that created it. During
-; death it orbits harmlessly, then docks or exits an edge. Game Over uses
+; death it retreats immediately, then docks or exits an edge. Game Over uses
 ; the same flight callbacks with an immediately selected nearest destination.
 
 seeker_state_retreat_pad: equ 2
@@ -133,10 +133,15 @@ seeker_pad_visible:
     xor a
     ret
 
-; Called once on Game Over or next-level warp entry. Actor code owns retreat
-; and can replace a seeker already in an orbit or a death-phase retreat.
+; Player death uses the original pad and preserves a retreat already in
+; flight. Game Over and warp may instead choose the nearest visible pad.
+seeker_group_enter_death_retreat:
+    ld c,1
+    jp seeker_group_apply_retreat
 seeker_group_enter_game_over_retreat:
 seeker_group_enter_retreat:
+    ld c,0
+seeker_group_apply_retreat:
     ld iy,seekers_base
     ld b,seekers_max
 @loop:
@@ -151,13 +156,49 @@ seeker_group_enter_retreat:
     ld a,(iy+sprite_type)
     and actor_type_mask
     cp enemy_air
-    call z,seeker_enter_nearest_pad_retreat
+    jp nz,@next
+    ld a,c ; per-pass policy preserved by the BC save at the top of the loop
+    or a
+    jp nz,@death
+    .if GAME_OVER_REVIEW_EDGE
+; Test the edge exit even when a valid pad is under the first visible
+; seeker. Do not change warp retreat or invalidate any pad record.
+    ld hl,(game_state)
+    ld de,game_over
+    or a
+    sbc hl,de
+    jp nz,@nearest
+    push iy
+    pop ix
+    call seeker_enter_retreat_edge_ix
+    jp @next
+@nearest:
+    call seeker_enter_nearest_pad_retreat
+    .else
+    call seeker_enter_nearest_pad_retreat
+    .endif
+    jp @next
+@death:
+    call seeker_enter_death_retreat
 @next:
     pop iy
     pop bc
     lea iy,iy+table_record_size
     djnz @loop
     ret
+
+; IY = validated seeker. Don't change the heading/destination of a seeker
+; already retreating; death can occur while a warp retreat is still active.
+seeker_enter_death_retreat:
+    ld a,(iy+seeker_state)
+    cp seeker_state_retreat_pad
+    jp z,@already
+    cp seeker_state_retreat_edge
+    jp nz,seeker_enter_retreat
+@already:
+    scf
+    ret
+; end seeker_enter_death_retreat
 
 ; Scan the fixed table in id order; the first record wins an exact tie.
 ; Squared integer-pixel deltas fit in 24 bits over this field. Do not change
@@ -331,38 +372,72 @@ move_enemy_seeker_retreat_pad:
     ret
 ; end move_enemy_seeker_retreat_pad
 
-; VDP sprites use physical screen coordinates, independent of the plot
-; viewport. Bypass the bouncing mover and release only past the visible edge.
+; Bypass the bouncing mover. Once the proposed image would no longer fit
+; the playfield, hide and free the seeker before any VDP position is sent.
 ; inputs: IY = seeker record, table_pointer already publishes it
 move_enemy_seeker_retreat_edge:
     ld hl,(iy+sprite_x)
     ld de,(iy+sprite_xvel)
     add hl,de
     ld (iy+sprite_x),hl
-    bit 7,(iy+sprite_xvel+2)
-    jp z,@right
-    ld de,0
-    ld d,(iy+sprite_dim_x)
-    add hl,de
-    ld de,-origin_left*256
-    or a
-    sbc hl,de
-    jp m,table_deactivate_sprite
-    jp z,table_deactivate_sprite
-    jp seeker_retreat_draw_or_collide
-@right:
-    ld de,[screen_right+1-origin_left]*256
-    or a
-    sbc hl,de
-    jp p,table_deactivate_sprite
     jp seeker_retreat_draw_or_collide
 ; end move_enemy_seeker_retreat_edge
 
-; Warp is live play: retreat changes heading and destination, not hit rules.
-; Player-death and Game Over retreats keep their existing harmless behavior.
+; IY = seeker record, positions relative to the playfield. Carry iff the
+; whole rendered footprint fits. VDP truncates 16.8 to integer pixels; the
+; last legal pixel remains drawable, including from a fractional position.
+; Width and height are counts; compare the exclusive end to limit+1.
+; Destroys A, DE, HL; preserves IY and the traversal counter BC.
+seeker_within_playfield:
+    ld hl,(iy+sprite_x)
+    ld de,field_left*256
+    or a
+    sbc hl,de
+    jp m,@outside
+    ld l,0
+    ld de,0
+    ld d,(iy+sprite_dim_x)
+    ld a,d
+    or a
+    ret z
+    add hl,de
+    ld de,[field_right-field_left+2]*256
+    or a
+    sbc hl,de
+    ret nc
+    ld hl,(iy+sprite_y)
+    ld de,field_top*256
+    or a
+    sbc hl,de
+    jp m,@outside
+    ld l,0
+    ld de,0
+    ld d,(iy+sprite_dim_y)
+    ld a,d
+    or a
+    ret z
+    add hl,de
+    ld de,[field_bottom-field_top+2]*256
+    or a
+    sbc hl,de
+    ret
+@outside:
+    or a
+    ret
+; end seeker_within_playfield
+
+; Retreat can collide only in a live-player warp. If the player dies during
+; the warp, the same exit route continues harmlessly through respawn.
 seeker_retreat_draw_or_collide:
+    call seeker_within_playfield
+    jp nc,table_deactivate_sprite
     ld hl,(game_state)
     ld de,game_level_transition
+    or a
+    sbc hl,de
+    jp nz,sprite_frame_heading
+    ld hl,(player_state)
+    ld de,player_alive
     or a
     sbc hl,de
     jp z,move_enemy_seeker
