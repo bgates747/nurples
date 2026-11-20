@@ -87,7 +87,41 @@ opening, grace, and terrain handoff. Do not change the accepted warp speed
 profile. Where mid-level respawn has a safety-selected endpoint, keep that
 endpoint and safety behavior rather than forcing a return to centre.
 
-- GAME-001E-START-WARP-004 [ ] Tune and review the lateral entrance on FAE
+- GAME-001E-START-WARP-004 [x] Tune and review the lateral entrance on FAE
   after the Game Over bitmap work. Check for a centred start and settle,
   smaller first swing, shrinking excursions, and no clipping or abrupt
-  handoff. Check the ordinary entrance and a mid-level respawn.
+  handoff.
+
+- GAME-001E-START-WARP-005 [ ] On the next gameplay acceptance pass, spot-check
+  a mid-level respawn with an off-centre safe endpoint; this was not reported
+  separately in the visual review.
+
+Smith authorized the horizontal-only change after checkpointing the reviewed
+title build on `dev` (`94d158969c65d97bb64dd14b082ac95dc6813462`). Use the
+same sine primitive with four phase units per frame (formerly eight), a
+16-frame eased start, a 64-pixel maximum excursion, then a taper toward the
+unchanged handoff. The first two peaks span 128 of the 256 playable pixels.
+Resolve respawn endpoints exactly as before; cap the sway on either side to
+the nearer edge and start inward. Bank only when the published X moves.
+
+Full build and deterministic asset check passed; 225 tests passed and one
+headless-input test skipped. The host motion model covers all 241 legal
+top-left endpoints and finishes within one pixel before the existing snap.
+The vertical velocity, 96-pixel approach offset, 112-frame timer, 60-frame
+grace, and warp/terrain handoff code are unchanged. Both AGNB containers
+and the font match `94d1589` byte for byte.
+
+Staged `swoop.bin` (`90d7fba3…b6e5c`) on the existing checked-out FAE
+profile, `/home/smith/Agon/mystuff/nurples/.emulator/title-phase-lut-fae-r01`,
+without releasing Oryx 542. The previous virtual card is preserved byte
+for byte at `spawn-swoop-r01/control-card.img`; its default `nurples.bin`,
+assets and startup still match the control on the active card. At MOS,
+`LOAD swoop.bin &040000`, then `RUN`. FAE is stopped pending Smith's test.
+
+### FAE visual PASS — November 20
+
+Smith accepted the adjusted swoop: it looked much better. He confirmed FAE
+was closed and authorized committing and pushing the build on `dev`, then
+releasing Oryx 542. He also specified that future ordinary deployments use
+the stable `nurples.bin` filename, not a temporary review name. Keep this
+review card and its launch commands as historical evidence.

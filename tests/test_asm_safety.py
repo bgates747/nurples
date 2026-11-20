@@ -862,8 +862,9 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("player_grace_frames: equ 60", player)
         self.assertIn("player_entry_total_frames: equ 112", player)
         self.assertNotIn("[sprite_bottom*256", player)
-        self.assertIn("player_entry_initial_amplitude: equ 112", player)
-        self.assertIn("player_entry_start_x: equ player_entry_target_x-player_entry_initial_amplitude", player)
+        self.assertIn("player_entry_max_amplitude: equ 64", player)
+        self.assertIn("player_entry_y_velocity: equ -219", player)
+        self.assertIn("player_entry_start_y_offset: equ 96", player)
 
         setup = routine(player, "player_init", "; end player_init")
         self.assertLess(setup.index("call player_entry_load_start_coords"),
@@ -871,6 +872,7 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertLess(setup.index("ld hl,player_defaults"),
                         setup.index("call spawn_sprite_from_coords"))
         coords = routine(player, "player_entry_load_start_coords", "; end player_entry_load_start_coords")
+        self.assertIn("ld a,(player_spawn_resolved_x)\n    ld bc,0\n    ld b,a", coords)
         self.assertIn("ld hl,player_entry_start_y_offset*256\n    add hl,de\n    ex de,hl", coords)
         self.assertNotIn("add a,player_entry_start_y_offset", coords)
 

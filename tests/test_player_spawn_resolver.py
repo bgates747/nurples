@@ -104,7 +104,14 @@ class PlayerSpawnResolverTests(unittest.TestCase):
         self.assertIn("call player_spawn_resolve_endpoint", player)
         self.assertIn("player_entry_target_x_actor:", player)
         self.assertIn("player_entry_target_y_actor:", player)
-        self.assertIn("player_entry_direction:", player)
+        self.assertIn("call player_entry_init_lateral", player)
+        lateral = player.split("player_entry_init_lateral:\n", 1)[1].split(
+            "; end player_entry_init_lateral", 1,
+        )[0]
+        self.assertIn("ld a,(ix+player_entry_target_x_actor)", lateral)
+        self.assertIn("ld a,sprite_right\n    sub b", lateral)
+        self.assertIn("ld (ix+player_entry_angle),c", lateral)
+        self.assertIn("ld (ix+player_entry_amplitude),a", lateral)
         self.assertLess(
             player.index("call player_spawn_resolve_endpoint"),
             player.index("ld hl,player_spawning"),

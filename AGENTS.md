@@ -91,6 +91,11 @@ This publishes a binary-matched `tgt/nurples.symbols` alongside the binary.
 The stable runtime observation contract is documented in
 `docs/runtime-telemetry.md`.
 
+Deploy ordinary game changes under the same guest filename, `nurples.bin`,
+for emulator and hardware reviews. Use Git commits or separate isolated
+profiles to preserve earlier builds. Use a different guest executable name
+only when the Author specifically asks for a separate diagnostic variant.
+
 Launch the isolated profile through the canonical environment script:
 
 ```bash

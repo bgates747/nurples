@@ -7,11 +7,11 @@ player_entry_timer: equ player_entry_angle+1
 player_grace_timer: equ player_entry_timer+1
 player_entry_warp_enabled: equ player_grace_timer+1
 ; Keep the actor layout stable. Three old timing bytes are now unused.
-player_entry_amplitude: equ player_entry_warp_enabled+4
+player_entry_amplitude: equ player_entry_warp_enabled+4 ; per-endpoint lateral cap
 player_entry_target_x_actor: equ player_entry_amplitude+1
 player_entry_target_y_actor: equ player_entry_target_x_actor+1
-player_entry_direction: equ player_entry_target_y_actor+1
-player_custom_end: equ player_entry_direction+1
+; Retain the former entry-direction byte so this actor's layout stays stable.
+player_custom_end: equ player_entry_target_y_actor+2
     .if player_custom_end-player_custom_begin-14
         dl player_custom_span_mismatch
     .endif
@@ -22,23 +22,16 @@ player_entry_target_x: equ 120
 player_entry_target_y: equ 224
 player_grace_frames: equ 60
 player_entry_total_frames: equ 112
-player_entry_initial_angle: equ 192
-player_entry_angle_step: equ 8
-player_entry_initial_amplitude: equ 112
+player_entry_angle_step: equ 4
+player_entry_max_amplitude: equ 64
+player_entry_ramp_frames: equ 16 ; four pixels of amplitude per frame
 player_entry_y_velocity: equ -219 ; -0.855 px/frame; final residue is snapped
 player_entry_start_y_offset: equ 96
 player_death_lateral_speed: equ 1*256
 player_death_forward_speed: equ -64 ; -0.25 pixel/frame in 16.8 fixed
 
-; The damped sine begins near the left edge and can never leave the actor's
-; horizontal runway. Its final subpixel vertical residue is snapped to the
-; reviewed endpoint before grace begins.
-player_entry_start_x: equ player_entry_target_x-player_entry_initial_amplitude
-    .if player_entry_start_x-8
-        dl player_entry_start_x_mismatch
-    .endif
-    .if player_entry_target_x+player_entry_initial_amplitude-232
-        dl player_entry_right_extent_mismatch
+    .if player_entry_ramp_frames*4-player_entry_max_amplitude
+        dl player_entry_ramp_amplitude_mismatch
     .endif
 
 player_defaults:
@@ -258,7 +251,7 @@ player_init_respawn:
 
 ; set initial player position
 ; inputs: A = nonzero only when no terrain has entered the playfield yet
-; outputs: player_x/y set to bottom-left corner of screen
+; outputs: player positioned near the bottom under the resolved endpoint
 ; destroys: pretty much everything
 player_init:
     and 1
@@ -308,29 +301,17 @@ player_init:
 @draw:
     call player_entry_load_start_coords
     call vdu_sprite_move_abs168
-    call vdu_sprite_show
 ; The shared entrance owns first visibility and collision publication.
     res sprite_alive,(ix+sprite_collisions)
     ld a,(player_spawn_resolved_x)
     ld (ix+player_entry_target_x_actor),a
     ld a,(player_spawn_resolved_y)
     ld (ix+player_entry_target_y_actor),a
-    ld a,(player_spawn_resolved_direction)
-    ld (ix+player_entry_direction),a
-    or a
-    ld a,2 ; positive-X entrances begin on the left, banking right
-    jp z,@entry_pose_ready
-    xor a ; negative-X entrances begin on the right, banking left
-@entry_pose_ready:
+    call player_entry_init_lateral
+    ld a,1 ; start unbanked at the centre of this entrance
     ld (ix+sprite_frame),a
     call vdu_sprite_select_frame
-    ld a,(ix+player_entry_direction)
-    or a
-    ld a,player_entry_initial_angle
-    jp z,@entry_angle_ready
-    ld a,64
-@entry_angle_ready:
-    ld (ix+player_entry_angle),a
+    call vdu_sprite_show
     ld a,player_entry_total_frames
     ld (ix+player_entry_timer),a
     xor a
@@ -339,8 +320,6 @@ player_init:
     ld (ix+player_entry_warp_enabled),a
     or a
     call nz,level_transition_init_entrance
-    ld a,player_entry_initial_amplitude
-    ld (ix+player_entry_amplitude),a
     ld hl,0
     ld (ix+sprite_xvel),hl
     ld hl,player_entry_y_velocity
@@ -363,15 +342,6 @@ player_init:
 ; outputs: BC = start X, DE = start Y
 player_entry_load_start_coords:
     ld a,(player_spawn_resolved_x)
-    ld c,player_entry_initial_amplitude
-    ld hl,player_spawn_resolved_direction
-    bit 0,(hl)
-    jp nz,@from_right
-    sub c
-    jp @x_ready
-@from_right:
-    add a,c
-@x_ready:
     ld bc,0
     ld b,a
     ld a,(player_spawn_resolved_y)
@@ -383,6 +353,29 @@ player_entry_load_start_coords:
     ex de,hl
     ret
 ; end player_entry_load_start_coords
+
+; IX = new player record. Start the sine at its centre; on a right-hand
+; respawn start to the left instead. The amplitude cap is no wider than the
+; distance to the nearer legal sprite edge, so even forced off-centre
+; respawns can return to their safe endpoint without clipping or bouncing.
+player_entry_init_lateral:
+    ld a,(ix+player_entry_target_x_actor)
+    ld c,0
+    cp player_entry_target_x+1
+    jr c,@cap
+    ld c,128
+    ld b,a
+    ld a,sprite_right
+    sub b
+@cap:
+    ld (ix+player_entry_angle),c
+    cp player_entry_max_amplitude
+    jr c,@store
+    ld a,player_entry_max_amplitude
+@store:
+    ld (ix+player_entry_amplitude),a
+    ret
+; end player_entry_init_lateral
 
 ; Draw the player record after an actor-owned scripted update.
 ; inputs: IY = player record
@@ -432,40 +425,51 @@ player_spawning:
 ; end player_spawning
 
 ; Damped sinusoidal approach shared by level entry and mid-level respawn.
-; The generic primitive owns only its math; this actor schema owns the evolving
-; angle, amplitude and bank frame. Amplitude falls one pixel per frame, so the
-; ship completes several broad weaves before settling naturally at centre.
+; Ease in over 16 frames, make one broad left-right sweep, then taper the
+; envelope to one pixel by the final update. The generic sine stays unchanged.
 ; inputs: IY = player record
 player_entry_damped_swoop:
-    ld a,(iy+player_entry_angle)
+    ld hl,(iy+sprite_x)
+    push hl
+    ld a,player_entry_total_frames
+    sub (iy+player_entry_timer) ; elapsed frames
+    cp player_entry_ramp_frames
+    jr nc,@full_amplitude
+    add a,a
+    add a,a
+    jr @taper
+@full_amplitude:
+    ld a,player_entry_max_amplitude
+@taper:
+    cp (iy+player_entry_timer)
+    jr c,@endpoint_cap
+    ld a,(iy+player_entry_timer)
+@endpoint_cap:
+    cp (iy+player_entry_amplitude)
+    jr c,@position
+    ld a,(iy+player_entry_amplitude)
+@position:
     ld bc,0
-    ld b,(iy+player_entry_amplitude)
+    ld b,a
     ld de,0
     ld d,(iy+player_entry_target_x_actor)
+    ld a,(iy+player_entry_angle)
     call motion_damped_sine_position
     ld (iy+sprite_x),hl
-; Bank in the direction of the sine derivative. Angle quadrants 3 and 0 move
-; right; quadrants 1 and 2 move left.
-    ld a,(iy+player_entry_angle)
-    cp 64
-    jp c,@bank_right
-    cp 192
-    jp c,@bank_left
-@bank_right:
+; Bank from the actual published integer-pixel motion, not the sine alone.
+    pop de
+    ld a,h
+    cp d
+    ld a,1
+    jr z,@bank_ready
+    ld a,0
+    jr c,@bank_ready
     ld a,2
-    jp @bank_ready
-@bank_left:
-    xor a
 @bank_ready:
     ld (iy+sprite_frame),a
     ld a,(iy+player_entry_angle)
     add a,player_entry_angle_step
     ld (iy+player_entry_angle),a
-    ld a,(iy+player_entry_amplitude)
-    or a
-    ret z
-    dec a
-    ld (iy+player_entry_amplitude),a
     ret
 ; end player_entry_damped_swoop
 

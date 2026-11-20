@@ -104,31 +104,44 @@ class StarfieldWarpTests(unittest.TestCase):
         motion = MOTION.read_text()
         self.assertIn("call motion_damped_sine_position", player)
         self.assertIn("ld (iy+sprite_x),hl", player)
-        self.assertIn("dec a\n    ld (iy+player_entry_amplitude),a", player)
+        self.assertIn("sub (iy+player_entry_timer) ; elapsed frames", player)
+        self.assertIn("cp (iy+player_entry_timer)", player)
+        self.assertIn("cp (iy+player_entry_amplitude)", player)
+        self.assertIn("ld a,h\n    cp d", player)
         self.assertIn("call sin168", motion)
         self.assertIn("call smul168", motion)
         self.assertNotIn("player_", motion)
         self.assertNotIn("sprite_", motion)
 
-        positions = []
-        for frame in range(112):
-            angle = (192 + frame * 8) & 0xFF
-            amplitude = 112 - frame
-            positions.append(
-                120 + math.sin(angle * math.tau / 256) * amplitude
-            )
-        self.assertAlmostEqual(positions[0], 8.0)
-        self.assertTrue(all(8 <= position <= 232 for position in positions))
-        self.assertLess(abs(positions[-1] - 120), 1)
-        direction_changes = sum(
-            (middle - left) * (right - middle) < 0
-            for left, middle, right in zip(
-                positions,
-                positions[1:],
-                positions[2:],
-            )
-        )
-        self.assertGreaterEqual(direction_changes, 6)
+        def value(name: str) -> int:
+            return int(player.split(f"player_entry_{name}: equ ", 1)[1].split()[0])
+
+        frames, step, cap, ramp = (value(name) for name in (
+            "total_frames", "angle_step", "max_amplitude", "ramp_frames",
+        ))
+        self.assertEqual((frames, step, cap, ramp), (112, 4, 64, 16))
+
+        def positions(target: int) -> list[float]:
+            initial_phase = 128 if target > 120 else 0
+            endpoint_cap = min(cap, target, 240 - target)
+            return [target + math.sin((initial_phase + frame * step) * math.tau / 256)
+                    * min(endpoint_cap, frame * (cap // ramp), frames - frame)
+                    for frame in range(frames)]
+
+        opening = positions(120)
+        self.assertAlmostEqual(opening[0], 120)
+        self.assertLess(abs(opening[1] - 120), 0.5)
+        self.assertAlmostEqual(opening[16] - opening[48], 128)
+        self.assertAlmostEqual(opening[80], 152)
+        self.assertLess(max(abs(b-a) for a, b in zip(opening, opening[1:])), 7)
+        for target in range(241):
+            with self.subTest(target=target):
+                trace = positions(target)
+                self.assertAlmostEqual(trace[0], target)
+                self.assertLessEqual(abs(trace[-1] - target), 1)
+                self.assertTrue(all(0 <= x <= 240 for x in trace))
+        self.assertGreater(positions(104)[1], 104)
+        self.assertLess(positions(136)[1], 136)
 
     def test_starfield_fill_closes_seams_with_vdp_guard_scanline(self) -> None:
         startup = (ROOT / "src" / "asm" / "state_game_init.inc").read_text()
