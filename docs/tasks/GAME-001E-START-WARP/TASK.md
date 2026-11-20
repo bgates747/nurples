@@ -74,3 +74,20 @@ visual evidence for restart, mid-level respawn, or the between-level warp.
 Smith closed FAE. Checkout 530 was
 [released](../../../.build/opening-warp-r01/release.json) after a fresh
 whole-host idle check, and TRS-80 request `8e0043ddf6aa` was notified.
+
+## Follow-up — soften the ship's lateral entrance
+
+Smith accepted the scroll speed and the slow forward movement of the ship,
+but the side-to-side motion is too wide and fast. Start horizontally centred
+near the bottom, use about half the playable width for the first full
+side-to-side swing (about a quarter width to either side of centre), and
+shrink successive swings until the ship settles at centre. Ease the movement
+so it reads as a swoop. Keep the existing vertical profile, 112-frame
+opening, grace, and terrain handoff. Do not change the accepted warp speed
+profile. Where mid-level respawn has a safety-selected endpoint, keep that
+endpoint and safety behavior rather than forcing a return to centre.
+
+- GAME-001E-START-WARP-004 [ ] Tune and review the lateral entrance on FAE
+  after the Game Over bitmap work. Check for a centred start and settle,
+  smaller first swing, shrinking excursions, and no clipping or abrupt
+  handoff. Check the ordinary entrance and a mid-level respawn.

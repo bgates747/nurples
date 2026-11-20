@@ -80,6 +80,10 @@ class OverlayArtTests(unittest.TestCase):
         second_geometry = [shape.__dict__ | {"color": None} for shape in second.shapes]
         self.assertEqual(first_geometry, second_geometry)
         self.assertNotEqual(first.shapes, second.shapes)
+        alpha0 = bytes(pixel >> 6 for pixel in drawing_to_rgba2(first))
+        alpha1 = bytes(pixel >> 6 for pixel in drawing_to_rgba2(second))
+        self.assertEqual(alpha0, alpha1)
+        self.assertEqual(set(alpha0), {0, 3})
 
 
 if __name__ == "__main__":

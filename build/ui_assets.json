@@ -321,7 +321,7 @@
     "name": "splash_title_0",
     "buffer_id": 45,
     "width": 240,
-    "height": 76,
+    "height": 89,
     "prepare": true,
     "loading_title_frame": 0
   },
@@ -329,7 +329,7 @@
     "name": "splash_title_1",
     "buffer_id": 46,
     "width": 240,
-    "height": 76,
+    "height": 89,
     "prepare": true,
     "loading_title_frame": 1
   }

@@ -569,3 +569,119 @@ and source-contract tests passed: 221 tests passed, one input fixture skipped
 because its headless runner was unavailable. Both asset containers are
 byte-identical to the prior ordinary build. The Pi compile slot was released;
 there has been no emulator or hardware test of this change.
+
+### ART-001-030 — Splash tagline above the existing logo
+
+Smith wants one small line, `WELCOME TO ATTACK OF THE`, centred horizontally
+over the two-line `PURPLE NURPLES` logo. Use the native-size pixel font used
+for the prompts, with the same drop-shadow and colour-flash treatment as the
+large logo. Preserve the two large lines, horizontal position and splash artwork.
+Try the opposite phase for the tagline (each uses its alternate colour frame
+when the other changes) as an in-game visual option, not a settled design.
+
+- ART-001-030 [x] Mock up one complete 512×384 splash image, for approval
+  before changing any game asset or render code. Use the accepted artwork,
+  existing logo and progress text placement, and a representative colour
+  pairing for the small and large text. A still can show the arrangement
+  and contrast, not the cadence.
+
+- ART-001-031 [ ] After approval, integrate the tagline and verify legibility,
+  alignment and the flash relationship in FAE. Keep the existing loading and
+  input behavior. Do not promote the mockup without Smith's sign-off.
+
+[Single-image preview](splash-tagline-preview.png): native-size Lode lettering
+is centred over the logo's visible bounds. This still pairs magenta small
+text and violet/black shadow with the pale-yellow large-logo phase. Smith
+liked the layout and asked to lower the whole group, keeping the tagline and
+large lines together. The updated composite places the group's top at row 50
+and its bottom boundary at row 139, leaving 50 pixels on either side between
+the top of the screen and the ship's nose at row 189. The progress line is
+illustrative and stays put. No game asset, generator, or renderer has been
+changed for the tagline.
+
+### ART-001-032 — Upload only the master colour phase of each title
+
+Smith selected Rally's VDP colour lookup for both titles. Use the approved
+lowered splash design as one three-line bitmap per phase; the tagline has
+the opposite colour from the main title inside each bitmap. Keep the Game
+Over art, placement, colour cadence and Continue prompt unchanged. Generate
+both alternate phases on the VDP at startup using stock buffered Expand
+Bitmap, not the affine geometry API. They keep their existing resident VDP
+IDs; omit their pixel payloads from the SD containers. Keep canonical art for
+both phases to verify the result byte for byte. The lookup must preserve the
+exact alpha mask and reject conflicting mappings during the build.
+
+- ART-001-032 [x] Rebuild, check the payload reduction and exact derived
+  bytes, and assemble the production and review paths. Preserve the staged
+  Game Over bitmap control profile. FAE visual qualification remains separate.
+
+The approved splash is integrated in the local build at `(28, 50)`; the
+official phase-0 asset matches every preview pixel below the loading line.
+Independent container comparison against the staged control found exactly
+two omissions: UI ID 46 and game ID 63991. UI ID 45 grew to carry the tagline;
+all other records are unchanged. The containers are 30,576 bytes smaller
+in total. The new bitmap and lookup payload combined is 29,968 bytes less
+VDP upload data than the control, excluding command overhead. No load-time
+measurement has been made. Both colour frames remain resident.
+
+Tests applied the tables from the assembled binary and reproduced both
+alternate bitmaps exactly. The emitted command packets also match Rally's
+stock VDP sequence, including destination registration as RGBA2222.
+The ordinary, isolated Game Over, map and UART fixture executables were
+rebuilt against the same containers; only the UART build hook needed
+disambiguation to keep scripted input in its existing `player_alive` cohort.
+225 tests passed and one headless-input fixture skipped. The original FAE
+bitmap-only review profile was left untouched. The new splash and colour
+lookup are pending the combined FAE visual check in ART-001-031.
+
+### FAE review — derived title phases
+
+Smith requested a new Oryx review. Rebuild the complete ordinary bundle and
+include the immediate-frozen Game Over executable as a shortcut. Stage a new
+stopped FAE profile with stock VDP and pinned Eirene RC3. Preserve the prior
+bitmap-only card as a control. In the new build, check that both splash title
+phases appear during loading, the tagline alternates opposite the large
+title, and the Game Over title has both colours without disappearing while
+the Continue prompt blinks independently. Leave the launch to Smith.
+
+The full rebuild matched the earlier ordinary executable, review variants
+and both containers byte for byte. The review package is verified. Oryx
+request `8bed69186b23` is queued after TRS-80's generation 541. The earlier
+Nurples checkout 540 was released after fresh host-idle verification, and
+the next owner was notified. The previous FAE profile remains unchanged.
+
+Smith clarified that the FIFO controls emulator execution, not ordinary
+isolated file staging. Staged and verified the new stopped profile while
+TRS-80 retained execution custody. The virtual SD readback matched the
+ordinary build, both containers, font and immediate-frozen executable.
+Verified card SHA-256 is `d88ec18a11a0c1c0b98762d8ccaa23d4ae331ea3a08cf4d1cf0f3f1f2b046915`.
+No emulator was started and the control card was unchanged. Hold launch
+until request `8bed69186b23` completes fresh idle inspection and checkout.
+
+After TRS-80 released, the fresh host inspection found no emulators and
+Nurples checked out generation 542. The card, launcher, stock VDP module
+and pinned Eirene RC3 hashes passed again immediately before human review.
+FAE remains stopped pending Smith's launch; retain the slot until review
+ends and the emulator is closed.
+
+Smith reported that the visuals looked good, then FAE aborted after playing
+for some time. His stderr shows a bounds panic in the host audio callback,
+followed by a non-unwinding abort. No guest audio trigger, precise SDL
+request or repeatability is established, and the report does not identify
+which staged MOS launch command was used. Track the host-runtime failure
+separately from the visual result; no link between them is established.
+At Smith's request, sent [the full dump and pinned inputs to Alexe](/Agon/mystuff/agon-dev-env/cross-agent/agentcoms/messages/2026-11-20_17-57-20_nurples_fae126-audio-abort-plan-only-one.md)
+for a draft investigation task only. Exact archived runtime, guest manifests
+and source references are under `.build/title-phase-lut-fae-r01/`. Do not
+rerun, patch or release Oryx generation 542 unless Smith directs it.
+
+Alexe returned [FX-311](/Agon/mystuff/flexe-agon-emulator/docs/tasks/FX-311.md)
+for Smith's review. It proposes an isolated host test of zero, negative and
+positive audio requests first; a matched real-audio run would be a separate
+decision. The plan does not claim the original SDL trigger is known. No
+investigation run or custody change was made; Nurples still holds 542.
+
+Smith then completed another full game in the FAE review with no errors.
+Record this as an intermittent failure: one observed audio abort and one
+clean full-game run, not a measured failure rate or a resolution of FX-311.
+Oryx remains held per Smith's instruction.

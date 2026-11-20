@@ -344,3 +344,56 @@ both exited cleanly on current VDPlet and stock VDP. The old failure has
 not been explained. Use the ordinary build with restoration enabled as the
 baseline and include exit-to-MOS in the next Console8 comparison; do not
 carry the diagnostic into production.
+
+### Next tranche — ordinary bitmap Game Over title
+
+Smith selected the bitmap title as the next implementation item. The next
+visual review will use FAE for convenience. Save the standalone Console8
+startup-mode smoke test for the next substantive hardware review; a FAE
+pass can check appearance and flow, not settle physical scanout flicker.
+The previously reviewed ordinary game remains the hardware-sprite control.
+
+- JK-INT-008 [x] Plot only the fixed-position, two-colour-frame Game Over
+  title as ordinary bitmaps over the frozen playfield. Keep its artwork,
+  footprint, position, and flash cadence; keep the Continue prompt as the
+  same hardware sprite, with the same blink cadence. Leave attract,
+  gameplay, the ordinary mode restore, and asset data unchanged. Keep the
+  existing scrolling comparison useful as a hardware-sprite control; do not
+  use the frozen-layer optimization there.
+
+- JK-INT-009 [ ] Verify the title is visible from first Game Over frame,
+  retains its colour changes and position, and is gone from the next game.
+  Verify a fresh press starts again without asset reload, and Escape returns
+  to MOS with mode restoration enabled. First review on FAE; on eventual
+  Console8 comparison, record whether unintended flicker tracks the prompt
+  in either renderer. Do not make a standalone hardware or SD run for this
+  tranche.
+
+The frozen title paints once after the world and cockpit updates, so even
+an animated active tile underneath it cannot erase its foreground pixels.
+Its two existing frames have the same binary alpha mask; neither frame
+requires a background capture or a separate erase. Continuation redraws a
+clean playfield from the resident assets; Escape keeps the usual MOS return.
+There is no title hardware sprite in this build. The hidden reserved slot
+fills the contiguous prefix so the prompt still owns slot 21.
+
+Local ordinary and review builds and both renderer assembly paths passed;
+223 tests passed and one headless-input fixture skipped. Both asset
+containers match the previous build byte for byte. Oryx generation 540,
+request `9e3aa6474f63`, holds the stopped FAE profile at
+`/home/smith/Agon/mystuff/nurples/.emulator/game-over-bitmap-fae-r01`.
+The virtual-card readback matches the ordinary binary (`a7d501a0…9a1c`)
+and the optional immediate-frozen `game-over-now.bin` (`884a5db7…46a8`).
+FAE uses stock VDP and pinned Eirene RC3. The existing startup loads the
+ordinary executable, leaving the launch to Smith. Use `RUN` for ordinary
+play, or `LOAD game-over-now.bin &040000` and `RUN` to enter Game Over at
+the first player-control handoff. Await the verdict and FAE shutdown.
+
+Follow-up: [ART-001-032](../ART-001/TASK.md#art-001-032--upload-only-the-master-colour-phase-of-each-title)
+now derives the second Game Over colour phase on the VDP in a later local
+build. Its expected output is byte-identical to this run's artwork, and it
+does not change title placement, the animation cadence, or the prompt.
+Generation 540's existing staged card still carries the two-upload control.
+Smith requested the newer FAE build. Generation 540 was released after a
+fresh host-wide idle check, without modifying the card or recording a visual
+verdict for this control. The waiting TRS-80 owner was notified.

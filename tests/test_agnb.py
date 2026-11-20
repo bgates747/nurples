@@ -8,8 +8,10 @@ from nurples_tools.agnb_verify import parse_images, verify_container
 from nurples_tools.current_assets import (
     build_catalogs,
     check_current_assets,
+    container_records,
     render_container_include,
     render_family_include,
+    title_phase_lut,
 )
 
 
@@ -59,10 +61,36 @@ class AgnbContainerTests(unittest.TestCase):
     def test_checked_in_containers_match_every_catalog_payload(self) -> None:
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
-        self.assertEqual(len(ui), 386_220)
-        self.assertEqual(len(game), 406_256)
-        verify_container(ui, self.ui_records)
-        verify_container(game, self.game_records)
+        self.assertEqual(len(ui), 371_052)
+        self.assertEqual(len(game), 390_848)
+        ui_records, game_records = container_records(self.catalogs)
+        verify_container(ui, ui_records)
+        verify_container(game, game_records)
+        self.assertEqual(set(record.buffer_id for record in self.ui_records)
+                         - set(image.buffer_id for image in parse_images(ui)), {46})
+        self.assertEqual(set(record.buffer_id for record in self.game_records)
+                         - set(image.buffer_id for image in parse_images(game)), {63_991})
+
+    def test_title_phase_lookup_reproduces_both_alternates(self) -> None:
+        for records, name in ((self.ui_records, "splash_title"),
+                              (self.game_records, "game_over")):
+            with self.subTest(title=name):
+                frames = {rec.name: rec.payload_path.read_bytes() for rec in records
+                          if rec.name.startswith(name)}
+                master, alternate = frames[f"{name}_0"], frames[f"{name}_1"]
+                lookup = title_phase_lut(master, alternate)
+                self.assertEqual(len(lookup), 256)
+                self.assertEqual(lookup[:0xC0], bytes(range(0xC0)))
+                self.assertNotEqual(master, alternate)
+                self.assertEqual(master.translate(lookup), alternate)
+
+    def test_title_lookup_rejects_ambiguous_colors_or_changed_alpha(self) -> None:
+        with self.assertRaisesRegex(ValueError, "conflicting mappings"):
+            title_phase_lut(b"\xff\xff", b"\xfe\xff")
+        with self.assertRaisesRegex(ValueError, "binary opacity mask"):
+            title_phase_lut(b"\xff", b"\x00")
+        with self.assertRaisesRegex(ValueError, "transparent bytes unchanged"):
+            title_phase_lut(b"\x00", b"\x01")
 
     def test_generated_outputs_are_deterministic(self) -> None:
         self.assertEqual(check_current_assets(PROJECT_ROOT), [])
@@ -73,9 +101,9 @@ class AgnbContainerTests(unittest.TestCase):
             self.assertNotIn(".rgba2", rendered)
             self.assertNotIn("_image_list", rendered)
             self.assertNotIn("fn_", rendered)
-        container_counts = render_container_include(self.ui_records, self.game_records)
-        self.assertIn("ui_agnb_num_images: equ 47", container_counts)
-        self.assertIn("game_num_images: equ 359", container_counts)
+        container_counts = render_container_include(*container_records(self.catalogs))
+        self.assertIn("ui_agnb_num_images: equ 46", container_counts)
+        self.assertIn("game_num_images: equ 358", container_counts)
 
     def test_target_contains_only_supported_artifacts(self) -> None:
         files = {

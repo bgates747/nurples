@@ -30,6 +30,7 @@ class Uart001FixtureBuildTests(unittest.TestCase):
             staged = Path(directory)
             (staged / "nurples.asm").write_text(source, encoding="utf-8")
             (staged / "player_state.inc").write_text(
+                "player_grace:\n    call player_input\n    ret\n"
                 "player_alive:\n    call player_input\n    rst.lil 18h\n"
                 "    rst.lil $10\n",
                 encoding="utf-8",
@@ -48,7 +49,8 @@ class Uart001FixtureBuildTests(unittest.TestCase):
             self.assertIn("    call uart001_vdu_write_a\n", patched)
             player = (staged / "player_state.inc").read_text(encoding="utf-8")
             self.assertNotIn(PLAYER_INPUT_ANCHOR, player)
-            self.assertIn("    call uart001_player_input\n", player)
+            self.assertIn("player_alive:\n    call uart001_player_input\n", player)
+            self.assertIn("player_grace:\n    call player_input\n", player)
             self.assertNotRegex(player, r"(?i)rst\.lil\s+(?:\$18|18h)")
             self.assertNotRegex(player, r"(?i)rst\.lil\s+(?:\$10|10h)")
             self.assertEqual(

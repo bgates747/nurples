@@ -8,9 +8,9 @@
 ui_agnb_filename:   db "ui.agnb",0
 game_agnb_filename: db "game.agnb",0
 
-; Author's two-line mockup anchor in physical Mode 20 pixels.
+; Author's three-line mockup anchor in physical Mode 20 pixels.
 SPLASH_TITLE_X: equ 28
-SPLASH_TITLE_Y: equ 47
+SPLASH_TITLE_Y: equ 50
 SPLASH_TITLE_PERIOD: equ 32 ; MOS clock centiseconds; checked at record boundaries
 
 game_load_index:             dl 0
@@ -128,7 +128,11 @@ splash_draw_title:
 load_ui_images:
     ld de,ui_agnb_filename
     ld hl,img_load_agnb_breadcrumb
-    jp agnb_load_images_with_callback
+    call agnb_load_images_with_callback
+    ret nz
+    call title_phase_build_splash
+    xor a
+    ret
 
 
 ; Load all backgrounds, sprites, and DG tiles through one persistent handle.
@@ -149,6 +153,7 @@ load_game_images:
     ld a,(game_load_callback_overflow)
     or a
     jr nz,@count_error
+    call title_phase_build_game_over
     xor a
     ret
 
@@ -157,3 +162,5 @@ load_game_images:
     ld (agnb_last_error),a
     or a
     ret
+
+    include "title_phase_vdp.inc"

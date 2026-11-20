@@ -125,15 +125,30 @@ def game_over_drawing(frame: int) -> Drawing:
 
 
 def loading_title_drawing(frame: int) -> Drawing:
-    """Two fixed-footprint color phases of the Mode 20 loading title."""
+    """One three-line bitmap per phase, with opposite tagline colors."""
     if frame not in (0, 1):
         raise ValueError("Loading title frame must be 0 or 1")
-    width, height, scale = 240, 76, 4
-    face, shadow = (PALE_YELLOW, DARK_MAGENTA) if frame == 0 else (MAGENTA, VIOLET)
+    width, height, scale = 240, 89, 4
+    phases = ((PALE_YELLOW, DARK_MAGENTA), (MAGENTA, VIOLET))
+    face, shadow = phases[frame]
     shapes = []
-    for word, y in (("PURPLE", 2), ("NURPLES", 39)):
+    for word, y in (("PURPLE", 17), ("NURPLES", 54)):
         x = (width - _text_width(word, scale)) // 2
         shapes.extend(_display_title(word, x, y, scale, face, shadow))
+
+    small_face, small_shadow = phases[frame ^ 1]
+    text = "WELCOME TO ATTACK OF THE"
+    tagline = _glyph_rectangles(text, 2, 2, 1, BLACK)
+    tagline.extend(_glyph_rectangles(text, 1, 1, 1, small_shadow))
+    tagline.extend(_glyph_rectangles(text, 0, 0, 1, small_face))
+    logo_left = min(rect.x for rect in shapes)
+    logo_right = max(rect.x + rect.width for rect in shapes)
+    tagline_left = min(rect.x for rect in tagline)
+    tagline_right = max(rect.x + rect.width for rect in tagline)
+    dx = (logo_left + logo_right - tagline_right - tagline_left) // 2
+    dy = -min(rect.y for rect in tagline)
+    shapes.extend(Rectangle(rect.x + dx, rect.y + dy, 1, 1, rect.color)
+                  for rect in tagline)
     return Drawing(width, height, tuple(shapes))
 
 

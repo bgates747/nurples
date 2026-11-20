@@ -1,4 +1,4 @@
-"""Contracts for the dormant hardware-sprite presentation renderer."""
+"""Contracts for the bitmap title and hardware-sprite prompts/controls."""
 
 from __future__ import annotations
 
@@ -23,7 +23,9 @@ class PresentationOverlayRendererTests(unittest.TestCase):
         self.assertIn("PRESENTATION_SPRITE_PROMPT: equ 21", source)
         self.assertIn("PRESENTATION_ACTIVE_ACTORS: equ 20", source)
         self.assertIn("PRESENTATION_ACTIVE_ALL: equ 22", source)
-        self.assertIn("ld bc,136\n    ld de,116", source)
+        self.assertIn("PRESENTATION_TITLE_X: equ 136", source)
+        self.assertIn("PRESENTATION_TITLE_Y: equ 116", source)
+        self.assertIn("ld bc,PRESENTATION_TITLE_X\n    ld de,PRESENTATION_TITLE_Y", source)
         self.assertIn("ld bc,152\n    ld de,210", source)
 
     def test_enter_defines_before_publishing_active_prefix(self) -> None:
@@ -43,6 +45,43 @@ class PresentationOverlayRendererTests(unittest.TestCase):
         self.assertLess(title_hardware, prompt_hardware)
         self.assertLess(prompt_hardware, activate)
         self.assertLess(activate, publish)
+
+    def test_title_sprite_only_in_scrolling_control(self) -> None:
+        source = SOURCE.read_text()
+        enter = source.split("presentation_renderer_enter:\n", 1)[1].split(
+            "; end presentation_renderer_enter", 1
+        )[0]
+        title = enter.split(".if GAME_OVER_REVIEW_SCROLL", 1)[1].split(".endif", 1)[0]
+        control, frozen = title.split(".else", 1)
+        self.assertIn("call vdu_sprite_mark_hardware", control)
+        self.assertIn("ld hl,PRESENTATION_BUF_TITLE_0", control)
+        self.assertNotIn("PRESENTATION_BUF_TITLE", frozen)
+        self.assertNotIn("call vdu_sprite_mark_hardware", frozen)
+        self.assertIn("call vdu_sprite_add_buff\n    call vdu_sprite_hide", frozen)
+
+    def test_frozen_title_plots_in_field_each_game_over_frame(self) -> None:
+        source = SOURCE.read_text()
+        update = source.split("presentation_renderer_update:\n", 1)[1].split(
+            "; end presentation_renderer_update", 1
+        )[0]
+        self.assertIn(
+            "ld a,(presentation_mode)\n"
+            "    cp PRESENTATION_GAME_OVER\n"
+            "    call z,presentation_renderer_plot_title",
+            update,
+        )
+        self.assertLess(update.index("call z,presentation_renderer_plot_title"),
+                        update.index("@prompt:"))
+        self.assertIn("bit 1,a", update.split("@prompt:", 1)[1])
+        plot = source.split("presentation_renderer_plot_title:\n", 1)[1].split(
+            "; end presentation_renderer_plot_title", 1
+        )[0]
+        self.assertEqual(plot.count("jp vdu_plot_bmp"), 1)
+        self.assertIn("call set_gfx_playing_field", plot)
+        self.assertIn("ld hl,PRESENTATION_BUF_TITLE_0", plot)
+        self.assertIn("ld hl,PRESENTATION_BUF_TITLE_1", plot)
+        self.assertIn("ld bc,PRESENTATION_TITLE_X-origin_left", plot)
+        self.assertIn("ld de,PRESENTATION_TITLE_Y-origin_top", plot)
 
     def test_exit_detaches_and_demotes_before_feature_restore(self) -> None:
         source = SOURCE.read_text()
@@ -98,15 +137,23 @@ class PresentationOverlayRendererTests(unittest.TestCase):
             short_source = fixture_root / "f.asm"
             shutil.copy2(FIXTURE, short_source)
             output = fixture_root / "f.bin"
-            result = subprocess.run(
-                [assembler, short_source.name, str(output), "-c"],
-                cwd=fixture_root,
-                capture_output=True,
-                check=False,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertGreater(output.stat().st_size, 0)
+            config = mirror / "src" / "asm" / "game_over_review_config.inc"
+            defaults = config.read_text()
+            for scrolling in (0, 1):
+                with self.subTest(scrolling=scrolling):
+                    config.write_text(defaults.replace(
+                        "GAME_OVER_REVIEW_SCROLL: equ 0",
+                        f"GAME_OVER_REVIEW_SCROLL: equ {scrolling}",
+                    ))
+                    result = subprocess.run(
+                        [assembler, short_source.name, str(output), "-c"],
+                        cwd=fixture_root,
+                        capture_output=True,
+                        check=False,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertGreater(output.stat().st_size, 0)
 
 
 if __name__ == "__main__":

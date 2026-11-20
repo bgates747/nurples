@@ -1,15 +1,14 @@
-; Hardware-sprite renderer for the shared attract/game-over presentation state.
-;
-; Integrated after the standalone Alexe R07 qualifier passed. The controller
-; owns cadence/input; this renderer owns only VDP slots 20/21 and the
-; feature-variable transaction. Overlay bitmaps are immutable
-; process resources: teardown detaches every sprite reference before demotion,
-; while the global resource owner retains the four buffers for later entries.
+; Shared attract/game-over renderer. The controller owns cadence and input.
+; Prompts use hardware slot 21. Only the scrolling review uses a hardware
+; title; the frozen game's title is painted onto the playfield. Overlay
+; bitmaps are immutable process resources retained for later entries.
 
 PRESENTATION_SPRITE_TITLE: equ 20
 PRESENTATION_SPRITE_PROMPT: equ 21
 PRESENTATION_ACTIVE_ACTORS: equ 20
 PRESENTATION_ACTIVE_ALL: equ 22
+PRESENTATION_TITLE_X: equ 136 ; physical pixels, shared with the review sprite
+PRESENTATION_TITLE_Y: equ 116
 
 PRESENTATION_BUF_TITLE_0: equ BUF_GAME_OVER_0
 PRESENTATION_BUF_TITLE_1: equ BUF_GAME_OVER_1
@@ -46,6 +45,7 @@ presentation_renderer_enter:
     ld a,PRESENTATION_SPRITE_TITLE
     call vdu_sprite_select
     call vdu_sprite_clear_frames
+    .if GAME_OVER_REVIEW_SCROLL
     ld hl,PRESENTATION_BUF_TITLE_0
     call vdu_sprite_add_buff
     ld hl,PRESENTATION_BUF_TITLE_1
@@ -53,8 +53,8 @@ presentation_renderer_enter:
     xor a
     call vdu_sprite_set_gcol
     call vdu_sprite_mark_hardware
-    ld bc,136
-    ld de,116
+    ld bc,PRESENTATION_TITLE_X
+    ld de,PRESENTATION_TITLE_Y
     call vdu_sprite_move_abs
     ld a,(presentation_title_frame)
     call vdu_sprite_select_frame
@@ -66,6 +66,13 @@ presentation_renderer_enter:
 @hide_title:
     call vdu_sprite_hide
 @title_ready:
+    .else
+; Slot 21 needs a contiguous active prefix. Keep slot 20 defined but hidden,
+; with no title frames and no hardware compositor membership.
+    ld hl,PRESENTATION_BUF_PROMPT_START
+    call vdu_sprite_add_buff
+    call vdu_sprite_hide
+    .endif
 
     ld a,PRESENTATION_SPRITE_PROMPT
     call vdu_sprite_select
@@ -100,13 +107,14 @@ presentation_renderer_enter:
     ret
 ; end presentation_renderer_enter
 
-; Apply only controller-published dirty fields. Hardware sprite changes are
-; immediate; this path deliberately issues no software-sprite refresh command.
+; Update the prompt on its dirty bit. The frozen title is redrawn once per
+; Game Over frame after active scenery, including on its first frame.
 ; outputs: carry set while active; carry clear when no renderer owns the slots
 presentation_renderer_update:
     ld a,(presentation_renderer_active)
     or a
     ret z
+    .if GAME_OVER_REVIEW_SCROLL
     ld a,(presentation_dirty)
     bit 0,a
     jp z,@prompt
@@ -121,6 +129,11 @@ presentation_renderer_update:
     jp @prompt
 @title_hide:
     call vdu_sprite_hide
+    .else
+    ld a,(presentation_mode)
+    cp PRESENTATION_GAME_OVER
+    call z,presentation_renderer_plot_title
+    .endif
 
 @prompt:
     ld a,(presentation_dirty)
@@ -139,6 +152,27 @@ presentation_renderer_update:
     scf
     ret
 ; end presentation_renderer_update
+
+    .if GAME_OVER_REVIEW_SCROLL
+    .else
+; Both frames have identical opaque pixels and binary alpha. Swap the colors
+; in place without a background capture or erasing the title rectangle.
+; On continuation game_prepare_playfield redraws the entire surface; on
+; Escape the common MOS exit clears it. Neither needs a saved background.
+presentation_renderer_plot_title:
+    call set_gfx_playing_field ; cockpit gauges left their own viewport active
+    ld hl,PRESENTATION_BUF_TITLE_0
+    ld a,(presentation_title_frame)
+    or a
+    jp z,@selected
+    ld hl,PRESENTATION_BUF_TITLE_1
+@selected:
+    call vdu_buff_select
+    ld bc,PRESENTATION_TITLE_X-origin_left
+    ld de,PRESENTATION_TITLE_Y-origin_top
+    jp vdu_plot_bmp
+; end presentation_renderer_plot_title
+    .endif
 
 ; Restore the exact production prefix and detach/demote both slots before the
 ; hardware feature flag is restored. Immutable bitmap buffers stay under the
@@ -166,7 +200,9 @@ presentation_renderer_exit:
     ld a,PRESENTATION_SPRITE_TITLE
     call vdu_sprite_select
     call vdu_sprite_clear_frames
+    .if GAME_OVER_REVIEW_SCROLL
     call vdu_sprite_mark_software
+    .endif
 
     ld a,PRESENTATION_ACTIVE_ACTORS
     call vdu_sprite_activate

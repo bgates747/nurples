@@ -54,6 +54,8 @@ class GameOverLifecycleTests(unittest.TestCase):
         self.assertEqual(update.count("call presentation_input_poll"), 1)
         self.assertEqual(update.count("call presentation_overlay_update"), 1)
         self.assertEqual(update.count("call presentation_renderer_update"), 1)
+        self.assertLess(update.index("call move_tiles"),
+                        update.index("call presentation_renderer_update"))
         self.assertNotIn("call do_player", update)
         self.assertNotIn("vdu_vblank", update)
         self.assertNotIn("waitKeypress", update)

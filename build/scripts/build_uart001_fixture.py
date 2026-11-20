@@ -28,7 +28,9 @@ OUTPUT_SYMBOLS = TARGET_DIR / "nurples-uart001.symbols"
 INCLUDE_ANCHOR = '    include "runtime_init.inc"\n'
 PROCESS_INIT_ANCHOR = "    call runtime_process_init\n"
 DISPATCH_ANCHOR = "    call do_game\n"
-PLAYER_INPUT_ANCHOR = "    call player_input\n"
+# The measured full-frame cohort starts in player_alive, not the startup grace
+# state, which has its own ordinary input call.
+PLAYER_INPUT_ANCHOR = "player_alive:\n    call player_input\n"
 ESCAPE_ANCHOR = "@escape:\n    call telemetry_request_exit\n"
 
 VDU_BLOCK_WRITE = re.compile(
@@ -107,7 +109,7 @@ def stage_fixture(staged_asm: Path) -> None:
     source = replace_once(
         source,
         PLAYER_INPUT_ANCHOR,
-        "    call uart001_player_input\n",
+        "player_alive:\n    call uart001_player_input\n",
         "player input dispatch",
     )
     player.write_text(source, encoding="utf-8")

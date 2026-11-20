@@ -88,16 +88,26 @@ PNGs in `assets/img/proc/ui`.
 Both current asset-build entry points invoke this stage before packing AGNB.
 The standalone preparation command does not repack the containers.
 
-The 240x76 `splash_title_0` and `splash_title_1` stack `PURPLE` above `NURPLES`
-using the same exact Lode Runner glyph rows, block shadows, and single-pixel
-highlights as GAME OVER, at 4x.
+The 240x89 `splash_title_0` and `splash_title_1` put the native-size tagline
+`WELCOME TO ATTACK OF THE` above `PURPLE` and `NURPLES`. The large lettering
+uses the same Lode Runner glyph rows, block shadows, and single-pixel
+highlights as GAME OVER, at 4x. The tagline uses the opposite colour phase.
 The generator writes editable SVGs to `assets/vector/ui` and produces
 identical binary-alpha footprints. The loader plots them at the reviewed
-Mode 20 anchor `(28, 47)` and changes colors only at completed-record
+Mode 20 anchor `(28, 50)` and changes colors only at completed-record
 boundaries. The background is painted once; the existing fixed-width status
 text is overwritten in place on every record. After the last record, a
 keyboard/joystick question replaces that line before the pre-start screen.
 The old checkerboard logo is archival artwork outside the runtime catalog.
+
+The AGNB files upload only phase 0 of the splash and Game Over titles.
+The asset builder keeps both authored phases for comparison and emits
+one 256-byte lookup each. It rejects partial or mismatched alpha masks,
+changes to transparent bytes, and ambiguous source-colour mappings. At
+startup the VDP expands each master into the existing phase-1 ID with
+buffered command 72, then registers the result as RGBA2222. The scratch
+lookup buffer is cleared after each use. Both generated bitmaps remain
+resident, so this reduces upload traffic, not steady-state VDP memory.
 
 ### Starfield tiles
 

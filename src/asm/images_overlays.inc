@@ -2,7 +2,7 @@
 
 overlays_num_images: equ 4
 
-; Explicit VDP buffer IDs carried by the matching AGNB records.
+; Explicit resident VDP buffer IDs.
 BUF_GAME_OVER_0: equ 63990
 BUF_GAME_OVER_1: equ 63991
 BUF_PRESS_ANY_KEY_TO_CONTINUE: equ 63992

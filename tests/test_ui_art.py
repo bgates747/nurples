@@ -43,7 +43,7 @@ class UiArtTests(unittest.TestCase):
             [(e["name"], e["buffer_id"], e["width"], e["height"]) for e in prepared],
             [("bezel_l", 6, 128, 304), ("bezel_r", 7, 128, 304),
              ("splash_bg", 44, 512, 384),
-             ("splash_title_0", 45, 240, 76), ("splash_title_1", 46, 240, 76)],
+             ("splash_title_0", 45, 240, 89), ("splash_title_1", 46, 240, 89)],
         )
         for entry in prepared:
             path = ROOT / f"assets/rgba2/ui/{entry['name']}.rgba2"
@@ -62,20 +62,25 @@ class UiArtTests(unittest.TestCase):
 
     def test_loading_title_phases_change_color_with_identical_alpha(self):
         title_dir = ROOT / "assets/rgba2/ui"
-        first = rgba2_to_img(title_dir / "splash_title_0.rgba2", 240, 76)
-        second = rgba2_to_img(title_dir / "splash_title_1.rgba2", 240, 76)
+        first = rgba2_to_img(title_dir / "splash_title_0.rgba2", 240, 89)
+        second = rgba2_to_img(title_dir / "splash_title_1.rgba2", 240, 89)
         mask = first.getchannel("A")
         self.assertEqual(mask.tobytes(), second.getchannel("A").tobytes())
         self.assertNotEqual(first.tobytes(), second.tobytes())
-        first_word = mask.crop((0, 0, 240, 37)).getbbox()
-        second_word = mask.crop((0, 39, 240, 76)).getbbox()
-        self.assertIsNotNone(first_word)
-        self.assertIsNotNone(second_word)
-        self.assertIsNone(mask.crop((0, 37, 240, 39)).getbbox())
-        for left, _, right, _ in [first_word, second_word]:
+        for y0, y1 in ((0, 10), (17, 52), (54, 89)):
+            left, _, right, _ = mask.crop((0, y0, 240, y1)).getbbox()
             self.assertGreater(left, 0)
             self.assertLess(right, 240)
             self.assertLess(abs(left + right - 240), 8)
+        self.assertIsNone(mask.crop((0, 10, 240, 17)).getbbox())
+        self.assertIsNone(mask.crop((0, 52, 240, 54)).getbbox())
+        for frame in (first, second):
+            tagline = set(frame.crop((0, 0, 240, 10)).get_flattened_data())
+            large = set(frame.crop((0, 17, 240, 89)).get_flattened_data())
+            self.assertNotEqual((255, 0, 255, 255) in tagline,
+                                (255, 0, 255, 255) in large)
+            self.assertNotEqual((255, 255, 85, 255) in tagline,
+                                (255, 255, 85, 255) in large)
 
     def test_mode20_splash_preserves_the_authored_pixels(self):
         entry = next(entry for entry in ui_manifest(ROOT) if entry["name"] == "splash_bg")

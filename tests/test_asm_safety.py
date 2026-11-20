@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import shutil
+import struct
 import subprocess
 from tempfile import TemporaryDirectory
 import unittest
@@ -83,6 +84,27 @@ class AssemblySafetyTests(unittest.TestCase):
                         expected_offset,
                     )
 
+            binary = output.read_bytes()
+            for recipe, prefix, folder, master, destination, height in (
+                ("splash", "splash_title", "ui", 45, 46, 89),
+                ("game_over", "game_over", "overlays", 63_990, 63_991, 64),
+            ):
+                with self.subTest(title=recipe):
+                    commands = (bytes((23, 0, 0xA0))
+                                + struct.pack("<HBBHH", destination, 72, 0x10, master, 63_984)
+                                + bytes((23, 27, 0x20)) + struct.pack("<H", destination)
+                                + bytes((23, 27, 0x21)) + struct.pack("<HHB", 240, height, 1))
+                    packet = symbols[f"title_phase_{recipe}_vdu"] - 0x040000
+                    self.assertEqual(binary[packet:packet+len(commands)], commands)
+                    lookup = symbols[f"{prefix}_lut"] - 0x040000
+                    assets = PROJECT_ROOT / "assets/rgba2" / folder
+                    self.assertEqual(
+                        (assets / f"{prefix}_0.rgba2").read_bytes().translate(
+                            binary[lookup:lookup+256],
+                        ),
+                        (assets / f"{prefix}_1.rgba2").read_bytes(),
+                    )
+
     def test_agnb_startup_uses_two_containers_and_exact_progress_count(self) -> None:
         images = read_asm("images.inc")
         startup = read_asm("state_game_init.inc")
@@ -90,10 +112,10 @@ class AssemblySafetyTests(unittest.TestCase):
 
         self.assertIn('ui_agnb_filename:   db "ui.agnb",0', images)
         self.assertIn('game_agnb_filename: db "game.agnb",0', images)
-        self.assertIn("game_num_images: equ 359", counts)
+        self.assertIn("game_num_images: equ 358", counts)
         self.assertIn("ld hl,game_num_images\n    ld (game_load_remaining),hl", images)
         self.assertIn("SPLASH_TITLE_X: equ 28", images)
-        self.assertIn("SPLASH_TITLE_Y: equ 47", images)
+        self.assertIn("SPLASH_TITLE_Y: equ 50", images)
         self.assertIn("ld (game_load_callback_overflow),a", images)
         self.assertIn("call load_ui_images", startup)
         self.assertIn("call load_game_images", startup)
@@ -110,6 +132,11 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("call splash_update_title\n    call splash_print_progress", progress)
         self.assertIn("call vdu_move_cursor", images)
         self.assertIn('asciz "Loading images: "', images)
+
+        ui_loader = block(images, "load_ui_images", "load_game_images")
+        game_loader = routine(images, "load_game_images", 'include "title_phase_vdp.inc"')
+        self.assertIn("ret nz\n    call title_phase_build_splash", ui_loader)
+        self.assertIn("jr nz,@count_error\n    call title_phase_build_game_over", game_loader)
 
     def test_game_init_unconditionally_rebuilds_all_vdp_resources(self) -> None:
         active_source = read_asm("nurples.asm") + "".join(

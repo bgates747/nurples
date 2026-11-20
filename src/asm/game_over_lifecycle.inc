@@ -103,6 +103,7 @@ game_over_lifecycle_update:
     ld a,0
     adc a,0
     ld (game_over_dismiss_requested),a
+; The bitmap title paints over the active tiles; keep it after world draws.
     call presentation_renderer_update
     ld a,(game_over_dismiss_requested)
     or a

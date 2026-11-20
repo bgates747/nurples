@@ -72,7 +72,7 @@ def generate_ui_art(project_root: Path) -> dict[Path, bytes]:
                     raise ValueError(f"manifest dimensions disagree with {name} geometry")
                 image = drawing_to_image(drawing)
                 outputs[Path(f"assets/vector/ui/{name}.svg")] = drawing_to_svg(
-                    drawing, "PURPLE NURPLES"
+                    drawing, "WELCOME TO ATTACK OF THE PURPLE NURPLES"
                 )
             else:
                 image = prepare_image(

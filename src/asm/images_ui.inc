@@ -2,7 +2,7 @@
 
 ui_num_images: equ 47
 
-; Explicit VDP buffer IDs carried by the matching AGNB records.
+; Explicit resident VDP buffer IDs.
 BUF_BAR_H_0: equ 0
 BUF_BAR_H_1: equ 1
 BUF_BAR_H_2: equ 2
