@@ -548,3 +548,24 @@ still pick out joins, but they no longer stand out during ordinary play.
 Accepted for the current build. Checkout 521 was released after a fresh
 whole-host inspection found no emulator process; no successor was queued.
 Smith authorized committing and pushing the accepted build on `dev`.
+
+### ART-001-029 — Reuse Mode 20 at startup
+
+Smith asked to skip the startup mode switch when MOS is already in the
+requested mode. The text and graphical loaders already use the same surface;
+the unconditional mode request is before the text loader. Query the live VDP
+mode and skip `VDU 22` if it reports Mode 20, while still checking the dimensions
+and colour depth. A different mode must still get one acknowledged mode switch.
+Reset the loading viewports without relying on a mode switch. Leave the
+separate exit-mode diagnostic and restoration unchanged.
+
+- ART-001-029 [x] Verify the matching, different-mode, and failed-query paths
+  and assemble locally. No emulator or hardware deployment in this change.
+
+The startup branch now reuses a fresh matching mode report, issues one
+acknowledged mode request on a mismatch, and uses the existing display error
+path on timeout. Both success paths validate the physical display. Assembly
+and source-contract tests passed: 221 tests passed, one input fixture skipped
+because its headless runner was unavailable. Both asset containers are
+byte-identical to the prior ordinary build. The Pi compile slot was released;
+there has been no emulator or hardware test of this change.

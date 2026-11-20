@@ -3,6 +3,11 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **GAME-001-EXIT — Console8 fails to return to MOS:** not reproduced
+  with the current VDPlet or stock VDP. Keep the ordinary exit path;
+  collect firmware and reset evidence if it recurs. VDPL-059 is plan-only.
+  [Hardware exit task](docs/tasks/GAME-001-EXIT/TASK.md).
+
 - [ ] **GAME-001JK-OLIMEX — Verify overlay restoration on production Olimex.**
   [Task and preparation evidence](docs/tasks/GAME-001JK-OLIMEX/TASK.md).
 
@@ -199,10 +204,12 @@ decisions are recorded in the dated development log.
 
   - [ ] **GAME-001J — Animated game-over sequence:** replace the blocking
     text-mode `game_over` handler with a bounded `GAME_OVER` lifecycle. Freeze
-    the starfield and terrain behind a centred hardware-sprite composition that presents a large,
-    stylized `GAME OVER` title whose colours alternate. Include a smaller
-    regular-font `Press any key to continue` notice in the composition and
-    flash it at a slower, independently legible cadence. On entry, remove the
+    the starfield and terrain behind a centred, stylized `GAME OVER` title
+    whose colours alternate. Smith approved plotting the title as a regular
+    bitmap on the frozen backdrop. Use the clean ordinary exit on current
+    firmware as the baseline and verify it again after the renderer change.
+    Keep the smaller `Press any key to continue` hardware sprite and its
+    separate blink cadence for the first comparison. On entry, remove the
     player and hostile projectiles but make the remaining world non-hostile
     rather than empty. Suppress new launches and send existing seekers directly
     into shared retreat. Each chooses the nearest active, visible launchpad

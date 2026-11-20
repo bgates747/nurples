@@ -2,6 +2,9 @@
 .vscode/
 .emulator/
 
+# Local build, deployment staging, and test evidence (not source or tgt/).
+/.build/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

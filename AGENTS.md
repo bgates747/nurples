@@ -141,6 +141,17 @@ implicit authorization to rewrite legacy code.
 
 See `TODO.md`. Chronological evidence and decisions belong under `devlog/`.
 
+## Urgent attention on Oryx
+
+For urgent attention only, use the
+[canonical Oryx spoken-alert procedure](../agon-dev-env/codex/urgent-alerts.md)
+instead of the OpenAI “agent has a question” dialog. Say “Purple Nurples” (or
+the session name Smith recognizes) and one short, specific sentence about the
+issue. Keep the full context and any question or approval in the originating
+chat. Do not include sensitive details in speech, repeat an alert when Smith
+is already attending to it, or use it for routine updates or emulator setup.
+Normal review, workload, and approval gates are unchanged.
+
 ## Network access authority
 
 For access between development machines, read the [canonical network instructions](https://github.com/bgates747/agon-dev-env/blob/feature/standardized-deployment/codex/environment.md#ssh-between-development-machines) in `~/Agon/mystuff/agon-dev-env/codex/environment.md` and its machine-local `.local/ssh-001/CONNECTIONS.md` guide. They own current hostnames, discovery, SSH identities, sudo, and LAN shares. Do not duplicate access recipes or revive old aliases, addresses, or share mappings in this project.

@@ -16,9 +16,12 @@ game_init:
     call vdu_font_select
     call vdu_sprite_reset
     call vdu_clear_all_buffers
-; Allocate the full playfield before resident assets consume VDP memory.
+; Select or reuse the full playfield before resident assets consume VDP memory.
     call playfield_display_select
     jp nc,presentation_flow_fail
+    ld a,26 ; reset viewports and origin even when MODE was skipped
+    rst.lil 10h
+    call vdu_select_text_cursor
 ; print ascii art splash screen
     call vdu_cls
     ld hl,purple_nurples_ascii

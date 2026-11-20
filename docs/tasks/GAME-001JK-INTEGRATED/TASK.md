@@ -292,3 +292,55 @@ Await Smith's review and emulator shutdown before releasing.
 Smith confirmed FAE was closed. Checkout 529 was
 [released](../../../.build/seeker-death-retreat-r01/release.json) after a
 fresh whole-host idle check. No successor was queued.
+
+### Console8 normal-game hardware review — November 20
+
+Smith selected Console8 instead of Olimex for the next hardware check and
+requested a complete replacement of the existing runtime install. The
+manifest-driven deployer replaced only `/mystuff/nurples` on the verified
+`AGONC8` card attached to Oryx. The four-file readback matches published
+`dev` at `8bab625`, ordinary executable `1b4941df…94aa`, with all forced
+test settings disabled. The
+[deployment receipt](../../../.build/console8-game-over-8bab625/deployment-receipt.txt)
+records the sync and unchanged `autoexec.txt` hash. The previous install
+was saved and verified off-card in the same evidence directory. Card left
+mounted. No firmware or startup files were changed; actual flashed
+firmware was not measured by this SD operation.
+
+Smith will run from MOS with `CD /mystuff/nurples`, then
+`LOAD nurples.bin &040000` and `RUN`. Lose the last ship, preferably with
+a visible seeker, and check whether either overlay flickers or tears
+while meant to be visible. Confirm the normal restart and record whether a
+seeker was present. This is an ordinary hardware playthrough, not a matched
+forced-trigger comparison. Await the hardware verdict.
+
+Smith reported no scanout errors or flicker in ordinary Console8 gameplay.
+In Game Over, unintended flicker generally coincided with the Continue
+prompt being visible and generally stopped while it was hidden. Neither
+correlation was absolute. The prompt is a 208×16 hardware sprite in slot 21
+with an intentional toggle every 30 frames; the independent 240×64 Game
+Over title is also a hardware sprite (slot 20). The observation implicates
+the overlay path but does not distinguish visible-sprite compositing load
+from the show/hide update or another cause. The natural Console8 run did
+not report a separate restart or seeker verdict. No code was changed.
+
+### Approved title renderer change, held for the exit bug
+
+Smith approved drawing the fixed-footprint Game Over title with ordinary
+bitmap plots on the frozen backdrop. Preserve the title art, position, and
+color cadence. For the first hardware comparison, leave the Continue
+prompt's sprite and blink cadence unchanged so the title renderer is the
+only variable. Keep the prior hardware-sprite run as a control. Rally's
+lookup-table recoloring is available as a separate asset optimization;
+it is not needed to compare the two title renderers.
+
+Before proceeding, Smith reported a Console8 exit that appears to reset
+the machine and never restores a responsive MOS prompt. Track that
+separately in [GAME-001-EXIT](../GAME-001-EXIT/TASK.md) and diagnose it first.
+No bitmap renderer code changed.
+
+Current disposition: the ordinary game and the no-mode-restore diagnostic
+both exited cleanly on current VDPlet and stock VDP. The old failure has
+not been explained. Use the ordinary build with restoration enabled as the
+baseline and include exit-to-MOS in the next Console8 comparison; do not
+carry the diagnostic into production.

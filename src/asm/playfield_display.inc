@@ -14,10 +14,15 @@ playfield_display_colours: db 0
 playfield_display_width: dl 0
 playfield_display_height: dl 0
 
-; A = checkpoint. Carry set only for the expected physical surface.
+; Reuse a matching live mode. Carry set only for the expected physical surface.
 playfield_display_select:
     ld a,PLAYFIELD_CHECK_LOAD
     ld (playfield_display_checkpoint),a
+    call vdu_query_mode
+    jp nc,playfield_display_failed
+    ld a,(ix+sysvar_scrMode)
+    cp PLAYFIELD_MODE
+    jp z,playfield_display_validate
     ld a,PLAYFIELD_MODE
     call vdu_set_mode_confirm
     jp nc,playfield_display_failed
