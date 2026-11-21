@@ -214,7 +214,7 @@ arrival with Bugs2 2, then Terminator on campaign wraparound.
 
 Smith requested both additions in the same private per-level fixture.
 
-- MUS-001-05 [ ] Retrigger the accepted two-voice explosion from the top
+- MUS-001-05 [x] Retrigger the accepted two-voice explosion from the top
   for **each** destroyed ground or air target, not once for clearing the
   whole screen. Cover the existing destruction paths whether or not the
   visual explosion pool has space. Do not trigger for a pad launch, retreat,
@@ -222,7 +222,7 @@ Smith requested both additions in the same private per-level fixture.
   explosion. Keep the player finale, laser, mix and channel assignments.
   Check distinct kills even within a single frame.
 
-- MUS-001-06 [ ] Start Spawn's LOADTUNE from its beginning at the first
+- MUS-001-06 [x] Start Spawn's LOADTUNE from its beginning at the first
   post-load controller prompt. Continue uninterrupted through controller
   selection and attract while waiting for the accepted start input. Stop it
   when Start is accepted, before session setup/swoop. On Game Over switch
@@ -235,3 +235,41 @@ Check the private LOADTUNE original against Jukebox's metadata; retain only
 provenance and hashes in Git. Verify assembled triggers, music transitions
 and private inputs; leave R02 and production unchanged. Hardware and a new
 FAE deployment are outside this local implementation tranche.
+
+**Local build and verification.** Contract freeze
+`764192a932a7504f916c926d8834c4bcf63e5089`. Both additions are
+implemented in the campaign fixture. Destructive air collisions (seeker or
+fireball impact) and ground-target cratering (pad, turret, electrode) each
+queue one retrigger before visual allocation. A count replaces the original
+one-bit event, so kills in the same frame are not merged. Electrode lightning
+cleanup, seeker retreat and the player's individual debris particles are not
+separate kills. The player's final explosion still uses the same cue.
+
+LOADTUNE's 1,552 private bytes matched Jukebox's SHA-256. Assembled-code
+checks verified the exact three modules, two level-table entries, shared
+post-load/attract/Game Over music entry, accepted Start and exit stop
+hooks, destruction hooks and the per-event counter drain. Ordinary and both
+R02 binaries reproduced byte for byte. Current private binary:
+`.build/mus001-r03-presentation/campaign/nurples.bin`, 67,003 bytes,
+SHA-256 `c18f8afb1043f46fbe2dd54faf78514cb9f15d3fa639d9ef7db49ccb28bb570c`.
+No listening verdict at assembly time.
+
+**R03 FAE listening review staged (2026-11-21).** At Smith's request the
+combined presentation/campaign binary above was staged without rebuilding
+in `~/Agon/mystuff/nurples/.emulator/mus001-campaign-fae-r03` on Oryx.
+Checkout 577 (request `2b7e1d780c5a`) was held for Smith's run. Verified
+the pinned FAE, RC3 MOS, stock VDP, load-only startup and byte-for-byte
+FAT readback of the executable, game/UI containers and font. Card SHA-256
+`482be7b0c8e879762820917432feabb8a66233c66c9106a96a61a240244290f8`.
+Left stopped. Launch `./fab-agon-emulator` in the profile and type `RUN`
+at MOS. This is one campaign; no directory or tune switching is required.
+
+**R03 FAE listening review — passed, 2026-11-21.** Smith heard LOADTUNE
+at start and Game Over, Terminator stop for warp, and Bugs2 2 start on entry
+to the next level. Destroying both ground and air targets produced audible
+explosions. Same-frame kill counting was checked in the assembled code,
+not distinguished by ear; frame cadence was not measured in this run.
+
+Smith closed FAE. A fresh whole-host inspection found no emulator processes.
+Oryx checkout 577 was released at 16:38:27 Eastern and Flexe was notified
+that its FX-325 request was next.

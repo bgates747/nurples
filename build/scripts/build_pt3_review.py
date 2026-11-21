@@ -8,6 +8,7 @@ import runpy
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
+import tomllib
 
 from build_game_over_review import ASSETS, ROOT
 
@@ -50,12 +51,28 @@ def effect_programs(path):
     )
 
 
-def build(assembler, amp, bank, song, output):
+LEVEL_MUSIC = {
+    "../tiles/dg/dg0_03.tmx": "terminator.pt3",
+    "../tiles/dg/nurples_z80_main.tmx": "bugs2_2.pt3",
+}
+
+
+def campaign_tracks(directory, manifest):
+    levels = tomllib.loads(manifest.read_text())["levels"]
+    return [directory / LEVEL_MUSIC[level["source"]] for level in levels]
+
+
+def build(assembler, amp, bank, song, output, *, campaign=False):
     pins = json.loads((ROOT / "docs/tasks/MUS-001/samples.json").read_text())
-    pin, = (p for p in pins if p["filename"] == song.name)
-    module = song.read_bytes()
-    if len(module) != pin["bytes"] or sha256(module).hexdigest() != pin["sha256"]:
-        raise ValueError("wrong audition module")
+    tracks = campaign_tracks(song, ROOT / "maps/campaign.toml") if campaign else [song]
+    modules = {}
+    title = song / "01_loadtune.pt3" if campaign else None
+    for track in [*tracks, *([title] if title else [])]:
+        pin, = (p for p in pins if p["filename"] == track.name)
+        module = track.read_bytes()
+        if len(module) != pin["bytes"] or sha256(module).hexdigest() != pin["sha256"]:
+            raise ValueError(f"wrong audition module: {track.name}")
+        modules[track.name] = module
     with TemporaryDirectory(prefix="mus001-") as temporary:
         src = Path(temporary) / "asm"
         shutil.copytree(ROOT / "src/asm", src)
@@ -69,7 +86,17 @@ def build(assembler, amp, bank, song, output):
         for name in ("libsupport.asm", "pt3play.asm", "pt3tab.inc", "ayvdp.asm"):
             (src / name).write_bytes(subprocess.check_output(
                 ["git", "-C", amp, "show", f"{AMP}:lib/{name}"]))
-        (src / "terminator.pt3").write_bytes(module)
+        # Emit one private copy per distinct track, in campaign manifest order.
+        labels = {name: f"mus_track_{i}" for i, name in enumerate(modules)}
+        for name, data in modules.items():
+            (src / name).write_bytes(data)
+        table = ("mus_tracks:\n" + "".join(f"    dl {labels[t.name]}\n" for t in tracks)
+                 if campaign else "")
+        title_alias = f"mus_loadtune: equ {labels[title.name]}\n" if title else ""
+        (src / "mus_tracks.inc").write_text(table + "mus_song:\n" + "".join(
+            f'{labels[name]}:\n    incbin "{name}"\n' for name in modules) + "mus_song_end:\n" + title_alias)
+        (src / "mus_config.inc").write_text(f"mus_campaign: equ {int(campaign)}\n"
+                                            f"mus_level_count: equ {len(tracks)}\n")
         (src / "mus_fx.inc").write_text(effect_programs(bank))
         shutil.copyfile(ROOT / "tests/asm/pt3_review.inc", src / "pt3_review.inc")
         main = src / "nurples.asm"
@@ -84,10 +111,20 @@ def build(assembler, amp, bank, song, output):
         # Use only successful laser allocations and the single finale transition.
         inject(src / "player_laser.inc", "    ld (ix+sprite_yvel),hl\n    ret\n; end player_spawn_laser",
                "    ld (ix+sprite_yvel),hl\n    ld a,1\n    ld (mus_laser),a\n    ret\n; end player_spawn_laser")
+        blast = "    call mus_queue_blast\n" if campaign else "    ld a,1\n    ld (mus_blast),a\n"
         inject(src / "player_state.inc", "    ld a,player_dying_phase_finale\n",
-               "    ld a,1\n    ld (mus_blast),a\n    ld a,player_dying_phase_finale\n")
+               blast + "    ld a,player_dying_phase_finale\n")
+        if campaign:
+            # Destructive air collisions and ground kills converge here.
+            # Initial crater placement, retreat and decorative debris do not.
+            for filename, label in (("explosion.inc", "spawn_explosion"),
+                                    ("tile_crater.inc", "transform_active_tile_to_crater")):
+                inject(src / filename, f"\n{label}:\n", f"\n{label}:\n" + blast)
+            # Shared accepted Start, before the (potentially slow) redraw.
+            inject(src / "presentation_flow_states.inc", "\ngame_start_session:\n",
+                   "\ngame_start_session:\n    call mus_stop\n")
         fixture = assemble()
-        if fixture.count(module) != 1:
+        if any(fixture.count(data) != 1 for data in modules.values()):
             raise ValueError("assembled song did not match the private original exactly once")
         output.mkdir(parents=True, exist_ok=False)
         (output / "nurples.bin").write_bytes(fixture)
@@ -102,7 +139,12 @@ def build(assembler, amp, bank, song, output):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    for flag in ("assembler", "amp", "bank", "song", "output"):
+    for flag in ("assembler", "amp", "bank", "output"):
         parser.add_argument("--" + flag, type=Path, required=True)
+    tracks = parser.add_mutually_exclusive_group(required=True)
+    tracks.add_argument("--song", type=Path, help="R02 single-track audition")
+    tracks.add_argument("--campaign-songs", type=Path, help="private directory of verified modules")
     args = parser.parse_args()
-    build(*(p.resolve() for p in (args.assembler, args.amp, args.bank, args.song, args.output)))
+    build(*(p.resolve() for p in (args.assembler, args.amp, args.bank,
+                                  args.song or args.campaign_songs, args.output)),
+          campaign=args.campaign_songs is not None)

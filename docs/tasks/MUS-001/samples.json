@@ -1,5 +1,20 @@
 [
   {
+    "filename": "01_loadtune.pt3",
+    "title": "LOADTUNE",
+    "authors": ["Spawn"],
+    "format": "PT3",
+    "year": null,
+    "entry_id": 79442,
+    "page": "https://zxart.ee/tune/79442",
+    "original_url": "https://zxart.ee/file/id:79442/filename:Spawn_-_LOADTUNE.pt3",
+    "bytes": 1552,
+    "sha256": "0675a93c1964d1801c582ef6ff6b615a6e1b202ee7adf2881e02491074c5d4f2",
+    "content_type": "application/octet-stream",
+    "license": "not stated in search metadata",
+    "native": true
+  },
+  {
     "filename": "terminator.pt3",
     "title": "Terminator",
     "authors": ["Spawn"],
