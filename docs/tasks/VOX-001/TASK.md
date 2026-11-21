@@ -115,3 +115,38 @@ target gets the existing hollow ping. Each event plays once; leave firing,
 score, destruction visuals and the player's finale untouched. The separate
 tin-roof candidate is not part of this audition. Verify the three-record
 voice bank and event routing. Preserve R02 and production as controls.
+
+R03 freeze: `0aa91f237a16631e2685c93b06e8b195522b4af3`. Verified
+the three voice records independently against their WAVs (FB01–FB03);
+FB00 and its 50,332 sample bytes are absent. The voice bank is 50,376
+bytes smaller. The original signed welcome file still matches its R01 hash.
+Checked compiled conditional Game Over entry, ship-hit blast, air-kill
+ping and crater gating. The ordinary control binary still matches R03
+campaign music. Isolated audition binary SHA-256:
+`a607169c4431b54b0c34b28cb6e4ba827fc9aa7198d4cb21e9af1fc1c1d0457e`.
+Read back all staged guest payloads on Oryx; the R03 FAE profile is
+`~/Agon/mystuff/nurples/.emulator/vox001-announcer-fae-r03`. No emulator
+or hardware was launched. R02 checkout 584 released after Smith's feedback
+and fresh empty-host proof, Flexe notified, R03 queued as `794792370f33`.
+Oryx checkout **587** granted for R03 after a fresh idle inspection.
+Verified ownership, runtime/firmware manifests, staged card hash and
+load-only autoexec. Left FAE stopped for Smith to launch. Await listening
+verdict and closure before handback. Rally's standalone FAE tin-roof
+capture remains separate; it is not in this profile.
+
+**R03 FAE listening review — PASS, 2026-11-21.** Smith confirmed an
+explosion when his ship was hit, a ping when his shot destroyed a target,
+and no welcome announcement. He reported FAE closed. Game Over and the two
+shield warnings were not individually reported in this run. This is an
+audition verdict, not a production promotion.
+
+Oryx checkout 587 was released at 18:48:39 Eastern after a fresh
+whole-host inspection found no emulator processes. No request was waiting.
+
+**Production rollback contract.** Smith approved promoting the R03 audition
+and publishing a critical rollback commit on `dev`. Preserve byte identity
+for the executable and the complete runtime bundle, including the three-cue
+voice bank. Make the normal build and deployment manifests reproduce it from
+the committed inputs plus the existing private PT3s. Do not publish music or
+music-bearing executables, add welcome to the app, change the Console8 card
+or move `main`.

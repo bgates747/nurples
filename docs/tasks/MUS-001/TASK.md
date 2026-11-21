@@ -310,3 +310,12 @@ in 15,436 statements, including the INCBIN payload hashes. Missing/altered
 song checks and the no-clobber test passed. Pi request `62799b99d53c`
 tracks the separate native rebuild check. No card rewrite or new hardware
 review is needed for the promoted artifact.
+
+**Independent rebuild, 2026-11-21.** Pi generation 1151: the ordinary
+`--assemble` output compared byte-for-byte equal to the accepted Console8
+R03 (`c18f8afb1043f46fbe2dd54faf78514cb9f15d3fa639d9ef7db49ccb28bb570c`).
+The host suite ran 230 tests (one failure, one error, one skip): the isolated
+presentation fixture does not define `mus_campaign`, and the assembly-safety
+test tried to read the native symbol file as UTF-8. These need follow-up;
+neither was a mismatch in the ordinary binary. Logs are in
+`.build/mus001-production-verify-1151/`. Released the compiler slot to Rally.
