@@ -5,6 +5,8 @@ decisions are recorded in the dated development log.
 
 - [ ] **MUS-001 — Audition single-chip PT3 music on the game's VBlank clock.**
   [Both tunes passed FAE playback, half-volume mix and rapid-fire laser review; frame cadence remains unmeasured](docs/tasks/MUS-001/TASK.md).
+  Current fixture work: per-level music, LOADTUNE during the start and Game
+  Over prompts, and retriggered explosions for destroyed targets.
 
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).

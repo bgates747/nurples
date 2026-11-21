@@ -195,3 +195,43 @@ and lifecycle boundaries, and both embedded modules against the private
 manifest. Do not stage another emulator, promote to production, or publish
 the songs or binaries containing them. Recover the reviewed R02 from this
 checkpoint and the ignored private inputs.
+
+R03 local result (contract `2622e324948c5be839f0f5c3c31e2066b36f13c5`):
+the fixture builder now also accepts `--campaign-songs .build/mus001/audition`
+instead of `--song FILE`. It resolves the tracks from campaign TMX identities
+in manifest order and checks both private input hashes. Ordinary assembly
+and both R02 single-song modes reproduced their previous binaries byte for
+byte. The combined 65,296-byte executable is local and ignored:
+`.build/mus001-r03/campaign/nurples.bin`, SHA-256
+`91ec4e9757c1535a04fa62f754802e63c472e60494bf2550767642028c0e8b1e`.
+Assembled-code checks covered the bounded two-entry lookup, exact track
+bytes, warp's music-only mute and effects dispatch, and restart after the
+map changes without waiting for another player spawn. Not yet playtested or
+staged. The listening check is level completion → warp with laser sound →
+arrival with Bugs2 2, then Terminator on campaign wraparound.
+
+## R03 amendment — target explosions and presentation music
+
+Smith requested both additions in the same private per-level fixture.
+
+- MUS-001-05 [ ] Retrigger the accepted two-voice explosion from the top
+  for **each** destroyed ground or air target, not once for clearing the
+  whole screen. Cover the existing destruction paths whether or not the
+  visual explosion pool has space. Do not trigger for a pad launch, retreat,
+  offscreen despawn, existing crater animation, or each particle of one
+  explosion. Keep the player finale, laser, mix and channel assignments.
+  Check distinct kills even within a single frame.
+
+- MUS-001-06 [ ] Start Spawn's LOADTUNE from its beginning at the first
+  post-load controller prompt. Continue uninterrupted through controller
+  selection and attract while waiting for the accepted start input. Stop it
+  when Start is accepted, before session setup/swoop. On Game Over switch
+  back to LOADTUNE from the beginning; do not restart it each waiting frame.
+  Stop it on accepted restart before the new game begins. Preserve the
+  opening level's control-handoff start, per-level tunes and music-free
+  between-level warp. Exit must silence owned audio from either prompt.
+
+Check the private LOADTUNE original against Jukebox's metadata; retain only
+provenance and hashes in Git. Verify assembled triggers, music transitions
+and private inputs; leave R02 and production unchanged. Hardware and a new
+FAE deployment are outside this local implementation tranche.
