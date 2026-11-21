@@ -3,6 +3,7 @@
     assume adl=1
     org 040000h
     jp fixture_start
+    include "../../src/asm/mus_config.inc"
 
 STATE_NEW_EVENT_START: equ 1
 STATE_NEW_NEW_GAME: equ 2

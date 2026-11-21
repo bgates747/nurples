@@ -1,9 +1,11 @@
 from pathlib import Path
 import struct
+import tomllib
 from tempfile import TemporaryDirectory
 import unittest
 
 from nurples_tools.agnb import ImageRecord, build_container
+from nurples_tools.announcer import audio_container
 from nurples_tools.agnb_verify import parse_images, verify_container
 from nurples_tools.current_assets import (
     build_catalogs,
@@ -19,6 +21,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class AgnbContainerTests(unittest.TestCase):
+    def test_production_bundle_carries_the_reviewed_three_cue_bank(self):
+        samples = PROJECT_ROOT / "assets/announcer"
+        self.assertEqual({p.stem for p in samples.glob("*.wav")},
+                         {"game_over", "shields_depleted", "shields_critical"})
+        self.assertEqual(audio_container(samples), (PROJECT_ROOT / "tgt/voice.agnb").read_bytes())
+        bundles = tomllib.loads((PROJECT_ROOT / "deploy.toml").read_text())["bundles"]
+        for name in ("nurples", "nurples-runtime"):
+            self.assertIn("voice.agnb", bundles[name]["files"])
+            self.assertIn("voice.agnb", bundles[name]["require"])
+        self.assertNotIn("voice.agnb", bundles["map-tests"]["files"])
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.catalogs = build_catalogs(PROJECT_ROOT)
@@ -125,6 +138,7 @@ class AgnbContainerTests(unittest.TestCase):
                 "nurples-uart001.bin",
                 "nurples-uart001.symbols",
                 "ui.agnb",
+                "voice.agnb",
             },
         )
         self.assertFalse(list((PROJECT_ROOT / "tgt").rglob("*.rgba2")))

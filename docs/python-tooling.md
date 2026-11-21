@@ -66,6 +66,19 @@ or launch an emulator.
 
 ### Production soundtrack
 
+The VOX-001 rollback build ships `tgt/voice.agnb` alongside the image banks.
+The three WAVs in `assets/announcer/` are the reviewed inputs; rebuilding is
+offline, with no TTS request and no welcome clip. The AGNB 0.2 writer is in
+the canonical agon-utils checkout (override its path with `AGON_UTILS_ROOT`).
+The hollow scoring ping is a 105-byte VDP command sequence in
+`src/asm/audio/hull.vdu`; it has no external soundboard build dependency.
+
+At the production rollback commit, supply the three private PT3s as below,
+run `--all`, then run
+`.venv/bin/python build/scripts/verify_vox001_rollback.py`. All five guest files
+must match the hashes of the FAE-accepted R03. That verifier identifies this
+specific checkpoint, not every future intentional game change.
+
 `--assemble` and `--all` require private copies of `terminator.pt3`,
 `bugs2_2.pt3` and `01_loadtune.pt3`. Set `NURPLES_MUSIC_DIR` to their
 directory, or put them in the ignored `.build/mus001/audition/`. The build

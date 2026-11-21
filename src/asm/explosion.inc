@@ -29,8 +29,9 @@ explosion_defaults:
 
 spawn_explosion:
     .if mus_campaign
-    call mus_queue_blast
+    call vox_queue_ping
     .endif
+vox_contact_explosion:
     ld hl,explosion_defaults
     ld ix,explosions_base
     ld b,explosions_max

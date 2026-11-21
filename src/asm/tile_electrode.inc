@@ -39,7 +39,11 @@ move_electrode:
     call check_enemy_collision_player
     jp nz,@laser ; no collision so check laser collision    
     call update_shields
+    .if mus_campaign
+    jp vox_contact_electrode
+    .else
     jp kill_electrode
+    .endif
 @laser:
     call check_enemy_collision_laser
     ret nz ; no collision so we're done

@@ -7,9 +7,9 @@ expected_sd_label = "AGON"
 [bundles.nurples]
 collection = "apps"
 source = "tgt"
-files = ["nurples.bin", "nurples.symbols", "game.agnb", "ui.agnb", "fonts"]
+files = ["nurples.bin", "nurples.symbols", "game.agnb", "ui.agnb", "voice.agnb", "fonts"]
 destination = "mystuff/nurples-dev/apps/nurples"
-require = ["nurples.bin", "game.agnb", "ui.agnb"]
+require = ["nurples.bin", "game.agnb", "ui.agnb", "voice.agnb"]
 entry = "nurples.bin"
 
 [bundles.map-tests]
@@ -24,7 +24,7 @@ entry = "nurples-map-tests.bin"
 [bundles.nurples-runtime]
 collection = "apps"
 source = "tgt"
-files = ["nurples.bin", "game.agnb", "ui.agnb", "fonts/Lat38-VGA8_8x8.font"]
+files = ["nurples.bin", "game.agnb", "ui.agnb", "voice.agnb", "fonts/Lat38-VGA8_8x8.font"]
 destination = "mystuff/nurples"
-require = ["nurples.bin", "game.agnb", "ui.agnb", "fonts/Lat38-VGA8_8x8.font"]
+require = ["nurples.bin", "game.agnb", "ui.agnb", "voice.agnb", "fonts/Lat38-VGA8_8x8.font"]
 entry = "nurples.bin"

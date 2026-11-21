@@ -31,6 +31,9 @@ update_shields:
     jp p,@have_shields
     xor a ; set to zero
 @have_shields:
+    .if mus_campaign
+    call vox_contact
+    .endif
     ld (player_shields),a
     or a ; check for zero
     jp z,kill_player

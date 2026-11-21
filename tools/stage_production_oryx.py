@@ -32,6 +32,7 @@ FIXED_FILES = (
     "nurples.symbols",
     "game.agnb",
     "ui.agnb",
+    "voice.agnb",
 )
 AUTOEXEC = (
     b"SET KEYBOARD 1\r\n"

@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+from nurples_tools.announcer import audio_container
 from nurples_tools.campaign_audio import prepare_audio, verify_audio
 from nurples_tools.current_assets import check_current_assets, write_current_assets
 from nurples_tools.fonts import build_fonts, check_fonts
@@ -23,6 +24,9 @@ CAMPAIGN_MANIFEST = PROJECT_ROOT / "maps/campaign.toml"
 
 
 def build_assets() -> None:
+    bank = audio_container(PROJECT_ROOT / "assets/announcer")
+    TARGET_DIR.mkdir(parents=True, exist_ok=True)
+    (TARGET_DIR / "voice.agnb").write_bytes(bank)
     for output in write_lode_font(PROJECT_ROOT):
         print(f"Generated {output.relative_to(PROJECT_ROOT)}")
     build_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST)
@@ -34,6 +38,9 @@ def build_assets() -> None:
 
 def check_assets() -> None:
     differences = check_lode_font(PROJECT_ROOT)
+    voice = TARGET_DIR / "voice.agnb"
+    if not voice.is_file() or voice.read_bytes() != audio_container(PROJECT_ROOT / "assets/announcer"):
+        differences.append("tgt/voice.agnb differs from the approved announcer WAVs")
     differences.extend(check_fonts(FONT_SOURCE, FONT_TARGET, FONT_MANIFEST))
     differences.extend(check_current_assets(PROJECT_ROOT))
     differences.extend(check_map_include(CAMPAIGN_MANIFEST))

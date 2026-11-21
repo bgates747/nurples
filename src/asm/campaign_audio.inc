@@ -11,6 +11,9 @@ mus_blast: db 0
 mus_ticks: dl 0
 
 mus_process_init:
+    .if mus_campaign
+    call vox_reset
+    .endif
     xor a
     .if mus_campaign
     ld (mus_in_warp),a
@@ -172,6 +175,9 @@ mus_tick:
     inc hl
     ld (mus_ticks),hl
 mus_effects:
+    .if mus_campaign
+    call vox_frame
+    .endif
     ld a,(mus_laser)
     or a
     jr z,@blast
@@ -215,6 +221,7 @@ mus_queue_blast:
     ret
 
 mus_audio_open:
+    call vox_open
     call ay_init
     ld hl,ay_amptab2
     ld (ay_amps),hl
@@ -235,6 +242,11 @@ mus_presentation:
 @replace:
     call ay_reset ; silence departing music, not combat effect channels
 @load:
+    ld hl,(game_state)
+    ld de,game_over
+    or a
+    sbc hl,de
+    call z,vox_game_over
     ld hl,mus_loadtune
     call pt3_init
     ld hl,0
@@ -251,6 +263,9 @@ mus_stop:
     ld a,(mus_active)
     or a
     ret z
+    .if mus_campaign
+    call vox_close
+    .endif
     call ay_shutdown
     ld hl,mus_fx_stop
     ld bc,mus_fx_stop_end-mus_fx_stop
@@ -262,4 +277,7 @@ mus_stop:
     include "audio/agonAMP/pt3tab.inc"
     include "audio/agonAMP/ayvdp.asm"
     include "audio/mus_fx.inc"
+    .if mus_campaign
+    include "announcer.inc"
+    .endif
     include "mus_tracks.inc"

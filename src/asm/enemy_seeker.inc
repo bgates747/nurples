@@ -230,7 +230,7 @@ move_enemy_seeker_laser:
     jp spawn_explosion
 move_enemy_seeker_player:
     call update_shields
-    jp spawn_explosion
+    jp vox_contact_explosion
 ; end move_enemy_seeker
 
 seeker_draw_heading:

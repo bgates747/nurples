@@ -29,10 +29,12 @@ def block(source: str, label: str, next_label: str) -> str:
 
 def read_symbol_addresses(path: Path) -> dict[str, int]:
     addresses: dict[str, int] = {}
-    for line in path.read_text().splitlines():
-        match = re.fullmatch(r"([^ ]+) \$([0-9A-Fa-f]+)", line)
+    # The native assembler also emits internal, non-ASCII local symbol names.
+    # Parse only the public ASCII records; do not decode the entire file.
+    for line in path.read_bytes().splitlines():
+        match = re.fullmatch(rb"([!-~]+) \$([0-9A-Fa-f]+)", line)
         if match is not None:
-            addresses[match.group(1)] = int(match.group(2), 16)
+            addresses[match.group(1).decode("ascii")] = int(match.group(2), 16)
     return addresses
 
 

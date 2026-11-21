@@ -91,7 +91,7 @@ move_enemy_fireball:
     call check_enemy_collision_player
     jp nz,@animate ; no collision so do animation
     call update_shields
-    jp spawn_explosion
+    jp vox_contact_explosion
 @animate:
 ; check the animation timer
     dec (iy+sprite_animation_timer)

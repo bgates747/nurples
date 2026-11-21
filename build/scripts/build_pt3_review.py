@@ -62,12 +62,13 @@ def build(assembler, amp, bank, song, output, *, campaign=False):
         output.mkdir(parents=True, exist_ok=False)
         (output / "nurples.bin").write_bytes(fixture)
         shutil.copyfile(src / "nurples.symbols", output / "nurples.symbols")
-        for name in ASSETS:
+        assets = (*ASSETS, "voice.agnb") if campaign else ASSETS
+        for name in assets:
             (output / name).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / "tgt" / name, output / name)
         (output / "SHA256SUMS").write_text("".join(
             f"{sha256((output / n).read_bytes()).hexdigest()}  {n}\n"
-            for n in ("nurples.bin", "nurples.symbols", *ASSETS)))
+            for n in ("nurples.bin", "nurples.symbols", *assets)))
 
 
 if __name__ == "__main__":

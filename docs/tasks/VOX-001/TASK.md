@@ -46,12 +46,12 @@ only “Shields critical.”
   downward band changes, not a per-frame color test. Check threshold equality,
   repeated hits within a band, a direct green-to-red hit, healing and respawn.
 
-- VOX-001-04 [ ] In an isolated audition build, play welcome and Game Over
+- VOX-001-04 [x] In an isolated audition build, play welcome and Game Over
   once per entry and use a voice channel distinct from music and combat SFX.
   A critical warning must not wait behind a stale depleted warning. Verify
   clean stop on exit and no loss of music or laser/explosion audio.
 
-- VOX-001-05 [ ] Smith reviews pronunciation, intelligibility, timing and
+- VOX-001-05 [x] Smith reviews pronunciation, intelligibility, timing and
   balance. Stop before production promotion, card deployment or changing
   the Oryx alert service. No emulator slot is needed to hear the WAV previews.
 
@@ -150,3 +150,14 @@ voice bank. Make the normal build and deployment manifests reproduce it from
 the committed inputs plus the existing private PT3s. Do not publish music or
 music-bearing executables, add welcome to the app, change the Console8 card
 or move `main`.
+
+**Production result:** the normal `--all` build reproduced all five accepted
+guest files byte-for-byte. R02's welcome was deliberately retired in R03,
+not lost; its original remains in the private R01 audition files. R03's
+listening verdict above is the scope of the human acceptance. The committed
+WAVs, hull command bytes, normal assembly hooks, voice-bank builder and both
+production deployment manifests are the rollback inputs, together with the
+private PT3s documented in MUS-001. See the [rebuild and verification
+instructions](../../python-tooling.md#production-soundtrack). No new card
+deployment or emulator run. The two previously recorded host-test issues
+were corrected in their diagnostic fixtures, without changing game bytes.

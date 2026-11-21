@@ -1,4 +1,4 @@
-; VOX-001 isolated campaign audition. Music owns 0-4, laser/blast 5-7,
+; VOX-001 campaign audio. Music owns 0-4, laser/blast 5-7,
 ; hollow scoring ping 8-10 and one interruptible speech channel 11.
 vox_filename: db "voice.agnb",0
 vox_pings: dl 0
@@ -126,5 +126,5 @@ vox_frame:
     ld (hl),0
     jp vox_say
 vox_hull:
-    incbin "hull.vdu"
+    incbin "audio/hull.vdu"
 vox_hull_end:

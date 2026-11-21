@@ -73,6 +73,11 @@ game_init:
 ; load all backgrounds, sprites, and active DG tiles from one container
     call load_game_images
     jp nz,@agnb_load_error
+    .if mus_campaign
+    ld de,vox_filename
+    call agnb_load_audio
+    jp nz,@agnb_load_error
+    .endif
 ; Keep the splash visible for the bounded controller choice. Only a valid
 ; choice enters the resident-asset attract state and its fresh start gate.
     ld a,STATE_NEW_EVENT_LOAD_COMPLETE
