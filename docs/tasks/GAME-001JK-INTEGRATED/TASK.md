@@ -93,9 +93,9 @@ death effects, launcher cooldowns, pause, and retouched starfield now
 have Author observations. The current build includes moving attract,
 death/respawn, seeker retreat, turret tracking/search, live warp, and the
 recovered Z80 campaign level. Their presence is not a full acceptance run.
-Top/side-edge death, mid-level respawn with score and map progress kept,
-and the recovered level's hazards and crater
-transforms still need focused coverage. New enemy patterns, attract replay,
+Top/side-edge death and mid-level respawn with score and map progress kept
+still need focused coverage. Smith has accepted the recovered level; no
+separate hazard or crater review remains open. New enemy patterns, attract replay,
 and the Xevious mode are later work.
 
 - JK-INT-006 [ ] **FAE first:** rebuild the seeker-present / frozen review

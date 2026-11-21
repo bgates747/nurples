@@ -698,6 +698,11 @@ hardware-specific transition defect. This does not reopen or add an acceptance
 gate. `GAME-001G` remains open only for its previously stated explicit
 pad/turret/crater confirmation or an Author waiver of that line.
 
+**November 21 — GAME-001G accepted.** Smith confirmed the recovered level
+works and described it as “really hard.” That closes the level review,
+including the outstanding pad/turret/crater sign-off. Difficulty is
+playtest feedback, not a request to rebalance the map.
+
 ## 14. Turret slew and fireball directional-rendering defect
 
 The Author reported that the projectiles fired by the historically misnamed
