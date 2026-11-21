@@ -121,6 +121,9 @@ decisions are recorded in the dated development log.
     the actor to `player_alive`. A mid-level death must not restore
     `player_score` from `player_starting_score`.
 
+  - [ ] **GAME-001E-DEATH-KEY — On-demand death fixture for safe respawn.**
+    [Task and FAE acceptance cases](docs/tasks/GAME-001E-DEATH-KEY/TASK.md).
+
   - [ ] **GAME-001E-START-WARP — Opening starfield speed profile:** start at
     normal speed, accelerate to fast scroll, then slow down before admitting
     terrain. [Task and timing decision](docs/tasks/GAME-001E-START-WARP/TASK.md).

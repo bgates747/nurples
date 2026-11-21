@@ -397,3 +397,29 @@ Generation 540's existing staged card still carries the two-upload control.
 Smith requested the newer FAE build. Generation 540 was released after a
 fresh host-wide idle check, without modifying the card or recording a visual
 verdict for this control. The waiting TRS-80 owner was notified.
+
+### Console8 combined hardware review — November 20
+
+Smith requested deployment of the accepted FAE build (`dev` at `bf1970a`)
+onto the mounted `AGONC8` SD card on Oryx. The ordinary runtime is at
+`/mystuff/nurples`, using the stable `nurples.bin` filename. The prior
+installed files were backed up off-card before the manifest-driven swap.
+Readback matched the four runtime files, including executable SHA-256
+`90d7fba36dd451a4c3a4ce19bd210907cbe54f63fb39767efd06d8bd4abb6e5c`.
+The existing stock VDP copy and older `nurples-nomode.bin` diagnostic were
+carried through unchanged; neither is part of this release candidate. Root
+firmware and `autoexec.txt` also matched their pre-deploy bytes. The card
+was synced and left mounted. See the [local deployment receipt](../../../.build/console8-bf1970a/deployment-receipt.txt).
+
+At MOS: `CD /mystuff/nurples`, `LOAD nurples.bin &040000`, then `RUN`.
+Check entry from Mode 20 and from another mode, then the Game Over title,
+Continue prompt flicker, and Escape back to MOS. An off-centre respawn is
+a useful additional check if it occurs. No firmware was flashed or game
+run by Nurples; await Smith's observation.
+
+**Console8 Game Over visual PASS.** Smith reported that the intended
+flashing looked good, with no scanout errors or unintended flicker. This
+passes the Game Over overlay on `bf1970a` with the bitmap title and unchanged
+hardware-sprite Continue prompt. The earlier visible-period flicker did not
+recur in this run. Mode-specific startup, return to MOS, and off-centre
+respawn were not reported separately.
