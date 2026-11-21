@@ -3,6 +3,9 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **MUS-001 — Audition single-chip PT3 music on the game's VBlank clock.**
+  [Approved private FAE audition](docs/tasks/MUS-001/TASK.md).
+
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).
 
