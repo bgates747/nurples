@@ -42,7 +42,7 @@ only “Shields critical.”
   clip checksums and playback settings. Keep experimental audio local until
   publication is decided; no online dependency at game runtime.
 
-- VOX-001-03 [ ] Trace the shield update and HUD band selection. Hook genuine
+- VOX-001-03 [x] Trace the shield update and HUD band selection. Hook genuine
   downward band changes, not a per-frame color test. Check threshold equality,
   repeated hits within a band, a direct green-to-red hit, healing and respawn.
 
@@ -86,3 +86,32 @@ Use separate speech and impact channels. Retain the R01 samples unchanged
 and compare the fixture against the ordinary campaign. Stage a stopped FAE
 profile on Oryx with RC3 MOS and stock VDP and give Smith the launch command.
 No Console8 change or production promotion before listening review.
+
+R02 freeze: `6179692636d8aeee67f7abbd7f0fff4e5f6cdb0c`. Built with the
+ordinary private campaign as a byte-matched control. Startup loads four
+AGNB 0.2 audio records once. Each decoded PCM payload matched its approved
+WAV; named buffers FB00–FB03 play at 16,384 Hz on channel 11. The verified
+hollow hull patch plays on 8–10 at registered seeker, fireball, electrode
+and lightning contacts. Contact destruction retains its visual result
+without a duplicate blast; laser kills and the player finale retain the
+ordinary blast. All 12,675 combinations of old/new shield values (0–64)
+and pending warning (none/yellow/red) passed the compiled branch check.
+
+Pi compilation released. Oryx checkout **584** held for Smith's listening
+review. FAE profile `~/Agon/mystuff/nurples/.emulator/vox001-announcer-fae-r02`
+is staged and stopped. Pinned FAE/stock VDP/RC3 MOS verified; every guest
+payload read back identically, including `voice.agnb`. Audition executable
+SHA-256 `c8923ea258d58956995bec847d2a179e5eb1893b49eae1809cb2917c57294c94`.
+No production install changed. Pending: Smith's actual listening/mix and
+exit verdict; release Oryx after he closes FAE.
+
+## R03 — omit welcome; swap the two existing gameplay cues
+
+Smith revised the audition mix: keep the welcome recording in the original
+R01 sample set, but do not package, load or play it. LOADTUNE still plays.
+Keep Game Over and the two downward shield warnings. Enemy contact with the
+ship gets the existing explosion; a player laser destroying an air or ground
+target gets the existing hollow ping. Each event plays once; leave firing,
+score, destruction visuals and the player's finale untouched. The separate
+tin-roof candidate is not part of this audition. Verify the three-record
+voice bank and event routing. Preserve R02 and production as controls.
