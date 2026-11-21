@@ -29,14 +29,16 @@ def build(assembler: Path, output: Path) -> None:
                            cwd=source, check=True)
             return (source / "n.bin").read_bytes()
 
-        if assemble() != (ROOT / "tgt/nurples.bin").read_bytes():
-            raise RuntimeError("ordinary assembly does not match tgt/nurples.bin")
+        # The D-key fixture is intentionally independent of private campaign music.
+        control = assemble()
         redirect(source, "player_shields.inc", "update_shields", "ordinary_update_shields")
         redirect(source, "game_pause.inc", "game_pause_poll", "ordinary_pause_poll")
         with (source / "game_pause.inc").open("a") as stream:
             stream.write('\n    include "respawn_death_review.inc"\n')
         shutil.copyfile(ROOT / "tests/asm/respawn_death_review.inc", source / "respawn_death_review.inc")
         fixture = assemble()
+        if fixture == control:
+            raise RuntimeError("D-key hooks did not change the ordinary song-free assembly")
         output.mkdir(parents=True, exist_ok=False)
         (output / "nurples.bin").write_bytes(fixture)
         shutil.copyfile(source / "nurples.symbols", output / "nurples.symbols")

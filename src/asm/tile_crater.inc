@@ -28,6 +28,9 @@ activate_crater:
 
 ; Replace an existing active tile without allocating or changing its position.
 transform_active_tile_to_crater:
+    .if mus_campaign
+    call mus_queue_blast
+    .endif
     ld hl,crater_defaults
     jp spawn_active_tile_from_tile
 ; end transform_active_tile_to_crater

@@ -5,8 +5,10 @@ decisions are recorded in the dated development log.
 
 - [ ] **MUS-001 — Audition single-chip PT3 music on the game's VBlank clock.**
   [Both tunes passed FAE playback, half-volume mix and rapid-fire laser review; frame cadence remains unmeasured](docs/tasks/MUS-001/TASK.md).
-  R03 campaign listening review passed: LOADTUNE at start and Game Over,
-  level music handoff across warp, and explosions on ground and air kills.
+  R03 campaign audio accepted on FAE and Console8 and selected for production:
+  LOADTUNE at start and Game Over, level music handoff across warp, and
+  explosions on ground and air kills. The remaining clock measurement is
+  separate from the accepted gameplay and mix.
 
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).

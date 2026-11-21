@@ -617,6 +617,13 @@ player_dying:
     ret c
     xor a
     ld (player_dying_timer),a
+    .if mus_campaign
+    call mus_queue_blast
+    .endif
+    .if mus_single
+    ld a,1
+    ld (mus_blast),a
+    .endif
     ld a,player_dying_phase_finale
     ld (player_dying_phase),a
     ret

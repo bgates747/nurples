@@ -27,6 +27,7 @@ exit:
 
 ; API INCLUDES
     include "mos_api.inc"
+    include "mus_config.inc"
     include "macros.inc"
     include "functions.inc"
     include "arith24.inc"

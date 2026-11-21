@@ -126,6 +126,10 @@ player_spawn_laser:
 ; set laser velocity
     ld hl,-laser_speed
     ld (ix+sprite_yvel),hl
+    .if mus_enabled
+    ld a,1
+    ld (mus_laser),a
+    .endif
     ret
 ; end player_spawn_laser
 

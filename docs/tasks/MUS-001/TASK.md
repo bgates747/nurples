@@ -1,5 +1,10 @@
 # MUS-001 — Audition tracker music in the Nurples game loop
 
+**Current decision:** R03 passed on FAE and Console8. Smith approved its
+campaign audio for the ordinary game on `dev`, with private tunes and
+executables kept out of Git. The original experiment and subsequent review
+records below are chronological; the initial fixture-only limit is historical.
+
 Find out whether a single-chip PT3 tune sounds right alongside game effects
 without making play less responsive. The first experiment uses the existing
 frame clock, not a new interrupt. Smith approved one private FAE audition
@@ -294,3 +299,14 @@ hardware deployment or firmware change. Keep all three PT3s and all binaries
 containing them out of Git. Preserve the ordinary local `tgt/nurples.bin`
 filename. Verify a clean assembly byte-for-byte against the hardware-approved
 R03 above, and check the outgoing Git content before publishing.
+
+**Production integration.** The normal orchestrator now stages the private
+inputs; the music, pause, exit and kill hooks are in the game source, not
+injected by the review script. The three unmodified song modules remain local.
+The executable, symbols, both containers and font in `tgt/` were promoted
+from or matched against the accepted R03 package (all five hashes passed).
+The normal game's expanded campaign assembly matched the original R03 recipe
+in 15,436 statements, including the INCBIN payload hashes. Missing/altered
+song checks and the no-clobber test passed. Pi request `62799b99d53c`
+tracks the separate native rebuild check. No card rewrite or new hardware
+review is needed for the promoted artifact.

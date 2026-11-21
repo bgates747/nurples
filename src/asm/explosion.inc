@@ -28,6 +28,9 @@ explosion_defaults:
     db 0                    ; frame
 
 spawn_explosion:
+    .if mus_campaign
+    call mus_queue_blast
+    .endif
     ld hl,explosion_defaults
     ld ix,explosions_base
     ld b,explosions_max

@@ -1,47 +1,11 @@
 import subprocess
-import sys
 import os
 import shutil
 import argparse
 
 def run_ez80asm():
-    try:
-        # Store the current working directory
-        original_dir = os.getcwd()
-
-        # Define the directory containing the .asm file
-        asm_directory = "src/asm"
-        asm_file = "nurples.asm"
-        output_file = "../../tgt/nurples.bin"
-
-        # Change working directory to the directory containing the .asm file
-        os.chdir(asm_directory)
-
-        # Define the command with relative paths from the new working directory
-        command = [
-            "ez80asm",
-            "-l",              # Option to generate listing file
-            asm_file,          # Input assembly file
-            output_file        # Output binary file (relative path from the new directory)
-        ]
-
-        # Execute the command
-        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        # Print the output
-        print(result.stdout.decode())
-        
-    except subprocess.CalledProcessError as e:
-        # Print the error message if the command fails
-        print(f"Command failed with error: {e.stderr.decode()}")
-        sys.exit(1)
-    except Exception as e:
-        # Handle other exceptions (e.g., if directory change fails)
-        print(f"An error occurred: {e}")
-        sys.exit(1)
-    finally:
-        # Restore the original working directory
-        os.chdir(original_dir)
+    from build_00_all_the_things import assemble
+    assemble()
 
 def copy_to_sdcard():
     try:

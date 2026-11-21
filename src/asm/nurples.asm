@@ -28,6 +28,7 @@ exit:
 ; API INCLUDES
     include "game_over_review_config.inc"
     include "mos_api.inc"
+    include "mus_config.inc"
     include "macros.inc"
     include "functions.inc"
     include "arith24.inc"
@@ -115,6 +116,9 @@ main:
 ; resident process state. MOS RUN does not reload initialized data.
     call telemetry_init
     call runtime_process_init
+    .if mus_enabled
+    call mus_process_init
+    .endif
 ; Capture the caller's display mode exactly once, before game_init changes VDP
 ; state. In-process restarts must not replace this with the gameplay mode.
     call vdu_get_screen_mode
@@ -143,6 +147,9 @@ main:
 main_loop:
 ; Freeze before the clock and state dispatch. VBlank/ESC still run below.
     call game_pause_poll
+    .if mus_enabled
+    call mus_pause_edge
+    .endif
     jp c,@wait_frame
 ; update the global timestamp
     call timestamp_tick
@@ -154,6 +161,9 @@ main_loop:
     ld a,(game_exit_requested)
     or a
     jp nz,@state_exit
+    .if mus_enabled
+    call mus_frame
+    .endif
 ; Production pacing: one vblank. Two-vblank review lives in /test/nurples.
 @wait_frame:
     call vdu_vblank
@@ -186,6 +196,9 @@ main_loop:
     jp main_end
 
 main_end:
+    .if mus_enabled
+    call mus_stop
+    .endif
 ; Release application-owned VDP state. Select the permanent system font before
 ; deleting the custom-font buffer, and detach sprites before their bitmaps.
     call presentation_flow_shutdown
@@ -233,4 +246,5 @@ main_end:
 ; end main
 
 ; needs to be the final include to leave room for the sprite and tile tables
+    include "mus_payload.inc"
     include "tables.inc"

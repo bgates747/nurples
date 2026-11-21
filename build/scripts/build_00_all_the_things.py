@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+from nurples_tools.campaign_audio import prepare_audio, verify_audio
 from nurples_tools.current_assets import check_current_assets, write_current_assets
 from nurples_tools.fonts import build_fonts, check_fonts
 from nurples_tools.lode_font import check_lode_font, write_lode_font
@@ -49,6 +50,7 @@ def assemble() -> None:
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
+        modules = prepare_audio(PROJECT_ROOT, staged_asm)
         staged_binary = staged_asm / "nurples.bin"
         staged_symbols = staged_asm / "nurples.symbols"
         staged_binary.unlink(missing_ok=True)
@@ -60,6 +62,7 @@ def assemble() -> None:
         )
         if not staged_binary.is_file() or not staged_symbols.is_file():
             raise RuntimeError("assembly did not produce a binary/symbol pair")
+        verify_audio(staged_binary.read_bytes(), modules)
         for staged, destination in (
             (staged_binary, TARGET_DIR / "nurples.bin"),
             (staged_symbols, TARGET_DIR / "nurples.symbols"),

@@ -111,8 +111,12 @@ class AgnbContainerTests(unittest.TestCase):
             for path in (PROJECT_ROOT / "tgt").rglob("*")
             if path.is_file()
         }
+        # A fresh checkout has no private music build; after assembly both
+        # output files must be present, never an orphaned binary or symbols.
+        private_pair = {"nurples.bin", "nurples.symbols"}
+        self.assertIn(files & private_pair, (set(), private_pair))
         self.assertEqual(
-            files,
+            files - private_pair,
             {
                 "fonts/Lat38-VGA8_8x8.font",
                 "game.agnb",
@@ -120,8 +124,6 @@ class AgnbContainerTests(unittest.TestCase):
                 "nurples-map-tests.symbols",
                 "nurples-uart001.bin",
                 "nurples-uart001.symbols",
-                "nurples.bin",
-                "nurples.symbols",
                 "ui.agnb",
             },
         )

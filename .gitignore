@@ -4,6 +4,11 @@
 
 # Local build, deployment staging, and test evidence (not source or tgt/).
 /.build/
+# Local production includes privately supplied PT3 music. Never publish it.
+*.[pP][tT]3
+/tgt/nurples.bin
+/tgt/nurples.symbols
+/src/asm/nurples.bin
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

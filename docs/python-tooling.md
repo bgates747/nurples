@@ -64,6 +64,24 @@ conversion, decoded PNG previews, generated metadata, every packed payload and
 the campaign include without writing. The orchestrator does not deploy files
 or launch an emulator.
 
+### Production soundtrack
+
+`--assemble` and `--all` require private copies of `terminator.pt3`,
+`bugs2_2.pt3` and `01_loadtune.pt3`. Set `NURPLES_MUSIC_DIR` to their
+directory, or put them in the ignored `.build/mus001/audition/`. The build
+checks lengths and SHA-256 against [the tune manifest](tasks/MUS-001/samples.json)
+before replacing any production output. It does not download music or fall
+back to a silent release. Asset-only operations do not need the songs.
+
+The normal output is still `tgt/nurples.bin`, with matching local symbols.
+Neither output is tracked; do not redistribute an executable, assembly listing
+or card image containing the songs. Standalone diagnostic assembly uses the
+song-free configuration. [Campaign audio](../src/asm/campaign_audio.inc)
+uses Nick J. Date's unmodified agonAMP player sources (commit
+`91ef401bcb7f636e7593ad1ba176508344deebb9`, [license](../src/asm/audio/agonAMP/LICENSE)).
+Laser and explosion patches are from the AgonArcade soundboard; the review
+builder verifies the command bytes against the pinned generator.
+
 ### Cel UI artwork
 
 `build/ui_assets.json` explicitly fixes all 47 UI buffer IDs and runtime

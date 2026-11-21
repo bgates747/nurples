@@ -106,6 +106,9 @@ game_start_config:
 ; resident assets. Failure is terminal for this invocation; silently returning
 ; to game_init would violate the no-reload lifecycle and could loop forever.
 game_start_session:
+    .if mus_campaign
+    call mus_stop
+    .endif
     ld a,PLAYFIELD_CHECK_START
     call game_prepare_playfield
     jp nc,presentation_flow_fail

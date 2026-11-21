@@ -87,7 +87,11 @@ Assemble without deploying or launching an emulator:
 .venv/bin/python build/scripts/build_00_all_the_things.py --assemble
 ```
 
-This publishes a binary-matched `tgt/nurples.symbols` alongside the binary.
+Production assembly requires the three private PT3s listed in
+`docs/tasks/MUS-001/samples.json` (see `docs/python-tooling.md`). The local
+`tgt/nurples.bin` embeds them; never commit or publish that executable, a
+listing containing their bytes, or the tunes. The build writes a matching
+local `tgt/nurples.symbols` alongside the binary.
 The stable runtime observation contract is documented in
 `docs/runtime-telemetry.md`.
 

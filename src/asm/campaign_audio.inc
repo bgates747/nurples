@@ -1,5 +1,4 @@
-; MUS-001 private fixture. Called in the foreground; no timer or ISR.
-    include "mus_config.inc"
+; Campaign audio, called in the foreground; no timer or ISR.
     .if mus_campaign
 mus_in_warp: db 0
 mus_title_active: db 0
@@ -258,9 +257,9 @@ mus_stop:
     rst.lil 18h
     jp mus_process_init
 
-    include "libsupport.asm"
-    include "pt3play.asm"
-    include "pt3tab.inc"
-    include "ayvdp.asm"
-    include "mus_fx.inc"
+    include "audio/agonAMP/libsupport.asm"
+    include "audio/agonAMP/pt3play.asm"
+    include "audio/agonAMP/pt3tab.inc"
+    include "audio/agonAMP/ayvdp.asm"
+    include "audio/mus_fx.inc"
     include "mus_tracks.inc"
