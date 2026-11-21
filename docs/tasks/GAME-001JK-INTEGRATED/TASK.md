@@ -94,7 +94,7 @@ have Author observations. The current build includes moving attract,
 death/respawn, seeker retreat, turret tracking/search, live warp, and the
 recovered Z80 campaign level. Their presence is not a full acceptance run.
 Top/side-edge death, mid-level respawn with score and map progress kept,
-combat during hyperwarp, and the recovered level's hazards and crater
+and the recovered level's hazards and crater
 transforms still need focused coverage. New enemy patterns, attract replay,
 and the Xevious mode are later work.
 
@@ -423,3 +423,10 @@ passes the Game Over overlay on `bf1970a` with the bitmap title and unchanged
 hardware-sprite Continue prompt. The earlier visible-period flicker did not
 recur in this run. Mode-specific startup, return to MOS, and off-centre
 respawn were not reported separately.
+
+### Between-level warp combat — closed, probably working
+
+Smith observed that player laser fire looked correct during warp. Seekers
+retreated, making contact hard to verify; he recalls a likely collision with
+the expected outcome. Enemy fireballs were not separately confirmed. Smith
+closed the combat check on that evidence, not as a full pass of GAME-001F.

@@ -152,6 +152,10 @@ decisions are recorded in the dated development log.
     row-ingestion loop to multiple scanlines per frame. The automated player
     victory flight remains available for another state but is not used here.
 
+    - [x] **Combat during between-level warp — closed, probably working.**
+      Player laser fire looked correct. A seeker collision appeared to have
+      the expected outcome, but was not confirmed. No dedicated retest required.
+
   - [ ] **GAME-001G — Original Z80 campaign level port:** retain the modern
     Agon campaign as level zero and follow it with the recovered original
     Z80 game's 255-row main level. Import only the old level definition and its
