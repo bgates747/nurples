@@ -285,3 +285,12 @@ and app-local stock VDP copy, was backed up off-card before replacement.
 Root firmware files and autoexec were unchanged; no firmware was flashed or
 bundled. The card was synchronized and left mounted.
 [Deployment receipt](../../../.build/console8-r03-7ba955a/deployment-receipt.txt).
+
+**Console8 accepted; production promotion authorized, 2026-11-21.** Smith
+played the installed R03 campaign and approved it for production. Promote
+that exact behavior to the ordinary build on `dev`: same level assignments,
+LOADTUNE, pause/resume, mix, retriggers and kill cues. No new audio design,
+hardware deployment or firmware change. Keep all three PT3s and all binaries
+containing them out of Git. Preserve the ordinary local `tgt/nurples.bin`
+filename. Verify a clean assembly byte-for-byte against the hardware-approved
+R03 above, and check the outgoing Git content before publishing.
