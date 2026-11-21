@@ -71,3 +71,13 @@ A separate 50 Hz timer is a fallback for discussion, not a parallel task.
 Before adopting it, establish timer ownership and audit live alternate
 registers; if used, the interrupt should count pending ticks and leave VDP
 writes to the foreground so audio cannot split a graphics command.
+
+## Approved audition amendment — two tracks, one channel map
+
+Original contract freeze: `c52aad513e7c9185f6d9d4dffd4b4b89d249ee0b`.
+Smith added [Spawn's Bugs2 2](https://zxart.ee/tune/79447) for comparison.
+Keep Terminator as the default load. Stage the second private audition in a
+separate guest directory under the same stopped FAE profile, with the same
+`nurples.bin` filename, engine and game settings. Keep agonAMP unchanged
+on its default channels 0–4. Map the fixture laser to 5 and the two explosion
+voices to 6 and 7. Neither track is cleared for publication.
