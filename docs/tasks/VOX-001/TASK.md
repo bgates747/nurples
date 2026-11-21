@@ -34,7 +34,7 @@ only “Shields critical.”
 
 - VOX-001-01 [x] Freeze the reviewed contract on `dev` before implementation.
 
-- VOX-001-02 [ ] Render all four lines using the reference voice. Provide
+- VOX-001-02 [x] Render all four lines using the reference voice. Provide
   mono PCM in the Agon's supported sample encoding, with an explicit sample
   rate and byte length per clip (target signed 8-bit PCM at 16,384 Hz,
   the stock VDP default). Provide WAV previews made from the **final**
@@ -58,3 +58,31 @@ only “Shields critical.”
 Recovery: the ordinary campaign build and Console8 installation stay intact;
 any audition outputs go in a separate ignored build directory. The Oryx
 alert implementation is a read-only voice reference, not a game dependency.
+
+## R01 — samples ready for listening review
+
+Freeze: `15c7149485611c185e3e6f127495f76a144a405b` on `dev`.
+The [renderer](render_samples.py) used the Oryx alert environment for
+synthesis only. No alert played. FFmpeg converted each response to mono
+signed 8-bit PCM at 16,384 Hz with 2 dB of headroom. The WAVs wrap these
+samples with the unsigned bias required by 8-bit WAV; reversing that bias
+reproduced every raw clip byte for byte.
+
+Local [manifest with clip hashes and playback settings](../../../.build/vox001-announcer-r01/samples.json).
+Welcome: 50,332 bytes; Game Over: 20,447; Shields depleted: 30,671;
+Shields critical: 28,312. The ZIP of raw samples and manifest passed its
+integrity check. No game code changed and no playback on Agon hardware
+is claimed. Next: Smith listens to the four WAVs before any integration.
+
+## R02 — full-game FAE listening audition, approved 2026-11-21
+
+Smith accepted the voice and authorized the four cues above in a private
+campaign build. Add the second metal strike from Rally's A/B preview (hollow
+hull, not bright anvil) once per registered enemy air/ground contact with
+the ship. Keep laser kills, scoring, damage, laser fire and the player's
+final explosion unchanged. Shield speech follows downward color crossings
+only; multiple drops in one frame must not leave a stale yellow warning.
+Use separate speech and impact channels. Retain the R01 samples unchanged
+and compare the fixture against the ordinary campaign. Stage a stopped FAE
+profile on Oryx with RC3 MOS and stock VDP and give Smith the launch command.
+No Console8 change or production promotion before listening review.
