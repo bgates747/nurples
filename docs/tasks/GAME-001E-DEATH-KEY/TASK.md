@@ -18,12 +18,11 @@ at death and review the existing safe-respawn behavior. Production stays unchang
   stock VDP, normal guest name nurples.bin). Obtain the ordinary visual slot;
   Smith launches. Keep the implementation uncommitted pending review.
 - E-DKEY-04 [ ] Human review: take a hit without shield loss, earn points,
-  approach a playfield edge, and press D when a ground hazard obstructs the
-  centre respawn lane. Look for one death/life loss, frozen terrain, inward
-  bounce, retained score and map progress, a safe endpoint and blinking grace
+  approach a playfield edge, and press D. Look for one death/life loss, frozen
+  terrain, inward bounce, retained score and map progress, and blinking grace
   before normal play. Try holding D through respawn and releasing/repressing.
-  A centred respawn on clear terrain is a control, not proof of the blocked
-  case. Last-life D should use ordinary Game Over. Record observed results only.
+  Last-life D should use ordinary Game Over. The blocked-centre placement
+  case is closed unverified; it is no longer part of this review.
 
 ## R01 ready for human review
 
@@ -78,3 +77,8 @@ builder is retained separately for repeatable death/respawn tests.
 This pass covers the edge behavior; it does not close the off-centre
 safe-respawn scenario in E-DKEY-04. Oryx checkout 566 was released after
 FAE closed and the next owner was notified.
+
+Smith subsequently closed the off-centre placement check without a verified
+result. Placement avoidance may be working; grace seemed effective in play,
+which makes a dedicated placement test less critical. Neither the resolver
+nor the grace period was changed.

@@ -92,9 +92,10 @@ endpoint and safety behavior rather than forcing a return to centre.
   smaller first swing, shrinking excursions, and no clipping or abrupt
   handoff.
 
-- GAME-001E-START-WARP-005 [ ] On the next gameplay acceptance pass, spot-check
-  a mid-level respawn with an off-centre safe endpoint; this was not reported
-  separately in the visual review.
+- GAME-001E-START-WARP-005 [x] **Closed unverified, not a pass.** No playtest
+  confirmed that a blocked centre lane produced an off-centre respawn. Smith
+  reports that grace appears to protect the ship as intended, so this placement
+  check is no longer required. Keep the existing placement logic.
 
 Smith authorized the horizontal-only change after checkpointing the reviewed
 title build on `dev` (`94d158969c65d97bb64dd14b082ac95dc6813462`). Use the

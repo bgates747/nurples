@@ -119,7 +119,9 @@ decisions are recorded in the dated development log.
     begins only after the entrance has visibly settled; collision remains
     disabled throughout `player_grace`; and timer expiry explicitly transitions
     the actor to `player_alive`. A mid-level death must not restore
-    `player_score` from `player_starting_score`.
+    `player_score` from `player_starting_score`. The dedicated off-centre
+    placement check is closed unverified: grace appears effective in play,
+    and no further placement test is required.
 
   - [ ] **GAME-001E-DEATH-KEY — On-demand death fixture for safe respawn.**
     [Task and FAE acceptance cases](docs/tasks/GAME-001E-DEATH-KEY/TASK.md).
