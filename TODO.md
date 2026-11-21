@@ -3,6 +3,9 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **VOX-001 — Audition a British game announcer.**
+  [Four Agon speech samples and shield-color transition cues](docs/tasks/VOX-001/TASK.md).
+
 - [ ] **MUS-001 — Audition single-chip PT3 music on the game's VBlank clock.**
   [Both tunes passed FAE playback, half-volume mix and rapid-fire laser review; frame cadence remains unmeasured](docs/tasks/MUS-001/TASK.md).
   R03 campaign audio accepted on FAE and Console8 and selected for production:
