@@ -383,12 +383,13 @@ move_enemy_seeker_retreat_edge:
     jp seeker_retreat_draw_or_collide
 ; end move_enemy_seeker_retreat_edge
 
-; IY = seeker record, positions relative to the playfield. Carry iff the
+; IY = sprite record, positions relative to the playfield. Carry iff the
 ; whole rendered footprint fits. VDP truncates 16.8 to integer pixels; the
 ; last legal pixel remains drawable, including from a fractional position.
 ; Width and height are counts; compare the exclusive end to limit+1.
 ; Destroys A, DE, HL; preserves IY and the traversal counter BC.
 seeker_within_playfield:
+sprite_footprint_within_playfield:
     ld hl,(iy+sprite_x)
     ld de,field_left*256
     or a

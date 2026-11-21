@@ -1231,13 +1231,30 @@ class AssemblySafetyTests(unittest.TestCase):
             "move_explosion",
             "; end move_explosion",
         )
-        self.assertIn(
-            "call move_sprite\n"
-            "; neg_hlu destroys A on a vertical collision; the published edge byte is the\n"
-            "; only reliable result of the generic mover\n"
-            "    ld a,(sprite_screen_edge)",
-            explosion,
-        )
+        self.assertNotIn("call move_sprite", explosion)
+        self.assertNotIn("neg_hlu", explosion)
+        for axis in ("x", "y"):
+            self.assertIn(
+                f"ld hl,(iy+sprite_{axis})\n    ld de,(iy+sprite_{axis}vel)\n"
+                f"    add hl,de\n    ld (iy+sprite_{axis}),hl", explosion,
+            )
+        reject = "call sprite_footprint_within_playfield\n    jp nc,table_deactivate_sprite"
+        self.assertLess(explosion.index("ld (iy+sprite_y),hl"), explosion.index(reject))
+        self.assertLess(explosion.index(reject), explosion.index("dec (iy+sprite_animation_timer)"))
+
+        # First-show and post-callback publication both go through this gate.
+        guard = routine(read_asm("sprites.inc"), "sprite_move_publication_allowed",
+                        "; end sprite_move_publication_allowed")
+        self.assertIn("cp explosion\n    jp nz,@allowed", guard)
+        self.assertIn("jp z,@hidden\n    call sprite_footprint_within_playfield", guard)
+        self.assertIn("seeker_within_playfield:\nsprite_footprint_within_playfield:",
+                      read_asm("seeker_retreat.inc"))
+        defaults = block(read_asm("explosion.inc"), "explosion_defaults", "spawn_explosion")
+        counts = [int(n) for n in re.findall(r"^\s*db (\d+)\s*; rendered", defaults, re.M)]
+        self.assertEqual(counts, [16, 16])
+        for frame in "abcde":
+            png = PROJECT_ROOT / f"assets/img/proc/sprites/explosion_{frame}.png"
+            self.assertEqual(struct.unpack(">II", png.read_bytes()[16:24]), tuple(counts))
 
         fireball = routine(
             read_asm("enemy_fireball.inc"),

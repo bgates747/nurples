@@ -550,16 +550,19 @@ move_sprite_group:
     jp @next_record
 ; end move_sprite_group
 
-; Only seekers acquire a playfield visibility limit. Check both position
+; Seekers and explosions share a playfield visibility limit. Check position
 ; publication and first show: stock VDP sprites ignore the graphics viewport.
 sprite_move_publication_allowed:
     ld a,(iy+sprite_type)
     and actor_type_mask
     cp enemy_air
+    jp z,@bounded
+    cp explosion
     jp nz,@allowed
+@bounded:
     bit sprite_alive,(iy+sprite_collisions)
     jp z,@hidden
-    call seeker_within_playfield
+    call sprite_footprint_within_playfield
     ret c
     call table_deactivate_sprite
 @hidden:

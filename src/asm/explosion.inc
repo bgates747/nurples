@@ -15,8 +15,8 @@ explosion_defaults:
     dl BUF_EXPLOSION_A	    ; base_bufferId
     dl move_explosion	    ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
-    db 7	                ; dim_x
-    db 7                    ; dim_y
+    db 16                   ; rendered width of each explosion bitmap
+    db 16                   ; rendered height
     db 1                    ; num_orientations
     db explosion_animation_count ; num_animations
     db explosion_animation_count ; animation
@@ -72,13 +72,19 @@ tile_spawn_explosion:
 ; end tile_spawn_explosion
 
 move_explosion:
-; run the movement program for the explosion
-    call move_sprite
-; neg_hlu destroys A on a vertical collision; the published edge byte is the
-; only reliable result of the generic mover
-    ld a,(sprite_screen_edge)
-    or a ; non-zero means the explosion has reached a screen edge
-    jp nz,table_deactivate_sprite
+; Free flight: check the proposed position, not the generic mover's
+; clamped/reflected position. A particle must never turn back into view.
+    ld iy,(table_pointer)
+    ld hl,(iy+sprite_x)
+    ld de,(iy+sprite_xvel)
+    add hl,de
+    ld (iy+sprite_x),hl
+    ld hl,(iy+sprite_y)
+    ld de,(iy+sprite_yvel)
+    add hl,de
+    ld (iy+sprite_y),hl
+    call sprite_footprint_within_playfield
+    jp nc,table_deactivate_sprite
 ; do the animations
     dec (iy+sprite_animation_timer)
     ret nz ; not time to bump animation frame
