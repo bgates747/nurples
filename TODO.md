@@ -130,7 +130,7 @@ decisions are recorded in the dated development log.
     normal speed, accelerate to fast scroll, then slow down before admitting
     terrain. [Task and timing decision](docs/tasks/GAME-001E-START-WARP/TASK.md).
 
-  - [ ] **GAME-001F — Live hyperwarp level transition:** after admitting the
+  - [x] **GAME-001F — Live hyperwarp level transition (accepted):** after admitting the
     final map row, keep normal gameplay active until its terrain scrolls fully
     off the bottom. Then enter bounded `LEVEL_TRANSITION` and send surviving
     seekers into their existing retreat movement. Preserve player steering,
@@ -152,6 +152,13 @@ decisions are recorded in the dated development log.
     row-ingestion loop to multiple scanlines per frame. The automated player
     victory flight remains available for another state but is not used here.
 
+    - [x] **Level exit:** the final terrain and active ground tiles clear at
+      normal speed before warp; the final map row is the read boundary.
+    - [x] **Warp and arrival:** only the starfield accelerates, holds and
+      slows; the bezel and cockpit stay fixed, no scanlines are exposed, and
+      the next terrain enters at one pixel per frame.
+    - [x] **Single-level wraparound:** the level repeats only after the full
+      transition. No separate fixture is needed.
     - [x] **Combat during between-level warp — closed, probably working.**
       Player laser fire looked correct. A seeker collision appeared to have
       the expected outcome, but was not confirmed. No dedicated retest required.

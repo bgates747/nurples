@@ -430,3 +430,11 @@ Smith observed that player laser fire looked correct during warp. Seekers
 retreated, making contact hard to verify; he recalls a likely collision with
 the expected outcome. Enemy fireballs were not separately confirmed. Smith
 closed the combat check on that evidence, not as a full pass of GAME-001F.
+
+### Between-level transition — GAME-001F accepted
+
+Smith subsequently confirmed the remaining three checks: the old level
+drains before warp, the starfield-only speed cycle and next-level handoff
+work as intended, and a single-level map set takes the full transition
+before repeating. GAME-001F is closed. The separate combat observation
+above retains its original confidence; no further warp fixture is planned.
