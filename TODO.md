@@ -3,7 +3,7 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
-- [ ] **MAP-001 — Tiled level-design workspace on Oryx.**
+- [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).
 
 - [ ] **GAME-001-EXIT — Console8 fails to return to MOS:** not reproduced
