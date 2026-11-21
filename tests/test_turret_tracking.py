@@ -93,6 +93,25 @@ class TurretTrackingTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertGreater(output.stat().st_size, 0)
 
+    def test_fireball_uses_this_frames_terrain_displacement_from_the_muzzle(self) -> None:
+        def instructions(file: str) -> str:
+            lines = (SOURCE.parent / file).read_text().splitlines()
+            return "\n".join(code for line in lines if (code := line.split(";")[0].strip()))
+
+        game = instructions("nurples.asm")
+        terrain = instructions("tiles.inc")
+        fireball = instructions("enemy_fireball.inc")
+        self.assertIn("xor a\nld (terrain_step_pixels),a\ncall do_game", game)
+        self.assertIn("ld h,1\nld a,h\nld (terrain_step_pixels),a\nld a,2\ncall vdu_scroll_down", terrain)
+        self.assertIn("ld hl,(Vp_y)\nld (ix+fireball_ground_vy),hl\ncall fireball_to_screen_vy\n"
+                      "ld (ix+sprite_yvel),hl", fireball)
+        self.assertIn("ld hl,(ix+sprite_y)\nld de,(ix+sprite_yvel)\nadd hl,de\nld (ix+sprite_y),hl",
+                      fireball)
+        self.assertIn("ld hl,(iy+fireball_ground_vy)\ncall fireball_to_screen_vy\n"
+                      "ld (iy+sprite_yvel),hl\ncall move_sprite", fireball)
+        self.assertIn("fireball_to_screen_vy:\nld de,0\nld a,(terrain_step_pixels)\n"
+                      "ld d,a\nadd hl,de\nret", fireball)
+
 
 if __name__ == "__main__":
     unittest.main()

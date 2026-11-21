@@ -113,6 +113,7 @@ tiles_plot:
     ret
 ; end tiles_plot
 
+terrain_step_pixels: db 0 ; actual downward terrain travel this logical frame
 tiles_scroll_background:
 ; GAMEPLAY ONLY: this one-scanline scroll and one-scanline redraw are coupled to
 ; tiles_plot's optimized terrain cadence. Do not pass a variable speed here and
@@ -124,9 +125,11 @@ tiles_scroll_background:
 ; set gfx viewport to playing field window
     call set_gfx_playing_field
 ; move the background down one pixel
-    ld a,2 ; current gfx viewport
     ld l,2 ; direction=down
     ld h,1 ; speed=1 px
+    ld a,h
+    ld (terrain_step_pixels),a
+    ld a,2 ; current gfx viewport
     call vdu_scroll_down
 ; set gfx viewport to one scanline to optimise plotting tiles
     ld bc,0 ; leftmost x-coord

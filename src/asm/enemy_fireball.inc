@@ -1,6 +1,7 @@
 fireball_custom_begin: equ actor_record_custom
-fireball_custom_end: equ fireball_custom_begin
-    .if fireball_custom_end-fireball_custom_begin
+fireball_ground_vy: equ fireball_custom_begin ; immutable signed 16.8
+fireball_custom_end: equ fireball_ground_vy+3
+    .if fireball_custom_end-fireball_custom_begin-3
         dl fireball_custom_span_mismatch
     .endif
 
@@ -41,6 +42,8 @@ enemy_spawn_fireball:
     ld hl,(Vp_x)
     ld (ix+sprite_xvel),hl
     ld hl,(Vp_y)
+    ld (ix+fireball_ground_vy),hl
+    call fireball_to_screen_vy
     ld (ix+sprite_yvel),hl
 ; move projectile one frame's distance so it isn't drawn right over turret
     ld hl,(ix+sprite_x)
@@ -63,8 +66,21 @@ enemy_spawn_fireball:
     ret
 ; end enemy_spawn_fireball
 
+; HL = ground velocity + this frame's actual terrain displacement in 16.8.
+; Do the full ADL add: an upward component can cross zero. Never accumulate
+; last frame's camera motion or take speed from the decorative starfield.
+fireball_to_screen_vy:
+    ld de,0
+    ld a,(terrain_step_pixels)
+    ld d,a
+    add hl,de
+    ret
+
 move_enemy_fireball:
-; run the movement program for the fireball enemy
+    ld iy,(table_pointer)
+    ld hl,(iy+fireball_ground_vy)
+    call fireball_to_screen_vy
+    ld (iy+sprite_yvel),hl
     call move_sprite
     ld a,(sprite_screen_edge)
     or a ; a will be non-zero if have scrolled off screen

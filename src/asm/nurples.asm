@@ -147,6 +147,8 @@ main_loop:
 ; update the global timestamp
     call timestamp_tick
 ; do gamestate logic
+    xor a
+    ld (terrain_step_pixels),a ; no camera motion unless terrain actually scrolls
     call do_game
 ; state handlers return through the dispatcher; honor an orderly exit request
     ld a,(game_exit_requested)
