@@ -273,3 +273,15 @@ not distinguished by ear; frame cadence was not measured in this run.
 Smith closed FAE. A fresh whole-host inspection found no emulator processes.
 Oryx checkout 577 was released at 16:38:27 Eastern and Flexe was notified
 that its FX-325 request was next.
+
+**Console8 deployment — 2026-11-21; hardware verdict pending.** R03 source
+and the FAE pass were published on `dev` at `7ba955ac326939e9be984ad0ea350ad0c01ce89d`;
+no audio module or executable containing one was published. Deployed the
+same FAE-reviewed 67,003-byte executable to the Console8 SD on Oryx at
+`/mystuff/nurples/nurples.bin`, together with the two AGNBs and font.
+All four installed file hashes matched. No Nurples install was found under
+`/test` or `/tests`. The prior install, including its no-mode diagnostic
+and app-local stock VDP copy, was backed up off-card before replacement.
+Root firmware files and autoexec were unchanged; no firmware was flashed or
+bundled. The card was synchronized and left mounted.
+[Deployment receipt](../../../.build/console8-r03-7ba955a/deployment-receipt.txt).
