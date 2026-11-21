@@ -13,5 +13,20 @@
     "content_type": "application/octet-stream",
     "license": "not stated in ZXArt entry metadata",
     "native": true
+  },
+  {
+    "filename": "bugs2_2.pt3",
+    "title": "Bugs2 2",
+    "authors": ["Spawn"],
+    "format": "PT3",
+    "year": "1999",
+    "entry_id": 79447,
+    "page": "https://zxart.ee/tune/79447",
+    "original_url": "https://zxart.ee/file/id:79447/filename:Spawn_-_Bugs2_2_%281999%29.pt3",
+    "bytes": 5597,
+    "sha256": "303601c3c9ad545b242491e62ff2d0b6e7b334a58d7017e13dfd336d3257d097",
+    "content_type": "application/octet-stream",
+    "license": "not stated in ZXArt entry metadata",
+    "native": true
   }
 ]
