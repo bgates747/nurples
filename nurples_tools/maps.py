@@ -10,6 +10,7 @@ from io import StringIO
 from pathlib import Path
 
 import tomllib
+from nurples_tools.tile_bindings import bindings
 
 MAP_WIDTH = 16
 MIN_MAP_HEIGHT = 1
@@ -81,7 +82,7 @@ def _relative_path(value: object, field: str, manifest_dir: Path) -> Path:
     return (manifest_dir / path).resolve()
 
 
-def _validate_tileset(tileset_path: Path) -> None:
+def _validate_tileset(tileset_path: Path) -> tuple[int, ...]:
     if tileset_path.name != "dg0.tsx":
         raise MapCompileError("manifest tileset must name the external dg0.tsx")
     root = _parse_xml(tileset_path, "DG tileset")
@@ -116,6 +117,11 @@ def _validate_tileset(tileset_path: Path) -> None:
             raise MapCompileError(
                 f"DG tileset image {attribute} is {actual!r}; expected {wanted!r}"
             )
+
+    try:
+        return bindings(root)
+    except ValueError as error:
+        raise MapCompileError(f"{tileset_path}: {error}") from error
 
 
 def _load_tile_catalog(catalog_path: Path) -> tuple[frozenset[int], int]:
@@ -167,6 +173,7 @@ def _parse_csv_rows(
     source_path: Path,
     height: int,
     available_tiles: frozenset[int],
+    runtime_ids: tuple[int, ...],
 ) -> tuple[tuple[int, ...], ...]:
     if data.attrib.get("encoding") != "csv":
         raise MapCompileError(f"{source_path}: tile layer must use CSV encoding")
@@ -224,12 +231,13 @@ def _parse_csv_rows(
                     f"{source_path}: row {row_number}, column {column} "
                     f"GID {gid} exceeds 255"
                 )
-            if gid and gid not in available_tiles:
+            runtime = runtime_ids[gid]
+            if runtime and runtime not in available_tiles:
                 raise MapCompileError(
                     f"{source_path}: row {row_number}, column {column} "
-                    f"uses GID {gid}, absent from dg_0_files.xml"
+                    f"uses GID {gid} (runtime {runtime}), absent from dg_0_files.xml"
                 )
-            parsed_row.append(gid)
+            parsed_row.append(runtime)
         rows.append(tuple(parsed_row))
     return tuple(rows)
 
@@ -240,6 +248,7 @@ def _compile_tmx(
     name: str,
     tileset_path: Path,
     available_tiles: frozenset[int],
+    runtime_ids: tuple[int, ...],
 ) -> CompiledLevel:
     root = _parse_xml(source_path, "TMX map")
     if root.tag != "map":
@@ -327,6 +336,7 @@ def _compile_tmx(
         source_path=source_path,
         height=height,
         available_tiles=available_tiles,
+        runtime_ids=runtime_ids,
     )
     return CompiledLevel(
         name=name,
@@ -402,7 +412,7 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
         "tile_catalog",
         manifest_dir,
     )
-    _validate_tileset(tileset_path)
+    runtime_ids = _validate_tileset(tileset_path)
     available_tiles, base_buffer_id = _load_tile_catalog(catalog_path)
 
     level_entries = manifest["levels"]
@@ -451,6 +461,7 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
                 name=name,
                 tileset_path=tileset_path,
                 available_tiles=available_tiles,
+                runtime_ids=runtime_ids,
             )
         )
 

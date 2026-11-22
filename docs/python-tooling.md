@@ -184,6 +184,10 @@ ID 7 maps to modern active ID 1 and old ID 8 maps to modern active ID 5. This
 deliberately preserves the modern launch-pad and laser-turret animations and
 their in-place transformation to modern crater ID 16.
 
+For a tilesheet rearrangement, use the [MAP-002 preview/apply tool](tasks/MAP-002/TASK.md#usage)
+from a clean, full checkout. Its TSX binding separates editor positions from
+runtime tile IDs. No assembly change or runtime lookup is needed.
+
 The standalone gameplay-map suite has separate, non-destructive stages:
 
 ```bash

@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+import xml.etree.ElementTree as ET
+
+from nurples_tools.tile_bindings import IDENTITY, bindings
 
 
 LEGACY_ROWS = 255
@@ -109,18 +112,19 @@ def parse_main_level(source_text: str) -> tuple[tuple[int, ...], ...]:
     return tuple(rows)
 
 
-def render_tmx(runtime_rows: tuple[tuple[int, ...], ...]) -> str:
+def render_tmx(runtime_rows: tuple[tuple[int, ...], ...], runtime_ids=IDENTITY) -> str:
     """Render runtime rows as a portable Tiled top-to-bottom CSV map."""
 
     if len(runtime_rows) != LEGACY_ROWS:
         raise LegacyLevelError(
             f"legacy map contains {len(runtime_rows)} rows; expected {LEGACY_ROWS}"
         )
+    editor_gids = {runtime: gid for gid, runtime in enumerate(runtime_ids)}
     csv_rows = []
     for row in reversed(runtime_rows):
         if len(row) != MAP_WIDTH:
             raise LegacyLevelError(f"legacy map row contains {len(row)} columns")
-        csv_rows.append(",".join(str(tile) for tile in row))
+        csv_rows.append(",".join(str(editor_gids[tile]) for tile in row))
     csv_text = ",\n".join(csv_rows)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -142,4 +146,9 @@ def import_main_level(source_path: Path, output_path: Path) -> None:
 
     runtime_rows = parse_main_level(source_path.read_text(encoding="utf-8"))
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(render_tmx(runtime_rows), encoding="utf-8")
+    tsx = output_path.with_name("dg0.tsx")
+    if not tsx.exists():
+        # Standalone exports to /tmp still use the project's current bindings.
+        tsx = Path(__file__).resolve().parents[1] / "tiles/dg/dg0.tsx"
+    runtime_ids = bindings(ET.parse(tsx).getroot())
+    output_path.write_text(render_tmx(runtime_rows, runtime_ids), encoding="utf-8")

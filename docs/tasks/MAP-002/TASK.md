@@ -27,12 +27,13 @@ assembly, reassign blank, or change the contents of a level. Report the two
 IDs, runtime identities and affected map cell counts. Provide a reviewable
 all-or-nothing change with a stale-input check and a Git rollback path.
 
-- MAP-002-001 [ ] Freeze contract and unchanged input state on origin/dev.
+- MAP-002-001 [x] Freeze contract and unchanged input state on origin/dev:
+  `dfe71f669557fc97f2b6e1de2eb3a351f23340fb`.
 
-- MAP-002-002 [ ] Implement planner, guarded application and build-side
+- MAP-002-002 [x] Implement planner, guarded application and build-side
   mapping. With no rearrangement, normal generation must be unchanged.
 
-- MAP-002-003 [ ] Exercise move, swap, rejected destinations and preservation
+- MAP-002-003 [x] Exercise move, swap, rejected destinations and preservation
   of compiled map bytes on disposable data. Record results and usage.
 
 - MAP-002-004 [ ] Smith selects moves for a subsequent joint test. No edits
@@ -43,3 +44,39 @@ all-or-nothing change with a stale-input check and a Git rollback path.
 Recovery: tracked inputs are pinned; no machine-external state is modified.
 Keep future accepted rearrangements in individual commits, reversible with
 `git revert` without rewriting development history.
+
+## Usage
+
+From the full checkout on dev, for example:
+
+```bash
+.venv/bin/python -m nurples_tools.tile_moves move 0 24
+.venv/bin/python -m nurples_tools.tile_moves swap 0 4
+```
+
+Each command above is an independent **preview**. The report gives counts in
+source/destination order per map. To apply one, rerun that same command with
+`--apply TOKEN`, using its printed token. The tool stages the PNG, TSX, changed
+TMXs and historical cross-reference CSV together. Inspect `git diff --cached`;
+commit an accepted move separately before previewing the next. No auto-commit,
+push or Oryx sync. Adding new artwork or assigning new gameplay behavior is
+a different operation.
+
+## Implementation checks — 2026-11-22
+
+- In a disposable Git checkout with all 14 tracked maps, moved local 0
+  (launchpad) to 24, then swapped 24 with 16 (imported passive tile).
+  All 14 maps retained every runtime byte; both campaign and standalone
+  assembly includes compiled identically before and after each operation.
+  Verified the three pixel blocks, legacy TMX export and regenerated atlas.
+- Verified dry runs left no changes; rejected occupied, reserved, empty-source,
+  same-ID and out-of-range requests, wrong tokens, dirty input and unsupported
+  layer encoding. No actual level, atlas, game byte or Oryx file was edited.
+- Baseline caveat: the frozen compiler and updated compiler both produce the
+  same campaign include SHA-256
+  `ce6766a9e859a5c60028c3ef8e9d1cceb5304d7b339e9c20748b8f0bdeb5f793`.
+  The already-tracked include differs in four cells from the campaign TMX,
+  so the existing campaign freshness assertion fails even at baseline. Do not
+  regenerate it as a side effect of moving tiles.
+- Next: Smith selects a local-ID pair for preview and visual review. No
+  emulator, hardware or remote design session is needed or held by this task.

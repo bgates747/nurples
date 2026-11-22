@@ -5,15 +5,17 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import xml.etree.ElementTree as ET
 
 from PIL import Image
 
 from nurples_tools.images import convert_to_agon_palette, img_to_rgba2
+from nurples_tools.tile_bindings import bindings
 
 
 # Runtime tile IDs 1 through 16 are owned by modern active-tile behavior.
 # These five IDs are the first passive slots and therefore cannot accidentally
-# enter an active-tile callback.  Tiled GID N occupies atlas cell N - 1.
+# enter an active-tile callback. Resolve their current editor slots via the TSX.
 LEGACY_PASSIVE_TILES = (
     (17, "tile_blank.png"),
     (18, "tile_circle.png"),
@@ -37,6 +39,7 @@ def generate_legacy_tile_outputs(
 
     source_root = project_root / "tiles/dg/legacy_z80"
     atlas_path = project_root / "tiles/dg/dg0.png"
+    runtime_ids = bindings(ET.parse(atlas_path.with_suffix(".tsx")).getroot())
     with Image.open(atlas_path) as source_atlas:
         atlas = source_atlas.convert("RGBA").copy()
     if atlas.size != (256, 256):
@@ -71,7 +74,7 @@ def generate_legacy_tile_outputs(
                 output_root / f"assets/rgba2/tiles/dg/0/{tile_name}.rgba2"
             ] = rgba_path.read_bytes()
 
-            atlas_index = tile_id - 1
+            atlas_index = runtime_ids.index(tile_id) - 1
             atlas_x = (atlas_index % 16) * 16
             atlas_y = (atlas_index // 16) * 16
             atlas.paste(converted, (atlas_x, atlas_y), converted)
