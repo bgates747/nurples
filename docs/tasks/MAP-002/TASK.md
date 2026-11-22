@@ -80,3 +80,27 @@ a different operation.
   regenerate it as a side effect of moving tiles.
 - Next: Smith selects a local-ID pair for preview and visual review. No
   emulator, hardware or remote design session is needed or held by this task.
+
+## R02 — Active-tile review and registry (approved amendment)
+
+Baseline: `ee68670d6cd82dccf93a7289dd50bc1386b03383` reconciled the four
+campaign cells. Smith approved this narrow exception to the original
+no-assembly-change contract: generate the existing game constants and
+activation table from one declarative registry, retaining the zero fast path,
+runtime numbering, actor defaults, callback whitelist and gameplay behavior.
+Editor rearrangement is distinct from assigning a new runtime behavior.
+
+- MAP-002-005 [ ] Freeze this amendment before implementation on dev.
+- MAP-002-006 [ ] Generate and freshness-check the production registry include;
+  compare old/new production machine code byte for byte with identical inputs.
+- MAP-002-007 [ ] Warn on either active endpoint, identify its behavior and
+  actor kind, and require explicit manual review acknowledgement as well as
+  the matching token for apply. Occupied destinations and all unrelated
+  safeguards stay blocked; an empty no-op reserved slot may be used.
+- MAP-002-008 [ ] Isolated electrode fixture: pass 15 through the actual
+  activation path as a no-op control, then as an electrode alias defined only
+  in fixture inputs. Verify allocation/type, callback validation, destruction
+  of eligible lightning and crater conversion. Leave the production alias off.
+- MAP-002-009 [ ] Only after fixture success, dry-run local 10 → 14,
+  report its behavior review and cell counts, then stop. No live atlas, TSX,
+  TMX, sparse-checkout or deployment changes. No GUI/hardware review.
