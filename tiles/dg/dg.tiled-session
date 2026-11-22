@@ -1,26 +1,35 @@
 {
-    "activeFile": "nurples_z80_main.tmx",
+    "activeFile": "dg0_00.tmx",
     "expandedProjectPaths": [
         "."
     ],
     "fileStates": {
         "dg0.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 2.6884
+        },
+        "dg0_00.tmx": {
+            "scale": 2.560546875,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 106.42257818459193,
+                "y": 3841.366895499619
+            }
         },
         "nurples_z80_main.tmx": {
             "scale": 2.2103,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 32.574763606750224,
-                "y": 30.312627245170347
+                "x": 127.81070442926298,
+                "y": 2039.994570872732
             }
         }
     },
     "openFiles": [
-        "nurples_z80_main.tmx"
+        "dg0_00.tmx"
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
+        "dg0_00.tmx",
         "nurples_z80_main.tmx"
     ]
 }
