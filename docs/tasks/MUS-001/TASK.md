@@ -327,12 +327,12 @@ block per tick. First prove timing and asset integrity under this demanding
 workload; do not migrate gameplay or promote before reviewing the result.
 Smith approved this loading-first contract. Nurples owns the isolated fixture.
 
-- MUS-001-07 [ ] Prime one immutable tracker command batch before arming an
+- MUS-001-07 [x] Prime one immutable tracker command batch before arming an
   idle 50 Hz PRT. ISR only acknowledges/counts. Foreground owns the VDP;
   send due music at complete command boundaries, then prepare the next batch.
   Preserve loader errors, restore timer/vector, and never steal a busy timer.
 
-- MUS-001-08 [ ] Keep 8 KiB SD reads and use independently framed 512-byte
+- MUS-001-08 [x] Keep 8 KiB SD reads and use independently framed 512-byte
   appends (short final append). Check after reads and between appends; no
   waiting or per-tick quota. Measure elapsed loading, service lateness and
   missed periods; distinguish measurements from wire-time estimates.
@@ -349,3 +349,101 @@ Build fixtures under ignored `.build/`; no song-bearing binary or module in
 Git. Use serial leased Pi assembly and an isolated Oryx FAE review; no hardware
 deployment. A 60-tick/s renderer playing 50-tick/s music is 20% fast;
 do not equate emulator wall time or unmeasured production FPS with that ratio.
+
+**R01 implementation and FAE result (2026-11-21).** Contract:
+`916765b1e807d3c35a32757a042b0e006b0ce3e3`. The
+[fixture builder](../../../build/scripts/build_prt_loading_review.py) makes
+an ordinary hash-checked build, a timing-only 8 KiB control and a private
+candidate. Production assembly sources and tgt outputs are unchanged.
+[Timer and append code](prt-loader.inc) starts just before UI uploads (after
+the font), covers UI, game and speech, and hands its already decoded next tick
+to the ordinary presentation clock. No second tracker initialization. ISR
+does no MOS calls or output. No early send even at the AY library watermark.
+R01 borrows PRT1 on a known-idle FAE startup, returns it disabled and
+checks the displaced vector on restoration. The control register is
+read-to-acknowledge; do not treat probing arbitrary live timers as passive.
+
+Pi generation 1161: ordinary matched the rollback; candidate SHA-256
+`e24b6e9dd15a9568c21989195732be8f7a8448c939489caaafbf16295cf3920c`.
+Oryx generation 589: same pinned FAE/stock VDP/RC3, serialized headless
+runs, dummy audio, no boost change. Both cards ran from MOS twice, exiting
+with ESC. Candidate reached the normal controller prompt on both runs.
+[Verifier](check-prt.py) checks the returned byte and append counts against
+the three actual RIFF files. [Local run evidence](../../../.build/mus001-prt-r01/).
+
+| First-run report | Control | Candidate |
+| --- | ---: | ---: |
+| MOS clock units across load | 1206 | 1240 (+2.8%) |
+| PRT interrupts / serviced ticks / extra periods missed | off | 515 / 514 / 1 |
+| Worst observed service delay | — | 1824 PRT counts (25.33 ms nominal) |
+| Accounted payload / independent appends | not instrumented | 821839 bytes / 1810 |
+
+Timer/vector teardown check passed, packet overflow clear. Do not claim
+hard real-time, physical UART performance, or audible acceptance. No catch-up
+bursts: the overdue tick plays once, and the extra period is counted.
+The timing file is create-only: the second RUN returned to MOS but did not
+replace the first report. Rename `LOADPRT.BIN` at MOS between runs if both
+reports are wanted. A single timing pair is not a benchmark distribution.
+
+Pi and automated Oryx slots released; next agents notified. Separate
+untouched listening profile `~/Agon/mystuff/nurples/.emulator/mus001-prt-review-r01`
+staged with full FAT readback; human-review FIFO request `7a10e2fc84f0`.
+After checkout, Smith launches the profile wrapper and types RUN. Listen
+especially across the splash and the controller prompt. Before extending
+to gameplay, attribute the >20 ms service gap (SD read, VDP operation or
+work between callbacks); R01 does not identify which boundary caused it.
+
+**Listening review ready.** Nurples checked out Oryx generation 591 after a
+fresh idle inspection. Ownership, runtime, MOS, staged card hash, load-only
+autoexec and candidate binary read directly from FAT all verified. FAE was
+left stopped for Smith. Hold the slot until he closes FAE and reports back.
+
+Smith accepted the FAE listening audition. Generation 591 released after
+a fresh empty-host inspection; no next request. At Smith's request the
+exact candidate replaced the Console8 card install at `/mystuff/nurples`.
+All five runtime files verified after synchronization. Previous install
+retained in `.build/mus001-prt-r01/c8/previous.tar`; autoexec preserved,
+no firmware changes.
+
+**Console8 listening result — plays, but tempo is uneven during upload.**
+Smith heard tempo changes while assets were still loading that he did not
+hear in FAE. He explicitly distinguished these from the expected speedup
+when LOADTUNE hands off from the 50 Hz PRT to the frame clock at the prompt.
+Slower real UART/VDP throughput is a plausible contributor, not yet a
+measured attribution. Next: retrieve the first clean-exit
+`/mystuff/nurples/LOADPRT.BIN` and compare missed periods and worst service
+delay to FAE. Those aggregate counters cannot distinguish an SD read from a
+VDP append, consolidation or progress redraw. If attribution is needed,
+time those boundaries separately in RAM; keep diagnostic output off the
+UART during loading. Hardware timing acceptance remains open.
+
+**Console8 report retrieved read-only.** Installed binary and three AGNB hashes
+match the FAE candidate. [First-exit report](../../../.build/mus001-prt-r01/c8/LOADPRT.BIN)
+SHA-256 `2a602b22f0154c677b2802a3680bff688006f05de3241e3ced02ca7dc559d0e9`.
+Verifier passed: 821839 bytes in 1810 appends, load complete, no packet
+overflow, vector restored. Across the measured upload, Console8 counted
+619 IRQs, 548 tracker steps, 71 missed periods (11.5%), 5780 /256 counts
+worst lateness (80.28 ms nominal), and 1464 MOS clock units. FAE missed
+1/515 (0.2%) with 25.33 ms worst lateness. R01 does not catch up lost
+periods: hardware lost 1.42 s of nominal tracker progression. The prompt
+clock handoff lies outside these counters. Before tuning chunk size, tag the
+intervals bracketing SD reads, VDP appends, record finalization and splash
+updates and retain their worst delays and missed-period counts in RAM.
+
+### R02 — RC3 asynchronous asset writes (approved before profiling)
+
+Change only the way the loader sends each asset append. Compare the R01
+Console8 result with the same tune, 8 KiB reads, 512-byte maximum payloads,
+clock, music service points, graphics and gameplay. No firmware deployment.
+
+- MUS-001-10 [ ] Apply tagged Eirene RC3 syscall 25h in a private R02
+  fixture. One foreground producer, one positive immutable source at a time;
+  callback releases the borrow, not the wire. Drain TEMT before the next
+  ordinary VDU output. Keep music and file IO out of interrupt context.
+  CTS stalls in the MOS ISR can still mask PRT interrupts.
+
+- MUS-001-11 [ ] Assemble on the leased Pi, check R01/ordinary identity and
+  unchanged assets. Replace the installed game on Console8, retaining R01's
+  report and rollback. Use a distinct create-only report for R02, check
+  callback/append accounting, elapsed MOS time, missed periods and worst
+  lateness on the next physical run. Hold production and gameplay unchanged.
