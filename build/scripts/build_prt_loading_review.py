@@ -20,10 +20,16 @@ def edit(src, filename, old, new):
     file.write_text(data.replace(old, new))
 
 
-def configure(src, candidate):
+def configure(src, candidate, small_reads=False):
     shutil.copyfile(ROOT / "docs/tasks/MUS-001/prt-loader.inc", src / "prt-loader.inc")
     with (src / "mus_payload.inc").open("a") as f:
-        f.write(f'lp_music: equ {int(candidate)}\n    include "prt-loader.inc"\n')
+        f.write(f'lp_music: equ {int(candidate)}\n'
+                '    include "prt-loader.inc"\n')
+    if small_reads:
+        edit(src, "agnb_api.inc", "agnb_io_buffer_size:       equ 8192",
+             "agnb_io_buffer_size:       equ 1024")
+        edit(src, "prt-loader.inc", '"LOADPRT.BIN"', '"LOAD1K.BIN"')
+        edit(src, "prt-loader.inc", '"LPR1"', '"LPR3"')
     init = "state_game_init.inc"
     edit(src, init, "    call load_ui_images", "    call lp_begin\n    call load_ui_images")
     edit(src, init, "    call game_start_config_begin",
@@ -42,13 +48,13 @@ def configure(src, candidate):
 
 
 def build():
-    for arm in ("ordinary", "control", "candidate"):
+    for arm in ("ordinary", "control", "candidate", "small-reads"):
         with TemporaryDirectory() as temp:
             src = Path(temp) / "asm"
             shutil.copytree(ROOT / "src/asm", src)
             modules = prepare_audio(ROOT, src)
             if arm != "ordinary":
-                configure(src, arm == "candidate")
+                configure(src, arm != "control", arm == "small-reads")
             assembler = shutil.which("ez80asm") or ROOT / ".build/game001jk-olimex-r01/ez80asm"
             subprocess.run([assembler, "-l", "-s",
                             "nurples.asm", "nurples.bin"], cwd=src, check=True, timeout=60)
@@ -56,7 +62,10 @@ def build():
             verify_audio(binary, modules)
             if arm == "ordinary" and sha256(binary).hexdigest() != PRODUCTION:
                 raise ValueError("ordinary binary no longer matches the rollback")
-            dst = OUTPUT / arm
+            if arm == "candidate" and sha256(binary).hexdigest() != (
+                    "e24b6e9dd15a9568c21989195732be8f7a8448c939489caaafbf16295cf3920c"):
+                raise ValueError("R01 timing control changed")
+            dst = (ROOT / ".build/mus001-prt-r03" if arm == "small-reads" else OUTPUT) / arm
             dst.mkdir(parents=True, exist_ok=True)
             files = ("nurples.bin", "nurples.symbols", "ui.agnb", "game.agnb",
                      "voice.agnb", "fonts/Lat38-VGA8_8x8.font")

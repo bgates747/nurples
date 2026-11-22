@@ -489,3 +489,31 @@ VDPlet. Use R01 as the synchronous comparison, not R02 as the base.
   separate create-only LOAD1K.BIN. No firmware writes. Obtain a Console8
   timing/listening verdict; distinguish stock compatibility by inspection
   from a run under identified stock firmware.
+
+R03 staged and verified on the Console8 SD, contract
+`8b35f4fbfb1445192cbd748d3a1c17da12ce5da3`. Pi generation 1165:
+ordinary and synchronous R01 controls reproduced exactly. R02 submit/join
+and callback are absent from the loader and its build arms. Only historical
+diagnostics/report parsing retain the RC3 experiment. R03 binary SHA-256
+`519cd653e7c5555d170169f573b4a2873e18b7866b7bf2979ed140372a9597c6`.
+The timer uses upstream mos_setintvector; reads use upstream ffs_fread;
+VDP buffer writes use ordinary RST 18h. Both earlier timing reports were
+restored byte-for-byte, no firmware or autoexec changes. Physical result
+pending. For whole-game stock qualification also exercise attract/Game Over
+and exit: presentation_renderer_enter calls overlay_feature_begin and the
+old restore-path comment cites VDPlet or a compatible fix. Not a new
+loader dependency; do not infer whole-game firmware qualification from this build.
+
+**R03 Console8 pass.** Smith heard only a brief slowdown at the text-to-splash
+boundary, accepts it, played through to Game Over, and exited to MOS. First
+report: 1478 MOS clock units, 633 IRQs, 630 serviced, 3 missed (versus 71
+on synchronous R01), 5482/72 = 76.14 ms peak lateness. All 821839 bytes
+and 1810 appends accounted for, vector restored. The aggregate does not
+locate the peak. No firmware identity was reported for this playthrough.
+
+### R04 — send each 1 KiB SD read as a single stock VDP append
+
+- MUS-001-14 [ ] Keep the qualified R03 rollback, read size, safe music
+  service before/after a whole append, and short final reads. Eliminate the
+  inner split loop. Compare a separate Console8 fixture/report against R03;
+  do not change the presentation transition, gameplay clock, or firmware.
