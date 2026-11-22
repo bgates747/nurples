@@ -7,9 +7,9 @@ import wave
 
 
 PINS = {
-    "game_over": "e11bf968d0ffee84127a7a5b7108b53b953024e01effd910b6aea71420c8d43f",
-    "shields_depleted": "6055a05cb7c4353b2fe1084b1e147f25b43330aa2ca41ffd6f7b0b7cb35bf29a",
-    "shields_critical": "da6b70badc183a45a18f7331bf1320db9afc112d857b4bea71aa9bcb16241743",
+    "game_over": "a12beb667cbb89d5794b5d233c3611c4a89dab98ea7c6d3f7a3b484ebed15538",
+    "shields_depleted": "0a40dddc6acb84c9062ff696094803494a1770b66b850558382783c556df8e10",
+    "shields_critical": "481c020036d3eccd2f6bc0aca09cba85e863e1b8c61d38fa66ff98bdbdbe4217",
 }
 
 

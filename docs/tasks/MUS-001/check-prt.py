@@ -1,5 +1,5 @@
-"""Decode and cross-check the two guest reports against the deployed containers."""
-import sys
+"""Decode a loader or whole-game timing report against its deployed containers."""
+import argparse
 from pathlib import Path
 
 from nurples_tools.agnb_verify import _chunk
@@ -21,10 +21,14 @@ def sizes(path):
                 yield stop - start
 
 
-def check(report, payload):
+def check(report, payload, expect=None):
     data = report.read_bytes()
     async_assets = data[:4] == b"LPR2"
-    assert (len(data), data[:4]) in ((27, b"LPR1"), (30, b"LPR2"), (27, b"LPR3"), (27, b"LPR4"))
+    whole_game = data[:4] == b"LPR5"
+    if expect and not whole_game:
+        raise ValueError("Phase checks require the whole-game LPR5 report")
+    assert (len(data), data[:4]) in ((27, b"LPR1"), (30, b"LPR2"), (27, b"LPR3"),
+                                     (27, b"LPR4"), (57, b"LPR5"))
     arm, status = data[4:6]
     elapsed, irqs, sent, missed, late, pieces, total = (
         int.from_bytes(data[i:i + 3], "little") for i in range(6, 27, 3))
@@ -39,8 +43,29 @@ def check(report, payload):
         counts = [n for name in ("ui.agnb", "game.agnb", "voice.agnb")
                   for n in sizes(payload / name)]
         assert arm == 1 and status == 9
-        assert sent > 0 and sent + missed <= irqs <= sent + missed + 1
-        cap = 1024 if data[:4] == b"LPR4" else 512
+        assert sent > 0 and sent + missed <= irqs
+        if whole_game:
+            load_time, load_missed, load_late, *phases, paused = (
+                int.from_bytes(data[i:i + 3], "little") for i in range(27, 57, 3))
+            assert sum(phases) == sent and phases[0] > 0
+            assert 0 < load_time <= elapsed and load_missed <= missed and load_late <= late
+            assert paused <= irqs - sent - missed
+            print(f"Loading: MOS-clock={load_time} missed={load_missed} peak={load_late}/72 ms; "
+                  f"ticks [load, prompt, attract, level 1, level 2, Game Over]={phases}; "
+                  f"paused periods={paused}; other unplayed={irqs-sent-missed-paused}")
+            if expect:
+                # MOS sysvar_time counts 1/120 s; compare the whole invocation,
+                # not just the sounding periods, to its independent PRT count.
+                assert 49 <= irqs * 120 / elapsed <= 51, "Unexpected PRT cadence"
+            if expect == "play-pause":
+                assert all(phases[:4]) and paused > 0, "Did not reach play and resume"
+            if expect == "resident-prompt":
+                assert phases[1] > 0 and not any(phases[2:]) and not paused
+            if expect == "campaign":
+                assert all(phases), "Did not deliver music in every requested phase"
+        else:
+            assert irqs <= sent + missed + 1
+        cap = 1024 if data[:4] in (b"LPR4", b"LPR5") else 512
         assert total == sum(counts) and pieces == sum((n + cap - 1) // cap for n in counts)
         if async_assets:
             callbacks = int.from_bytes(data[27:30], "little")
@@ -50,4 +75,9 @@ def check(report, payload):
 
 
 if __name__ == "__main__":
-    check(Path(sys.argv[1]), Path(sys.argv[2]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("report", type=Path)
+    parser.add_argument("payload", type=Path)
+    parser.add_argument("--expect", choices=("play-pause", "resident-prompt", "campaign"))
+    args = parser.parse_args()
+    check(args.report, args.payload, args.expect)

@@ -63,6 +63,9 @@ enemy_spawn_fireball:
     call vdu_sprite_select
     ld a,(iy+sprite_frame)
     call vdu_sprite_select_frame
+    .if mus_combat_cues
+    call cues_queue_launch ; slot allocated, projectile initialized and visible
+    .endif
     ret
 ; end enemy_spawn_fireball
 

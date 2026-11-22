@@ -4,13 +4,12 @@ This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
 - [ ] **MUS-001 — Campaign music and the 50 Hz tracker clock.**
-  [Both tunes passed FAE playback, half-volume mix and rapid-fire laser review; frame cadence remains unmeasured](docs/tasks/MUS-001/TASK.md).
-  R03 campaign audio accepted on FAE and Console8 and selected for production:
-  LOADTUNE at start and Game Over, level music handoff across warp, and
-  explosions on ground and air kills. The remaining clock measurement is
-  separate from the accepted gameplay and mix.
-  [Console8 accepted 50 Hz LOADTUNE during uploads. Extend the same clock
-  to the whole game (R05).](docs/tasks/MUS-001/TASK.md#r05--one-50-hz-music-clock-throughout-a-run)
+  Console8 accepted 50 Hz music during uploads. The
+  [full-game clock](docs/tasks/MUS-001/TASK.md#r05--one-50-hz-music-clock-throughout-a-run)
+  passed automated FAE timing and phase checks; Console8 listening remains.
+  [R06 turret launch and shield pre-alerts](docs/tasks/MUS-001/TASK.md#r06--turret-launch-and-shield-pre-alerts-in-the-50-hz-game)
+  passed sequencing checks. The [longer klaxon and louder speech passed
+  Smith’s FAE listening test](docs/tasks/MUS-001/klaxon-r07.md).
 
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).

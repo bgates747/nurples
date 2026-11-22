@@ -616,21 +616,58 @@ two-sweep klaxon immediately before the two shield warnings. Use the default
 AgonArcade Nurples soundboard patches (keys 5 and 1); keep music, laser,
 hit, score and speech channels independent. No new samples or firmware.
 
-- MUS-001-18 [ ] Play the **missile-launch SFX** once whenever a ground
+- MUS-001-18 [x] Play the **missile-launch SFX** once whenever a ground
   turret successfully spawns a fireball. No launch sound for tracking,
   a reload timer expiry without a projectile, or a failed allocation.
   Subsequent shots restart the cue from the top, like the player laser;
   keep it off the music channels. Audition against visible shots with the
   level tune playing.
 
-- MUS-001-19 [ ] On a downward shield colour crossing only, play the full
+- MUS-001-19 [x] On a downward shield colour crossing only, play the full
   whoop-whoop, then the existing depleted/critical sample without blocking the
   game or music. Red supersedes an unsaid yellow warning; no doubled klaxon
   for that escalation. Cancel stale warnings on respawn, Game Over and exit.
   Game Over speech keeps its immediate entrance without a klaxon.
 
-- MUS-001-20 [ ] Verify command channels, patch bytes, sequencing, reload and
+- MUS-001-20 [x] Verify command channels, patch bytes, sequencing, reload and
   cleanup including a rapid escalation; assemble the ordinary private game.
   Retain the R05 executable/control and historical loader pins. Human mix
   acceptance is separate from these checks; no physical deployment or
   production promotion. Preserve unreviewed R05 work outside Git.
+
+**R06 implementation and test.** Frozen task: `c0d6cbbad71cdde53c366c4a12e20c92cace0e7d`.
+Pi 1169 assembled the ordinary binary, SHA-256
+`88e4f8b4c33b014291bd3b8cb34c6d051352ec8197182c0742553db04c31d44e`.
+Historical controls reproduced; deterministic assets check passed. Unit suite:
+232 tests run, one skipped. Linked packet checks match soundboard keys 5
+(rocket, channels 12/13) and 1 (klaxon, channel 14) after remapping. Speech
+stays on channel 11. The shield clock waits 20 PRT edges (~0.4 seconds)
+after submission, long enough for the second sweep and release.
+
+Oryx 596: [14 MOS readbacks](../../../.build/mus001-prt-r06/measure.u9peAJX2/)
+from the linked game on a disposable FAE card passed: two launches queued
+and drained, no early speech, counter wrap, critical supersession at the
+original deadline, new-life cancellation and immediate Game Over. Inputs
+were injected at the cue boundary. This tests game logic, not audible mix.
+No physical card or firmware writes. Normal audition profile on Oryx:
+`.emulator/mus001-prt-combat-r06`; slot returned with no emulator running.
+
+- MUS-001-21 [ ] Listen in ordinary play: match launches to shots, check the
+  two shield phrases remain intelligible after the whoop and that Game Over
+  still cuts through. For this audition only, compare Rally's louder bank in
+  a separate profile to the unchanged accepted bank. The drop-in bank has
+  SHA-256 `3ba577d5053ce9ef5579ea6c2807f68a5e4523e8ded06684a4005e82707715fe`;
+  it changes the three speech payloads, not the cue selection, channel volume
+  or music. No gain promotion without Smith's listening verdict.
+
+Both audition profiles are staged and stopped on Oryx. Within
+`~/Agon/mystuff/nurples/.emulator/`, use `mus001-prt-voicelevel-r06` for
+Rally's louder speech and `mus001-prt-combat-r06` for the control. Guest
+readback matched both bundles; their manifests differ only at `voice.agnb`.
+After an ordinary Oryx review checkout, launch `./fab-agon-emulator` from
+the chosen profile and type `RUN` at MOS. Close FAE between auditions.
+
+**R06 audible feedback (Oryx 597):** Smith prefers the louder speech over the
+music and effects and likes the klaxon sound, but wants it louder and four
+times as long. This is not an acceptance of the R06 klaxon level or length.
+See the [R07 tuning task and listening gate](klaxon-r07.md).

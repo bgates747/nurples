@@ -245,6 +245,9 @@ player_init_level_entry:
 ; end player_init_level_entry
 
 player_init_respawn:
+    .if mus_combat_cues
+    call cues_cancel_warning ; a new shield charge must not announce the old life
+    .endif
     xor a
     jp player_init
 ; end player_init_respawn

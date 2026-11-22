@@ -7,6 +7,10 @@ vox_quiet_crater: db 0
 
 vox_reset:
     xor a
+    .if mus_combat_cues
+    ld (cues_launches),a
+    ld (cues_pre_alert),a ; start timestamp is written before arming
+    .endif
     ld (vox_warning),a
     ld (vox_quiet_crater),a
     ld hl,0
@@ -80,6 +84,9 @@ vox_open:
     rst.lil 18h
     ret
 @cmd: db 23,0,85h,8,8, 23,0,85h,9,8, 23,0,85h,10,8, 23,0,85h,11,8
+    .if mus_combat_cues
+    db 23,0,85h,12,8, 23,0,85h,13,8, 23,0,85h,14,8
+    .endif
 @end:
 vox_close:
     ld hl,@cmd
@@ -87,10 +94,16 @@ vox_close:
     rst.lil 18h
     ret
 @cmd: db 23,0,85h,11,9, 23,0,85h,10,9, 23,0,85h,9,9, 23,0,85h,8,9
+    .if mus_combat_cues
+    db 23,0,85h,14,9, 23,0,85h,13,9, 23,0,85h,12,9
+    .endif
 @end:
 
 ; Called on Game Over entry only. The initial LOADTUNE has no speech.
 vox_game_over:
+    .if mus_combat_cues
+    call cues_cancel_warning
+    .endif
     ld a,1
 vox_say:
     ld (@id),a
@@ -119,12 +132,20 @@ vox_frame:
     rst.lil 18h
     jr vox_frame
 @speech:
+    .if mus_combat_cues
+    call cues_play_launches
+    jp cues_service_warning
+    .else
     ld a,(vox_warning)
     or a
     ret z
     ld hl,vox_warning
     ld (hl),0
     jp vox_say
+    .endif
 vox_hull:
     incbin "audio/hull.vdu"
 vox_hull_end:
+    .if mus_combat_cues
+    include "combat_cues.inc"
+    .endif

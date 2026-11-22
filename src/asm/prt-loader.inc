@@ -1,23 +1,38 @@
-; Production whole-append loading clock and historical review arms. PRT1 follows
+; Whole-game music clock and historical loading-only controls. PRT1 follows
 ; AgonArcade RALLY-25/prt.inc. 18.432 MHz / 256 / 1440 = 50 Hz.
 lp_reload: equ 1440
 lp_record: db "LPR1",lp_music
 lp_resettable:
 lp_status: db 0 ; bit0 completed, bit1 timer busy, bit2 packet overflow, bit3 vector restored
-lp_elapsed: dl 0 ; MOS clock units across identical UI/game/voice load boundaries
+lp_elapsed: dl 0 ; R05: whole invocation from loader start to timer stop; R01–04: load only
 lp_irqs: dl 0
 lp_sent: dl 0 ; serviced tracker periods, including empty command batches
 lp_missed: dl 0 ; extra deadlines observed together; never burst-replay
 lp_late: dl 0 ; worst lateness in /256 PRT counts (72 per ms)
 lp_appends: dl 0
 lp_bytes: dl 0
+    .if mus_all50
+lp_load_elapsed: dl 0
+lp_load_missed: dl 0
+lp_load_late: dl 0
+; Exclusive counts of delivered periods by phase. A silent pause/warp has none.
+lp_phase_ticks: ds 18 ; loading / controller / attract / level 0 / other level / Game Over
+lp_paused_irqs: dl 0 ; measured completed music-pause intervals (not missed deadlines)
+    .endif
 lp_record_end:
 lp_owned: db 0
 lp_capture: db 0
 lp_handoff: db 0
 lp_seen: dl 0
 lp_size: dl 0
+    .if mus_all50
+lp_audible: ds AY_VOICES ; actual last-sent mix, NOT the next decoded mix
+lp_pause_start: dl 0
+    .endif
 lp_reset_end:
+    .if mus_all50
+lp_started: db 0
+    .endif
 lp_start_time: dl 0
 lp_old_ctl: db 0
 lp_old_iss: db 0
@@ -26,11 +41,19 @@ lp_packet: ds 512
 lp_filename: asciz "LOADPRT.BIN"
 
 lp_begin:
+    .if mus_all50
+    ld a,1
+    ld (lp_started),a
+    .endif
     ld hl,lp_resettable
     ld de,lp_resettable+1
     ld bc,lp_reset_end-lp_resettable-1
     ld (hl),0
     ldir
+    .if mus_all50
+    ld hl,0
+    ld (mus_ticks),hl
+    .endif
     MOSCALL mos_sysvars
     ld hl,(ix+sysvar_time)
     ld (lp_start_time),hl
@@ -87,6 +110,14 @@ lp_stop_timer:
     xor a
     out0 (083h),a
     ld (lp_owned),a
+    .if mus_all50
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
+    ld de,(lp_start_time)
+    or a
+    sbc hl,de
+    ld (lp_elapsed),hl
+    .endif
     ld a,(lp_old_iss)
     out0 (092h),a
     ld hl,(lp_old_vector)
@@ -166,6 +197,17 @@ lp_pump:
     ld a,(lp_owned)
     or a
     ret z
+    .if mus_all50
+    ld a,(mus_active)
+    or a
+    ret z
+    ld a,(mus_paused)
+    or a
+    ret nz
+    ld a,(mus_in_warp)
+    or a
+    ret nz
+    .endif
 @snapshot:
     ld bc,(lp_irqs)
     ld hl,(lp_seen)
@@ -213,7 +255,19 @@ lp_pump:
     add hl,de
     ld (lp_late),hl
 @send:
+    .if mus_all50
+    ld a,(lp_status)
+    bit 2,a
+    jr z,@intact
+    ld a,1 ; never count, play or decode past a dropped packet
+    ld (game_exit_requested),a
+    ret
+@intact:
+    .endif
     call lp_send
+    .if mus_all50
+    call lp_note_tick
+    .endif
     ld hl,(lp_sent)
     inc hl
     ld (lp_sent),hl
@@ -287,6 +341,15 @@ lp_append:
 lp_finish:
     .if lp_music
     call lp_pump
+    .endif
+    .if mus_all50
+    ; Nothing changes owner here. Keep the next packet and the IRQ phase.
+    ld hl,(lp_missed)
+    ld (lp_load_missed),hl
+    ld hl,(lp_late)
+    ld (lp_load_late),hl
+    .endif
+    .if lp_music-mus_all50
     ld a,(lp_owned)
     ld (lp_handoff),a
     call lp_stop_timer
@@ -296,12 +359,19 @@ lp_finish:
     ld de,(lp_start_time)
     or a
     sbc hl,de
+    .if mus_all50
+    ld (lp_load_elapsed),hl
+    .else
     ld (lp_elapsed),hl
+    .endif
     ld hl,lp_status
     set 0,(hl)
     ret
 
-; First presentation frame consumes the *already decoded* next tick.
+    .if mus_all50
+    include "music_clock.inc"
+    .else
+; Historical loading-only builds: first frame consumes the prepared handoff.
 lp_frame:
     ld a,(lp_handoff)
     or a
@@ -312,8 +382,20 @@ lp_frame:
 @ordinary:
     call pt3_play
     jp ay_update
+    .endif
 
 lp_save:
+    .if mus_all50
+    ld a,(lp_started)
+    or a
+    ret z
+    ld a,(lp_status)
+    bit 1,a
+    jr z,@report
+    call printInline
+    asciz "Music clock unavailable: PRT1 is in use.\r\n"
+@report:
+    .endif
     ld hl,lp_filename
     ld de,lp_record
     ld bc,lp_record_end-lp_record

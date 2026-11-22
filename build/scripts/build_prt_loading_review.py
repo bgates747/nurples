@@ -1,4 +1,4 @@
-"""Build three private arms in fresh directories; never publish to tgt/."""
+"""Rebuild the historical private loader controls; never publish to tgt/."""
 from hashlib import sha256
 from pathlib import Path
 import shutil
@@ -38,6 +38,9 @@ def build():
                     "519cd653e7c5555d170169f573b4a2873e18b7866b7bf2979ed140372a9597c6"):
                 raise ValueError("R03 timing control changed")
             if arm == "whole":
+                if sha256(binary).hexdigest() != (
+                        "9d33340d79a9b5711d05306f0c857691225350ab260735067bd20e433f0529ce"):
+                    raise ValueError("R04 whole-append rollback changed")
                 dst = ROOT / ".build/mus001-prt-r04/whole"
             dst.mkdir(parents=True, exist_ok=True)
             files = ("nurples.bin", "nurples.symbols", "ui.agnb", "game.agnb",

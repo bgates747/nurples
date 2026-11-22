@@ -1,4 +1,5 @@
-; Campaign audio, called in the foreground; no timer or ISR.
+; Foreground track selection and frame-driven effects. In the ordinary build
+; only the 50 Hz service advances the tracker; frames may poll, not tick it.
     .if mus_campaign
 mus_in_warp: db 0
 mus_title_active: db 0
@@ -49,9 +50,16 @@ mus_pause_edge:
     ld (hl),a
     or a
     jr z,@restore
+    .if mus_all50
+    ld hl,(lp_irqs)
+    ld (lp_pause_start),hl
+    .endif
     call ay_silence
     jr @done
 @restore:
+    .if mus_all50
+    call lp_resume
+    .else
     ld hl,ay_nw_vol
     ld de,ay_sh_vol
     ld c,0
@@ -68,6 +76,7 @@ mus_pause_edge:
     cp AY_VOICES
     jr nz,@volume
     call vdu_flush
+    .endif
 @done:
     pop af
     ret
@@ -168,12 +177,19 @@ mus_frame:
     ld (mus_ticks),hl
     ld a,1
     ld (mus_active),a
+    .if mus_all50
+    call lp_prime_track
+    .endif
 mus_tick:
+    .if mus_all50
+    call lp_pump
+    .else
     call pt3_play
     call ay_update
     ld hl,(mus_ticks)
     inc hl
     ld (mus_ticks),hl
+    .endif
 mus_effects:
     .if mus_campaign
     call vox_frame
@@ -256,6 +272,11 @@ mus_presentation:
     inc a
     ld (mus_active),a
     ld (mus_title_active),a
+    .endif
+    .if mus_all50
+    call lp_prime_track
+    .endif
+    .if mus_campaign
     jp mus_tick
     .endif
 

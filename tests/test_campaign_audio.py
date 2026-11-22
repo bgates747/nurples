@@ -2,11 +2,13 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import shutil
+from struct import pack
 import subprocess
 from tempfile import TemporaryDirectory
 import unittest
 
 from nurples_tools.campaign_audio import prepare_audio, verify_audio
+from nurples_tools.loading_music import configure
 
 
 class CampaignAudioTests(unittest.TestCase):
@@ -69,3 +71,67 @@ class CampaignAudioTests(unittest.TestCase):
         addresses = [0x040000 + binary.index(module) for module in modules[:2]]
         self.assertEqual(binary[start-6:start],
                          b"".join(a.to_bytes(3, "little") for a in addresses))
+
+    @unittest.skipUnless(shutil.which("ez80asm"), "ez80asm is not on PATH")
+    def test_ordinary_clock_in_linked_game(self):
+        asm = Path(__file__).resolve().parents[1] / "src/asm"
+        shutil.copytree(asm, self.stage, dirs_exist_ok=True)
+        prepare_audio(self.root, self.stage, directory=self.songs)
+        configure(self.stage, True, small_reads=True, whole=True, all_phases=True, combat_cues=True)
+        subprocess.run(["ez80asm", "-s", "nurples.asm", "clock.bin"], cwd=self.stage,
+                       stdout=subprocess.PIPE, check=True)
+        game = (self.stage / "clock.bin").read_bytes()
+        symbols = {name: int(value[1:], 16) for name, value in
+                   (line.split() for line in (self.stage / "nurples.symbols").read_text()
+                    .splitlines() if line.strip())}
+
+        def section(start, end):
+            return game[symbols[start]-0x40000:symbols[end]-0x40000]
+
+        def call(name):
+            return b"\xcd" + symbols[name].to_bytes(3, "little")
+
+        # In the shipped path, preparation is the ONLY decoder call, and a
+        # frame can only poll. There is no compiled free-running lp_frame.
+        self.assertEqual(game.count(call("pt3_play")), 1)
+        self.assertIn(call("pt3_play") + call("ay_update"), section("lp_prepare", "lp_send"))
+        self.assertNotIn("lp_frame", symbols)
+        self.assertEqual(section("mus_tick", "mus_effects"), call("lp_pump"))
+        self.assertNotIn(call("lp_stop_timer"), section("lp_finish", "lp_poll"))
+        self.assertIn(call("lp_stop_timer"), section("main_end", "mus_in_warp"))
+        self.assertEqual(game.count(call("lp_poll")), 3)
+        self.assertEqual(symbols["lp_record_end"] - symbols["lp_record"], 57)
+        # The rocket still matches the soundboard's key 5.
+        self.assertEqual(sha256(section("cues_rocket", "cues_rocket_end")).hexdigest(),
+                         "2f0a9935d462d1e148f14a8c6fa880ee3d996052928af0a78566694b526ba81a")
+        # Decode the intended audible shape independently of its assembly
+        # layout: four pairs at the old speed, not a longer silent wait.
+        header = bytes((23, 0, 133, 14))
+        phases = []
+        for i in range(8):
+            body = 75 if i % 2 == 0 else 64
+            phases.extend([(127, 4), (body, 146 if i < 7 else 156)])
+            if i < 7:
+                phases.append((0, 10))
+        gate = sum(ms for _, ms in phases)
+        tail = 176
+        expected = (
+            header + bytes((4, 1)) +
+            header + bytes((6, 2, len(phases))) + b"".join(pack("<BH", *p) for p in phases) +
+            bytes((0, 1)) + pack("<BH", 0, tail) +
+            header + bytes((7, 1, 2, 5)) + pack("<HhHhH", 10, 32, 8, -32, 8) +
+            header + bytes((0, 80)) + pack("<HH", 470, gate)
+        )
+        self.assertEqual(section("cues_klaxon", "cues_klaxon_end"), expected)
+        self.assertEqual(gate + tail, 4 * (320 + 44))
+        self.assertEqual(symbols["cues_alert_ticks"], (gate + tail + 19) // 20 + 1)
+        spawn = section("enemy_spawn_fireball", "fireball_to_screen_vy")
+        self.assertIn(call("spawn_sprite_from_tile") + b"\xd0", spawn)  # RET NC
+        self.assertTrue(spawn.endswith(call("cues_queue_launch") + b"\xc9"))
+        self.assertEqual(game.count(call("cues_queue_launch")), 1)
+        self.assertIn(call("cues_cancel_warning"), section("player_init_respawn", "player_init"))
+        self.assertIn(call("cues_cancel_warning"), section("vox_game_over", "vox_say"))
+        for ch in (12, 13, 14):
+            header = bytes((23, 0, 0x85, ch))
+            self.assertIn(header + b"\x08", section("vox_open", "vox_close"))
+            self.assertIn(header + b"\x09", section("vox_close", "vox_game_over"))

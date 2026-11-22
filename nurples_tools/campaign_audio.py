@@ -46,7 +46,8 @@ def prepare_audio(root: Path, staged: Path, *, directory: Path | None = None,
         "mus_song_end:\n" + (f"mus_loadtune: equ {labels[title.name]}\n" if title else ""))
     (staged / "mus_config.inc").write_text(
         f"mus_enabled: equ 1\nmus_campaign: equ {int(campaign)}\n"
-        f"mus_single: equ {int(not campaign)}\nmus_level_count: equ {len(tracks)}\n")
+        f"mus_single: equ {int(not campaign)}\nmus_level_count: equ {len(tracks)}\n"
+        "mus_all50: equ 0\nmus_combat_cues: equ 0\n")
     (staged / "mus_payload.inc").write_text('    include "campaign_audio.inc"\n')
     return modules
 

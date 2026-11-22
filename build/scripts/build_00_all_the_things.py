@@ -59,7 +59,8 @@ def assemble() -> None:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
         modules = prepare_audio(PROJECT_ROOT, staged_asm)
-        configure_loading_music(staged_asm, candidate=True, small_reads=True, whole=True)
+        configure_loading_music(staged_asm, candidate=True, small_reads=True, whole=True,
+                                all_phases=True, combat_cues=True)
         staged_binary = staged_asm / "nurples.bin"
         staged_symbols = staged_asm / "nurples.symbols"
         staged_binary.unlink(missing_ok=True)

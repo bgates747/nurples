@@ -5,6 +5,14 @@ original_text_background: db c_black
 original_text_colours_valid: db 0
 
 game_init:
+    .if mus_all50
+    ld a,(lp_started)
+    or a
+    jr z,@new_run
+    ld (game_exit_requested),a ; corrupt dispatch re-entered init; unwind the owned timer
+    ret
+@new_run:
+    .endif
     ld a,STATE_NEW_LOADING
     call telemetry_publish_phase
 ; The VDP alone owns the truth about its resource registries. Never infer that

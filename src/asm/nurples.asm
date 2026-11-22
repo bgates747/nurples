@@ -112,6 +112,10 @@ exit:
 
 ; --- MAIN PROGRAM FILE ---
 main:
+    .if mus_all50
+    xor a
+    ld (lp_started),a ; do not save a previous RUN's report on early display/font failure
+    .endif
 ; Invalidate and rebuild the public observer record before touching any other
 ; resident process state. MOS RUN does not reload initialized data.
     call telemetry_init
