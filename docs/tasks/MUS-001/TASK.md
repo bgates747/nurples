@@ -1,9 +1,10 @@
 # MUS-001 — Audition tracker music in the Nurples game loop
 
-**Current decision:** R03 passed on FAE and Console8. Smith approved its
-campaign audio for the ordinary game on `dev`, with private tunes and
-executables kept out of Git. The original experiment and subsequent review
-records below are chronological; the initial fixture-only limit is historical.
+**Current decision:** The accepted game uses the 50 Hz music clock during
+loading. [R05](#r05--one-50-hz-music-clock-throughout-a-run) extends that
+clock to every track, without retiming gameplay. Tunes and song-bearing
+executables remain private. The earlier VBlank experiments and qualifications
+below are historical, not instructions to run two music clocks.
 
 Find out whether a single-chip PT3 tune sounds right alongside game effects
 without making play less responsive. The first experiment uses the existing
@@ -556,7 +557,7 @@ respawn and Game Over, must come from PRT1. Silent warp, the existing entrance
 cue policy, and P pause remain deliberate: no replay of elapsed silent time.
 Do not retime the main loop, speech, retriggers, actors or VBlank.
 
-- MUS-001-16 [ ] Make the timer invocation-owned; service it only between
+- MUS-001-16 [x] Make the timer invocation-owned; service it only between
   complete foreground VDU operations. Never take another timer owner's vector
   or substitute a frame tick. On P preserve the prepared packet **and** the
   last audible mix. Clean up on error and ESC; a resident MOS RUN starts fresh.
@@ -567,3 +568,69 @@ Do not retime the main loop, speech, retriggers, actors or VBlank.
   restart and Game Over, then ESC and RUN again. No card or firmware changes
   in implementation; keep all song-bearing outputs private. Rollback is
   accepted dev commit e1ac534 and its retained private R04 whole-append build.
+
+**R05 implementation and automated evidence.** Contract:
+`18695d1e23ab3837fdda5bb6a968c2a310389367`. The ordinary game carries the
+R04 LOADTUNE packet through controller selection without a second decode or
+timer handoff. Track changes prime once and discard silent deadlines; pause
+retains the pending delta and restores the last *heard* volumes. VBlank and
+render boundaries poll the timer, but do not tick the tracker. Game effects
+still run on frames. A busy timer fails visibly instead of stealing the
+vector or switching to 60 Hz. The interrupt still only acknowledges and counts.
+
+Pi build 1168: assembled ordinary `nurples.bin`, SHA-256
+`c1037c6f822cc8037308c6ea4f02187ead7833f25ea7df7c434589c91f741209`.
+Rollback R04 reproduced exactly. Generated assets verified; 232 unit tests,
+one skipped. The synthetic-song link test checks the actual binary: exactly
+one decoder call, in packet preparation; no legacy frame routine or timer
+shutdown at loader finish. Private soundtrack and executable remain untracked.
+
+Oryx FAE/stock VDP, Eirene RC3, boost off, dummy audio. Checkout 594,
+ordinary build and maps, two resident RUNs without reloading. First:
+2,196 IRQs / 5,272 MOS units (~49.98 Hz), 1,939 delivered periods, zero
+missed. Loading/prompt/attract/level 1: 540/608/211/580 ticks; P accounted for
+162 silent periods. Second: 1,157 delivered / 1,157 IRQs, zero missed.
+Both completed 1,097 appends / 821,839 bytes and restored the vector;
+separate 57-byte reports, status 0x09, from both exits to MOS.
+[Guest reports and screenshots](../../../.build/mus001-prt-r05/) are local
+evidence. `MUSIC50.BIN` is create-only: rename it at MOS before another RUN
+if both reports are wanted. Decode with `check-prt.py MUSIC50.BIN tgt`.
+
+Oryx 595: exercised the real warp, second level, deaths/respawns and Game
+Over using the same binary, normal three lives and a disposable FAE card.
+Before RUN, MOS changed only the first map's row count and the maximum shields
+in guest RAM. The first scripted attempt dropped a key while MOS was busy;
+no game report from that attempt. With spacing between commands the retry
+delivered **539 / 710 / 211 / 293 / 1478 / 1693** ticks in load / controller /
+attract / first level / second level / Game Over. 5,270 IRQs, 4,924 serviced,
+zero missed; the rest fell in intentionally silent intervals. See the
+[flow report and captures](../../../.build/mus001-prt-r05/measure.ETWfRGvE/).
+All three reports passed the phase-specific verifier. Both emulator slots and
+the Pi slot released. R05 is built but not promoted; next gate is an audible
+Console8 playthrough. No card deployment, firmware change or audio verdict.
+
+### R06 — turret launch and shield pre-alerts in the 50 Hz game
+
+Smith moved the turret cue into this update and requested the soundboard's
+two-sweep klaxon immediately before the two shield warnings. Use the default
+AgonArcade Nurples soundboard patches (keys 5 and 1); keep music, laser,
+hit, score and speech channels independent. No new samples or firmware.
+
+- MUS-001-18 [ ] Play the **missile-launch SFX** once whenever a ground
+  turret successfully spawns a fireball. No launch sound for tracking,
+  a reload timer expiry without a projectile, or a failed allocation.
+  Subsequent shots restart the cue from the top, like the player laser;
+  keep it off the music channels. Audition against visible shots with the
+  level tune playing.
+
+- MUS-001-19 [ ] On a downward shield colour crossing only, play the full
+  whoop-whoop, then the existing depleted/critical sample without blocking the
+  game or music. Red supersedes an unsaid yellow warning; no doubled klaxon
+  for that escalation. Cancel stale warnings on respawn, Game Over and exit.
+  Game Over speech keeps its immediate entrance without a klaxon.
+
+- MUS-001-20 [ ] Verify command channels, patch bytes, sequencing, reload and
+  cleanup including a rapid escalation; assemble the ordinary private game.
+  Retain the R05 executable/control and historical loader pins. Human mix
+  acceptance is separate from these checks; no physical deployment or
+  production promotion. Preserve unreviewed R05 work outside Git.
