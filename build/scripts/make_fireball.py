@@ -2,10 +2,10 @@ import random
 from PIL import Image
 
 # Load the images
-img0 = Image.open('assets/img/design/fireball_0.png').convert('RGBA')
-img1 = Image.open('assets/img/design/fireball_1.png').convert('RGBA')
-img2 = Image.open('assets/img/design/fireball_2.png').convert('RGBA')
-img2 = Image.open('assets/img/design/fireball_3.png').convert('RGBA')
+img0 = Image.open('assets/img/design/sprites/fireball_0.png').convert('RGBA')
+img1 = Image.open('assets/img/design/sprites/fireball_1.png').convert('RGBA')
+img2 = Image.open('assets/img/design/sprites/fireball_2.png').convert('RGBA')
+img2 = Image.open('assets/img/design/sprites/fireball_3.png').convert('RGBA')
 
 # Ensure all images are the same size
 assert img0.size == img1.size == img2.size, "All images must be the same size"

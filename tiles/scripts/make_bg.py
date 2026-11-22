@@ -33,7 +33,7 @@ def create_composites(source_path, target_directory, output_prefix, tile_size, g
         composite_image.save(output_path)
 
 if __name__ == "__main__":
-    source_image_path = "assets/img/design/bg_stars.png"
+    source_image_path = "assets/img/design/backgrounds/bg_stars.png"
     target_dir = "tiles/bg/orig"
     prefix = "bg_stars"
     tile_size = 64
