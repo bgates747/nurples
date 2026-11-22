@@ -605,7 +605,8 @@ class AssemblySafetyTests(unittest.TestCase):
                 )
 
     def test_tile_activation_table_covers_every_accepted_id(self) -> None:
-        source = read_asm("tiles_active.inc")
+        self.assertIn('include "active_tile_registry.inc"', read_asm("tiles_active.inc"))
+        source = read_asm("active_tile_registry.inc")
         table = routine(
             source,
             "tile_activation_routines",

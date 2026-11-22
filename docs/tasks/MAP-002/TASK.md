@@ -90,17 +90,50 @@ activation table from one declarative registry, retaining the zero fast path,
 runtime numbering, actor defaults, callback whitelist and gameplay behavior.
 Editor rearrangement is distinct from assigning a new runtime behavior.
 
-- MAP-002-005 [ ] Freeze this amendment before implementation on dev.
-- MAP-002-006 [ ] Generate and freshness-check the production registry include;
+- MAP-002-005 [x] Frozen on origin/dev: `443105df1833957fe2a48145c0fe82d3e17d7e42`.
+- MAP-002-006 [x] Generate and freshness-check the production registry include;
   compare old/new production machine code byte for byte with identical inputs.
-- MAP-002-007 [ ] Warn on either active endpoint, identify its behavior and
+- MAP-002-007 [x] Warn on either active endpoint, identify its behavior and
   actor kind, and require explicit manual review acknowledgement as well as
   the matching token for apply. Occupied destinations and all unrelated
   safeguards stay blocked; an empty no-op reserved slot may be used.
-- MAP-002-008 [ ] Isolated electrode fixture: pass 15 through the actual
+- MAP-002-008 [x] Isolated electrode fixture: pass 15 through the actual
   activation path as a no-op control, then as an electrode alias defined only
   in fixture inputs. Verify allocation/type, callback validation, destruction
   of eligible lightning and crater conversion. Leave the production alias off.
-- MAP-002-009 [ ] Only after fixture success, dry-run local 10 → 14,
+- MAP-002-009 [x] Only after fixture success, dry-run local 10 → 14,
   report its behavior review and cell counts, then stop. No live atlas, TSX,
   TMX, sparse-checkout or deployment changes. No GUI/hardware review.
+
+### R02 verification
+
+The runtime IDs in [the registry](../../../maps/active_tiles.toml) are **not**
+Tiled local IDs. Its actor field selects the activation routine; overlapping
+markers may create the same actor. The compiler and planner check the generated
+include; `python -m nurples_tools.active_tiles --write` regenerates it. An
+active endpoint requires both the fresh preview token and `--reviewed-active`.
+Review the reported handler, its defaults/movement and interactions before
+acknowledging. A live behavior itself makes a slot occupied even without art.
+
+Using the same private music and options, the production assembly was 69,386
+bytes with either dispatch table, SHA-256
+`abd6f6203a680fca832ef8149137a9ee2fab0f514372523dfe01b3b4e6568c3b`.
+`tests/build_active_tile_fixture.py ASSEMBLER NEW_DIRECTORY` performs the
+comparison in scratch and emits only the two song-free MOS probes. In a
+disposable MOS directory load each at &040000 and RUN. Expected fresh
+CONTROL.OUT and ALIAS.OUT bytes: `4d 32 00 2a` and `4d 32 01 2a`.
+
+First FAE run stopped at checkpoint 4 in both arms: an unbracketed address
+in the fixture multiplied the sum instead of just the index. Corrected only
+that fixture expression. Both fresh receipts then matched in Oryx generation
+601. Runtime 15 allocated no record in the control; 11 served as its positive
+control. In the alias arm 15 created a type-9 electrode, its stored movement
+callback validated, destruction removed matching lightning but spared a
+distant barrier, and the original record became a valid crater without a tile
+fault. Pi build and Oryx slots released; no private executable published.
+
+Preview: local 10 (runtime 11, right electrode) → local 14 (currently runtime
+15, no-op); both endpoints flagged. 18 source cells in 5 maps: 10 campaign,
+3 Circuit Breaker, 3 Damage Control, 1 Dirty Handoff, 1 Orbital Shipyard.
+Zero destination references. After a move, new local 14 would compile to 11;
+this fixture did not promote its temporary slot-15 behavior. No move applied.

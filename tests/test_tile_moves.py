@@ -12,6 +12,7 @@ from pathlib import Path
 from PIL import Image
 
 from nurples_tools.legacy_level import render_tmx
+from nurples_tools.active_tiles import REGISTRY, INCLUDE
 from nurples_tools.legacy_tiles import check_legacy_tiles
 from nurples_tools.maps import compile_map_manifest
 from nurples_tools.tile_bindings import bindings
@@ -27,7 +28,7 @@ class TileMoveTests(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
         for p in (*tracked(ROOT, "*.tmx", "tiles/dg/legacy_z80/*.png"),
-                  TSX, PNG, CAT, CSV, *map(Path, MANIFESTS)):
+                  TSX, PNG, CAT, CSV, REGISTRY, INCLUDE, *map(Path, MANIFESTS)):
             (self.root / p).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / p, self.root / p)
         git(self.root, "init", "-q", "-b", "dev")
@@ -74,7 +75,8 @@ class TileMoveTests(unittest.TestCase):
         for op, src, dst in [("move", a, b), ("swap", b, c)]:
             token = self.cli(op, src, dst).split()[-1]
             self.assertEqual(git(self.root, "status", "--porcelain"), b"")
-            self.cli(op, src, dst, "--apply", token)
+            self.assertIn("--reviewed-active required", self.cli(op, src, dst, "--apply", token, ok=False))
+            self.cli(op, src, dst, "--reviewed-active", "--apply", token)
             self.assertTrue(git(self.root, "diff", "--cached", "--stat"))
             self.assertEqual((self.compiled(), self.cells()), before)
             self.commit()
@@ -89,7 +91,7 @@ class TileMoveTests(unittest.TestCase):
 
     def test_fail_closed(self):
         a, b, c = (self.slot(runtime) for runtime in (1, 25, 5))
-        for op, src, dst in [("move", a, c), ("move", a, self.slot(12)), ("swap", a, b),
+        for op, src, dst in [("move", a, c), ("swap", a, b),
                              ("move", b, a), ("move", a, a), ("move", -1, b), ("swap", a, 255)]:
             self.cli(op, src, dst, ok=False)
         token = self.cli("move", a, b).split()[-1]
@@ -101,3 +103,21 @@ class TileMoveTests(unittest.TestCase):
         git(self.root, "add", "--", p)
         self.commit()
         self.assertIn("CSV", self.cli("move", a, b, ok=False))
+
+    def test_reserved_empty_destination_requires_manual_review(self):
+        source, dest = self.slot(17), self.slot(15)
+        report = self.cli("move", source, dest)
+        self.assertNotIn("active-range source", report)
+        self.assertIn("active-range destination", report)
+        self.assertIn("activate_null_tile, actor none", report)
+        token = report.split()[-1]
+        self.assertIn("--reviewed-active required", self.cli("move", source, dest, "--apply", token, ok=False))
+        self.assertEqual(git(self.root, "status", "--porcelain"), b"")
+        self.assertIn("occupied", self.cli("move", source, self.slot(11), ok=False))
+
+    def test_registry_drift_refuses_preview(self):
+        p = self.root / REGISTRY
+        p.write_text(p.read_text().replace('15 = ["15", "none"]', '15 = ["15", "electrode"]'))
+        git(self.root, "add", "--", REGISTRY)
+        self.commit()
+        self.assertIn("stale", self.cli("move", self.slot(17), self.slot(15), ok=False))

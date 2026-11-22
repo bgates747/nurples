@@ -7,6 +7,7 @@ import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from nurples_tools.announcer import audio_container
+from nurples_tools.active_tiles import registry
 from nurples_tools.campaign_audio import prepare_audio, verify_audio
 from nurples_tools.loading_music import configure as configure_loading_music
 from nurples_tools.current_assets import check_current_assets, write_current_assets
@@ -25,6 +26,7 @@ CAMPAIGN_MANIFEST = PROJECT_ROOT / "maps/campaign.toml"
 
 
 def build_assets() -> None:
+    registry(PROJECT_ROOT, write=True)
     bank = audio_container(PROJECT_ROOT / "assets/announcer")
     TARGET_DIR.mkdir(parents=True, exist_ok=True)
     (TARGET_DIR / "voice.agnb").write_bytes(bank)
@@ -38,6 +40,7 @@ def build_assets() -> None:
 
 
 def check_assets() -> None:
+    registry(PROJECT_ROOT)
     differences = check_lode_font(PROJECT_ROOT)
     voice = TARGET_DIR / "voice.agnb"
     if not voice.is_file() or voice.read_bytes() != audio_container(PROJECT_ROOT / "assets/announcer"):
@@ -51,6 +54,7 @@ def check_assets() -> None:
 
 
 def assemble() -> None:
+    registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
     )

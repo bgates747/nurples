@@ -12,6 +12,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from nurples_tools.active_tiles import registry
 from nurples_tools.maps import _load_tile_catalog, _validate_tileset
 from nurples_tools.tile_bindings import PROPERTY, exchange
 
@@ -81,6 +82,13 @@ def build_plan(root, op, src, dst):
         raise ValueError("choose two distinct Tiled local IDs in 0..254")
     a, b = src + 1, dst + 1
     ids = _validate_tileset(root / TSX)
+    slots = registry(root)
+    warnings = []
+    for role, local, runtime in (("source", src, ids[a]), ("destination", dst, ids[b])):
+        if runtime < len(slots):
+            slot = slots[runtime]
+            warnings.append(f"WARNING active-range {role}: local {local}, runtime {runtime} "
+                            f"(tile_{slot.name}), {slot.handler}, actor {slot.actor}")
     tree = ET.parse(root / TSX).getroot()
     # Animation frames, per-tile collision shapes and wangsets would also need
     # rewriting. Do not silently drop or leave behind unknown slot references.
@@ -100,7 +108,7 @@ def build_plan(root, op, src, dst):
     changed = {}
     counts = [0, 0]
     report = [f"{op} Tiled local {src} / {dst}; GIDs {a} / {b}; "
-              f"runtime identities {ids[a]} / {ids[b]}"]
+              f"runtime identities {ids[a]} / {ids[b]}", *warnings]
     for path in tracked(root, "*.tmx"):
         result = rewrite_map(root, path, a, b)
         if result is None:
@@ -118,12 +126,13 @@ def build_plan(root, op, src, dst):
         boxes = [(i % 16 * 16, i // 16 * 16, i % 16 * 16 + 16, i // 16 * 16 + 16)
                  for i in (src, dst)]
         tiles = [image.crop(box) for box in boxes]
-        occupied = [bool(tile.getchannel("A").getbbox() or ids[g] in catalog or n)
+        occupied = [bool(tile.getchannel("A").getbbox() or ids[g] in catalog or n
+                         or (ids[g] < len(slots) and slots[ids[g]].actor != "none"))
                     for tile, g, n in zip(tiles, (a, b), counts)]
         if not occupied[0]:
             raise ValueError("source slot is free")
-        if op == "move" and (occupied[1] or ids[b] <= 16 or int(entries[dst])):
-            raise ValueError("move destination is occupied or reserved; not a free slot")
+        if op == "move" and (occupied[1] or int(entries[dst])):
+            raise ValueError("\n".join([*warnings, "move destination is occupied; not a free slot"]))
         if op == "swap" and not occupied[1]:
             raise ValueError("swap destination has no tile; use move for a free slot")
         if op not in {"move", "swap"}:
@@ -142,7 +151,7 @@ def build_plan(root, op, src, dst):
     exchange(tree, a, b)
     ET.indent(tree, space=" ")
     changed[TSX] = ET.tostring(tree, encoding="utf-8", xml_declaration=True) + b"\n"
-    return changed, report
+    return changed, report, bool(warnings)
 
 
 def binary_patch(root, changed):
@@ -168,21 +177,26 @@ def main():
     parser.add_argument("source", type=int)
     parser.add_argument("destination", type=int)
     parser.add_argument("--apply", metavar="PREVIEW_TOKEN", help="apply and stage the preview")
+    parser.add_argument("--reviewed-active", action="store_true",
+                        help="confirm manual review of the reported active tile behaviors")
     args = parser.parse_args()
     try:
         root = Path(git(".", "rev-parse", "--show-toplevel").decode().strip())
         check_clean(root)
         head = git(root, "rev-parse", "HEAD").strip()
-        changed, report = build_plan(root, args.operation, args.source, args.destination)
+        changed, report, review = build_plan(root, args.operation, args.source, args.destination)
         patch = binary_patch(root, changed)
-        token = hashlib.sha256(head + b"\n" + report[0].encode() + b"\n" + patch).hexdigest()
+        token = hashlib.sha256(head + b"\n" + "\n".join(report).encode() + b"\n" + patch).hexdigest()
         print("\n".join(report))
         git(root, "apply", "--index", "--check", "-", data=patch)
         if args.apply is None:
-            print(f"Dry run; no changes. To stage this exact plan repeat with --apply {token}")
+            flag = "--reviewed-active " if review else ""
+            print(f"Dry run; no changes. To stage this exact plan repeat with {flag}--apply {token}")
         else:
             if args.apply != token:
                 raise ValueError("stale or incorrect preview token; preview again")
+            if review and not args.reviewed_active:
+                raise ValueError("inspect the active handlers first; --reviewed-active required")
             if git(root, "branch", "--show-current").strip() != b"dev":
                 raise ValueError("only apply from dev")
             check_clean(root)

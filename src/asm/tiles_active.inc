@@ -1,43 +1,4 @@
-
-; ###### TODO: NEW CODE TO IMPLEMENT ######
-tile_pad_small: equ 1
-tile_pad_med: equ 2
-tile_pad_large: equ 3
-tile_charge_shields: equ 4
-tile_turret_fireball: equ 5
-tile_laser_turret: equ 6
-tile_twin_laser_turret: equ 7
-tile_charge_fuel: equ 8
-tile_electrode: equ 9
-tile_lightning: equ 10
-; tile_electrode_r: equ 11 ; same as tile_electrode
-tile_12: equ 12
-tile_13: equ 13
-tile_14: equ 14
-tile_15: equ 15
-tile_crater: equ 16
-
-tile_activation_routines:
-    dl activate_null_tile ; dummy spacer since tiled is 1-based
-    dl activate_pad_small
-    dl activate_null_tile
-    dl activate_null_tile
-    dl activate_null_tile
-    dl activate_turret_fireball
-    dl activate_null_tile
-    dl activate_null_tile
-    dl activate_null_tile
-    dl activate_electrode
-    dl activate_lightning
-    dl activate_electrode
-    dl activate_null_tile
-    dl activate_null_tile
-    dl activate_null_tile
-    dl activate_null_tile ; tile 15
-    dl activate_crater ; tile 16
-tile_activation_routines_end:
-tile_activation_routines_count: equ [tile_activation_routines_end-tile_activation_routines]/3
-; end tile_activation_routines
+    include "active_tile_registry.inc"
 
 ; Shared active-tile launch countdown. Zero is an explicit ready state rather
 ; than a value to decrement: this preserves an intentionally immediate random
