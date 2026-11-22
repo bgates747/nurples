@@ -1,4 +1,4 @@
-; Isolated FAE audition, not included by production. PRT1 programming follows
+; Production whole-append loading clock and historical review arms. PRT1 follows
 ; AgonArcade RALLY-25/prt.inc. 18.432 MHz / 256 / 1440 = 50 Hz.
 lp_reload: equ 1440
 lp_record: db "LPR1",lp_music

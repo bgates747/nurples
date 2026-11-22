@@ -9,7 +9,8 @@ decisions are recorded in the dated development log.
   LOADTUNE at start and Game Over, level music handoff across warp, and
   explosions on ground and air kills. The remaining clock measurement is
   separate from the accepted gameplay and mix.
-  [Current experiment: 50 Hz LOADTUNE during asset upload](docs/tasks/MUS-001/TASK.md#50-hz-loader-experiment).
+  [Console8 accepted 50 Hz LOADTUNE during uploads. Next: extend the music clock
+  to the remaining phases (MUS-001-15).](docs/tasks/MUS-001/TASK.md#r04--send-each-1-kib-sd-read-as-a-single-stock-vdp-append)
 
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).

@@ -355,7 +355,7 @@ do not equate emulator wall time or unmeasured production FPS with that ratio.
 [fixture builder](../../../build/scripts/build_prt_loading_review.py) makes
 an ordinary hash-checked build, a timing-only 8 KiB control and a private
 candidate. Production assembly sources and tgt outputs are unchanged.
-[Timer and append code](prt-loader.inc) starts just before UI uploads (after
+[Timer and append code](../../../src/asm/prt-loader.inc) starts just before UI uploads (after
 the font), covers UI, game and speech, and hands its already decoded next tick
 to the ordinary presentation clock. No second tracker initialization. ISR
 does no MOS calls or output. No early send even at the AY library watermark.
@@ -513,7 +513,7 @@ locate the peak. No firmware identity was reported for this playthrough.
 
 ### R04 — send each 1 KiB SD read as a single stock VDP append
 
-- MUS-001-14 [ ] Keep the qualified R03 rollback, read size, safe music
+- MUS-001-14 [x] Keep the qualified R03 rollback, read size, safe music
   service before/after a whole append, and short final reads. Eliminate the
   inner split loop. Compare a separate Console8 fixture/report against R03;
   do not change the presentation transition, gameplay clock, or firmware.
@@ -538,3 +538,10 @@ the card already has that version. No firmware or card rewrite.
   controller selection/attract, level play, death, respawn and Game Over at
   50 Hz independent of rendering. Preserve silent warp, pause position,
   track transitions, speech/SFX and game speed; test exit and repeated RUN.
+
+Production checkpoint: build_00_all_the_things uses the shared R04 loading
+configuration. Compared its prepared assembly tree against the frozen recipe
+at 8ee7de0: all 117 files matched except one comment. Promoted the actual
+hardware-accepted binary/symbols into tgt; all six hashes matched the R04
+manifest. No separate compiler run claimed; the queued rebuild was withdrawn.
+No card change. MUS-001-15 awaits Smith's go-ahead.
