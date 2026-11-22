@@ -24,7 +24,7 @@ def sizes(path):
 def check(report, payload):
     data = report.read_bytes()
     async_assets = data[:4] == b"LPR2"
-    assert (len(data), data[:4]) in ((27, b"LPR1"), (30, b"LPR2"), (27, b"LPR3"))
+    assert (len(data), data[:4]) in ((27, b"LPR1"), (30, b"LPR2"), (27, b"LPR3"), (27, b"LPR4"))
     arm, status = data[4:6]
     elapsed, irqs, sent, missed, late, pieces, total = (
         int.from_bytes(data[i:i + 3], "little") for i in range(6, 27, 3))
@@ -40,7 +40,8 @@ def check(report, payload):
                   for n in sizes(payload / name)]
         assert arm == 1 and status == 9
         assert sent > 0 and sent + missed <= irqs <= sent + missed + 1
-        assert total == sum(counts) and pieces == sum((n + 511) // 512 for n in counts)
+        cap = 1024 if data[:4] == b"LPR4" else 512
+        assert total == sum(counts) and pieces == sum((n + cap - 1) // cap for n in counts)
         if async_assets:
             callbacks = int.from_bytes(data[27:30], "little")
             print(f"async completions: {callbacks}/{pieces}")

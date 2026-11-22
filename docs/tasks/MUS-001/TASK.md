@@ -517,3 +517,24 @@ locate the peak. No firmware identity was reported for this playthrough.
   service before/after a whole append, and short final reads. Eliminate the
   inner split loop. Compare a separate Console8 fixture/report against R03;
   do not change the presentation transition, gameplay clock, or firmware.
+
+R04 built against frozen R03 checkpoint
+`f76db57649b3e0ee64a3077b23aa4d25784b52db`; ordinary/R01/R03 binary
+pins reproduced. Console8 card readback matched candidate
+`9d33340d79a9b5711d05306f0c857691225350ab260735067bd20e433f0529ce`,
+unchanged assets, and all three earlier reports. LOAD1KW.BIN (LPR4)
+should account for 1097 whole-read appends, still 821839 bytes. Await
+hardware verdict against R03 (3 missed); no production promotion.
+
+**R04 accepted; production promotion.** Smith heard no material difference
+and selected the whole-append version. Console8 LOAD1KW.BIN verifies 1097
+appends / 821839 bytes, 629 IRQs, 624 tracker ticks, 5 missed, nominal
+87.07 ms worst, 1490 MOS units. R03 had 3 missed, 76.14 ms worst and 1478
+units. Adequate, not a measured speed improvement. Publish the normal build
+on dev byte-identical to R04, retaining private tunes/binaries out of Git;
+the card already has that version. No firmware or card rewrite.
+
+- MUS-001-15 [ ] Next tranche, after this promotion: drive music during
+  controller selection/attract, level play, death, respawn and Game Over at
+  50 Hz independent of rendering. Preserve silent warp, pause position,
+  track transitions, speech/SFX and game speed; test exit and repeated RUN.

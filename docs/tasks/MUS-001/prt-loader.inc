@@ -223,6 +223,25 @@ lp_pump:
 lp_append:
     push ix
     push iy
+    .if lp_whole
+    ; AGNB already bounded BC to min(1024, remaining); no inner cursor.
+    push hl
+    push de
+    push bc
+    call lp_pump
+    pop bc
+    pop de
+    pop hl
+    push bc
+    call vdu_load_buffer
+    pop bc
+    ld hl,(lp_bytes)
+    add hl,bc
+    ld (lp_bytes),hl
+    ld hl,(lp_appends)
+    inc hl
+    ld (lp_appends),hl
+    .else
 @more:
     push hl
     push de
@@ -259,6 +278,7 @@ lp_append:
     ld a,b
     or c
     jr nz,@more
+    .endif
     call lp_pump
     pop iy
     pop ix
