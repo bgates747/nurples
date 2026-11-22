@@ -436,14 +436,56 @@ Change only the way the loader sends each asset append. Compare the R01
 Console8 result with the same tune, 8 KiB reads, 512-byte maximum payloads,
 clock, music service points, graphics and gameplay. No firmware deployment.
 
-- MUS-001-10 [ ] Apply tagged Eirene RC3 syscall 25h in a private R02
+- MUS-001-10 [x] Apply tagged Eirene RC3 syscall 25h in a private R02
   fixture. One foreground producer, one positive immutable source at a time;
   callback releases the borrow, not the wire. Drain TEMT before the next
   ordinary VDU output. Keep music and file IO out of interrupt context.
   CTS stalls in the MOS ISR can still mask PRT interrupts.
 
-- MUS-001-11 [ ] Assemble on the leased Pi, check R01/ordinary identity and
+- MUS-001-11 [x] Assemble on the leased Pi, check R01/ordinary identity and
   unchanged assets. Replace the installed game on Console8, retaining R01's
   report and rollback. Use a distinct create-only report for R02, check
   callback/append accounting, elapsed MOS time, missed periods and worst
   lateness on the next physical run. Hold production and gameplay unchanged.
+
+R02 staged on Console8 following freeze
+`238f2b439b29644c98bccb8f5cfde9b4398a3a89`. Each positive append is
+one immutable 8-byte header plus payload submitted via 25h. Only bookkeeping
+overlaps the transfer; foreground joins callback and TEMT before music, SD
+reuse or another VDU command. No claim of throughput gain before measurement.
+Pi rebuild matched R01 and ordinary pins. Card binary SHA-256
+`a1a458a98e4fac98e8456b2cdd7c88efd9dd41cfd276738115eceec95e8d4994`;
+all runtime files verified after sync. Original LOADPRT.BIN preserved,
+autoexec and firmware untouched. Await first physical R02 exit report
+`LOADASY.BIN` (LPR2, 30 bytes; final u24 counts completions).
+
+Console8 R02: Smith heard neither improvement nor regression. Retrieved
+LOADASY.BIN read-only; all 1810 callbacks matched 1810 appends, 821839
+payload bytes, status 0x09. IRQ/serviced/missed = 621/551/70, worst lateness
+44.79 ms, elapsed 1456 MOS units (R01: 619/548/71, 80.28 ms, 1464 units).
+The better single maximum does not establish a repeatable transport benefit.
+
+Found the [legacy storage-only measurements](../../../../agon-extender-legacy/agm/design-considerations.md#measured-sequential-read-ceiling)
+for the same blocking ffs_fread API: 8 KiB at 196.54 KiB/s implies 40.7 ms
+per call on average on that setup. The current containers require 82 full
+8 KiB reads across 16 records before counting tails. Suggested next control:
+cap each SD read at 1 KiB, check music between reads, retain R02's 512-byte
+VDP appends and all other settings. The old 1020-byte benchmark implies
+about 5.6 ms per read. These are aggregate-derived estimates, not Console8
+per-call traces or proof of attribution.
+
+### R03 — 1 KiB SD reads, stock MOS and VDP
+
+R02 retired by Smith. Ordinary distribution must not require Eirene or
+VDPlet. Use R01 as the synchronous comparison, not R02 as the base.
+
+- MUS-001-12 [ ] Remove the async build arm and its transport/callback.
+  Cap each AGNB payload read at 1024 bytes, preserve short tails, service
+  music between reads and retain 512-byte synchronous VDP appends.
+  Keep gameplay and the accepted production rollback unchanged.
+
+- MUS-001-13 [ ] Verify R01 and ordinary binary pins, stock ABI references,
+  unchanged asset hashes and R03 card readback. Preserve prior reports;
+  separate create-only LOAD1K.BIN. No firmware writes. Obtain a Console8
+  timing/listening verdict; distinguish stock compatibility by inspection
+  from a run under identified stock firmware.
