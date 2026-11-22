@@ -36,7 +36,7 @@ all-or-nothing change with a stale-input check and a Git rollback path.
 - MAP-002-003 [x] Exercise move, swap, rejected destinations and preservation
   of compiled map bytes on disposable data. Record results and usage.
 
-- MAP-002-004 [ ] Smith selects moves for a subsequent joint test. No edits
+- MAP-002-004 [x] Smith selects moves for a subsequent joint test. No edits
   to live art/maps, sparse checkout sync, emulator, hardware or new enemy
   definitions in this implementation tranche. Commit the tool separately
   so tests can start from a clean rollback point.
@@ -137,3 +137,12 @@ Preview: local 10 (runtime 11, right electrode) → local 14 (currently runtime
 3 Circuit Breaker, 3 Damage Control, 1 Dirty Handoff, 1 Orbital Shipyard.
 Zero destination references. After a move, new local 14 would compile to 11;
 this fixture did not promote its temporary slot-15 behavior. No move applied.
+
+### Accepted editor moves — 2026-11-22
+
+Smith accepted 10→14 in Tiled and ordinary FAE play, then 9→13 and 8→12
+in Tiled and a second ordinary FAE playtest. Left electrode, lightning and
+right electrode now occupy local slots 12–14 and retain runtime bytes 9–11.
+All 19,184 cells across 14 maps compiled identically; the freshly assembled
+production game matched the pre-move binary byte-for-byte. Both generated
+map includes passed their freshness checks before publication.
