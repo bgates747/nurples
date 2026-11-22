@@ -319,3 +319,33 @@ presentation fixture does not define `mus_campaign`, and the assembly-safety
 test tried to read the native symbol file as UTF-8. These need follow-up;
 neither was a mismatch in the ordinary binary. Logs are in
 `.build/mus001-production-verify-1151/`. Released the compiler slot to Rally.
+
+## 50 Hz loader experiment
+
+Make LOADTUNE playable during asset loading without pacing the upload at one
+block per tick. First prove timing and asset integrity under this demanding
+workload; do not migrate gameplay or promote before reviewing the result.
+Smith approved this loading-first contract. Nurples owns the isolated fixture.
+
+- MUS-001-07 [ ] Prime one immutable tracker command batch before arming an
+  idle 50 Hz PRT. ISR only acknowledges/counts. Foreground owns the VDP;
+  send due music at complete command boundaries, then prepare the next batch.
+  Preserve loader errors, restore timer/vector, and never steal a busy timer.
+
+- MUS-001-08 [ ] Keep 8 KiB SD reads and use independently framed 512-byte
+  appends (short final append). Check after reads and between appends; no
+  waiting or per-tick quota. Measure elapsed loading, service lateness and
+  missed periods; distinguish measurements from wire-time estimates.
+
+- MUS-001-09 [ ] Build isolated control and candidate from the accepted
+  production baseline, verify ordinary output and container bytes remain
+  unchanged, and qualify loader continuity into the prompt, clean exit/rerun
+  and throughput against control. Stop for listening/timing review. Gameplay
+  keeps its existing frame clock; its conversion is the later tranche.
+
+Recovery: ordinary production at `71a74f865c3a71b4dddf6670f6f2a1a45933fdab`.
+Retain its local binary, private song inputs, existing profiles and cards.
+Build fixtures under ignored `.build/`; no song-bearing binary or module in
+Git. Use serial leased Pi assembly and an isolated Oryx FAE review; no hardware
+deployment. A 60-tick/s renderer playing 50-tick/s music is 20% fast;
+do not equate emulator wall time or unmeasured production FPS with that ratio.
