@@ -62,3 +62,6 @@ The game-only audio track was present at all four checks; full-track peak
 −1.9 dBFS. OBS stopped recording but its private process stayed open after
 finalization. Verified it no longer held the MKV, stopped that instance
 only, then released checkout 599 with no emulators or waiting request.
+
+Console8 listening PASS, 2026-11-22: Smith clearly heard the shield warning
+after the klaxon on the deployed `76802f3` build.

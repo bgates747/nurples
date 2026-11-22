@@ -535,7 +535,7 @@ units. Adequate, not a measured speed improvement. Publish the normal build
 on dev byte-identical to R04, retaining private tunes/binaries out of Git;
 the card already has that version. No firmware or card rewrite.
 
-- MUS-001-15 [ ] Next tranche, after this promotion: drive music during
+- MUS-001-15 [x] Next tranche, after this promotion: drive music during
   controller selection/attract, level play, death, respawn and Game Over at
   50 Hz independent of rendering. Preserve silent warp, pause position,
   track transitions, speech/SFX and game speed; test exit and repeated RUN.
@@ -671,3 +671,10 @@ the chosen profile and type `RUN` at MOS. Close FAE between auditions.
 music and effects and likes the klaxon sound, but wants it louder and four
 times as long. This is not an acceptance of the R06 klaxon level or length.
 See the [R07 tuning task and listening gate](klaxon-r07.md).
+
+**2026-11-22 — Console8 hardware PASS** (dev `76802f3`). Smith heard steady
+music tempo through loading and gameplay, with one slight glitch between the
+splash and the main game screen. Cause not established. The spoken shield
+warning was clear after the klaxon. The physical joypad worked, and keyboard
+controls remained active in joystick mode; that coexistence is desirable.
+This was a listening and controls check, not a measurement of missed ticks.

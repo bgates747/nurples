@@ -6,10 +6,11 @@ decisions are recorded in the dated development log.
 - [ ] **MUS-001 — Campaign music and the 50 Hz tracker clock.**
   Console8 accepted 50 Hz music during uploads. The
   [full-game clock](docs/tasks/MUS-001/TASK.md#r05--one-50-hz-music-clock-throughout-a-run)
-  passed automated FAE timing and phase checks; Console8 listening remains.
+  passed automated FAE timing and phase checks and the Console8 listening
+  check (one slight glitch at the splash-to-game transition).
   [R06 turret launch and shield pre-alerts](docs/tasks/MUS-001/TASK.md#r06--turret-launch-and-shield-pre-alerts-in-the-50-hz-game)
   passed sequencing checks. The [longer klaxon and louder speech passed
-  Smith’s FAE listening test](docs/tasks/MUS-001/klaxon-r07.md).
+  Smith’s FAE and Console8 listening tests](docs/tasks/MUS-001/klaxon-r07.md).
 
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).
