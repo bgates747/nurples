@@ -545,3 +545,25 @@ at 8ee7de0: all 117 files matched except one comment. Promoted the actual
 hardware-accepted binary/symbols into tgt; all six hashes matched the R04
 manifest. No separate compiler run claimed; the queued rebuild was withdrawn.
 No card change. MUS-001-15 awaits Smith's go-ahead.
+
+### R05 — one 50 Hz music clock throughout a RUN
+
+Smith approved MUS-001-15. Keep the accepted R04 loader, mixer and track
+choices. Carry its timer and its prepared LOADTUNE packet through the
+controller prompt and attract; no second clock, reinitialization, or audible
+tempo jump. Every sounding tracker tick, including both level tracks, death,
+respawn and Game Over, must come from PRT1. Silent warp, the existing entrance
+cue policy, and P pause remain deliberate: no replay of elapsed silent time.
+Do not retime the main loop, speech, retriggers, actors or VBlank.
+
+- MUS-001-16 [ ] Make the timer invocation-owned; service it only between
+  complete foreground VDU operations. Never take another timer owner's vector
+  or substitute a frame tick. On P preserve the prepared packet **and** the
+  last audible mix. Clean up on error and ESC; a resident MOS RUN starts fresh.
+
+- MUS-001-17 [ ] Assemble the ordinary build and check the R04 control hash;
+  verify clock, pause/resume, song switches, cleanup and separate timing evidence.
+  Listening gate: compare loading to the prompt, play through death, warp,
+  restart and Game Over, then ESC and RUN again. No card or firmware changes
+  in implementation; keep all song-bearing outputs private. Rollback is
+  accepted dev commit e1ac534 and its retained private R04 whole-append build.

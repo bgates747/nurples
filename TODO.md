@@ -3,14 +3,14 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
-- [ ] **MUS-001 — Audition single-chip PT3 music on the game's VBlank clock.**
+- [ ] **MUS-001 — Campaign music and the 50 Hz tracker clock.**
   [Both tunes passed FAE playback, half-volume mix and rapid-fire laser review; frame cadence remains unmeasured](docs/tasks/MUS-001/TASK.md).
   R03 campaign audio accepted on FAE and Console8 and selected for production:
   LOADTUNE at start and Game Over, level music handoff across warp, and
   explosions on ground and air kills. The remaining clock measurement is
   separate from the accepted gameplay and mix.
-  [Console8 accepted 50 Hz LOADTUNE during uploads. Next: extend the music clock
-  to the remaining phases (MUS-001-15).](docs/tasks/MUS-001/TASK.md#r04--send-each-1-kib-sd-read-as-a-single-stock-vdp-append)
+  [Console8 accepted 50 Hz LOADTUNE during uploads. Extend the same clock
+  to the whole game (R05).](docs/tasks/MUS-001/TASK.md#r05--one-50-hz-music-clock-throughout-a-run)
 
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).
