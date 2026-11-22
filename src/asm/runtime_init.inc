@@ -13,6 +13,7 @@ runtime_process_init:
     ld (game_exit_requested),a
     ld (game_level_transition_active),a
     ld (player_event),a
+    ld (player_death_pending),a
     ld (player_dying_phase),a
     ld (player_dying_timer),a
     ld (player_dying_spawns),a

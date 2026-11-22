@@ -220,6 +220,9 @@ check_enemy_collision_laser: ; check for collisions with laser
 
 check_enemy_collision_player: ; check for collisions with player
     ld ix,player_begin
+    ld a,(player_death_pending)
+    or a
+    ret nz ; lethal contact already accepted this frame
     call check_collision
     ret nz ; no collision so nothing to do
     set sprite_just_died,(ix+sprite_collisions)

@@ -27,7 +27,8 @@ game_pause_poll:
     ret nc
     xor a
     ld (player_shields),a ; match the ordinary lethal-hit HUD
-    call kill_player
+    ld hl,player_death_pending
+    ld (hl),1 ; exercise the same end-of-world-frame handoff as a lethal hit
     or a ; dispatch the game; never turn the D event into a pause
     ret
 @ineligible:

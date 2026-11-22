@@ -36,7 +36,11 @@ update_shields:
     .endif
     ld (player_shields),a
     or a ; check for zero
-    jp z,kill_player
+    ret nz
+; Queue one lethal contact. Keep A=0/Z and the caller's actor registers intact.
+; The coordinator finishes the current world frame before starting death.
+    ld hl,player_death_pending
+    ld (hl),1
     ret
 ; end update_shields
 

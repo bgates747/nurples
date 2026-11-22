@@ -259,5 +259,6 @@ reset_runtime_tables:
     call tile_table_init
     xor a
     ld (player_event),a
+    ld (player_death_pending),a
     ret
 ; end reset_runtime_tables

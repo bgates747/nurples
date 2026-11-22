@@ -58,6 +58,15 @@ game_update_live_world:
     call do_enemies
     call move_explosions
     call move_tiles
+; Normal play and warp share this boundary: no lethal collision may freeze
+; travel while only part of the active-tile stack has taken its scroll step.
+    ld a,(player_death_pending)
+    or a
+    jp z,@contacts_done
+    xor a
+    ld (player_death_pending),a
+    call kill_player
+@contacts_done:
 
 ; update UI
     ld bc,0

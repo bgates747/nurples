@@ -55,6 +55,7 @@ player_state:  dl player_alive
 player_event_none: equ 0
 player_event_game_over: equ 1
 player_event: db player_event_none
+player_death_pending: db 0
 player_fault_bad_state: equ 0
 player_fault_bad_entry_warp: equ 1
 player_fault_flags: db 0 ; latched fail-closed diagnostics

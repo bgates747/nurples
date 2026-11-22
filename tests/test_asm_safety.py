@@ -1463,6 +1463,20 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertIn("@source_not_found:", kill)
         self.assertNotIn("ret z ; end of stack", kill)
 
+    def test_lethal_contact_waits_until_every_tile_has_moved(self) -> None:
+        damage = routine(read_asm("player_shields.inc"), "update_shields", "; end update_shields")
+        self.assertNotIn("kill_player", damage)
+        self.assertIn("ld hl,player_death_pending\n    ld (hl),1", damage)
+        contact = routine(read_asm("collisions.inc"), "check_enemy_collision_player",
+                          "; end check_enemy_collision_player")
+        self.assertLess(contact.index("ret nz"), contact.index("call check_collision"))
+        world = routine(read_asm("state_game_playing.inc"), "game_update_live_world",
+                        "; end game_update_live_world")
+        steps = ["call do_enemies", "call move_tiles", "ld a,(player_death_pending)",
+                 "jp z,@contacts_done", "ld (player_death_pending),a", "call kill_player"]
+        positions = [world.index(step) for step in steps]
+        self.assertEqual(positions, sorted(positions))
+
     def test_lethal_shield_path_preserves_collision_record_indices(self) -> None:
         kill = routine(
             read_asm("player_state.inc"),
