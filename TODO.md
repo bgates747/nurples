@@ -12,6 +12,9 @@ decisions are recorded in the dated development log.
   passed sequencing checks. The [longer klaxon and louder speech passed
   Smith’s FAE and Console8 listening tests](docs/tasks/MUS-001/klaxon-r07.md).
 
+- [ ] **MAP-002 — Move or swap DG tiles by Tiled local ID.**
+  [Contract, tool and qualification](docs/tasks/MAP-002/TASK.md).
+
 - [x] **MAP-001 — Tiled level-design workspace on Oryx (ready).**
   [Task and setup checks](docs/tasks/MAP-001-ORYX/TASK.md).
 
