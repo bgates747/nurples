@@ -3,6 +3,8 @@
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
 
+- [ ] **MAP-003 — [Earth terrain tile picker](docs/tasks/MAP-003/TASK.md).**
+
 - [ ] **MUS-001 — Campaign music and the 50 Hz tracker clock.**
   Console8 accepted 50 Hz music during uploads. The
   [full-game clock](docs/tasks/MUS-001/TASK.md#r05--one-50-hz-music-clock-throughout-a-run)
