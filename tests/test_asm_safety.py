@@ -114,7 +114,7 @@ class AssemblySafetyTests(unittest.TestCase):
 
         self.assertIn('ui_agnb_filename:   db "ui.agnb",0', images)
         self.assertIn('game_agnb_filename: db "game.agnb",0', images)
-        self.assertIn("game_num_images: equ 364", counts)
+        self.assertIn("game_num_images: equ 380", counts)
         self.assertIn("ld hl,game_num_images\n    ld (game_load_remaining),hl", images)
         self.assertIn("SPLASH_TITLE_X: equ 28", images)
         self.assertIn("SPLASH_TITLE_Y: equ 50", images)
@@ -674,7 +674,6 @@ class AssemblySafetyTests(unittest.TestCase):
             ("game_main_menu", "game_paused"),
             ("game_paused", "game_level_transition"),
             ("game_victory", "game_loading"),
-            ("game_cutscene", "game_inventory"),
             ("game_inventory", "game_map"),
             ("game_map", "game_exit"),
         )

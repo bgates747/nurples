@@ -107,6 +107,19 @@ mus_frame:
     or a
     sbc hl,de
     jr z,@playing
+    .if mus_campaign
+    ld hl,(game_state)
+    ld de,game_cutscene
+    or a
+    sbc hl,de
+    jp nz,@not_opening
+    ld a,(mus_active)
+    or a
+    jp nz,mus_tick
+    call mus_audio_open
+    jp @start_track
+@not_opening:
+    .endif
     ld hl,(game_state)
     ld de,game_level_transition
     or a

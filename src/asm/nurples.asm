@@ -88,6 +88,7 @@ exit:
     include "playfield_display.inc"
     include "presentation_flow_states.inc"
     include "state.inc"
+    include "earth_opening.inc"
     include "state_game_init.inc"
     include "state_game_playing.inc"
     include "targeting.inc"

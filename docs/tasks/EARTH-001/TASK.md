@@ -30,6 +30,24 @@ Smith approved implementation, compilation and FAE staging. This is a special op
 
 ## Source audit
 
+**FAE acceptance, 2026-11-23:** Smith accepted the staged four-level campaign
+after playtest and authorized commit and push. This supersedes the R01 pending
+review note below; no hardware test is claimed.
+
+**R01 staged for human review.** Approved amendment frozen on dev at
+`04f3189000ba289db3f7e089c64812ff6a0af63d`. Ordinary four-level game;
+no forced transition or invulnerability. Static structures are composited
+onto the sixteen ordered strips at build time. The timed reveal travels
+12×16 + 6×12 + 5×8 + 5×4 + 4×2 + 4×1 = 336 pixels. Regular terrain
+instructions remain unchanged: level setup binds the existing ADL CALL
+operand, restoring starfield selection after strip 15. Original three map
+records compared identical. Full build/check and 240 tests (one skipped);
+FAE guest binary and AGNB files read back equal. Private binary SHA-256
+`127e7aec53c418c6db5f3f7cf573b13f535eefa2809c19f55649044036fdb87c`.
+Staged in held Oryx profile `.emulator/map002-electrode-game-r01`.
+Next: Smith to verify the stopped Earth screen, takeoff, normal play,
+and real end-of-Earth warp into dg0_00 with ACIDFLSH. No visual pass claimed.
+
 Music decision resolved: Smith replaced 79469 with [BREAK2](https://zxart.ee/tune/79463). The native file identifies itself as a ProTracker 3.1 compilation. Downloaded privately and pinned in MUS-001/samples.json; no format conversion required. Not yet auditioned in Earth City.
 
 Freeze: 14395230405ee8dd8f7c14d6d4069daae8fbe00c. The current compiler validates a single shared tileset, one tile layer, and one base buffer ID for all levels. The current music build stages PT3 only. ZXArt's music API identifies entry 79469 as Spawn's 1997 “'TO INTRO'”, **PT2**, 1:44.85; embedded credit: “TO INTRO” FOR PARADOX BY ALEX. Original download 1,420 bytes, SHA-256 82602748fffaee23da449e545fd4a8e19fbe4eb3e9ad470871e0d8d7e7531b08. No redistribution permission established. Do not feed the raw module to the PT3 player. Music strategy needs a decision before claiming a faithful playable build.

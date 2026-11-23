@@ -171,6 +171,7 @@ tiles_scroll_background:
     ld iy,0 ; bottommost y-coord
     call vdu_set_gfx_viewport
 ; plot the background
+terrain_bg_call_operand: equ $+1 ; level-entry binding; same CALL, no dispatch overhead
     call bg_plot
     ret
 ; end tiles_scroll_background

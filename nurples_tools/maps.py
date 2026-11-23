@@ -430,7 +430,8 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
         if not isinstance(entry, dict):
             raise MapCompileError(f"{description} must be a table")
         keys = set(entry)
-        if keys != _LEVEL_KEYS:
+        earth = entry.get("terrain") == "ordered-earth"
+        if keys != (_LEVEL_KEYS | ({"terrain"} if earth else set())):
             missing_level = sorted(_LEVEL_KEYS - keys)
             unknown_level = sorted(keys - _LEVEL_KEYS)
             details = []
@@ -456,6 +457,11 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
         if source_path in seen_sources:
             raise MapCompileError(f"duplicate map manifest level source: {source_path}")
         seen_sources.add(source_path)
+        if earth:
+            from nurples_tools.earth_city import earth_layers
+            _, rows = earth_layers(source_path)
+            levels.append(CompiledLevel(name, source_path, 256, rows))
+            continue
         levels.append(
             _compile_tmx(
                 source_path,

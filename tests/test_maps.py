@@ -415,6 +415,7 @@ class ProductionCampaignTests(unittest.TestCase):
         self.assertEqual(
             [(level.name, level.height) for level in compiled.levels],
             [
+                ("Earth City", 256),
                 ("Air enemy proving ground", 256),
                 ("Modern Agon campaign", 256),
                 ("Original Z80 main level", 255),

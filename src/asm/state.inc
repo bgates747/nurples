@@ -139,8 +139,7 @@ game_loading:
     ret
 
 game_cutscene:
-    ; Unimplemented legacy state: remain here deterministically.
-    ret
+    jp earth_opening_step
 
 game_inventory:
     ; Unimplemented legacy state: remain here deterministically.

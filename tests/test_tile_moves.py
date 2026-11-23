@@ -27,7 +27,7 @@ class TileMoveTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
-        for p in (*tracked(ROOT, "*.tmx", "tiles/dg/legacy_z80/*.png"),
+        for p in (*tracked(ROOT, "*.tmx", "tiles/dg/legacy_z80/*.png", "tiles/kenney/earth-city/*.tsx", "tiles/kenney/earth-city/*.png"),
                   TSX, PNG, CAT, CSV, REGISTRY, INCLUDE, *map(Path, MANIFESTS)):
             (self.root / p).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / p, self.root / p)
@@ -66,7 +66,7 @@ class TileMoveTests(unittest.TestCase):
     def cells(self):
         ids = self.runtime_ids()
         return {p: bytes(ids[int(i)] for i in ET.parse(self.root / p).findtext("layer/data").split(","))
-                for p in tracked(self.root, "*.tmx")}
+                for p in tracked(self.root, "*.tmx") if ET.parse(self.root / p).find("tileset").get("source","").endswith("dg0.tsx")}
 
     def test_move_then_swap_on_full_map_set(self):
         before = self.compiled(), self.cells()

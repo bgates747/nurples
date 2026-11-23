@@ -11,6 +11,7 @@ from nurples_tools.current_assets import (
     build_catalogs,
     check_current_assets,
     container_records,
+    earth_records,
     render_container_include,
     render_family_include,
     title_phase_lut,
@@ -75,10 +76,11 @@ class AgnbContainerTests(unittest.TestCase):
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
         self.assertEqual(len(ui), 371_052)
-        self.assertEqual(len(game), 394_240)
+        self.assertEqual(len(game), 1_443_584)
         ui_records, game_records = container_records(self.catalogs)
         verify_container(ui, ui_records)
-        verify_container(game, game_records)
+        with TemporaryDirectory() as tmp:
+            verify_container(game, game_records + earth_records(PROJECT_ROOT, Path(tmp)))
         self.assertEqual(set(record.buffer_id for record in self.ui_records)
                          - set(image.buffer_id for image in parse_images(ui)), {46})
         self.assertEqual(set(record.buffer_id for record in self.game_records)
@@ -114,9 +116,11 @@ class AgnbContainerTests(unittest.TestCase):
             self.assertNotIn(".rgba2", rendered)
             self.assertNotIn("_image_list", rendered)
             self.assertNotIn("fn_", rendered)
-        container_counts = render_container_include(*container_records(self.catalogs))
+        ui, game = container_records(self.catalogs)
+        with TemporaryDirectory() as tmp:
+            container_counts = render_container_include(ui, game + earth_records(PROJECT_ROOT, Path(tmp)))
         self.assertIn("ui_agnb_num_images: equ 46", container_counts)
-        self.assertIn("game_num_images: equ 364", container_counts)
+        self.assertIn("game_num_images: equ 380", container_counts)
 
     def test_target_contains_only_supported_artifacts(self) -> None:
         files = {

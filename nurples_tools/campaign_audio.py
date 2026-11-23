@@ -7,6 +7,7 @@ import tomllib
 
 
 LEVEL_MUSIC = {
+    "../tiles/kenney/earth-city/earth-city.tmx": "break2.pt3",
     "../tiles/dg/dg0_00.tmx": "acidflsh.pt3",
     "../tiles/dg/dg0_03.tmx": "terminator.pt3",
     "../tiles/dg/nurples_z80_main.tmx": "bugs2_2.pt3",

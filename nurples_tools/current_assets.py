@@ -304,15 +304,29 @@ def render_container_include(
     )
 
 
+def earth_records(project_root: Path, scratch: Path) -> list[ImageRecord]:
+    from nurples_tools.earth_city import earth_layers
+    plane, _ = earth_layers(project_root / "tiles/kenney/earth-city/earth-city.tmx")
+    records = []
+    for i in range(16):
+        y = (15-i)*256
+        path = scratch / f"earth_{i}.rgba2"
+        img_to_rgba2(plane.crop((0,y,256,y+256)), path)
+        records.append(ImageRecord("bg",f"earth_{i}",1280+i,256,256,path))
+    return records
+
+
 def generate_outputs(project_root: Path, output_root: Path) -> dict[Path, bytes]:
     """Regenerate all bitmap containers and constants in an isolated directory."""
 
     catalogs = build_catalogs(project_root)
     ui_records, game_records = container_records(catalogs)
     ui_container = build_container(ui_records)
-    game_container = build_container(game_records)
+    with TemporaryDirectory() as tmp:
+        game_records.extend(earth_records(project_root, Path(tmp)))
+        game_container = build_container(game_records)
+        verify_container(game_container, game_records)
     verify_container(ui_container, ui_records)
-    verify_container(game_container, game_records)
 
     outputs = {
         output_root / "tgt/ui.agnb": ui_container,

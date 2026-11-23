@@ -137,6 +137,7 @@ init_level:
 ; print level number, score, and countdown to start
     call print_level
     call print_score
+    call earth_bind_background
 ; TEMPORARY DIAGNOSTIC: bypass the blocking countdown. Restore the tagged
 ; debug/pre-countdown-bypass-20260802 state to return to the original path.
     jp @countdown_bypassed
