@@ -1,0 +1,28 @@
+{
+    "activeFile": "earth-city.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "earth-city.tmx": {
+            "scale": 3.2641,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 55.298550902239526,
+                "y": 3124.9042615115955
+            }
+        },
+        "tiny-city.tsx": {
+            "scaleInDock": 2.7488,
+            "scaleInEditor": 1
+        }
+    },
+    "openFiles": [
+        "earth-city.tmx"
+    ],
+    "project": "earth-city.tiled-project",
+    "recentFiles": [
+        "earth-city.tmx",
+        "tiny-city.tsx"
+    ]
+}
