@@ -1,12 +1,14 @@
 """Build exactly the bitmap assets consumed by the current Purple Nurples game."""
 
 from collections.abc import Iterable
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import xml.etree.ElementTree as ET
 
 from PIL import Image
 
+from nurples_tools.active_tiles import PAD_ART, REGISTRY, parse
 from nurples_tools.agnb import ImageRecord, build_container, validate_records
 from nurples_tools.agnb_verify import verify_container
 from nurples_tools.legacy_tiles import check_legacy_tiles, write_legacy_tiles
@@ -316,6 +318,34 @@ def earth_records(project_root: Path, scratch: Path) -> list[ImageRecord]:
     return records
 
 
+def orient_entry_tiles(records, slots, scratch):
+    """Rotate packed DG terrain pixels in scratch, not the editor or source art."""
+    poses = {}
+    for i, slot in enumerate(slots):
+        art = TILE_BUFFER_BASE + PAD_ART.get(i, i)
+        heading = slot.entry_heading or 0
+        if poses.setdefault(art, heading) != heading:
+            raise ValueError(f"incompatible entry facings share terrain art {art}")
+    pending = {art: h for art, h in poses.items() if h}
+    result = []
+    for rec in records:
+        heading = pending.pop(rec.buffer_id, 0)
+        if heading:
+            if rec.width != rec.height:
+                raise ValueError(f"entry tile must be square: {rec.name}")
+            # One byte per pixel; transpose the indices without interpreting colors.
+            image = Image.frombytes("L", (rec.width, rec.height), rec.payload_path.read_bytes())
+            op = {64: Image.Transpose.ROTATE_270, 128: Image.Transpose.ROTATE_180,
+                  192: Image.Transpose.ROTATE_90}[heading]
+            path = scratch / f"entry_{rec.buffer_id}.rgba2"
+            path.write_bytes(image.transpose(op).tobytes())
+            rec = replace(rec, payload_path=path)
+        result.append(rec)
+    if pending:
+        raise ValueError(f"missing directional terrain art: {sorted(pending)}")
+    return result
+
+
 def generate_outputs(project_root: Path, output_root: Path) -> dict[Path, bytes]:
     """Regenerate all bitmap containers and constants in an isolated directory."""
 
@@ -323,6 +353,8 @@ def generate_outputs(project_root: Path, output_root: Path) -> dict[Path, bytes]
     ui_records, game_records = container_records(catalogs)
     ui_container = build_container(ui_records)
     with TemporaryDirectory() as tmp:
+        slots = parse((project_root / REGISTRY).read_text())
+        game_records = orient_entry_tiles(game_records, slots, Path(tmp))
         game_records.extend(earth_records(project_root, Path(tmp)))
         game_container = build_container(game_records)
         verify_container(game_container, game_records)

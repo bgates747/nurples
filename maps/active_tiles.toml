@@ -18,3 +18,7 @@
 14 = ["14", "none"]
 15 = ["pad_large", "pad_large"]
 16 = ["crater", "crater"]
+
+# Unit type, not editor position. Source terrain artwork is drawn facing north.
+[entry_facing]
+turret_fireball = "south"

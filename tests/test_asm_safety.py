@@ -1500,9 +1500,12 @@ class AssemblySafetyTests(unittest.TestCase):
 
     def test_reused_tile_records_clear_uninitialized_motion_state(self) -> None:
         source = read_asm("tile_table.inc")
-        self.assertEqual(source.count("ld (ix+tile_vel),hl"), 2)
-        self.assertEqual(source.count("ld (ix+tile_heading),hl"), 2)
-        self.assertEqual(source.count("ld (ix+tile_orientation),hl"), 2)
+        for name in ("spawn_active_tile", "spawn_active_tile_from_sprite"):
+            fresh = routine(source, name, f"; end {name}")
+            before_pose = fresh.split("call tile_apply_entry_facing")[0]
+            self.assertIn("ld hl,0\n    ld (ix+tile_xvel),hl\n"
+                          "    ld (ix+tile_vel),hl\n    ld (ix+tile_heading),hl\n"
+                          "    ld (ix+tile_orientation),hl", before_pose)
 
         sprite_sources = read_asm("sprites.inc") + read_asm("tiles_active.inc")
         self.assertEqual(sprite_sources.count("ld (ix+sprite_xvel),hl"), 3)

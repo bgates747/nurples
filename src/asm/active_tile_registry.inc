@@ -38,3 +38,5 @@ tile_activation_routines_end:
 tile_activation_routines_count: equ [tile_activation_routines_end-tile_activation_routines]/3
 tile_active_art:
     db 0,1,121,121,4,5,6,7,8,9,10,11,12,13,14,121,16
+tile_entry_headings: ; 255 leaves the constructor defaults alone
+    db 255,255,255,255,255,128,255,255,255,255,255,255,255,255,255,255,255

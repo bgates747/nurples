@@ -333,6 +333,7 @@ spawn_active_tile:
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
 ; initialize the allocator-owned generation and complete actor custom tail
+    call tile_apply_entry_facing
     call actor_record_begin_lifetime_ix
 ; return to caller
     set actor_type_just_spawned_bit,(ix+tile_type)
@@ -381,6 +382,7 @@ spawn_active_tile_from_sprite:
     ld hl,1*256 ; 1 pixel per frame
     ld (ix+tile_yvel),hl
 ; initialize the allocator-owned generation and complete actor custom tail
+    call tile_apply_entry_facing
     call actor_record_begin_lifetime_ix
 ; return to caller
     set actor_type_just_spawned_bit,(ix+tile_type)
@@ -388,6 +390,29 @@ spawn_active_tile_from_sprite:
     scf ; set carry flag to indicate success
     ret
 ; end spawn_active_tile_from_sprite
+
+; After copying type defaults and before publishing the new lifetime.
+; Non-directional types keep their frame, including nonzero authored defaults.
+; IX = new tile, A/HL/DE scratch. Apply only on entry, never when drawing.
+tile_apply_entry_facing:
+    ld a,(ix+tile_type)
+    cp tile_activation_routines_count
+    ret nc
+    ld hl,0
+    ld l,a
+    ld de,tile_entry_headings
+    add hl,de
+    ld a,(hl)
+    cp 255
+    ret z
+    ld hl,0
+    ld h,a
+    ld (ix+tile_heading),hl ; integer byte of a fresh signed 16.8 heading
+    ld d,(ix+tile_num_orientations)
+    ld e,a
+    mlt de
+    ld (ix+tile_frame),d ; floor(heading * orientation count / 256)
+    ret
 
 ; compute animation frame based on tile_animation and tile_heading
 ; inputs: iy set to tile record

@@ -1,6 +1,6 @@
 # Purple Nurples TODO
 
-- [ ] **TILE-POSE-001 — [Unit-defined entry facing](docs/tasks/TILE-POSE-001/TASK.md).**
+- [x] **TILE-POSE-001 — [Unit-defined entry facing](docs/tasks/TILE-POSE-001/TASK.md).** Accepted on FAE.
 
 - [ ] **EARTH-001 — [Earth City opening level](docs/tasks/EARTH-001/TASK.md).**
 

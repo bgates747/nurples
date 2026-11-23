@@ -220,6 +220,7 @@ spawn_active_tile_from_tile:
     ld bc,tile_definitions_size ; copy only bytes provided by defaults
     ldir ; copies defaults to new tile record
     ld ix,(tile_table_pointer) ; restore pointer to new tile record
+    call tile_apply_entry_facing ; opt-in destinations only; craters keep inherited motion
     scf
     ret
 ; end spawn_active_tile_from_tile

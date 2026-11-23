@@ -42,6 +42,7 @@ def generate_legacy_tile_outputs(
     runtime_ids = bindings(ET.parse(atlas_path.with_suffix(".tsx")).getroot())
     with Image.open(atlas_path) as source_atlas:
         atlas = source_atlas.convert("RGBA").copy()
+    original_pixels = atlas.tobytes()
     if atlas.size != (256, 256):
         raise ValueError(f"DG atlas is {atlas.size}; expected 256x256")
 
@@ -79,7 +80,11 @@ def generate_legacy_tile_outputs(
             atlas_y = (atlas_index // 16) * 16
             atlas.paste(converted, (atlas_x, atlas_y), converted)
 
-    outputs[output_root / "tiles/dg/dg0.png"] = _png_bytes(atlas)
+    # Tiled's atlas is also an authored input. Preserve its encoding/metadata
+    # on a no-op build; only serialize if the imported pixels actually changed.
+    outputs[output_root / "tiles/dg/dg0.png"] = (
+        atlas_path.read_bytes() if atlas.tobytes() == original_pixels else _png_bytes(atlas)
+    )
     return outputs
 
 

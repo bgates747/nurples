@@ -6,12 +6,14 @@ import unittest
 
 from nurples_tools.agnb import ImageRecord, build_container
 from nurples_tools.announcer import audio_container
+from nurples_tools.active_tiles import REGISTRY, parse
 from nurples_tools.agnb_verify import parse_images, verify_container
 from nurples_tools.current_assets import (
     build_catalogs,
     check_current_assets,
     container_records,
     earth_records,
+    orient_entry_tiles,
     render_container_include,
     render_family_include,
     title_phase_lut,
@@ -80,6 +82,8 @@ class AgnbContainerTests(unittest.TestCase):
         ui_records, game_records = container_records(self.catalogs)
         verify_container(ui, ui_records)
         with TemporaryDirectory() as tmp:
+            slots = parse((PROJECT_ROOT / REGISTRY).read_text())
+            game_records = orient_entry_tiles(game_records, slots, Path(tmp))
             verify_container(game, game_records + earth_records(PROJECT_ROOT, Path(tmp)))
         self.assertEqual(set(record.buffer_id for record in self.ui_records)
                          - set(image.buffer_id for image in parse_images(ui)), {46})
