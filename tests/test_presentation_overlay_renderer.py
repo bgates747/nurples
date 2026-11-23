@@ -19,10 +19,10 @@ PRODUCTION = ROOT / "src" / "asm" / "nurples.asm"
 class PresentationOverlayRendererTests(unittest.TestCase):
     def test_ownership_uses_reserved_slots_and_exact_physical_positions(self) -> None:
         source = SOURCE.read_text()
-        self.assertIn("PRESENTATION_SPRITE_TITLE: equ 20", source)
-        self.assertIn("PRESENTATION_SPRITE_PROMPT: equ 21", source)
-        self.assertIn("PRESENTATION_ACTIVE_ACTORS: equ 20", source)
-        self.assertIn("PRESENTATION_ACTIVE_ALL: equ 22", source)
+        self.assertIn("PRESENTATION_SPRITE_TITLE: equ PRESENTATION_ACTIVE_ACTORS", source)
+        self.assertIn("PRESENTATION_SPRITE_PROMPT: equ PRESENTATION_ACTIVE_ACTORS+1", source)
+        self.assertIn("PRESENTATION_ACTIVE_ACTORS: equ 28", source)
+        self.assertIn("PRESENTATION_ACTIVE_ALL: equ PRESENTATION_ACTIVE_ACTORS+2", source)
         self.assertIn("PRESENTATION_TITLE_X: equ 136", source)
         self.assertIn("PRESENTATION_TITLE_Y: equ 116", source)
         self.assertIn("ld bc,PRESENTATION_TITLE_X\n    ld de,PRESENTATION_TITLE_Y", source)

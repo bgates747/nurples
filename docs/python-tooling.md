@@ -79,7 +79,7 @@ run `--all`, then run
 must match the hashes of the FAE-accepted R03. That verifier identifies this
 specific checkpoint, not every future intentional game change.
 
-`--assemble` and `--all` require private copies of `terminator.pt3`,
+`--assemble` and `--all` require private copies of `acidflsh.pt3`, `terminator.pt3`,
 `bugs2_2.pt3` and `01_loadtune.pt3`. Set `NURPLES_MUSIC_DIR` to their
 directory, or put them in the ignored `.build/mus001/audition/`. The build
 checks lengths and SHA-256 against [the tune manifest](tasks/MUS-001/samples.json)

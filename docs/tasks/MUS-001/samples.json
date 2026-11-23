@@ -1,5 +1,21 @@
 [
   {
+    "filename": "acidflsh.pt3",
+    "title": "ACIDFLSH",
+    "authors": ["Spawn"],
+    "embedded_credit": "ACID FLASHBACK II by STRYKER/MEGAMIX CREATIVE GROUP!!",
+    "format": "PT3",
+    "year": null,
+    "entry_id": 79438,
+    "page": "https://zxart.ee/tune/79438",
+    "original_url": "https://zxart.ee/file/id:79438/filename:Spawn_-_ACIDFLSH.pt3",
+    "bytes": 2604,
+    "sha256": "52d128c32059b4fb9824a5a6ac3b839668d43e3354ab51563896aa37b23dc1ab",
+    "content_type": "application/octet-stream",
+    "license": "redistribution rights not established",
+    "native": true
+  },
+  {
     "filename": "01_loadtune.pt3",
     "title": "LOADTUNE",
     "authors": ["Spawn"],

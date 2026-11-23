@@ -8,6 +8,9 @@ import tomllib
 
 REGISTRY = Path("maps/active_tiles.toml")
 INCLUDE = Path("src/asm/active_tile_registry.inc")
+# Keys are stable runtime identities, not editor coordinates. Runtime bitmap
+# 121 is the existing artwork at Tiled local 120; no extra upload is needed.
+PAD_ART = {2: 121, 3: 121, 15: 121}
 
 
 @dataclass(frozen=True)
@@ -50,6 +53,8 @@ def render(slots):
     lines.extend(f"    dl {s.handler} ; {i}: {s.name}" for i, s in enumerate(slots))
     lines.extend(["tile_activation_routines_end:",
                   "tile_activation_routines_count: equ [tile_activation_routines_end-tile_activation_routines]/3"])
+    lines += ["tile_active_art:",
+              "    db " + ",".join(str(PAD_ART.get(i, i)) for i in range(len(slots)))]
     return "\n".join(lines) + "\n"
 
 

@@ -40,7 +40,7 @@ seeker_orbit_origin_x: equ seeker_state+1
 seeker_orbit_angle: equ seeker_orbit_origin_x+1
 seeker_custom_end: equ seeker_orbit_angle+1
 
-tile_pad_small: equ 1
+tile_pad_seeker: equ 1
 enemy_air: equ 1
 field_bottom: equ 335
 field_right: equ 255
@@ -253,7 +253,7 @@ fixture_start:
     ld (fixture_case),a
     ld iy,fixture_pads
     ld (iy+actor_record_generation),5
-    ld (iy+tile_type),tile_pad_small
+    ld (iy+tile_type),tile_pad_seeker
     set sprite_alive,(iy+tile_collisions)
     ld hl,30*256
     ld (iy+tile_x),hl
@@ -402,7 +402,7 @@ fixture_prepare_pad_one:
     ld (iy+tile_id),a
     ld a,7
     ld (iy+actor_record_generation),a
-    ld a,tile_pad_small
+    ld a,tile_pad_seeker
     ld (iy+tile_type),a
     set sprite_alive,(iy+tile_collisions)
     ld hl,100*256

@@ -8,6 +8,10 @@ tile_catalog = "../tiles/dg/dg_0_files.xml"
 output = "../src/asm/levels_tileset_0.inc"
 
 [[levels]]
+name = "Air enemy proving ground"
+source = "../tiles/dg/dg0_00.tmx"
+
+[[levels]]
 name = "Modern Agon campaign"
 source = "../tiles/dg/dg0_03.tmx"
 

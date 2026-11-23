@@ -104,7 +104,7 @@ exit:
     include "tile_crater.inc"
     include "tile_electrode.inc"
     include "tile_lightning.inc"
-    include "tile_pad_small.inc"
+    include "tile_pad_seeker.inc"
     include "tile_turret_fireball.inc"
     include "debug.inc"
     include "telemetry.inc"
@@ -252,3 +252,6 @@ main_end:
 ; needs to be the final include to leave room for the sprite and tile tables
     include "mus_payload.inc"
     include "tables.inc"
+    .if table_num_records-PRESENTATION_ACTIVE_ACTORS
+        dl presentation_slots_overlap_actor_table
+    .endif

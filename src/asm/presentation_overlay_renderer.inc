@@ -3,10 +3,10 @@
 ; title; the frozen game's title is painted onto the playfield. Overlay
 ; bitmaps are immutable process resources retained for later entries.
 
-PRESENTATION_SPRITE_TITLE: equ 20
-PRESENTATION_SPRITE_PROMPT: equ 21
-PRESENTATION_ACTIVE_ACTORS: equ 20
-PRESENTATION_ACTIVE_ALL: equ 22
+PRESENTATION_ACTIVE_ACTORS: equ 28 ; checked against table_num_records after layout
+PRESENTATION_SPRITE_TITLE: equ PRESENTATION_ACTIVE_ACTORS
+PRESENTATION_SPRITE_PROMPT: equ PRESENTATION_ACTIVE_ACTORS+1
+PRESENTATION_ACTIVE_ALL: equ PRESENTATION_ACTIVE_ACTORS+2
 PRESENTATION_TITLE_X: equ 136 ; physical pixels, shared with the review sprite
 PRESENTATION_TITLE_Y: equ 116
 

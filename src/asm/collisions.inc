@@ -184,6 +184,7 @@ check_collision_cartesian:
 ; end check_collision_cartesian
 
 ; check collisions of a sprite or tile against a sprite group
+    include "laser_geometry.inc"
 ; inputs: iy = pointer to sprite or tile record being checked
 ;         ix = pointer to sprite group, b = number of records in sprite group
 check_sprite_group_collisions:
@@ -193,8 +194,10 @@ check_sprite_group_collisions:
 ; check sprite_collisions sprite_alive flag to see if sprite is active
     bit sprite_alive,(ix+sprite_collisions)
     jp z,@next_record ; not alive so skip to next record
+    bit sprite_just_died,(ix+sprite_collisions)
+    jp nz,@next_record ; this shot already hit another target this tick
 ; sprite alive so check for collision
-    call check_collision
+    call laser_hits_pixels
     jp nz,@next_record ; no collision
 ; set sprite_just_died flag for each entity and return to caller
     pop bc ; dummy pop to balance stack

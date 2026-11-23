@@ -10,6 +10,7 @@ origin_top: equ 48
 field_bottom: equ 335
 BUF_BG_STARS_0: equ 1024
 tile_activation_routines_count: equ 1
+tile_active_art: db 0
 tile_activation_routines: dl fixture_fail
 fixture_last_row: db 0
 fixture_scrolls: dl 0

@@ -52,14 +52,14 @@ class ActiveTileLaunchTimerTests(unittest.TestCase):
         self.assertNotIn("dec (iy+tile_move_timer)", helper)
 
     def test_pad_and_turret_use_the_shared_zero_safe_tick(self) -> None:
-        pad = (ASM / "tile_pad_small.inc").read_text()
+        pad = (ASM / "tile_pad_seeker.inc").read_text()
         turret = (ASM / "tile_turret_fireball.inc").read_text()
         for source in (pad, turret):
             self.assertEqual(source.count("call active_tile_launch_timer_tick"), 1)
             self.assertNotIn("dec (iy+tile_move_timer)", source)
 
     def test_post_launch_ranges_remain_nonzero_and_bounded(self) -> None:
-        pad = (ASM / "tile_pad_small.inc").read_text()
+        pad = (ASM / "tile_pad_seeker.inc").read_text()
         turret = (ASM / "tile_turret_fireball.inc").read_text()
         self.assertIn("and %00011111", pad)
         self.assertIn("add a,64", pad)
@@ -70,7 +70,7 @@ class ActiveTileLaunchTimerTests(unittest.TestCase):
 
     def test_child_spawns_return_to_parent_before_rearming(self) -> None:
         for filename, move, spawn, reset in (
-            ("tile_pad_small.inc", "move_pad_small", "seeker", "pad_small"),
+            ("tile_pad_seeker.inc", "move_pad_seeker", "seeker", "pad_seeker"),
             ("tile_turret_fireball.inc", "move_turret_fireball", "fireball", "turret_fireball"),
         ):
             with self.subTest(spawn=spawn):
@@ -118,7 +118,7 @@ class ActiveTileLaunchTimerTests(unittest.TestCase):
         )
 
     def test_pad_holds_cooldown_until_player_is_fully_alive(self) -> None:
-        move = routine((ASM / "tile_pad_small.inc").read_text(), "move_pad_small")
+        move = routine((ASM / "tile_pad_seeker.inc").read_text(), "move_pad_seeker")
         live_check = "ld de,player_alive\n    or a\n    sbc hl,de\n    ret nz"
         self.assertLess(move.index("call draw_active_tile"), move.index(live_check))
         self.assertLess(move.index(live_check), move.index("call active_tile_launch_timer_tick"))

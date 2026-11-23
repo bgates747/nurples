@@ -87,7 +87,7 @@ Assemble without deploying or launching an emulator:
 .venv/bin/python build/scripts/build_00_all_the_things.py --assemble
 ```
 
-Production assembly requires the three private PT3s listed in
+Production assembly requires the private PT3s listed in
 `docs/tasks/MUS-001/samples.json` (see `docs/python-tooling.md`). The local
 `tgt/nurples.bin` embeds them; never commit or publish that executable, a
 listing containing their bytes, or the tunes. The build writes a matching

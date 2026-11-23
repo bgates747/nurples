@@ -15,6 +15,7 @@ origin_top: equ 48
     include "../../src/asm/input_gate.inc"
     include "../../src/asm/presentation_overlay_controller.inc"
     include "../../src/asm/hardware_overlay_feature.inc"
+table_num_records: equ 28
     include "../../src/asm/presentation_overlay_renderer.inc"
 
 fixture_start:

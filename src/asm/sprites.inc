@@ -187,6 +187,7 @@ sprites_init:
 ; define enemy sprites
     call init_enemy_seekers
     call init_enemy_fireballs
+    call init_air_frames
 
 ; define explosion sprites
     call init_explosions
@@ -244,6 +245,9 @@ sprite_pool_valid:
     ld de,fireballs_base
     call @base_matches
     jp z,@fireballs
+    ld de,air_base
+    call @base_matches
+    jp z,@air
     ld de,explosions_base
     call @base_matches
     jp z,@explosions
@@ -266,6 +270,11 @@ sprite_pool_valid:
 @fireballs:
     ld a,b
     cp fireballs_max
+    jp z,@valid
+    jp @invalid
+@air:
+    ld a,b
+    cp air_max
     jp z,@valid
     jp @invalid
 @explosions:
@@ -390,6 +399,8 @@ sprite_move_program_valid:
     jp c,@seeker
     cp fireballs_end_sprite_id
     jp c,@fireball
+    cp air_end_sprite_id
+    jp c,@air
     cp explosions_end_sprite_id
     jp c,@explosion
     jp @invalid
@@ -443,6 +454,14 @@ sprite_move_program_valid:
     call @matches
     jp z,@valid
     jp @invalid
+@air:
+    ld a,(iy+sprite_type)
+    cp enemy_air
+    jp nz,@invalid
+    ld de,move_air_enemy
+    call @matches
+    jp z,@valid
+    jp @invalid
 @explosion:
     ld a,(iy+sprite_type)
     cp explosion
@@ -463,6 +482,9 @@ sprite_move_program_valid:
     pop hl
     ret
 ; end sprite_move_program_valid
+
+    include "side_to_side.inc"
+    include "enemy_side_air.inc"
 
 ; call the behavior subroutines for a specified sprite group
 ; inputs: iy = pointer to sprite group, b = number of records in sprite group
@@ -520,6 +542,8 @@ move_sprite_group:
     jp nc,@F
     ld a,(iy+sprite_id)
     call vdu_sprite_select
+    ld a,(iy+sprite_frame)
+    call vdu_sprite_select_frame
     ld bc,(iy+sprite_x)
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
@@ -553,6 +577,19 @@ move_sprite_group:
 ; Seekers and explosions share a playfield visibility limit. Check position
 ; publication and first show: stock VDP sprites ignore the graphics viewport.
 sprite_move_publication_allowed:
+    ld a,(iy+sprite_id)
+    cp fireballs_end_sprite_id
+    jp c,@ordinary
+    cp air_end_sprite_id
+    jp nc,@ordinary
+    bit sprite_alive,(iy+sprite_collisions)
+    jp z,@hidden
+    ld a,(iy+air_visibility)
+    or a
+    jp nz,@hidden
+    scf
+    ret
+@ordinary:
     ld a,(iy+sprite_type)
     and actor_type_mask
     cp enemy_air

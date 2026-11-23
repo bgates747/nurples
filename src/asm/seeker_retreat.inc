@@ -37,7 +37,7 @@ seeker_capture_spawn_pad:
     jp z,@invalid
     ld a,(iy+tile_type)
     and actor_type_mask
-    cp tile_pad_small
+    cp tile_pad_seeker
     jp nz,@invalid
     ld a,(iy+tile_id)
     ld (ix+seeker_spawn_pad_id),a
@@ -105,7 +105,7 @@ seeker_pad_visible:
     jp z,@invalid
     ld a,(iy+tile_type)
     and actor_type_mask
-    cp tile_pad_small
+    cp tile_pad_seeker
     jp nz,@invalid
     ld hl,(iy+tile_x)
     ld de,16*256

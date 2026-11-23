@@ -117,6 +117,7 @@ player_spawn_laser:
     ld hl,(iy+sprite_x)
     ld de,5*256 ; horizontal center with player sprite
     add hl,de
+    call laser_bound_muzzle_x
     ld (ix+sprite_x),hl
 ; y-coordinate
     ld hl,(iy+sprite_y)
@@ -134,13 +135,15 @@ player_spawn_laser:
 ; end player_spawn_laser
 
 move_player_laser:
-; run the movement program for the laser
-    call move_sprite
-    ld a,(sprite_screen_edge)
-    and a,collide_top ; check collision with top of screen
-    jp z,@F ; still on screen
-    jp table_deactivate_sprite
-@@: ; check animation timer
+; Straight vertical flight: leave the muzzle X unchanged. As before, retire
+; the beam when its top-left passes above the playfield (field_top = 0).
+    ld iy,(table_pointer)
+    ld hl,(iy+sprite_y)
+    ld de,(iy+sprite_yvel)
+    add hl,de
+    ld (iy+sprite_y),hl
+    bit 7,(iy+sprite_y+2)
+    jp nz,table_deactivate_sprite
     dec (iy+sprite_animation_timer)
     jp nz,@F
     ld a,laser_animation_timer_reset

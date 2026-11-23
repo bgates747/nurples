@@ -47,8 +47,8 @@ move_active_tile:
 ; destroys: a,de,hl
 tile_move_program_valid:
     ld a,(iy+tile_type)
-    cp tile_pad_small
-    jp z,@pad_small
+    cp tile_pad_seeker
+    jp z,@pad_seeker
     cp tile_turret_fireball
     jp z,@turret_fireball
     cp tile_electrode
@@ -58,8 +58,8 @@ tile_move_program_valid:
     cp tile_crater
     jp z,@crater
     jp @invalid
-@pad_small:
-    ld de,move_pad_small
+@pad_seeker:
+    ld de,move_pad_seeker
     jp @compare
 @turret_fireball:
     ld de,move_turret_fireball

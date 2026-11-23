@@ -11,6 +11,7 @@ from pathlib import Path
 
 import tomllib
 from nurples_tools.tile_bindings import bindings
+from nurples_tools.active_tiles import PAD_ART
 
 MAP_WIDTH = 16
 MIN_MAP_HEIGHT = 1
@@ -232,7 +233,7 @@ def _parse_csv_rows(
                     f"GID {gid} exceeds 255"
                 )
             runtime = runtime_ids[gid]
-            if runtime and runtime not in available_tiles:
+            if runtime and PAD_ART.get(runtime, runtime) not in available_tiles:
                 raise MapCompileError(
                     f"{source_path}: row {row_number}, column {column} "
                     f"uses GID {gid} (runtime {runtime}), absent from dg_0_files.xml"

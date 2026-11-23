@@ -128,6 +128,13 @@ output = "generated/levels.inc"
         self._write_tmx("one.tmx", rows)
         self._write_manifest([("Test One", "one.tmx")])
 
+    def test_air_pad_markers_share_art_but_keep_their_runtime_ids(self) -> None:
+        self.tileset.write_bytes((PROJECT_ROOT / "tiles/dg/dg0.tsx").read_bytes())
+        self._write_catalog({0, 1, 121})
+        self._compile_single([",".join(map(str, [1, 2, 3, 4, 121] + [0] * 11))])
+        compiled = compile_map_manifest(self.manifest)
+        self.assertEqual(compiled.levels[0].runtime_rows[0][:5], (1, 2, 3, 15, 121))
+
     def test_manifest_order_and_runtime_row_reversal(self) -> None:
         self._write_tmx(
             "first.tmx",
@@ -408,6 +415,7 @@ class ProductionCampaignTests(unittest.TestCase):
         self.assertEqual(
             [(level.name, level.height) for level in compiled.levels],
             [
+                ("Air enemy proving ground", 256),
                 ("Modern Agon campaign", 256),
                 ("Original Z80 main level", 255),
             ],
@@ -419,7 +427,7 @@ class ProductionCampaignTests(unittest.TestCase):
         self.assertEqual(check_map_include(CAMPAIGN_MANIFEST), [])
 
     def test_original_level_uses_only_mapped_art_and_modern_active_tiles(self) -> None:
-        level = compile_map_manifest(CAMPAIGN_MANIFEST).levels[1]
+        level = compile_map_manifest(CAMPAIGN_MANIFEST).levels[-1]
         flattened = bytes(tile for row in level.runtime_rows for tile in row)
 
         self.assertEqual(

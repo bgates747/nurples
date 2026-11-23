@@ -13,6 +13,7 @@ from nurples_tools.legacy_tiles import check_legacy_tiles, write_legacy_tiles
 from nurples_tools.overlay_art import check_overlay_art, write_overlay_art
 from nurples_tools.ui_art import UI_ASSET_COUNT, check_ui_art, ui_manifest, write_ui_art
 from nurples_tools.starfields import check_starfields, write_starfields
+from nurples_tools.images import img_to_rgba2
 
 
 UI_BUFFER_BASE = 0
@@ -27,12 +28,14 @@ DERIVED_TITLE_NAMES = frozenset(f"{phase}_1" for phase in TITLE_PHASES)
 EXPECTED_COUNTS = {
     "ui": UI_ASSET_COUNT,
     "bg": 4,
-    "sprites": 159,
+    "sprites": 165,
     "tiles_dg": 192,
     "overlays": 4,
 }
 
 ROTATING_SPRITES = frozenset({"seeker", "turret", "fireball_2", "fireball_3"})
+AIR_FRAMES = tuple(f"enemy_{size}_A{frame}" for size in ("small", "medium", "big")
+                   for frame in (1, 2))
 
 
 def _rotate_image(image: Image.Image, degrees_256: int) -> Image.Image:
@@ -89,7 +92,7 @@ def _sprites(
 
     records: list[ImageRecord] = []
     for index, (name, width, height) in enumerate(
-        sorted(images, key=lambda item: item[0])
+        sorted(images, key=lambda item: (item[0] in AIR_FRAMES, item[0]))
     ):
         payload_path = payload_dir / f"{name}.rgba2"
         records.append(
@@ -247,7 +250,7 @@ def container_records(
     )
     game_records = [record for record in game_resident
                     if record.name not in DERIVED_TITLE_NAMES]
-    if len(ui_records) != UI_ASSET_COUNT - 1 or len(game_records) != 358:
+    if len(ui_records) != UI_ASSET_COUNT - 1 or len(game_records) != 364:
         raise ValueError("UI/game AGNB record-count contract changed")
     return ui_records, game_records
 
@@ -334,6 +337,11 @@ def write_current_assets(project_root: Path) -> list[Path]:
     prepared.extend(write_starfields(project_root))
     prepared.extend(write_legacy_tiles(project_root))
     prepared.extend(write_overlay_art(project_root))
+    for name in AIR_FRAMES:
+        with Image.open(project_root / f"assets/img/orig/sprites/{name}.png") as image:
+            dest = project_root / f"assets/rgba2/sprites/{name}.rgba2"
+            img_to_rgba2(image, dest)
+            prepared.append(dest)
     outputs = generate_outputs(project_root, project_root)
     for path, data in outputs.items():
         _write_if_changed(path, data)

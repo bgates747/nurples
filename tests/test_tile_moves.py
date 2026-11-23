@@ -82,7 +82,7 @@ class TileMoveTests(unittest.TestCase):
             self.commit()
         self.assertEqual([self.art(i) for i in (a, b, c)], [original[1], original[2], original[0]])
         self.assertEqual((self.slot(1), self.slot(17)), (c, b))
-        legacy = compile_map_manifest(self.root / MANIFESTS[0]).levels[1]
+        legacy = compile_map_manifest(self.root / MANIFESTS[0]).levels[-1]
         self.assertEqual(render_tmx(legacy.runtime_rows, self.runtime_ids()),
                          legacy.source_path.read_text())
         # No runtime tile files were copied here. Missing files are expected;
@@ -105,7 +105,7 @@ class TileMoveTests(unittest.TestCase):
         self.assertIn("CSV", self.cli("move", a, b, ok=False))
 
     def test_reserved_empty_destination_requires_manual_review(self):
-        source, dest = self.slot(17), self.slot(15)
+        source, dest = self.slot(17), self.slot(12)
         report = self.cli("move", source, dest)
         self.assertNotIn("active-range source", report)
         self.assertIn("active-range destination", report)
@@ -117,7 +117,7 @@ class TileMoveTests(unittest.TestCase):
 
     def test_registry_drift_refuses_preview(self):
         p = self.root / REGISTRY
-        p.write_text(p.read_text().replace('15 = ["15", "none"]', '15 = ["15", "electrode"]'))
+        p.write_text(p.read_text().replace('15 = ["pad_large", "pad_large"]', '15 = ["pad_large", "electrode"]'))
         git(self.root, "add", "--", REGISTRY)
         self.commit()
         self.assertIn("stale", self.cli("move", self.slot(17), self.slot(15), ok=False))

@@ -114,7 +114,7 @@ class AssemblySafetyTests(unittest.TestCase):
 
         self.assertIn('ui_agnb_filename:   db "ui.agnb",0', images)
         self.assertIn('game_agnb_filename: db "game.agnb",0', images)
-        self.assertIn("game_num_images: equ 358", counts)
+        self.assertIn("game_num_images: equ 364", counts)
         self.assertIn("ld hl,game_num_images\n    ld (game_load_remaining),hl", images)
         self.assertIn("SPLASH_TITLE_X: equ 28", images)
         self.assertIn("SPLASH_TITLE_Y: equ 50", images)
@@ -1035,9 +1035,10 @@ class AssemblySafetyTests(unittest.TestCase):
             "player_defaults",
             "laser_defaults",
             "seeker_defaults",
+            "air_defaults",
             "fireball_defaults",
             "explosion_defaults",
-            "pad_small_defaults",
+            "pad_seeker_defaults",
             "turret_fireball_defaults",
             "electrode_defaults",
             "lightning_defaults",
@@ -1099,9 +1100,9 @@ class AssemblySafetyTests(unittest.TestCase):
                 "fireball_custom_end",
             ),
             "explosion.inc": ("explosion_custom_begin", "explosion_custom_end"),
-            "tile_pad_small.inc": (
-                "pad_small_custom_begin",
-                "pad_small_custom_end",
+            "tile_pad_seeker.inc": (
+                "pad_seeker_custom_begin",
+                "pad_seeker_custom_end",
             ),
             "tile_turret_fireball.inc": (
                 "turret_fireball_custom_begin",
@@ -1289,7 +1290,7 @@ class AssemblySafetyTests(unittest.TestCase):
 
         for name in (
             "tile_electrode.inc",
-            "tile_pad_small.inc",
+            "tile_pad_seeker.inc",
             "tile_turret_fireball.inc",
         ):
             with self.subTest(source=name):
@@ -1440,7 +1441,7 @@ class AssemblySafetyTests(unittest.TestCase):
             "; end tile_move_program_valid",
         )
         for tile_type, handler in (
-            ("tile_pad_small", "move_pad_small"),
+            ("tile_pad_seeker", "move_pad_seeker"),
             ("tile_turret_fireball", "move_turret_fireball"),
             ("tile_electrode", "move_electrode"),
             ("tile_lightning", "move_lightning"),

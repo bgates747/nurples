@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "asm" / "game_over_lifecycle.inc"
 PLAYER = ROOT / "src" / "asm" / "player_state.inc"
 PRODUCTION = ROOT / "src" / "asm" / "nurples.asm"
-PAD = ROOT / "src" / "asm" / "tile_pad_small.inc"
+PAD = ROOT / "src" / "asm" / "tile_pad_seeker.inc"
 INIT = ROOT / "src" / "asm" / "state_game_init.inc"
 VDU = ROOT / "src" / "asm" / "vdu.inc"
 DISPLAY = ROOT / "src" / "asm" / "playfield_display.inc"
@@ -74,7 +74,7 @@ class GameOverLifecycleTests(unittest.TestCase):
         self.assertNotIn("ld (player_state)", policy)
 
     def test_pad_animation_precedes_the_game_over_launch_gate(self) -> None:
-        pad = PAD.read_text().split("move_pad_small:", 1)[1].split("kill_pad_small:")[0]
+        pad = PAD.read_text().split("move_pad_seeker:", 1)[1].split("kill_pad_seeker:")[0]
         self.assertLess(pad.index("call draw_active_tile"), pad.index("ld de,game_over"))
         self.assertLess(pad.index("ret z"), pad.index("call active_tile_launch_timer_tick"))
         self.assertLess(

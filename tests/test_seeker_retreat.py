@@ -115,7 +115,7 @@ class SeekerRetreatTests(unittest.TestCase):
         production = PRODUCTION.read_text()
         seeker = (ROOT / "src" / "asm" / "enemy_seeker.inc").read_text()
         sprites = (ROOT / "src" / "asm" / "sprites.inc").read_text()
-        pad = (ROOT / "src" / "asm" / "tile_pad_small.inc").read_text()
+        pad = (ROOT / "src" / "asm" / "tile_pad_seeker.inc").read_text()
         self.assertIn('include "seeker_retreat.inc"', production)
         self.assertIn("call seeker_capture_spawn_pad", seeker)
         self.assertIn("call seeker_orbit_note_step", seeker)

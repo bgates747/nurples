@@ -10,6 +10,7 @@ cur_baseBufferId: dl 0
 tiles_x_plot: dl 0
     db 0 ; padding for byte-shifting
 tiles_y_plot: dl -15
+tiles_visual_row: ds 16 ; render IDs only; activation still reads the source row
 
 ; GAMEPLAY-ONLY TERRAIN PIPELINE.
 ; This loop is deliberately synchronized to one scanline per frame and to the
@@ -38,6 +39,33 @@ tiles_plot:
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
     ld hl,(tiles_row_defs)
+; Resolve shared pad artwork once per incoming row, not per scanline.
+    ld a,(tiles_y_plot)
+    cp 0xF1 ; -15, first scanline of every new terrain row
+    jp nz,@visual_ready
+    ld de,tiles_visual_row
+    ld a,(tiles_cols)
+    ld b,a
+@resolve_art:
+    ld a,(hl)
+    inc hl
+    cp tile_activation_routines_count
+    jp nc,@store_art
+    push hl
+    ld hl,0
+    ld l,a
+    push de
+    ld de,tile_active_art
+    add hl,de
+    ld a,(hl)
+    pop de
+    pop hl
+@store_art:
+    ld (de),a
+    inc de
+    djnz @resolve_art
+@visual_ready:
+    ld hl,tiles_visual_row
     ld a,(tiles_cols)
     ld b,a ; column loop counter
 @loop:
@@ -75,7 +103,12 @@ tiles_plot:
     ret
 @next_row:
 ; do active tiles
-    push hl ; save pointer to next row tile def
+    ld hl,(tiles_row_defs)
+    ld de,0
+    ld a,(tiles_cols)
+    ld e,a
+    add hl,de
+    push hl ; save pointer to next source row, not end of visual cache
     call do_active_tiles
     pop hl ; get back pointer to next row tile def
 ; time to bump tiles_row_defs to next row

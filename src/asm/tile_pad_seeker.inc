@@ -1,13 +1,13 @@
-pad_small_custom_begin: equ actor_record_custom
-pad_small_custom_end: equ pad_small_custom_begin
-    .if pad_small_custom_end-pad_small_custom_begin
-        dl pad_small_custom_span_mismatch
+pad_seeker_custom_begin: equ actor_record_custom
+pad_seeker_custom_end: equ pad_seeker_custom_begin
+    .if pad_seeker_custom_end-pad_seeker_custom_begin
+        dl pad_seeker_custom_span_mismatch
     .endif
 
-pad_small_defaults:
-    db tile_pad_small       ; type
+pad_seeker_defaults:
+    db tile_pad_seeker       ; type
     dl BUF_TILE_PAD_0       ; base_bufferId
-    dl move_pad_small       ; move_program
+    dl move_pad_seeker       ; move_program
     db %01000000            ; collisions bit 6 signals sprite alive
     db 16                   ; dim_x
     db 16                   ; dim_y
@@ -21,8 +21,8 @@ pad_small_defaults:
     db 0                    ; shield_damage
     db 0                    ; frame
 
-activate_pad_small:
-    ld hl,pad_small_defaults
+activate_pad_seeker:
+    ld hl,pad_seeker_defaults
 ; get next available active tile id
     call spawn_active_tile
     ret nc ; no carry means no free active tile slots, so we go home
@@ -31,13 +31,13 @@ activate_pad_small:
     and %00011111 ; keep only 5 lowest bits (max 31)
     ld (ix+tile_move_timer),a ; when this hits zero,will spawn a seeker
     ret
-; end activate_pad_small
+; end activate_pad_seeker
 
-move_pad_small:
+move_pad_seeker:
     call move_active_tile 
     jp z,table_deactivate_tile
     call check_enemy_collision_laser
-    jp z,kill_pad_small
+    jp z,kill_pad_seeker
 ; do animation
     dec (iy+tile_animation_timer)
     jp nz,@F
@@ -69,14 +69,14 @@ move_pad_small:
     call enemy_spawn_seeker
     pop iy
     ; fall through to reset move timer
-pad_small_reset_move_timer:
+pad_seeker_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,64 ; range is now 64-95
     ld (iy+tile_move_timer),a ; when this hits zero,will spawn a seeker
     ret
 
-kill_pad_small:
+kill_pad_seeker:
     call update_score
     jp transform_active_tile_to_crater
-; end move_pad_small
+; end move_pad_seeker
