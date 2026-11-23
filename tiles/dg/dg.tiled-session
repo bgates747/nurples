@@ -1,35 +1,77 @@
 {
-    "activeFile": "dg0_00.tmx",
+    "activeFile": "nurples_z80_main.tmx",
     "expandedProjectPaths": [
         "."
     ],
     "fileStates": {
+        "civ.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3.93
+        },
         "dg0.tsx": {
-            "scaleInDock": 2.6884
+            "scaleInDock": 3
         },
         "dg0_00.tmx": {
+            "scale": 3.0514,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -0.9831552729894497,
+                "y": 2047.9124336370191
+            }
+        },
+        "dg0_01.tmx": {
+            "scale": 1.2802734375,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -179.64912280701753,
+                "y": 511.6094584286805
+            }
+        },
+        "dg0_03.tmx": {
+            "scale": 0.320068359375,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -1102.8893974065597,
+                "y": 2046.437833714722
+            }
+        },
+        "dg0_bg_green_plates.tmx": {
             "scale": 2.560546875,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 106.42257818459193,
-                "y": 3841.366895499619
+                "x": -25.775743707093824,
+                "y": 255.80472921434026
             }
         },
         "nurples_z80_main.tmx": {
-            "scale": 2.2103,
+            "scale": 0.32132352941176473,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 127.81070442926298,
-                "y": 2039.994570872732
+                "x": -74.69107551487423,
+                "y": 2038.4439359267733
             }
         }
     },
+    "last.imagePath": "/home/smith/Agon/mystuff/nurples-level-design/tiles/civ/earth_tiled",
     "openFiles": [
-        "dg0_00.tmx"
+        "dg0_00.tmx",
+        "dg0_01.tmx",
+        "dg0_03.tmx",
+        "dg0_bg_green_plates.tmx",
+        "nurples_z80_main.tmx"
     ],
     "project": "dg.tiled-project",
     "recentFiles": [
         "dg0_00.tmx",
-        "nurples_z80_main.tmx"
-    ]
+        "dg0_01.tmx",
+        "dg0_03.tmx",
+        "dg0_bg_green_plates.tmx",
+        "nurples_z80_main.tmx",
+        "civ.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
 }
