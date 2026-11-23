@@ -1,5 +1,7 @@
 # Purple Nurples TODO
 
+- [ ] **TILE-POSE-001 — [Unit-defined entry facing](docs/tasks/TILE-POSE-001/TASK.md).**
+
 - [ ] **EARTH-001 — [Earth City opening level](docs/tasks/EARTH-001/TASK.md).**
 
 This is the project's only authoritative unfinished-work list. Evidence and
