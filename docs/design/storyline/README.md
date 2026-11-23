@@ -19,6 +19,17 @@ See [boss encounters](../enemies/bosses/README.md) for possible placements along
 
 The first two stages also contrast in how their enemies move: a formation advance on Earth, then formation breakaways in space. See [opening-stage movement direction](../enemies/README.md#opening-stages--chosen-movement-direction-not-yet-implemented).
 
+## Stage 1 breach ending — undecided
+
+**The rule.** A Space Invaders-style option: a single living member of an Earth wave getting through costs the mission, however many ships the player has left. A shot-down alien does not count. Two possible thresholds: lose when the alien would normally despawn completely off the bottom, or when its leading edge first touches the bottom so the player can still see the culprit. If adopted, the shared Earth march handler could report a breach; the game would finish processing the frame and take the transition once, even if several aliens crossed together. This could be a distinct ending from losing the last player ship. None of these rules are in force.
+
+**What the aliens came to destroy.** “Earth system survival complex” is a working description, not a name. Two alternatives:
+
+- **Earthshield Control** maintains the planetary shield. Why are the attackers already inside it? Perhaps a small vanguard slipped through alongside authorized traffic. Briefing idea: *“Hold the line. If even one invader gets through, Earthshield falls.”*
+- **Earth Defense Command** coordinates orbital defenses against the main fleet. The ships on the map are a raiding party: they only need to silence one ground station. This shifts the stakes from immediate loss of a life-support facility to opening Earth to invasion. Briefing idea: *“If they knock out Defense Command, we can’t stop the main fleet.”*
+
+**What the player sees.** On a breach, cut player control and warp to the facility at the far end of the map. Brake in time to see a radar dish turning or a beacon pulsing. The aliens attack; the dish stops or the beacon goes dark. The regular **GAME OVER** graphic flashes while the attackers do a victory dance. One inexpensive choreography idea: reuse their march for two short steps left, two right, in unison. For the Defense Command version, the final shot could show the main fleet sailing overhead unopposed. The facility, staging, choreography and trigger all remain open.
+
 ## Keep open
 
 - What is Earth's life-sustaining facility? Which attackers count toward the deadline, and how does the player know any are still alive?
