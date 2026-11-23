@@ -1,5 +1,20 @@
 [
   {
+    "filename": "break2.pt3",
+    "title": "BREAK2",
+    "authors": ["Spawn"],
+    "embedded_credit": "BREAK DANCE STYLE ! by STRYKER FROM MEGAMIX GROUP/1998!",
+    "format": "PT3",
+    "year": "1998",
+    "entry_id": 79463,
+    "page": "https://zxart.ee/tune/79463",
+    "original_url": "https://zxart.ee/file/id:79463/filename:Spawn_-_BREAK2_%281998%29.pt3",
+    "bytes": 3601,
+    "sha256": "b0a6679e840f303118b24e162d1554ae630c336af91b52c454442356511ca836",
+    "license": "redistribution rights not established",
+    "native": true
+  },
+  {
     "filename": "acidflsh.pt3",
     "title": "ACIDFLSH",
     "authors": ["Spawn"],
