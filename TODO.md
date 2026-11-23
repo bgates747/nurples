@@ -1,5 +1,7 @@
 # Purple Nurples TODO
 
+- [ ] **[SPR-HW-001 — Explicit hardware sprites for gameplay](docs/tasks/SPR-HW-001/TASK.md).**
+
 - [ ] **[TURRET-CLEAR-001 — Loaded versus cleared to fire](docs/tasks/TURRET-CLEAR-001/TASK.md).** FAE review.
 
 - [x] **TILE-POSE-001 — [Unit-defined entry facing](docs/tasks/TILE-POSE-001/TASK.md).** Accepted on FAE.
