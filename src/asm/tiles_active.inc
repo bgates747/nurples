@@ -181,6 +181,7 @@ spawn_sprite_from_tile:
     ld (ix+sprite_x),hl
     ld hl,(iy+tile_y)
     ld (ix+sprite_y),hl
+    call sprite_center_on_tile
 ; clear motion state retained by a previously used physical record
     ld hl,0
     ld (ix+sprite_xvel),hl

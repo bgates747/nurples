@@ -636,14 +636,14 @@ class AssemblySafetyTests(unittest.TestCase):
 
         self.assertEqual(plotter.count("call tiles_scroll_background"), 1)
         self.assertLess(plotter.index("call tiles_scroll_background"),
-                        plotter.index("jp nz,@drain"))
-        self.assertLess(plotter.index("jp nz,@drain"), plotter.index("ld hl,(tiles_row_defs)"))
-        begin_drain = plotter[plotter.index("@begin_drain:"):plotter.index("@drain:")]
+                        plotter.index("jp nz,tiles_plot_drain"))
+        self.assertLess(plotter.index("jp nz,tiles_plot_drain"), plotter.index("ld hl,(tiles_row_defs)"))
+        begin_drain = plotter[plotter.index("tiles_plot_begin_drain:"):plotter.index("tiles_plot_drain:")]
         self.assertIn("ld hl,field_bottom+1", begin_drain)
         self.assertNotIn("(tiles_level_complete)", begin_drain)
-        drain = plotter[plotter.index("@drain:"):plotter.index("@level_complete:")]
+        drain = plotter[plotter.index("tiles_plot_drain:"):plotter.index("tiles_plot_level_complete:")]
         self.assertIn("dec hl\n    ld (tiles_drain_remaining),hl", drain)
-        self.assertIn("jp z,@level_complete", drain)
+        self.assertIn("jp z,tiles_plot_level_complete", drain)
         self.assertNotIn("(tiles_row_defs)", drain)
         self.assertIn("tile_bottom: equ field_bottom+1", read_asm("screen.inc"))
         self.assertIn("ld (tiles_drain_remaining),hl", read_asm("levels.inc"))
@@ -973,7 +973,7 @@ class AssemblySafetyTests(unittest.TestCase):
         gate = plotter.index("call player_world_travel_enabled")
         scroll = plotter.index("call tiles_scroll_background")
         self.assertLess(gate, scroll)
-        self.assertIn("jp c,@travel\n    xor a\n    ret", plotter[:scroll])
+        self.assertIn("jp c,tiles_plot_travel\n    xor a\n    ret", plotter[:scroll])
 
         mover = routine(
             read_asm("tiles_active.inc"),

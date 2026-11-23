@@ -67,37 +67,92 @@ air_launch:
     cp 2
     jp z,@medium
     ld bc,0x180D ; sideways 1.5, down 13/16 (nearest to 0.8)
-    call side_spawn_large
+    ld de,air_size_large
     ld hl,BUF_ENEMY_BIG_A1
     jp @frames
 @medium:
     ld bc,0x3014 ; sideways 3, down 1.25
-    call side_spawn_medium
+    ld de,air_size_medium
     ld hl,BUF_ENEMY_MEDIUM_A1
     jp @frames
 @small:
     ld bc,0x3818 ; sideways 3.5, down 1.5
-    call side_spawn_small
+    ld de,air_size_small
     ld hl,BUF_ENEMY_SMALL_A1
 @frames:
+    push hl ; selected bitmap
+    ld (ix+sprite_dim_x),d
+    ld (ix+sprite_dim_y),e
+    push de
+    call sprite_center_on_tile
+    pop de
+    ld hl,(ix+sprite_x)
+    push hl ; constructor's travel clamp must not change the spawn anchor
+    call side_spawn_inward
+    pop de
+    ld hl,(iy+sprite_x)
+    or a
+    sbc hl,de
+    jr z,@centered
+    ld (iy+sprite_x),de
+    ld a,side_hidden
+@centered:
+    pop hl
     ld (iy+air_visibility),a
     ld (iy+sprite_base_bufferId),hl
     ld de,BUF_ENEMY_BIG_A1
     or a
     sbc hl,de
     ld (iy+sprite_frame),l
+    scf ; successful constructor: IY is the allocated air record
     ret
 @no_launch:
     pop af
+    or a ; do not let an Earth marker customize an unallocated record
     ret
+
+earth_launch_small:
+    ld a,1
+    jp earth_launch_march
+earth_launch_medium:
+    ld a,2
+    jp earth_launch_march
+earth_launch_large:
+    ld a,3
+earth_launch_march:
+    call air_launch
+    ret nc
+    ld hl,move_earth_air
+    ld (iy+sprite_move_program),hl
+    ld hl,0
+    ld (iy+sprite_xvel),hl
+    ld hl,128 ; no initial wait: begin at march speed
+    ld (iy+sprite_move_step),0
+    ld a,(iy+air_hp) ; constructor HP equals class 1/2/3
+    cp 3
+    ld a,0
+    jr z,@wait
+    ld a,32 ; first rank is two 16px rows ahead of the large pair
+    ld hl,256 ; during the wait, follow each terrain scanline exactly
+@wait:
+    ld (iy+sprite_move_timer),a
+    ld (iy+sprite_yvel),hl
+    ret
+
+move_earth_air:
+    call earth_march_tick
+    jp air_after_motion
+
+    include "earth_march.inc"
 
 move_air_enemy:
     call side_to_side
+air_after_motion:
     cp side_exited
     jp z,table_deactivate_sprite
     or a
     jp z,@visible
-; Positive campaign VY means a partially exiting actor cannot re-enter.
+; A centered launch above the top remains hidden until fully inside.
     ld a,(iy+air_visibility)
     or a
     ret nz
@@ -106,6 +161,15 @@ move_air_enemy:
     call vdu_sprite_select
     jp vdu_sprite_hide
 @visible:
+    ld a,(iy+air_visibility)
+    or a
+    jr z,@animate
+    call sprite_footprint_within_playfield
+    ret nc ; also guard a wide actor centered on a side-edge tile
+    ld (iy+air_visibility),side_visible
+    ; Use the normal frame/position/show publication in move_sprite_group.
+    set actor_type_just_spawned_bit,(iy+sprite_type)
+@animate:
     dec (iy+sprite_animation_timer)
     jp nz,@contacts
     ld (iy+sprite_animation_timer),8

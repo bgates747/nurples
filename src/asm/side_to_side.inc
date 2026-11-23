@@ -8,14 +8,17 @@ side_exited:  equ 2 ; retire through the pool's normal deactivation path
 
 ; Post-allocation constructors. Position must already be set by the allocator.
 ; BC is packed VX,VY; no spawn timer, pool, sprite ID or speed chosen here.
+air_size_small: equ 0x1010 ; D=width, E=height
+air_size_medium: equ 0x2010
+air_size_large: equ 0x1c1c
 side_spawn_small:
-    ld de,0x1010 ; D=width, E=height
+    ld de,air_size_small
     jp side_spawn_inward
 side_spawn_medium:
-    ld de,0x2010
+    ld de,air_size_medium
     jp side_spawn_inward
 side_spawn_large:
-    ld de,0x1C1C
+    ld de,air_size_large
 side_spawn_inward:
     ld (iy+sprite_dim_x),d
     ld (iy+sprite_dim_y),e

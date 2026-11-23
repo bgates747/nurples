@@ -295,6 +295,30 @@ sprite_pool_valid:
     ret
 ; end sprite_pool_valid
 
+; Shared tile-launch convention. IX is the allocated actor with final bitmap
+; dimensions and the tile's top-left already in sprite_x/y. Keep the actor's
+; top-left in 16.8: tile_origin + 8px - half the sprite extent on each axis.
+; Inputs BC and IY preserved; no VDP call, per-frame offset, or new fields.
+sprite_center_on_tile:
+    ld hl,(ix+sprite_x)
+    ld a,(ix+sprite_dim_x)
+    call @axis
+    ld (ix+sprite_x),hl
+    ld hl,(ix+sprite_y)
+    ld a,(ix+sprite_dim_y)
+    call @axis
+    ld (ix+sprite_y),hl
+    ret
+@axis:
+    ld de,8*256
+    add hl,de
+    ld de,128
+    ld d,a
+    mlt de ; width/2 in 16.8 (including odd widths); DEU was zero
+    or a
+    sbc hl,de
+    ret
+
 ; create a new sprite at the prescribed coordinates
 ; inputs: hl = pointer to new sprite default settings, ub.c, ud.e = x,y position 
 ;         ix = pointer to sprite group, a = number of records in sprite group
@@ -459,6 +483,9 @@ sprite_move_program_valid:
     cp enemy_air
     jp nz,@invalid
     ld de,move_air_enemy
+    call @matches
+    jp z,@valid
+    ld de,move_earth_air
     call @matches
     jp z,@valid
     jp @invalid

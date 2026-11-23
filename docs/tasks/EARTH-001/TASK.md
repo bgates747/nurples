@@ -30,6 +30,65 @@ Smith approved implementation, compilation and FAE staging. This is a special op
 
 ## Source audit
 
+**R03: shared tile-center anchor and wider Earth formation.** A tile launch
+aligns the geometric center of the actual sprite rectangle with the center
+of its 16×16 tile, in both axes, once at spawn. Render, motion and collisions
+continue to use the resulting top-left. A partially entering air sprite is
+hidden until its whole rectangle fits (stock VDP does not clip sprites).
+This is shared across levels, unlike the choice of march movement.
+Earth's revised front rank spans columns 4–15 on row 232; large ships are
+on row 230. Wait 32 terrain ticks before the front rank marches; both ranks
+move 64 pixels left and then alternate 64 right/left. This supersedes the
+old audition timings below. No VDP firmware change.
+
+Smith accepted R03 on Oryx FAE on 2026-11-23. The reviewed executable
+SHA-256 was `3dd9c352f331eebc4c40535e9501a7e1ef860a9e1ec126236ff66ed7fd3be4d5`.
+
+**Earth march audition.** Use the saved eight-actor wave. Earth small and
+medium ships wait one terrain row (16 ticks) longer than the large pair
+before taking their first horizontal step. Then every actor goes left 96
+pixels, right 128, left 128, repeating at one pixel per tick. During the
+initial countdown descend one pixel per terrain pixel, including its final
+tick. On the first sideways step and thereafter descend at half that rate.
+A zero-delay actor starts directly at half speed. With consecutive authored
+rows this preserves 16 pixels between their top edges.
+Use individual actor timers, not a formation controller. Leave the ordinary
+side-to-side pads, eight-slot pool, HP, collision and artwork unchanged.
+
+Staged on Oryx FAE using Smith's latest TMX (first rank row 232, large pair
+231). Verified the compiled callback tables and read back the guest binary
+(`d8af96cf1152da4146f68fb07dee5cf1eba54569ccb6c82f41125245bf5dcad7`).
+A geometry model checked 649 ticks across all eight compiled placements:
+first horizontal step on tick 17, reversals at ticks 112 and 240, no
+footprint outside the field. This is not a visual pass. Full suite: 235
+passed, two skipped, three outstanding checks (two terrain source-label
+expectations and byte encoding of dg0.png). Human motion review pending.
+
+**R03 — eight-ship Earth wave (2026-11-23), staged for FAE.** Smith's saved
+map puts four small and two medium ships on Tiled row 231, then two large on
+row 230. All eight fit without a kill. Verified all 4,096 compiled Earth
+cells against the TMX; the only six byte differences from the R02 executable
+are in those map cells. No pool, movement, or pad-art change. Read back
+`nurples.bin` from the Oryx FAE card (SHA-256
+`a9087093808b21fc30f34099a55103f12df129197c6fcc8af74c971ca2901534`).
+Visual confirmation is pending.
+
+**Earth air markers, R02 placement review (2026-11-23).** In R01 Smith
+saw small ships using the existing side-to-side movement, but no mediums or
+larges. The first incoming rank alone requested all eight shared air records.
+A marker attempts allocation once, when its row is admitted; a full pool
+skips that marker, not a later ship already in flight. This is a Nurples
+capacity setting, not an eight-sprite VDP restriction.
+
+R02 uses Smith's revised Oryx TMX: six small markers on row 231, two
+medium on 230, two large on 229 (Tiled coordinates; larger Y enters first).
+No other executable changes from R01: all 28 changed bytes are Earth map
+cells. Verified the three constructor pointers and read back the staged
+FAE binary (`9c61d0d4154b4381301a945881e5eebaa6ad7fce9ea2e95a30e43af466020440`).
+The eight-slot shared pool and existing motion stay as-is for this review.
+Smith will adjust spacing/counts in Tiled. Discuss level-specific movement
+after this playtest; neither R02 motion nor visual results are newly qualified.
+
 **FAE acceptance, 2026-11-23:** Smith accepted the staged four-level campaign
 after playtest and authorized commit and push. This supersedes the R01 pending
 review note below; no hardware test is claimed.

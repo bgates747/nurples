@@ -5,6 +5,16 @@ earth_next_buffer: dl earth_first_buffer
 earth_open_frame: db 0
 earth_fraction: db 0
 earth_bind_background:
+    ld hl,tile_active_art
+    ld de,tile_activation_routines
+    ld a,(cur_level)
+    or a
+    jp nz,@tables
+    ld hl,earth_marker_art
+    ld de,earth_marker_callbacks
+@tables:
+    ld (terrain_art_operand),hl
+    ld (terrain_activation_operand),de
     ld hl,bg_plot
     ld a,(cur_level)
     or a
@@ -22,6 +32,33 @@ earth_select:
     inc hl
     ld (earth_next_buffer),hl
     ret
+
+; Earth-only editor markers. Runtime artwork is the existing transparent tile 0.
+earth_marker_art: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+earth_marker_callbacks:
+    dl activate_null_tile,earth_launch_seeker,earth_launch_small,earth_launch_medium,earth_launch_large
+    dl activate_null_tile,activate_null_tile,activate_null_tile,activate_null_tile
+    dl activate_null_tile,activate_null_tile,activate_null_tile,activate_null_tile
+    dl activate_null_tile,activate_null_tile,activate_null_tile,activate_null_tile
+earth_launch_seeker:
+    ld bc,(tiles_x_plot-1)
+    ld c,0
+    ld de,0
+    ld hl,seeker_defaults
+    ld ix,seekers_base
+    ld a,seekers_max
+    call spawn_sprite_from_coords
+    ret nc
+    call sprite_center_on_tile
+    ld (ix+seeker_spawn_pad_id),SEEKER_PAD_NONE
+    xor a
+    ld (ix+seeker_spawn_pad_generation),a
+    ld (ix+seeker_completed_orbits),a
+    ld hl,speed_seeker
+    ld (ix+sprite_vel),hl
+    push ix
+    pop iy
+    jp seeker_enter_live_launch
 earth_plot:
     ld a,(bg_y_plot)
     inc a

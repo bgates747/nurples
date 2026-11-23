@@ -23,10 +23,10 @@ tiles_plot:
 ; entrance and grace keep the existing field spatially fixed without teaching
 ; the global scheduler how to rewrite tile state.
     call player_world_travel_enabled
-    jp c,@travel
+    jp c,tiles_plot_travel
     xor a
     ret
-@travel:
+tiles_plot_travel:
     ld a,(tiles_level_complete)
     or a
     ret nz
@@ -34,7 +34,7 @@ tiles_plot:
     ld hl,(tiles_drain_remaining)
     ld a,h
     or l ; bounded by the 336-pixel playfield, so H:L covers the counter
-    jp nz,@drain
+    jp nz,tiles_plot_drain
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
@@ -42,33 +42,34 @@ tiles_plot:
 ; Resolve shared pad artwork once per incoming row, not per scanline.
     ld a,(tiles_y_plot)
     cp 0xF1 ; -15, first scanline of every new terrain row
-    jp nz,@visual_ready
+    jp nz,tiles_plot_visual_ready
     ld de,tiles_visual_row
     ld a,(tiles_cols)
     ld b,a
-@resolve_art:
+tiles_plot_resolve_art:
     ld a,(hl)
     inc hl
     cp tile_activation_routines_count
-    jp nc,@store_art
+    jp nc,tiles_plot_store_art
     push hl
     ld hl,0
     ld l,a
     push de
+terrain_art_operand: equ $+1
     ld de,tile_active_art
     add hl,de
     ld a,(hl)
     pop de
     pop hl
-@store_art:
+tiles_plot_store_art:
     ld (de),a
     inc de
-    djnz @resolve_art
-@visual_ready:
+    djnz tiles_plot_resolve_art
+tiles_plot_visual_ready:
     ld hl,tiles_visual_row
     ld a,(tiles_cols)
     ld b,a ; column loop counter
-@loop:
+tiles_plot_loop:
     push bc ; save the loop counter
 ; read the tile defintion for the current column
     ld a,(hl) ; a has tile definition
@@ -89,7 +90,7 @@ tiles_plot:
     pop hl ; get back pointer to tile def
     inc hl ; bump it to the next column
     pop bc ; snag our loop counter
-    djnz @loop
+    djnz tiles_plot_loop
 ; increment tiles plotting y-coordinate
 ; (we use ix b/c we want to preserve hl for the next step)
     ld ix,(tiles_y_plot)
@@ -98,10 +99,10 @@ tiles_plot:
     ld (tiles_y_plot),ix
     ld a,ixl
     cp 1
-    jp z,@next_row
+    jp z,tiles_plot_next_row
     xor a ; no level-complete result this frame
     ret
-@next_row:
+tiles_plot_next_row:
 ; do active tiles
     ld hl,(tiles_row_defs)
     ld de,0
@@ -122,25 +123,25 @@ tiles_plot:
 ; decrement tiles row counter
     ld hl,tiles_row
     dec (hl)
-    jp z,@begin_drain
+    jp z,tiles_plot_begin_drain
     xor a ; no level-complete result this frame
     ret
-@begin_drain:
+tiles_plot_begin_drain:
 ; The last row's top scanline is at Y=0. Count scrolls through Y=field_bottom
 ; and one beyond it. Do not revisit the source row pointer while draining.
     ld hl,field_bottom+1
     ld (tiles_drain_remaining),hl
     xor a
     ret
-@drain:
+tiles_plot_drain:
     dec hl
     ld (tiles_drain_remaining),hl
     ld a,h
     or l
-    jp z,@level_complete
+    jp z,tiles_plot_level_complete
     xor a
     ret
-@level_complete:
+tiles_plot_level_complete:
     ld a,1
     ld (tiles_level_complete),a
     ret
@@ -183,16 +184,17 @@ do_active_tiles:
     ld hl,(tiles_row_defs)
     ld a,(tiles_cols)
     ld b,a ; column loop counter
-@loop:
+do_active_tiles_loop:
     push bc ; save the loop counter
 ; read the tile defintion for the current column
     ld a,(hl) ; a has tile definition
     push hl ; save pointer to tile definition
     or a ; check for null tile
-    jp z,@next_tile ; skip to next tile if null
+    jp z,do_active_tiles_next_tile ; skip to next tile if null
     cp tile_activation_routines_count ; carry reset if active tile
-    jp nc,@next_tile ; skip to next tile if not active
+    jp nc,do_active_tiles_next_tile ; skip to next tile if not active
 ; call the tile activation routine
+terrain_activation_operand: equ $+1
     ld hl,tile_activation_routines
     ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
     ld d,3 ; three bytes per table entry
@@ -201,7 +203,7 @@ do_active_tiles:
     add hl,de ; hl is now the address of the table entry
     ld hl,(hl) ; hl is now the activation routine address
     CALL_HL ; call the activation routine
-@next_tile:
+do_active_tiles_next_tile:
 ; bump x-coords the width of one tile and save it
     ld hl,(tiles_x_plot)
     ld bc,16
@@ -211,7 +213,7 @@ do_active_tiles:
     pop hl ; get back pointer to tile def
     inc hl ; bump it to the next column
     pop bc ; snag our loop counter
-    djnz @loop
+    djnz do_active_tiles_loop
     ret ; done
 ; end do_active_tiles
 
