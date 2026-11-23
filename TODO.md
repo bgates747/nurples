@@ -12,6 +12,10 @@ decisions are recorded in the dated development log.
   passed sequencing checks. The [longer klaxon and louder speech passed
   Smith’s FAE and Console8 listening tests](docs/tasks/MUS-001/klaxon-r07.md).
 
+- [ ] **AIR-001 — Side-to-side movement for three new air spawns.**
+  [Movement and constructor contract](docs/tasks/AIR-001/TASK.md). Launch
+  parameters and live pad integration await design review.
+
 - [ ] **MAP-002 — Move or swap DG tiles by Tiled local ID.**
   [Contract, tool and qualification](docs/tasks/MAP-002/TASK.md).
 
