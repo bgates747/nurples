@@ -66,6 +66,7 @@ enemy_spawn_fireball:
     .if mus_combat_cues
     call cues_queue_launch ; slot allocated, projectile initialized and visible
     .endif
+    scf ; report a real launch after VDP/audio calls have finished
     ret
 ; end enemy_spawn_fireball
 

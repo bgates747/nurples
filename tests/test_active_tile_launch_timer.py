@@ -81,10 +81,23 @@ class ActiveTileLaunchTimerTests(unittest.TestCase):
                 rearm = code.index(f"{reset}_reset_move_timer:", restore)
                 store = code.index("ld (iy+tile_move_timer),a", rearm)
                 self.assertNotIn("pop iy", code[save:child])
-                self.assertNotRegex(code[child:store], r"(?m)^\s*(?:ret|jp)\b")
+                if spawn == "fireball":
+                    self.assertIn("pop iy\n    ret nc", code[child:rearm])
+                else:
+                    self.assertNotRegex(code[child:store], r"(?m)^\s*(?:ret|jp)\b")
+
+    def test_turret_checks_this_ticks_alignment_only_when_loaded(self):
+        move = routine((ASM / "tile_turret_fireball.inc").read_text(), "move_turret_fireball")
+        self.assertIn("call turret_track_desired_heading\n    push af", move)
+        self.assertIn("call active_tile_launch_timer_tick\n    jr z,@loaded\n"
+                      "    pop af\n    ret\n@loaded:\n    pop af\n    ret nc", move)
+        self.assertLess(move.index("@loaded:"), move.index("call enemy_spawn_fireball"))
+        spawn = routine((ASM / "enemy_fireball.inc").read_text(), "enemy_spawn_fireball")
+        self.assertIn("call spawn_sprite_from_tile\n    ret nc", spawn)
+        self.assertRegex(spawn, r"scf[^\n]*\n    ret\s*$")
 
     def test_cooldown_contract_across_initial_repeat_and_full_pool(self) -> None:
-        for cooldown in (64, 95, 24, 55):
+        for cooldown in (64, 95):  # seeker pads rearm even on a full pool
             with self.subTest(cooldown=cooldown):
                 timer = 0
                 attempts = []

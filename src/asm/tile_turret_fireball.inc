@@ -30,7 +30,7 @@ activate_turret_fireball:
     call turret_tracking_init
     call rand_8     ; snag a random number
     and %00011111 ; keep only 5 lowest bits (max 31)
-    ld (ix+tile_move_timer),a ; when this hits zero,will spawn a fireball
+    ld (ix+tile_move_timer),a ; zero = loaded, not necessarily cleared
     ret
 ; end activate_turret_fireball
 
@@ -52,23 +52,28 @@ move_turret_fireball:
     ld (Vp),hl ; param for targeting_computer
     call targeting_computer
     call turret_track_desired_heading
+    push af ; carry = physical barrel reached this tick's full-precision solution
     call tile_frame_heading
     call draw_active_tile
-; check whether it is time to spawn a fireball      
     call active_tile_launch_timer_tick
-    ret nz
+    jr z,@loaded
+    pop af
+    ret
+@loaded:
+    pop af
+    ret nc ; still turning: keep timer at zero and recompute next live tick
 ; Fire from the physical barrel, never the ideal lead solution.
-; Restore the turret record before rearming, regardless of allocation result.
     push iy
     call turret_prepare_physical_shot
     call enemy_spawn_fireball
     pop iy
+    ret nc ; no projectile slot: still loaded
     ; fall through to reset move timer
 turret_fireball_reset_move_timer:
     call rand_8     ; snag a random number
     and %00011111   ; keep only 5 lowest bits (max 31)
     add a,24 ; range is now 24-55
-    ld (iy+tile_move_timer),a ; when this hits zero,will spawn a fireball
+    ld (iy+tile_move_timer),a ; a successful shot starts a new reload
     ret
 
 turret_fireball_search:

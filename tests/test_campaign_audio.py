@@ -127,7 +127,7 @@ class CampaignAudioTests(unittest.TestCase):
         self.assertEqual(symbols["cues_alert_ticks"], (gate + tail + 19) // 20 + 1)
         spawn = section("enemy_spawn_fireball", "fireball_to_screen_vy")
         self.assertIn(call("spawn_sprite_from_tile") + b"\xd0", spawn)  # RET NC
-        self.assertTrue(spawn.endswith(call("cues_queue_launch") + b"\xc9"))
+        self.assertTrue(spawn.endswith(call("cues_queue_launch") + b"\x37\xc9"))  # SCF; RET: fired
         self.assertEqual(game.count(call("cues_queue_launch")), 1)
         self.assertIn(call("cues_cancel_warning"), section("player_init_respawn", "player_init"))
         self.assertIn(call("cues_cancel_warning"), section("vox_game_over", "vox_say"))
