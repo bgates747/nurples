@@ -198,11 +198,11 @@ IDs 0–39, on stock MOS/VDP. No framebuffer formation art or firmware sort.
 Smith authors the ranks in Earth City's Spawns layer; do not edit or deploy
 over the Oryx design checkout. Preserve the compile-time terrain/spawn split.
 
-- F40-01 [ ] The first admitted small/medium/large Earth marker starts the
+- F40-01 [x] The first admitted small/medium/large Earth marker starts the
   formation; each successfully admitted ship owns a distinct slot, highest
   available first so later ranks get lower IDs. Never overwrite a live ship.
   Seeker markers and other levels' ordinary side-to-side spawns do not join.
-- F40-02 [ ] Track live membership once per successful admission/removal.
+- F40-02 [x] Track live membership once per successful admission/removal.
   Last kill or scroll-out returns the counter to zero; teardown/restart clears
   it too. If there are no survivors, the next eligible spawn starts anew.
   Preserve individual movement, damage, collision and visible-edge behavior.
@@ -211,3 +211,49 @@ over the Oryx design checkout. Preserve the compile-time terrain/spawn split.
   and check capacity/order, full-pool refusal, cleanup and reuse. A real
   40-ship visibility/performance verdict requires Smith's layout and playtest.
   No new emulator launch, bench operation, or production promotion in this step.
+
+Implementation evidence against freeze `0a38fa27c55fb673c0fb30027d690f9fd03a9457`:
+ordinary and diagnostic games assembled. The linked bank is 40 × 64 bytes,
+other actor IDs are 40–67 and overlay IDs 68–69. The empty-bank branch skips
+formation movement. A linked eZ80 CPU check (`tests/formation_bank_cpu.rs`)
+ran on **both** executables: fills in descending order, refuses the 41st
+without changing the actor table, clears a mix of pending deaths and bottom
+exits, tolerates repeated removal, excludes an ordinary non-Earth air launch,
+restarts at slot 39, and resets at table initialization. Display I/O was
+stubbed; this measures neither frame time nor flicker. Python suite: 245 run,
+2 skipped, no failures. F40-03 remains open for the authored map and visual
+review. No Oryx sparse checkout, live bench or deployment changes.
+
+F40 Earth march audition: imported Smith's Oryx TMX (SHA-256
+`6fb049ddbf3de2280d02dd0dd18362ac41f1b6297ec0f2c1343e0750be006a5a`).
+The compiler groups eligible ranks separated by at most one spacer row;
+two consecutive empty rows separate waves. It emits rank wait and leg lengths
+from row spacing and centered sprite footprints. During the entrance, ranks
+follow ground scroll until the last rank arrives, then march at 1 px/tick
+horizontally and descend at half scroll speed. Wave 1 waits 64/48/32/16/0
+steps and traverses 96 pixels each way. Wave 2 waits 32/0 and traverses 64.
+Only wave 2's compiled admissions shift two rows later, so a no-kill wave 1
+can leave before the next admission. No edits to Oryx authoring files.
+Both assembled binaries passed the CPU position checks through a full sweep
+and reversal; the Python suite passed (245 run, two skipped). The staged
+mixed-renderer/invulnerable FAE card binary read back as
+`16cae72cbbad231450eba9b2682ab2951dc490c0d4f04702ef4bb9fb82e89493`.
+Smith reported the formation worked in FAE and requested the identical build
+on Olimex. Olimex visibility and pacing remain unqualified; the previous
+mixed-air packet pins an older executable. Follow-on commissioning requested.
+
+Olimex F40 visual result (2026-11-24): Smith observed heavy flicker until
+the formation reached approximately halfway down the playfield; from there
+it rendered cleanly. Early visibility failed with this build and layout.
+The midpoint is a visual estimate, not a measured scanline or a general
+spawn-height limit. This run does not isolate draw order from total draw time.
+
+### F40-HW: same ranks, hardware renderer audition
+
+- F40-HW-01 [ ] Freeze the tested software control, then switch only Earth
+  formation IDs 0–39 to hardware in the diagnostic build. Preserve both
+  waves, timing, art, other slots and controls. Compare linked executables;
+  stage as nurples.bin for Smith on Oryx FAE first. No Olimex access.
+- Design observation, not part of this test: Smith saw Galaga keep the rack
+  centered and expand/contract its vertical extent like breathing. Consider
+  that motion separately; this comparison retains the existing lateral march.

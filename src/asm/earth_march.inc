@@ -25,9 +25,11 @@ earth_march_tick:
     ld (iy+sprite_yvel),hl ; half speed beginning on the first sideways step
     jp side_visibility
 @begin:
-    ld a,1
+    ld a,(iy+earth_direction)
     ld (iy+sprite_move_step),a
-    ld (iy+sprite_move_timer),64 ; cols 4..15: four tiles of left travel
+    ld a,(iy+earth_first_leg)
+    ld (iy+sprite_move_timer),a
+    ld a,(iy+sprite_move_step)
 @stride:
     ld de,-256
     cp 1
@@ -43,5 +45,6 @@ earth_march_tick:
     ld a,(iy+sprite_move_step)
     xor 3 ; 1 <-> 2
     ld (iy+sprite_move_step),a
-    ld (iy+sprite_move_timer),64 ; twelve tiles wide in a sixteen-tile field
+    ld a,(iy+earth_full_leg)
+    ld (iy+sprite_move_timer),a
     jp side_visibility

@@ -43,6 +43,13 @@ enemies_state_pointer_valid:
 ; end enemies_state_pointer_valid
 
 enemies_alive:
+    ld a,(formation_live)
+    or a
+    jr z,@ordinary
+    ld iy,formation_base
+    ld b,formation_max
+    call move_sprite_group
+@ordinary:
     ld iy,enemy_sprites_begin
     ld b,table_num_enemy_records
     call move_sprite_group

@@ -61,6 +61,13 @@ game_over_lifecycle_enter:
     ld b,fireballs_max
     call game_over_deactivate_sprite_pool
     call seeker_group_enter_game_over_retreat
+    ld a,(formation_live)
+    or a
+    jr z,@ordinary_air
+    ld iy,formation_base
+    ld b,formation_max
+    call game_over_deactivate_sprite_pool
+@ordinary_air:
     ld iy,air_base
     ld b,air_max
     call game_over_deactivate_sprite_pool

@@ -1,13 +1,22 @@
 ; Stateless pad callbacks: invoked once by do_active_tiles on row admission.
 ; Never allocate a collidable ground actor. All three share a bounded air pool.
 air_max: equ 8
+formation_max: equ 40
+formation_live: db 0
 air_hp: equ actor_record_custom
 air_visibility: equ air_hp+1
+earth_first_leg: equ air_visibility+1
+earth_full_leg: equ air_visibility+2
+earth_direction: equ air_visibility+3
 
 ; Install immutable frame lists during sprite initialization, while inactive.
 init_air_frames:
+    ld iy,formation_base
+    ld b,formation_max
+    call init_air_frame_group
     ld iy,air_base
     ld b,air_max
+init_air_frame_group:
 @sprite:
     push bc
     push iy
@@ -44,6 +53,9 @@ activate_pad_medium:
 activate_pad_large:
     ld a,3
 air_launch:
+    ld ix,air_base
+    ld b,air_max
+air_launch_pool:
     push af
     ld hl,(game_state)
     ld de,game_over
@@ -51,11 +63,10 @@ air_launch:
     sbc hl,de
     jp z,@no_launch
     ld hl,air_defaults
+    ld a,b
     ld bc,(tiles_x_plot-1)
     ld c,0
     ld de,0 ; top of the admitted row
-    ld ix,air_base
-    ld a,air_max
     call spawn_sprite_from_coords
     jp nc,@no_launch
     push ix
@@ -120,22 +131,56 @@ earth_launch_medium:
 earth_launch_large:
     ld a,3
 earth_launch_march:
-    call air_launch
+    push af
+    ld a,(tiles_row)
+    ld hl,earth_rank_programs
+    ld b,earth_rank_count
+    inc b
+    dec b
+    jr z,@absent
+@find:
+    cp (hl)
+    jr z,@found
+    ld de,5
+    add hl,de
+    djnz @find
+@absent:
+    pop af
+    or a
+    ret
+@found:
+    pop af
+    push hl
+    ld ix,formation_base
+    ld b,formation_max
+    call air_launch_pool
+    pop hl
     ret nc
+    inc hl
+    ld a,(hl)
+    ld (iy+sprite_move_timer),a
+    inc hl
+    ld a,(hl)
+    ld (iy+earth_first_leg),a
+    inc hl
+    ld a,(hl)
+    ld (iy+earth_full_leg),a
+    inc hl
+    ld a,(hl)
+    ld (iy+earth_direction),a
+    ld hl,formation_live
+    inc (hl)
     ld hl,move_earth_air
     ld (iy+sprite_move_program),hl
     ld hl,0
     ld (iy+sprite_xvel),hl
     ld hl,128 ; no initial wait: begin at march speed
     ld (iy+sprite_move_step),0
-    ld a,(iy+air_hp) ; constructor HP equals class 1/2/3
-    cp 3
-    ld a,0
+    ld a,(iy+sprite_move_timer)
+    or a
     jr z,@wait
-    ld a,32 ; first rank is two 16px rows ahead of the large pair
     ld hl,256 ; during the wait, follow each terrain scanline exactly
 @wait:
-    ld (iy+sprite_move_timer),a
     ld (iy+sprite_yvel),hl
     ret
 

@@ -423,6 +423,7 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
         raise MapCompileError("map manifest must contain 1..255 levels")
 
     levels: list[CompiledLevel] = []
+    earth_schedule = ""
     seen_names: set[str] = set()
     seen_sources: set[Path] = set()
     for index, entry in enumerate(level_entries):
@@ -458,8 +459,9 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
             raise MapCompileError(f"duplicate map manifest level source: {source_path}")
         seen_sources.add(source_path)
         if earth:
-            from nurples_tools.earth_city import earth_layers
+            from nurples_tools.earth_city import earth_layers, compile_march
             _, rows = earth_layers(source_path)
+            rows, earth_schedule = compile_march(rows)
             levels.append(CompiledLevel(name, source_path, 256, rows))
             continue
         levels.append(
@@ -473,7 +475,7 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
         )
 
     frozen_levels = tuple(levels)
-    text = _render_include(symbol_prefix, base_buffer_id, frozen_levels)
+    text = _render_include(symbol_prefix, base_buffer_id, frozen_levels) + earth_schedule
     return CompiledMapSet(
         manifest_path=manifest_path,
         output_path=output_path,
