@@ -21,6 +21,32 @@ These are references for how movement feels, not specifications to reproduce the
 
 Start with authored spawn positions, directions, spacing and timer phases. Each alien owns its timer and follows its normal movement and playfield bounds. The goal is a readable march without overlap, not a shared formation controller. Check an entire sweep and reversal: independently bouncing ships can cross even if their initial spacing looks right. Destroying one must not change the clocks of the others. Coordinated group turns remain an alternative, not the starting design.
 
+#### Earth wave membership and sprite slots (proposal, 2026-11-24)
+
+Smith wants a way to designate formation spawns and represent **one active
+formation at a time** to start. Its job would be membership and draw-slot
+ownership, not steering: each alien keeps its own movement program and timer.
+This is separate from the seeker chase-formation idea below.
+
+One Tiled option, not yet selected: keep painting the existing ship markers
+and add a map property, `formation_rows`, listing one inclusive row range per
+wave. A marker inside a range joins that wave; the same tile outside remains
+an ordinary spawn. No duplicate layout, extra tile ID, new layer or change to
+the one-byte terrain map. A spawn still cannot share its cell with ground art.
+Ranges assume all eligible markers in those rows are members; moving a wave
+vertically would require updating its range as well.
+
+The compiler sees all ranks before the game sees the first one. It could emit
+a separate row/column lookup assigning the **top rank the lowest software IDs**,
+with left-to-right ties, independent of spawn order or earlier kills. Print a
+roster (row, column, ship, slot) for review and reject waves over eight members.
+The live object could hold a wave reference and an eight-bit live mask. Keep
+ownership until the final authored row has entered **and** the mask is empty:
+clearing the first rank early must not retire an incoming second rank. Flag a
+second wave arriving before release; don't silently steal slots. No format,
+allocator or runtime object has been implemented. See the
+[draw-order evidence and proposed A/B](../../tasks/SPR-HW-001/TASK.md).
+
 ### Outbound space: two dive patterns observed in Galaga
 
 Smith observed two distinct attacks in MAME. Sometimes a leader dives with two escorts, and the trio keeps the same orientation relative to the screen that it had in the main formation. Other times the leader flies its own dive while a lone non-leader flies a separate path, usually mirrored left-to-right. These are observations of the motion, not claims about Galaga's internal code.

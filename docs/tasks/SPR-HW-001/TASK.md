@@ -127,3 +127,87 @@ ordinary tile drawing and scrolling together made little difference to the
 visible jumps. Sprite count and size appeared to have the greatest effect.
 This is a visual observation, not a measured compositor deadline miss.
 Next proposed test: [R04 — interactive scanline lab](scanline-lab.md).
+
+### Live-game comparison: software formation enemies
+
+In the invulnerable 1/2/3/M fixture only, mark small/medium/large air slots
+as software sprites at bank setup. The linked selector routes slots 12–19
+to command 20, and all other gameplay slots to command 19. No change to
+spawn height, movement, refresh cadence, or active tiles. Built fixture
+`82d6e1654f2e16f704338eb4136d248464ca9b4ca200b1ebcea760fb0cdf349b`;
+245 tests, 2 skipped, no failures. Hardware visibility threshold unmeasured.
+
+### Olimex formation draw order — research, not an implementation
+
+Smith reports that as more formation ships appear, flicker persists farther
+down the screen. No pixel threshold or timing trace yet. This concerns software
+bitmap drawing racing the beam, distinct from dense hardware scanline composition.
+
+Evidence: in the Olimex v0.1.3-alpha release firmware-source archive, under
+`firmware-src/.pio/libdeps/esp32dev/vdp-gl/src/`, `displaycontroller.cpp`
+(`showSprites`, line 726) walks the active prefix in ascending ID, drawing
+eligible software bitmaps; `hideSprites` (700) restores saved backgrounds in
+reverse order when single buffered. `dispdrivers/vgapalettedcontroller.cpp`
+(`drawSpriteScanLine`, 533) walks the prefix separately and composites only
+eligible hardware sprites. No requirement to put software below hardware;
+shuffling a fixed active prefix does not shorten either traversal.
+
+Nurples currently allocates the first free record upwards (`air_launch` →
+`spawn_sprite_from_coords` → `table_get_next_id`). Proposed A/B: keep the
+same eight records, stable physical IDs, original entry heights, formation
+and toggles; change only the formation free-slot search to highest-free first.
+On a fresh wave this gives the younger, higher rank earlier bitmap draws.
+Reused slots and crossing trajectories need not preserve that relationship.
+Compare rank visibility at the same positions/count with animation running;
+ordering can redistribute missed deadlines, not eliminate the total draw cost.
+
+Firmware alternative, undecided: opt-in software draw-order list by sprite
+top Y, then ID; never reorder the sprite records or change hardware ordering.
+Keep ID layering as default. Snapshot at redraw; when backgrounds are saved,
+restore in reverse of the *previous actual draw list*, not a new Y sort.
+Equal-Y ties stay deterministic; different-Y overlapping sprites can still
+change layering. Test overlap, crossing, hide/despawn and restore before
+considering a firmware change. No runner, game or firmware change in this review.
+
+**Shipping constraint (Smith): bone-stock VDP and MOS.** Firmware Y-sorting
+is a separate research idea, not a Nurples dependency or shipping task.
+The source trace above is for the Olimex VDPlet pin, not a stock-firmware
+hardware qualification.
+
+Proposed assignment: reserve an eight-slot software block for formations.
+It need only precede *other software sprites* that can tolerate later draws,
+not start at ID zero. Keep player lasers and turret fireballs hardware for
+visibility high on the playfield; their narrow footprints are a better use
+of scanline capacity than a wide alien rank. Seekers could instead be software
+and stay no higher than the player. Measure using the top visible pixel, not
+the actor center. Open alternative for high launch/return pads: keep logical
+flight and docking intact but hide the seeker while its bitmap crosses the
+unsafe band, rather than clamping steering short of its pad.
+
+Proposed test order: reverse only formation allocation within 12–19; compare
+both ranks (does the upper improve without the lower flickering?) with eight
+aliens alive. Only then try software seekers and repeat at higher load. Do
+not adopt a constant safe Y from one formation count. Validate on Console8
+with stock firmware before choosing a production policy. Longer-term option:
+[assign stable slots to authored waves at build time](../../design/enemies/README.md).
+
+### F40 — Earth formation execution contract
+
+Deliver one formation of up to 40 real software sprites, using physical VDP
+IDs 0–39, on stock MOS/VDP. No framebuffer formation art or firmware sort.
+Smith authors the ranks in Earth City's Spawns layer; do not edit or deploy
+over the Oryx design checkout. Preserve the compile-time terrain/spawn split.
+
+- F40-01 [ ] The first admitted small/medium/large Earth marker starts the
+  formation; each successfully admitted ship owns a distinct slot, highest
+  available first so later ranks get lower IDs. Never overwrite a live ship.
+  Seeker markers and other levels' ordinary side-to-side spawns do not join.
+- F40-02 [ ] Track live membership once per successful admission/removal.
+  Last kill or scroll-out returns the counter to zero; teardown/restart clears
+  it too. If there are no survivors, the next eligible spawn starts anew.
+  Preserve individual movement, damage, collision and visible-edge behavior.
+- F40-03 [ ] Keep all other actor pools and overlay IDs disjoint, and avoid
+  visiting 40 unused records each frame when no formation is active. Assemble
+  and check capacity/order, full-pool refusal, cleanup and reuse. A real
+  40-ship visibility/performance verdict requires Smith's layout and playtest.
+  No new emulator launch, bench operation, or production promotion in this step.

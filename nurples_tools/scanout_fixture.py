@@ -12,6 +12,10 @@ def instrument(src):
     # Zero only incoming damage. Contact audio, projectile destruction and
     # ground/air collision responses still go through their ordinary paths.
     edit("player_shields.inc", "    ld l,(iy+sprite_shield_damage)", "    ld l,0")
+    # Replace only the setup-time actor marking call pair. The ordinary game
+    # still marks every actor as hardware; frame submission is identical.
+    edit("sprites.inc", "    call vdu_sprite_select\n    call vdu_sprite_mark_hardware",
+         "    call scanout_mark_actor")
     edit("nurples.asm", "main:\n", '    include "scanout_fixture.inc"\nmain:\n'
          "    xor a\n    ld (scanout_off),a\n    ld a,7\n    ld (scanout_previous),a\n")
     edit("game_pause.inc", "    call lp_sample_m", "    call scanout_sample\n    call lp_sample_m")

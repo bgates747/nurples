@@ -20,3 +20,14 @@ scanout_sample:
     ld a,b
     ld (scanout_previous),a
     ret
+
+; A = slot ID from sprites_mark_actor_prefix, before activation.
+scanout_mark_actor:
+    push af
+    call vdu_sprite_select
+    pop af
+    cp [air_base-table_base]/table_record_size
+    jp c,vdu_sprite_mark_hardware
+    cp air_end_sprite_id
+    jp c,vdu_sprite_mark_software
+    jp vdu_sprite_mark_hardware
