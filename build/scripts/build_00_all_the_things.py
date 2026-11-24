@@ -53,18 +53,22 @@ def check_assets() -> None:
     print("Current deployable assets are deterministic and up to date.")
 
 
-def assemble() -> None:
+def assemble(*, scanout_fixture=False) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
     )
-    TARGET_DIR.mkdir(parents=True, exist_ok=True)
+    output = PROJECT_ROOT / ".build/scanout-r01" if scanout_fixture else TARGET_DIR
+    output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
         modules = prepare_audio(PROJECT_ROOT, staged_asm)
         configure_loading_music(staged_asm, candidate=True, small_reads=True, whole=True,
                                 all_phases=True, combat_cues=True)
+        if scanout_fixture:
+            from nurples_tools.scanout_fixture import instrument
+            instrument(staged_asm)
         staged_binary = staged_asm / "nurples.bin"
         staged_symbols = staged_asm / "nurples.symbols"
         staged_binary.unlink(missing_ok=True)
@@ -78,11 +82,11 @@ def assemble() -> None:
             raise RuntimeError("assembly did not produce a binary/symbol pair")
         verify_audio(staged_binary.read_bytes(), modules)
         for staged, destination in (
-            (staged_binary, TARGET_DIR / "nurples.bin"),
-            (staged_symbols, TARGET_DIR / "nurples.symbols"),
+            (staged_binary, output / "nurples.bin"),
+            (staged_symbols, output / "nurples.symbols"),
         ):
             with NamedTemporaryFile(
-                dir=TARGET_DIR,
+                dir=output,
                 prefix=f".{destination.name}.",
                 suffix=".tmp",
                 delete=False,
@@ -93,7 +97,7 @@ def assemble() -> None:
                 publish_path.replace(destination)
             finally:
                 publish_path.unlink(missing_ok=True)
-    print("Generated tgt/nurples.bin and tgt/nurples.symbols")
+    print(f"Generated nurples.bin and nurples.symbols in {output}")
 
 
 def main() -> None:
@@ -120,12 +124,16 @@ def main() -> None:
         action="store_true",
         help="build assets, verify them, and assemble",
     )
+    actions.add_argument("--scanout-fixture", action="store_true",
+                         help="assemble the diagnostic game outside tgt/")
     args = parser.parse_args()
 
     if args.assets:
         build_assets()
     elif args.check:
         check_assets()
+    elif args.scanout_fixture:
+        assemble(scanout_fixture=True)
     elif args.assemble:
         assemble()
     else:
