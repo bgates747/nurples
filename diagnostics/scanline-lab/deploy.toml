@@ -1,0 +1,11 @@
+schema = 1
+project = "nurples-dev"
+expected_sd_label = "AGONC8"
+
+[bundles.scanlab]
+collection = "tests"
+source = "bin"
+files = ["scanlab.bin"]
+require = ["scanlab.bin"]
+destination = "test/scanlab"
+entry = "scanlab.bin"
