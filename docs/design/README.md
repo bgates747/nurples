@@ -8,4 +8,4 @@ Start here for what the game is meant to do. Keep each design decision under one
 | Enemies and combat | [Air spawns, seekers and bosses](enemies/README.md); [turret tracking and fireball motion](../tasks/GAME-001I-LEAD/TASK.md) |
 | Player and presentation | [Spawn swoop and opening warp](../tasks/GAME-001E-START-WARP/TASK.md); [death and explosion behavior](../tasks/GAME-001E-DEATH-KEY/TASK.md); [Game Over and seeker retreat](../tasks/GAME-001JK-INTEGRATED/TASK.md) |
 | Level authoring | [Tiled workspace](../tasks/MAP-001-ORYX/TASK.md); [tile IDs and editor versus runtime art](../tasks/MAP-002/TASK.md); [terrain curation](../tasks/MAP-003/TASK.md) |
-| Audio | [Level music, timing and effects](../tasks/MUS-001/TASK.md); [announcer and shield warnings](../tasks/VOX-001/TASK.md) |
+| Audio | [M soundtrack control](music-control.md); [level music, timing and effects](../tasks/MUS-001/TASK.md); [announcer and shield warnings](../tasks/VOX-001/TASK.md) |
