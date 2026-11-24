@@ -292,16 +292,10 @@ player_init:
     call spawn_sprite_from_coords
     jp nc,@allocation_failed ; IX is invalid when the one-record player pool is full
     res 7,(ix+sprite_type)
-; load sprite frames
+; The player's three bank frames are resident for the whole session. A new
+; life selects the slot; never clear a frame list exposed to scanout.
     ld a,(ix+sprite_id)
     call vdu_sprite_select
-    call vdu_sprite_clear_frames
-    ld hl,BUF_SHIP_0L
-    call vdu_sprite_add_buff
-    ld hl,BUF_SHIP_1C
-    call vdu_sprite_add_buff
-    ld hl,BUF_SHIP_2R
-    call vdu_sprite_add_buff
 @draw:
     call player_entry_load_start_coords
     call vdu_sprite_move_abs168
@@ -390,13 +384,7 @@ player_draw_record:
     ld de,(iy+sprite_y)
     call vdu_sprite_move_abs168
     ld a,(iy+sprite_frame)
-    call vdu_sprite_select_frame
-; Scripted player states pause terrain drawing, so no later plot is guaranteed
-; to flush queued sprite positions. Publish the move now; otherwise the VDP
-; holds every entrance/death update until grace resumes world drawing and the
-; ship appears to teleport to its final position.
-    call vdu_sprite_update
-    ret
+    jp vdu_sprite_select_frame ; hardware scanout needs no software refresh
 ; end player_draw_record
 
 player_spawning:

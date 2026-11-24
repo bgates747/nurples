@@ -192,11 +192,33 @@ sprites_init:
 ; define explosion sprites
     call init_explosions
 
-; activate only after every contiguous sprite has its final frame definitions
+; Mark the complete ordinary actor prefix while scanout is detached. The
+; two presentation slots belong to the overlay renderer, not this table.
+    call sprites_mark_actor_prefix
     ld a,table_num_records
 	call vdu_sprite_activate
     ret
 ; end sprites_init
+
+; VDP variable 2 gates the *mark* command, not subsequent rendering of
+; the marked slot. Borrow an existing transaction or restore our own
+; immediately afterwards. Do not touch the caller's auto-hardware policy.
+sprites_mark_actor_prefix:
+    call overlay_feature_begin
+    push af ; carry set iff this call owns the snapshot
+    ld b,table_num_records
+@slot:
+    push bc
+    ld a,b
+    dec a ; count-1 down through zero
+    call vdu_sprite_select
+    call vdu_sprite_mark_hardware
+    pop bc
+    djnz @slot
+    pop af
+    ret nc
+    jp overlay_feature_end
+; end sprites_mark_actor_prefix
 
 ; gets the next available sprite id for a particular sprite group
 ; inputs; ix = pointer to sprite group, b = number of records in sprite group

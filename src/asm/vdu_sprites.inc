@@ -247,7 +247,8 @@ vdu_sprite_reset:
     ld bc,@end-@cmd    
     rst.lil $18         
     ret
-@cmd: db 23,27,17
+; Detach scanout before resetSprites() clears the individual frame lists.
+@cmd: db 23,27,7,0, 23,27,17
 @end:
 
 ; VDU 23, 27, 18, n: Set the current sprite GCOL paint mode to n **

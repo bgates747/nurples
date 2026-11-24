@@ -933,10 +933,9 @@ class AssemblySafetyTests(unittest.TestCase):
             "; end player_draw_record",
         )
         move = scripted_draw.index("call vdu_sprite_move_abs168")
-        frame = scripted_draw.index("call vdu_sprite_select_frame")
-        publish = scripted_draw.index("call vdu_sprite_update")
+        frame = scripted_draw.index("jp vdu_sprite_select_frame")
         self.assertLess(move, frame)
-        self.assertLess(frame, publish)
+        self.assertNotIn("vdu_sprite_update", scripted_draw)
 
         grace = routine(player, "player_grace", "; end player_grace")
         input_tick = grace.index("call player_input")
@@ -1696,6 +1695,32 @@ class AssemblySafetyTests(unittest.TestCase):
             "ld a,table_num_records\n\tcall vdu_sprite_activate",
             initialization,
         )
+
+    def test_gameplay_hardware_setup_owns_only_detached_actor_slots(self) -> None:
+        source = read_asm("sprites.inc")
+        init = routine(source, "sprites_init", "; end sprites_init")
+        order = [init.index(f"call {name}") for name in (
+            "vdu_sprite_reset", "init_explosions", "sprites_mark_actor_prefix",
+            "vdu_sprite_activate",
+        )]
+        self.assertEqual(order, sorted(order))
+        reset = routine(read_asm("vdu_sprites.inc"), "vdu_sprite_reset", "VDU 23, 27, 18")
+        self.assertIn("db 23,27,7,0, 23,27,17", reset)
+        mark = routine(source, "sprites_mark_actor_prefix", "; end sprites_mark_actor_prefix")
+        ops = [line.partition(";")[0].strip() for line in mark.splitlines()]
+        self.assertEqual([op for op in ops if op], [
+            "sprites_mark_actor_prefix:", "call overlay_feature_begin", "push af",
+            "ld b,table_num_records", "@slot:", "push bc", "ld a,b", "dec a",
+            "call vdu_sprite_select", "call vdu_sprite_mark_hardware", "pop bc",
+            "djnz @slot", "pop af", "ret nc", "jp overlay_feature_end",
+        ])
+        player = routine(read_asm("player_state.inc"), "player_init", "; end player_init")
+        self.assertIn("call vdu_sprite_select_frame", player)
+        self.assertNotIn("vdu_sprite_clear_frames", player)
+        self.assertNotIn("vdu_sprite_add_buff", player)
+        tile = routine(read_asm("tiles_active.inc"), "draw_active_tile", "; end draw_active_tile")
+        self.assertIn("call vdu_plot_bmp168", tile)
+        self.assertNotIn("vdu_sprite_", tile)
 
     def test_fireball_sprite_frames_match_declared_animation_banks(self) -> None:
         source = read_asm("enemy_fireball.inc")
