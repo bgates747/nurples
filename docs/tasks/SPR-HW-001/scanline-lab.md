@@ -74,3 +74,33 @@ identify the physical scanline that missed its deadline. If the screen jumps
 while the host timings stay normal, correlate with video or propose a separate
 VDP-side probe around scanline composition and line delivery. Keep stock
 firmware as the baseline; instrumented firmware is not part of this fixture.
+
+### Standalone audition R01 — awaiting Smith
+
+Built `diagnostics/scanline-lab` with AgonDev for ADL MOS at 0x40000. Native
+editor tests passed for boundary drops, overlap selection, drag offset and
+cancellation, deletion, capacity, alignment/spread, undo and idle input.
+The four stationary opaque samples are 8×8, 16×16, 32×32 and 128×16.
+Guest readback: `/test/scanlab/scanlab.bin`, 13,202 bytes, SHA-256
+`eb15924889ee8542d9743b2bdea752453f4c8327a052c3629067eea000af3e87`.
+Staged alongside the game on Oryx checkout 603, not on hardware. FAE mouse,
+presentation, repeated edits and exit to MOS still require human validation.
+
+Smith confirmed spawning, dragging, selection, Align and Spread on FAE.
+R01 only treated Trash as a drop target. R02 also deletes the current selection
+on a click released inside Trash; release outside cancels. Both paths use
+the same deletion routine. Host regressions passed; R02 verified at the same
+guest path, SHA-256 `1d52a5961087ee4a5f645e11300cca79db1d27992235696d7ae5af850947577f`.
+
+Smith approved R02 for Console8 testing. Deployed that exact binary to
+AGONC8 at `/test/scanlab/scanlab.bin` and verified its SHA-256 on the card.
+Root autoexec and the existing Nurples executable were unchanged.
+
+**Console8 R02 observation:** Smith saw flicker begin at a displayed peak
+summed sprite width of about 128 pixels per scanline. With the same 32×32
+sprites, aligning them produced flicker; staggering them did not produce
+visible flicker. Artifacts occurred on sprite-occupied lines, usually nearer
+the sprites' bottoms. This implicates the concentration of work on shared
+lines rather than total sprite count alone. Running out of timing margin
+over successive dense lines is plausible but unmeasured. The counter sums
+bitmap widths, not compositor time; 128 is not a universal hardware limit.
