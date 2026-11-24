@@ -1,6 +1,7 @@
 # Purple Nurples TODO
 
 - [ ] **[SPR-HW-001 — Explicit hardware sprites for gameplay](docs/tasks/SPR-HW-001/TASK.md).**
+  Next proposed experiment: [mouse-driven scanline stress fixture](docs/tasks/SPR-HW-001/scanline-lab.md).
 
 - [ ] **[TURRET-CLEAR-001 — Loaded versus cleared to fire](docs/tasks/TURRET-CLEAR-001/TASK.md).** FAE review.
 

@@ -96,3 +96,34 @@ the hardware-mark routine. Combined binary SHA-256:
 245 tests, 2 skipped, no failures. The Oryx FAE card readback matched the
 combined binary. Smith approved the build for commit on dev. No new Console8
 test or rendering controls; R01's hardware scanout and restart findings remain open.
+
+### R03 — isolate rendering costs in the live game
+
+Build a fixture from accepted hardware-sprite dev `4865f04`: top-row 1
+inhibits background texture plots, 2 inhibits the ordinary terrain-row plots,
+and 3 inhibits the playfield scroll command. All start enabled and toggle
+independently on fresh presses. Keep game time, row admission, active tile
+behavior and M independent. Do not clear or rebuild existing screen pixels
+on a toggle. This is a workload discriminator, not a new production display
+mode. Physical scanout still requires a Console8 observation.
+
+Built with `build/scripts/build_00_all_the_things.py --scanout-fixture`
+under the project venv. Guest readback on Oryx FAE:
+`013d7184b277f958ad2ddd100330e97f42d9b4b34d5c43a3acbc6a6400a0bac9`.
+Ordinary target unchanged; suite 245 tests, 2 skipped, no failures. Inspected
+the linked key sampler and terrain bypass past the draw loop but before
+active-tile admission. Awaiting playtest; no hardware deployment.
+
+Console8 follow-up: zero incoming shield damage only in the fixture assembly
+stage. Contact checks, collision audio and actor responses stay live. Built
+and checked the linked damage instruction; 245 tests, 2 skipped, no failures.
+Replaced the six-file runtime on AGONC8 at `/mystuff/nurples` and verified
+all six by readback; executable `2f6f40a7cdce130659996ce95424cc83cbe41919691fac51440616dc089b7946`.
+Autoexec unchanged. Prior install and MUSIC50.BIN retained on Oryx in
+`~/Agon/mystuff/nurples/scanout-c8-r02/previous-install`.
+
+Console8 observation: Smith found that switching off background drawing,
+ordinary tile drawing and scrolling together made little difference to the
+visible jumps. Sprite count and size appeared to have the greatest effect.
+This is a visual observation, not a measured compositor deadline miss.
+Next proposed test: [R04 — interactive scanline lab](scanline-lab.md).
