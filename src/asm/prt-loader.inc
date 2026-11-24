@@ -194,6 +194,11 @@ lp_send:
 
 ; Only called outside an outstanding VDU transaction. No waiting for time.
 lp_pump:
+    .if mus_all50
+    ld a,(lp_music_off)
+    or a
+    ret nz
+    .endif
     ld a,(lp_owned)
     or a
     ret z

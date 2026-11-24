@@ -35,6 +35,11 @@ mus_process_init:
 ; the library's software envelope even without a PT3 decoder tick.
 mus_pause_edge:
     push af
+    .if mus_all50
+    ld a,(lp_music_off)
+    or a
+    jr nz,@done
+    .endif
     .if mus_campaign
     ld a,(mus_in_warp)
     or a
@@ -178,7 +183,7 @@ mus_frame:
     ld hl,mus_tracks
     add hl,de
     ld hl,(hl)
-    call pt3_init
+    call mus_select_track
     .else
     ld hl,mus_song
     call pt3_init
@@ -277,7 +282,7 @@ mus_presentation:
     sbc hl,de
     call z,vox_game_over
     ld hl,mus_loadtune
-    call pt3_init
+    call mus_select_track
     ld hl,0
     ld (mus_ticks),hl
     xor a
@@ -291,6 +296,14 @@ mus_presentation:
     .endif
     .if mus_campaign
     jp mus_tick
+    .endif
+
+mus_select_track:
+    .if mus_all50
+    ld (lp_selected_track),hl
+    ret
+    .else
+    jp pt3_init
     .endif
 
 mus_stop:

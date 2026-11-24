@@ -116,6 +116,9 @@ main:
     .if mus_all50
     xor a
     ld (lp_started),a ; do not save a previous RUN's report on early display/font failure
+    ld (lp_music_off),a
+    ld (lp_m_gate),a ; require release before first toggle
+    ld (lp_track_pending),a
     .endif
 ; Invalidate and rebuild the public observer record before touching any other
 ; resident process state. MOS RUN does not reload initialized data.

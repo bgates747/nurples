@@ -6,6 +6,9 @@
 ; the caller including the MOS IX pointer, VBlank countdown and flags.
 lp_poll:
     push af
+    ld a,(lp_music_off)
+    or a
+    jr nz,@return
     push bc
     push de
     push hl
@@ -17,12 +20,19 @@ lp_poll:
     pop hl
     pop de
     pop bc
+@return:
     pop af
     ret
 
 ; Track changes discard the departing packet and any silent deadlines.
 ; AY has already silenced/reset its voices. Prime but do NOT submit tick 1.
 lp_prime_track:
+    ld a,(lp_music_off)
+    ld (lp_track_pending),a
+    or a
+    ret nz ; defer even decoder initialization until the user enables music
+    ld hl,(lp_selected_track)
+    call pt3_init
     ld hl,lp_audible
     ld b,AY_VOICES
     xor a
@@ -47,6 +57,7 @@ lp_resume:
     ld de,(lp_paused_irqs)
     add hl,de
     ld (lp_paused_irqs),hl
+lp_restore_audible:
     ld hl,lp_audible
     ld c,0
 @voice:
@@ -65,6 +76,59 @@ lp_resume:
     ld bc,AY_VOICES
     ldir
     jp lp_rebase
+
+lp_music_off: db 0 ; per MOS run, not reset by mus_stop/new game
+lp_m_gate: db 0
+lp_track_pending: db 0
+lp_selected_track: dl 0
+
+; Main loop only, never in an ISR.
+lp_sample_m:
+    ld a,(lp_started)
+    or a
+    ret z
+    ld a,(lp_owned)
+    or a
+    ret z
+    xor a
+    bit music_key_bit,(ix+music_key_byte)
+    jr z,@sample
+    inc a
+@sample:
+    ld iy,lp_m_gate
+    call input_gate_update
+    ret nc
+    ld a,(lp_music_off)
+    xor 1
+    ld (lp_music_off),a
+    jr z,@on
+    xor a
+    out0 (083h),a ; stop counting AND disable PRT1 IRQ; retain vector ownership
+    in0 a,(083h) ; acknowledge any latched expiry
+    jp ay_silence
+@on:
+    call lp_rebase
+    ld a,(game_pause_active)
+    ld (mus_paused),a
+    ld hl,(lp_irqs)
+    ld (lp_pause_start),hl
+    ld a,(mus_active)
+    or a
+    jr z,@restart
+    ld a,(lp_track_pending)
+    or a
+    jr z,@same
+    call lp_prime_track
+    jr @restart
+@same:
+    ld a,(mus_paused)
+    ld hl,mus_in_warp
+    or (hl)
+    call z,lp_restore_audible
+@restart:
+    ld a,05fh ; reload a fresh 20 ms interval, no catch-up
+    out0 (083h),a
+    ret
 
 lp_note_tick:
     ld hl,ay_nw_vol

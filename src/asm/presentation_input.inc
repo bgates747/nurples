@@ -26,8 +26,21 @@ presentation_input_poll:
     MOSCALL mos_getkbmap
     push ix
     pop hl
+    .if mus_all50
+    ; M is a soundtrack command, not a Start/Continue key.
+    ld a,(ix+music_key_byte)
+    and 0ffh-[1<<music_key_bit]
+    ld b,music_key_byte
+@low:
+    or (hl)
+    inc hl
+    djnz @low
+    inc hl ; skip byte 12, already accumulated with M removed
+    ld b,15-music_key_byte
+    .else
     ld b,16
     xor a
+    .endif
 @byte:
     or (hl)
     inc hl

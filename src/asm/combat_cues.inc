@@ -8,8 +8,9 @@ cues_alert_start: dl 0
 ; itself; no per-pulse polling, no interruption of the 50 Hz soundtrack.
 cues_klaxon_gate_ms: equ 8*160
 cues_klaxon_tail_ms: equ 4*44
-; One edge of uncertainty because the note starts between PRT interrupts.
-cues_alert_ticks: equ [[cues_klaxon_gate_ms+cues_klaxon_tail_ms+19]/20]+1
+; MOS time advances twice per VBlank (120 counts/s in the game's 60 Hz
+; mode). Allow one VBlank of phase uncertainty. No dependency on music IRQs.
+cues_alert_ticks: equ [[cues_klaxon_gate_ms+cues_klaxon_tail_ms]*120+999]/1000+2
 
 cues_queue_launch:
     push af
@@ -44,13 +45,15 @@ cues_service_warning:
     ld hl,cues_interrupt_speech
     ld bc,cues_klaxon_end-cues_interrupt_speech
     rst.lil 18h
-    ld hl,(lp_irqs)
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
     ld (cues_alert_start),hl
     ld a,1
     ld (cues_pre_alert),a
     ret
 @waiting:
-    ld hl,(lp_irqs)
+    MOSCALL mos_sysvars
+    ld hl,(ix+sysvar_time)
     ld de,(cues_alert_start)
     or a
     sbc hl,de ; unsigned 24-bit elapsed, including wrap

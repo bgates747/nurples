@@ -678,3 +678,31 @@ splash and the main game screen. Cause not established. The spoken shield
 warning was clear after the klaxon. The physical joypad worked, and keyboard
 controls remained active in joystick mode; that coexistence is desirable.
 This was a listening and controls check, not a measurement of missed ticks.
+
+**M soundtrack switch — R02 accepted on FAE.** The
+[production decision](../../design/music-control.md) was frozen first at
+`95a5cc0`. Built that renderer plus the music changes only; the pending
+SPR-HW-001 conversion is not in this candidate. M stops PRT1, acknowledges
+the flag, silences only the AY voices, and suspends tracker service. On
+re-enable, reuse the pending packet for the same song or prime the song
+selected during silence. Shield speech now times its klaxon on the MOS
+clock. P still pauses the game independently. No render toggles included.
+
+Oryx FAE profile `map002-electrode-game-r01`, existing guest `nurples.bin`,
+readback SHA-256 `8d3f2240b02c895c239475925dea15dd3b71513740195e5af4439aedd00e54e6`.
+Full local suite: 245 tests, 2 skipped, no failures. Check M at a prompt,
+while firing and taking shield damage, with P paused, and across a track
+change/New Game. This is not a hardware frame-timing measurement.
+
+**R01 FAE FAIL / R02 binding correction:** Smith pressed M and the music
+continued. The R01 card contained the intended executable, but both input
+paths used byte 12 bit 6 (comma). MOS defines M as KEY(102), and the firmware
+subtracts one before indexing the bitmap: byte 12 bit 5. R02 uses one key
+definition for soundtrack input and prompt masking. Only two executable bytes
+changed; the linked regression checks both instructions. Suite: 245 tests,
+2 skipped, no failures. R02 replaced the game in the same idle FAE profile;
+guest readback SHA-256 `cd494f81fa62720c651cfb1cd075b0f83c75bb273b09927e8d70cb629e3b8d6e`.
+
+Smith confirmed M works in R02 and approved committing it on dev. This is
+the rollback point for music with the previous renderer, not acceptance of
+the hardware-sprite renderer or a Console8 timing result.

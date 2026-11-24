@@ -5,6 +5,7 @@
     jp fixture_start
 
     include "../../src/asm/mos_api.inc"
+    mus_all50: equ 0
     include "../../src/asm/input_gate.inc"
     include "../../src/asm/start_choice_controller.inc"
     include "../../src/asm/presentation_input.inc"

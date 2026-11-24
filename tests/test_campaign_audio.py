@@ -124,7 +124,20 @@ class CampaignAudioTests(unittest.TestCase):
         )
         self.assertEqual(section("cues_klaxon", "cues_klaxon_end"), expected)
         self.assertEqual(gate + tail, 4 * (320 + 44))
-        self.assertEqual(symbols["cues_alert_ticks"], (gate + tail + 19) // 20 + 1)
+        self.assertEqual(symbols["cues_alert_ticks"], ((gate + tail) * 120 + 999) // 1000 + 2)
+        toggle = section("lp_sample_m", "lp_note_tick")
+        # MOS KEY(102) is one-based: M = IX+12 bit 5, comma is bit 6.
+        self.assertIn(bytes.fromhex("dd cb 0c 6e"), toggle)
+        self.assertIn(bytes.fromhex("dd 7e 0c e6 df"), game[
+            symbols["presentation_input_poll"]-0x40000:][:128])
+        self.assertIn(bytes.fromhex("af ed 39 83 ed 38 83"), toggle)  # stop + acknowledge PRT1
+        self.assertIn(bytes.fromhex("3e 5f ed 39 83"), toggle)       # restart from reload
+        self.assertIn(call("input_gate_update"), toggle)
+        self.assertIn(call("lp_prime_track"), toggle)
+        self.assertIn(b"\xc0", section("lp_prime_track", "lp_rebase").split(call("pt3_init"))[0])
+        off = b"\x3a" + symbols["lp_music_off"].to_bytes(3, "little")
+        self.assertIn(off, section("lp_poll", "lp_prime_track"))
+        self.assertTrue(game[symbols["lp_pump"]-0x40000:].startswith(off + b"\xb7\xc0"))
         spawn = section("enemy_spawn_fireball", "fireball_to_screen_vy")
         self.assertIn(call("spawn_sprite_from_tile") + b"\xd0", spawn)  # RET NC
         self.assertTrue(spawn.endswith(call("cues_queue_launch") + b"\x37\xc9"))  # SCF; RET: fired
