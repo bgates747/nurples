@@ -295,4 +295,7 @@ on FAE before marking this rule for carry-forward to production.
 Ordinary and invulnerable builds assembled; host suite ran 245 tests (two
 skipped). The staged FAE card returned the expected diagnostic executable,
 SHA-256 `653661fcdff27ff15e79f80de4f5c310cbeb5f06165834ef34360ffd43695602`.
-Awaiting Smith's visual verdict; no production promotion yet.
+Smith passed the bottom-edge audition on Oryx FAE. Carry this rule forward
+when the experiments are folded into production. Accepted dev checkpoint:
+`16c94299dbb4af50610937f4ab2453b93dd0091f`; no merge to main or hardware
+qualification implied.

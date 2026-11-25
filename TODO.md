@@ -8,6 +8,7 @@
 - [x] **TILE-POSE-001 — [Unit-defined entry facing](docs/tasks/TILE-POSE-001/TASK.md).** Accepted on FAE.
 
 - [ ] **EARTH-001 — [Earth City opening level](docs/tasks/EARTH-001/TASK.md).**
+  Current audition: [just-in-time Earth background scanlines](docs/tasks/EARTH-001/jit-background.md) (single-row FAE build).
 
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.

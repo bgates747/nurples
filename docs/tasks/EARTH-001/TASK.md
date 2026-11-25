@@ -14,6 +14,12 @@ Reserve **three reusable VDP bitmap buffers** for the scrolling terrain. Preload
 
 At 64 KiB per strip, the five buffers hold **320 KiB** of bitmap payload instead of 1 MiB for sixteen strips. That is not a measured peak RAM figure. When implementation is authorized, check refill-time RAM usage, music tempo during reads, and the cut to the pinned scene on hardware. The current game still preloads all sixteen strips; streaming is deferred.
 
+**Current proposal:** [EARTH-001-008–012 — JIT background scanlines](jit-background.md).
+Earth now uses ordinary level entry: warp finishes before the first Earth
+scanline. The earlier 336-line warp reveal below is historical. This makes
+one row per terrain step worth testing before building the three-strip ring.
+The two pinned ending strips retain their dual use.
+
 ## Approved integration tranche (Nurples)
 
 Framework clarification: Earth City is a campaign level, not a fork, separate executable, or hard-coded level-zero renderer. Preserve the existing Tiled → validated campaign manifest → generated runtime data → ordinary game path. Extend it so a level can select its tileset, ordered background stream, initial spawn and music; existing levels inherit their current defaults. Keep empty cells zero, one-byte runtime cells, no tile transforms, and explicit active-tile mappings. The [Oryx editing workspace](../MAP-001-ORYX/TASK.md), [safe tile moves and active registry](../MAP-002/TASK.md), [terrain curation](../MAP-003/TASK.md), and [enemy spawn work](../AIR-001/TASK.md) are prior stages of the same design workflow, not rival map formats. Retain their original task records.
