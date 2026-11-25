@@ -11,11 +11,19 @@ Smith adapted these from [Gustavo Vituri’s Space Shooter pack](https://gvituri
 - [ ] **Flitter enemy ship** — `flitter_1.png`, `flitter_2.png`. Choose its movement and encounter before assigning a spawn.
 - [ ] **Missile** — single: `missile_3x6_1.png`, `missile_3x6_2.png`; double: `missile_3x6_double_1.png`, `missile_3x6_double_2.png`. Shooter and firing behavior are undecided; the artwork need not be paired with the Flitter.
 
-## Deferred: placing air spawns independently of terrain
+## Sprite spawns versus active tiles
 
-Earth City's Structures layer currently holds both scenery and spawn markers, so painting a marker over a building would replace the building in Tiled. A separate **Spawns** layer could remove that authoring restriction. Earth scenery is already baked into the background; the compiler could emit the markers into the existing one-byte runtime map without changing the engine.
+Use **sprite spawn**, not *air spawn*, for the generic map marker. It describes
+what gets created, not where it can travel. A fixed turret is an active tile
+even though it fires moving projectiles. Earth already permits sprite markers
+over independent scenery; [MAP-005](../../../level-design/sprite-spawns.md)
+extends that authoring rule to DG.
 
-Revisit the **runtime** architecture if a level needs an air spawn and an active ground tile (such as a working turret) at the same cell. A separate stream of spawn events is one option for preserving both actions. Neither the editor-layer change nor the runtime change is approved for implementation now.
+**Future possibility, not scheduled:** a Xevious-inspired tank could spawn
+from the same marker layer as a flying ship, but use a movement program
+that only admits road tiles. That suggests a terrain property such as
+“road” rather than hard-coded artwork IDs. How a tank chooses a turn at a
+junction or reacts to a dead end is an encounter-design question for later.
 
 ## Opening stages — chosen movement direction, not yet implemented
 
