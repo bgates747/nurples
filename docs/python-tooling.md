@@ -163,7 +163,13 @@ The standalone command prepares or checks the tiles but does not repack.
 
 ### Original Z80 level and passive artwork
 
-The production campaign is declared by `maps/campaign.toml` and can be built
+The standard test game uses the same Earth-first campaign as production. Build with
+`build/scripts/build_00_all_the_things.py --test-game` using the project Python.
+Press and release **D** during live play for a normal player death. Collision
+damage remains enabled. The control is only in the private
+`.build/test-game/nurples.bin`, not the production executable.
+
+The production map include can be built
 or checked independently:
 
 ```bash

@@ -53,7 +53,8 @@ def check_assets() -> None:
     print("Current deployable assets are deterministic and up to date.")
 
 
-def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False, spawn_review=False) -> None:
+def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False, spawn_review=False,
+             test_game=False) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
@@ -67,10 +68,17 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         output = PROJECT_ROOT / ".build/staggered-pace-control"
     if spawn_review:
         output = PROJECT_ROOT / ".build/map005-review"
+    if test_game:
+        output = PROJECT_ROOT / ".build/test-game"
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
+        if test_game:
+            from nurples_tools.loading_music import edit
+            edit(staged_asm, "game_pause.inc", "\ngame_pause_poll:\n", "\nordinary_pause_poll:\n")
+            with (staged_asm/"game_pause.inc").open("a") as stream:
+                stream.write('\n    include "test_death_key.inc"\n')
         if spawn_review:
             from nurples_tools.maps import compile_map_manifest, overlap_audition
             campaign = compile_map_manifest(CAMPAIGN_MANIFEST)
@@ -190,6 +198,7 @@ def main() -> None:
     actions.add_argument("--earth-jit", action="store_true",
                          help="build single-row Earth audition in .build/earth-jit-r01")
     actions.add_argument("--aligned-pace", choices=("control", "bombing"))
+    actions.add_argument("--test-game", action="store_true", help="ordinary gameplay with D-to-die")
     actions.add_argument("--staggered-pace", action="store_true")
     actions.add_argument("--sprite-spawn-review", action="store_true",
                          help="MAP-005 campaign audition: draw toggles and one DG conduit under a ship")
@@ -201,6 +210,8 @@ def main() -> None:
         check_assets()
     elif args.scanout_fixture:
         assemble(scanout_fixture=True)
+    elif args.test_game:
+        assemble(test_game=True)
     elif args.sprite_spawn_review:
         assemble(scanout_fixture=True, spawn_review=True)
     elif args.staggered_pace:
