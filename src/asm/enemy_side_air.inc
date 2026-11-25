@@ -3,6 +3,7 @@
 air_max: equ 8
 air_hp: equ actor_record_custom
 air_visibility: equ air_hp+1
+air_reload: equ air_visibility+1
 
 ; Install immutable frame lists during sprite initialization, while inactive.
 init_air_frames:
@@ -104,6 +105,7 @@ air_launch:
     or a
     sbc hl,de
     ld (iy+sprite_frame),l
+    call air_reset_reload
     scf ; successful constructor: IY is the allocated air record
     ret
 @no_launch:
@@ -177,6 +179,7 @@ air_after_motion:
     xor 1
     ld (iy+sprite_frame),a
 @contacts:
+    call air_try_bomb
     ld ix,player_begin
     bit sprite_alive,(ix+sprite_collisions)
     jp z,@laser

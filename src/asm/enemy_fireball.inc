@@ -5,7 +5,7 @@ fireball_custom_end: equ fireball_ground_vy+3
         dl fireball_custom_span_mismatch
     .endif
 
-speed_fireball: equ 4*256 ; 6 pixels per frame 16.8 fixed
+speed_fireball: equ 4*256 ; ground-relative speed in 16.8
 fireballs_max: equ 4
 
 fireball_defaults:
@@ -133,6 +133,16 @@ init_enemy_fireballs:
     inc hl
     pop bc
     djnz @frames_loop
+    ld hl,BUF_MISSILE_6X8_1
+    ld b,4 ; append singles at frames 64/65 and doubles at 66/67
+@bomb_frames:
+    push bc
+    push hl
+    call vdu_sprite_add_buff
+    pop hl
+    pop bc
+    inc hl
+    djnz @bomb_frames
     pop de ; sprite loop counter
     pop af ; sprite id
     inc a
@@ -140,3 +150,79 @@ init_enemy_fireballs:
     jp nz,@sprites_loop
     ret
 ; end init_enemy_fireballs
+
+air_reset_reload:
+    call rand_8
+    and 127
+    add a,48 ; 48..175 visible live-player ticks; missed slots skip a shot
+    ld (iy+air_reload),a
+    ret
+
+air_try_bomb:
+    ld a,(iy+sprite_frame) ; big 0/1, medium 2/3, small 4/5, independent of HP
+    cp 2
+    ret c
+    ld hl,(player_state)
+    ld de,player_alive
+    or a
+    sbc hl,de
+    ret nz
+    dec (iy+air_reload)
+    ret nz
+    call air_reset_reload
+    ld hl,bomb_defaults
+    ld ix,fireballs_base
+    ld b,fireballs_max
+    call spawn_sprite_from_sprite
+    ret nc
+    ld a,(iy+sprite_frame)
+    cp 4
+    jr nc,@muzzle
+    ld (ix+sprite_frame),66
+    ld (ix+sprite_dim_x),16
+    ld hl,BUF_MISSILE_6X8_DOUBLE_1
+    ld (ix+sprite_base_bufferId),hl
+@muzzle:
+    ld a,(iy+sprite_dim_x)
+    sub (ix+sprite_dim_x)
+    ld de,128
+    ld d,a
+    mlt de
+    ld hl,(iy+sprite_x)
+    add hl,de
+    ld (ix+sprite_x),hl
+    ld de,0
+    ld d,(iy+sprite_dim_y)
+    ld hl,(iy+sprite_y)
+    add hl,de
+    ld (ix+sprite_y),hl
+    ret
+
+bomb_defaults:
+    db enemy_projectile
+    dl BUF_MISSILE_6X8_1,move_air_bomb
+    db %01000000,6,8,1,2,0,6,0,0,0,-2,64
+
+move_air_bomb:
+    ld hl,(iy+sprite_y)
+    ld de,3*256
+    add hl,de
+    ld (iy+sprite_y),hl
+    ld de,[field_bottom+1]*256
+    or a
+    sbc hl,de
+    jp nc,table_deactivate_sprite
+    dec (iy+sprite_animation_timer)
+    jr nz,@contact
+    ld (iy+sprite_animation_timer),6
+    ld a,(iy+sprite_frame)
+    xor 1
+    ld (iy+sprite_frame),a
+@contact:
+    ld ix,player_begin
+    bit sprite_alive,(ix+sprite_collisions)
+    ret z
+    call check_enemy_collision_player
+    ret nz
+    call update_shields
+    jp vox_contact_explosion

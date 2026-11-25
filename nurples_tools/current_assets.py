@@ -30,7 +30,7 @@ DERIVED_TITLE_NAMES = frozenset(f"{phase}_1" for phase in TITLE_PHASES)
 EXPECTED_COUNTS = {
     "ui": UI_ASSET_COUNT,
     "bg": 4,
-    "sprites": 165,
+    "sprites": 169,
     "tiles_dg": 192,
     "overlays": 4,
 }
@@ -38,6 +38,8 @@ EXPECTED_COUNTS = {
 ROTATING_SPRITES = frozenset({"seeker", "turret", "fireball_2", "fireball_3"})
 AIR_FRAMES = tuple(f"enemy_{size}_A{frame}" for size in ("small", "medium", "big")
                    for frame in (1, 2))
+MISSILES = tuple(f"missile_6x8{variant}_{frame}" for variant in ("", "_double")
+                 for frame in (1, 2))
 
 
 def _rotate_image(image: Image.Image, degrees_256: int) -> Image.Image:
@@ -107,6 +109,10 @@ def _sprites(
                 payload_path=payload_path,
             )
         )
+    for name in MISSILES:
+        with Image.open(source_dir / "pending" / f"{name}.png") as img:
+            records.append(ImageRecord("sprites", name, SPRITE_BUFFER_BASE + len(records),
+                                       img.width, img.height, payload_dir / f"{name}.rgba2"))
     return records
 
 
@@ -252,7 +258,7 @@ def container_records(
     )
     game_records = [record for record in game_resident
                     if record.name not in DERIVED_TITLE_NAMES]
-    if len(ui_records) != UI_ASSET_COUNT - 1 or len(game_records) != 364:
+    if len(ui_records) != UI_ASSET_COUNT - 1 or len(game_records) != 368:
         raise ValueError("UI/game AGNB record-count contract changed")
     return ui_records, game_records
 
@@ -383,6 +389,11 @@ def write_current_assets(project_root: Path) -> list[Path]:
     prepared.extend(write_starfields(project_root))
     prepared.extend(write_legacy_tiles(project_root))
     prepared.extend(write_overlay_art(project_root))
+    for name in MISSILES:
+        with Image.open(project_root / f"assets/img/orig/sprites/pending/{name}.png") as image:
+            dest = project_root / f"assets/rgba2/sprites/{name}.rgba2"
+            img_to_rgba2(image.transpose(Image.Transpose.ROTATE_180), dest)
+            prepared.append(dest)
     for name in AIR_FRAMES:
         with Image.open(project_root / f"assets/img/orig/sprites/{name}.png") as image:
             dest = project_root / f"assets/rgba2/sprites/{name}.rgba2"

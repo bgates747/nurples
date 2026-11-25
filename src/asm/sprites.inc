@@ -499,6 +499,9 @@ sprite_move_program_valid:
     ld de,move_enemy_fireball
     call @matches
     jp z,@valid
+    ld de,move_air_bomb
+    call @matches
+    jp z,@valid
     jp @invalid
 @air:
     ld a,(iy+sprite_type)
