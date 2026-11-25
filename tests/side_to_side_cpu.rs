@@ -37,7 +37,7 @@ fn main() {
             let mut status=run(&mut m,&mut cpu,op);
             for _ in 0..600 {
                 let row=y>>8;
-                let expected=if row+h<=0 || row>=336 {2} else if row<0 || row+h>336 {1} else {0};
+                let expected=if row+h<=0 || row>=336 {2} else if row<0 {1} else {0};
                 assert_eq!((get(&m,0x2001),get(&m,0x2004),get(&m,0x2007),get(&m,0x200a),status),
                            (x,y,vx,vy,expected));
                 ticks+=1; if status==2 {break;}

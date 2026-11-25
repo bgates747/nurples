@@ -285,3 +285,14 @@ occupancy. Oryx Tiled file synced; FAE invulnerable diagnostic card readback
 `28dea77011c494bdbe66e726c7c5febdba6441e74ae16360a1364ed493d57460`.
 Smith accepted the six-wave build on Oryx FAE and requested this rollback
 checkpoint. This acceptance is for FAE, not a hardware qualification.
+
+Bottom-edge audition (baseline `f6b9551`): allow scrolling actors, shots
+and effects to remain visible through field Y=335, including fractional
+positions. The screen clips their lower pixels. Free bottom-exiting actors
+at Y=336; retain existing side/top protection, player movement limits,
+animation lifetimes and wave timing. Review the invulnerable six-wave build
+on FAE before marking this rule for carry-forward to production.
+Ordinary and invulnerable builds assembled; host suite ran 245 tests (two
+skipped). The staged FAE card returned the expected diagnostic executable,
+SHA-256 `653661fcdff27ff15e79f80de4f5c310cbeb5f06165834ef34360ffd43695602`.
+Awaiting Smith's visual verdict; no production promotion yet.

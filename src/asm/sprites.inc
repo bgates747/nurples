@@ -704,8 +704,23 @@ move_sprite:
     ld hl,sprite_top*256
     jp @collide_y
 @bottom:
-    ld a,collide_bottom
+    ; Only the piloted ship has a steering floor. For world sprites the
+    ; screen clips the overhang; no edge event until the top row is gone.
+    ld a,(iy+sprite_id)
+    cp player_lasers_end_sprite_id ; player_begin follows the laser slots
     ld hl,sprite_bottom*256
+    jr z,@bottom_event
+    ld hl,(iy+sprite_y)
+    ld de,[field_bottom+1]*256
+    or a
+    sbc hl,de
+    jr nc,@below_screen
+    xor a
+    jp @xaxis
+@below_screen:
+    ex de,hl ; clamp to the first fully offscreen position
+@bottom_event:
+    ld a,collide_bottom
 @collide_y:
     ld (sprite_screen_edge),a
     ld (iy+sprite_y),hl

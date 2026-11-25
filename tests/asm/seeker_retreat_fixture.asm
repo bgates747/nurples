@@ -304,11 +304,11 @@ fixture_start:
     ld (fixture_case),a
     ld hl,240*256+255
     ld (iy+sprite_x),hl
-    ld hl,320*256+255
+    ld hl,[field_bottom+1]*256-1 ; final fractional position with one row visible
     ld (iy+sprite_y),hl
     call seeker_within_playfield
     jp nc,fixture_fail
-    ld hl,321*256
+    ld hl,[field_bottom+1]*256
     ld (iy+sprite_y),hl
     call seeker_within_playfield
     jp c,fixture_fail

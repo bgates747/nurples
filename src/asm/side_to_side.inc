@@ -126,26 +126,18 @@ side_visibility:
     or a
     sbc hl,de
     jp p,@exited
+    bit 7,(iy+sprite_y+2) ; field_top = 0
+    ld a,side_visible ; bottom is the physical display edge: partial is drawable
+    ret z
     add hl,de
     ld de,0
     ld d,(iy+sprite_dim_y)
-    bit 7,(iy+sprite_y+2) ; field_top = 0
-    jp nz,@above
-    add hl,de ; first raster row below sprite
-    ld de,[field_bottom+2]*256
-    or a
-    sbc hl,de
-    ld a,side_visible
-    ret c
-    jp @partial
-@above:
     add hl,de
     ld de,0
     or a
     sbc hl,de
     jp m,@exited
     jp z,@exited
-@partial:
     ld a,side_hidden
     ret
 @exited:
