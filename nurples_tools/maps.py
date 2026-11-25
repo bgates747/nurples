@@ -12,6 +12,7 @@ from pathlib import Path
 import tomllib
 from nurples_tools.tile_bindings import bindings
 from nurples_tools.active_tiles import PAD_ART
+from nurples_tools.earth_city import EARTH_TILE_BASE, earth_layers
 
 MAP_WIDTH = 16
 MIN_MAP_HEIGHT = 1
@@ -45,6 +46,7 @@ class CompiledLevel:
     source_path: Path
     height: int
     runtime_rows: tuple[tuple[int, ...], ...]
+    structure_rows: tuple[tuple[int, ...], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -367,10 +369,10 @@ def _render_include(
                 f"{symbol_prefix}_level_{index:02X}: ; {level.name}\n",
                 f"\tdb {MAP_WIDTH}          ; num cols\n",
                 f"\tdl {level.height}          ; num rows\n",
-                f"\tdl {base_buffer_id}        ; base bufferId\n",
+                f"\tdl {EARTH_TILE_BASE if level.structure_rows else base_buffer_id}        ; base bufferId\n",
             )
         )
-        for row in level.runtime_rows:
+        for row in (*level.runtime_rows, *level.structure_rows):
             lines.append("\tdb " + ",".join(f"{gid:03d}" for gid in row) + "\n")
         if index + 1 != len(levels):
             lines.append("\n")
@@ -458,9 +460,8 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
             raise MapCompileError(f"duplicate map manifest level source: {source_path}")
         seen_sources.add(source_path)
         if earth:
-            from nurples_tools.earth_city import earth_layers
-            _, rows = earth_layers(source_path)
-            levels.append(CompiledLevel(name, source_path, 256, rows))
+            _, _, markers, structures = earth_layers(source_path)
+            levels.append(CompiledLevel(name, source_path, 256, markers, structures))
             continue
         levels.append(
             _compile_tmx(

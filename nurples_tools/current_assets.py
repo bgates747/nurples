@@ -313,14 +313,24 @@ def render_container_include(
 
 
 def earth_records(project_root: Path, scratch: Path) -> list[ImageRecord]:
-    from nurples_tools.earth_city import earth_layers
-    plane, _ = earth_layers(project_root / "tiles/kenney/earth-city/earth-city.tmx")
+    from nurples_tools.earth_city import EARTH_TILE_BASE, earth_layers
+    plane, sheet, _, structures = earth_layers(project_root / "tiles/kenney/earth-city/earth-city.tmx")
     records = []
     for i in range(16):
         y = (15-i)*256
         path = scratch / f"earth_{i}.rgba2"
         img_to_rgba2(plane.crop((0,y,256,y+256)), path)
         records.append(ImageRecord("bg",f"earth_{i}",1280+i,256,256,path))
+    # Only referenced art, plus a transparent bitmap for empty cells/markers.
+    for gid in sorted({0} | {g for row in structures for g in row}):
+        if gid:
+            x, y = (gid-1)%16*16, (gid-1)//16*16
+            tile = sheet.crop((x,y,x+16,y+16))
+        else:
+            tile = Image.new("RGBA", (16,16))
+        path = scratch / f"city_{gid}.rgba2"
+        img_to_rgba2(tile, path)
+        records.append(ImageRecord("tiles",f"city_{gid}",EARTH_TILE_BASE+gid,16,16,path))
     return records
 
 

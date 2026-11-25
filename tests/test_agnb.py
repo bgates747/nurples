@@ -78,7 +78,7 @@ class AgnbContainerTests(unittest.TestCase):
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
         self.assertEqual(len(ui), 371_052)
-        self.assertEqual(len(game), 1_444_384)
+        self.assertEqual(len(game), 1_459_280)
         ui_records, game_records = container_records(self.catalogs)
         verify_container(ui, ui_records)
         with TemporaryDirectory() as tmp:
@@ -124,7 +124,7 @@ class AgnbContainerTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             container_counts = render_container_include(ui, game + earth_records(PROJECT_ROOT, Path(tmp)))
         self.assertIn("ui_agnb_num_images: equ 46", container_counts)
-        self.assertIn("game_num_images: equ 386", container_counts)
+        self.assertIn("game_num_images: equ 435", container_counts)
 
     def test_target_contains_only_supported_artifacts(self) -> None:
         files = {

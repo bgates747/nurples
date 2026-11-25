@@ -1,7 +1,9 @@
-"""Flatten static structures onto ordered backgrounds; markers stay map bytes."""
+"""Read Earth scenery, static art, and spawn cells as independent inputs."""
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from PIL import Image
+
+EARTH_TILE_BASE = 0x0600  # low byte is the runtime tile ID; zero is transparent
 
 
 def earth_layers(source: Path):
@@ -25,20 +27,19 @@ def earth_layers(source: Path):
     cells = [int(x) for x in data.text.strip().split(",")]
     if len(cells)!=4096 or not all(0<=g<=int(atlas.attrib["tilecount"]) for g in cells):
         raise ValueError("Invalid Earth map cells or transform flags")
-    for n,g in enumerate(cells):
-        if g>16:
-            i=g-1
-            x,y=i%16*16,i//16*16
-            plane.alpha_composite(sheet.crop((x,y,x+16,y+16)),(n%16*16,n//16*16))
-            cells[n]=0
+    if any(g > 255 for g in cells):
+        raise ValueError("Earth structure GID does not fit a runtime tile byte")
+    structures = [g if g > 16 else 0 for g in cells]
+    markers = [g if g <= 16 else 0 for g in cells]
     if len(layers) == 2:
+        if any(markers):
+            raise ValueError("Move active markers from Structures to Spawns")
         spawn = layers[1]
         if (spawn.get("width"), spawn.get("height"), spawn.find("data").get("encoding")) != ("16", "256", "csv"):
             raise ValueError("Expected 16x256 CSV spawn layer")
         markers = [int(x) for x in spawn.findtext("data").strip().split(",")]
         if len(markers) != len(cells) or any(not 0 <= g <= 4 for g in markers):
             raise ValueError("Spawns accepts only empty cells or the four defined pad markers")
-        if any(cells):
-            raise ValueError("Move active markers from Structures to Spawns")
-        cells = markers
-    return plane,tuple(tuple(cells[n:n+16]) for n in range(4080,-1,-16))
+    def rows(values):
+        return tuple(tuple(values[n:n+16]) for n in range(4080,-1,-16))
+    return plane,sheet,rows(markers),rows(structures)

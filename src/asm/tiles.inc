@@ -43,6 +43,11 @@ tiles_plot_travel:
     ld a,(tiles_y_plot)
     cp 0xF1 ; -15, first scanline of every new terrain row
     jp nz,tiles_plot_visual_ready
+    ; Once per incoming row. DG reads the same row for art and activation;
+    ; Earth's structure plane follows its spawn plane in the compiled map.
+terrain_visual_offset_operand: equ $+1
+    ld de,0
+    add hl,de
     ld de,tiles_visual_row
     ld a,(tiles_cols)
     ld b,a

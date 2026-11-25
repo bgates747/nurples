@@ -2,6 +2,11 @@
 
 Open the campaign on Earth, defending the city before following the attackers to their worlds. This silo owns the Earth level, from its editable map to Smith's first in-motion review.
 
+**Current render contract:** Earth background strips contain Xevious pixels only.
+The ordinary dev build and both aligned fixtures draw the Kenney Structures
+layer with the regular tile renderer. Spawn markers are independent even when
+placed over a structure. The original baked-strip description below is historical.
+
 ## Design history
 
 The Xevious source is 1024×2048. The first two columns were cut into sixteen 256×256 strips, bottom to top in each column, left column first. In Tiled, strip 00 is at the foot of the 16×256-cell level. The assembled background is a locked image layer. The editable Structures layer uses Kenney's CC0 Tiny City pack: 132 original 16×16 tiles repacked sixteen across, converted to Agon64 by nearest RGB without dithering. IDs 0–15 are transparent and reserved for spawn markers. The 135 existing structure placements were shifted with their art and the rendered map checked pixel-for-pixel. Clockwise 90/180/270 variants of IDs 81, 92 and 93 occupy IDs 148–156. Rotations are baked; runtime tiles have no transform flags. Separate Civ terrain studies and picker are documented in MAP-003; they are not another runtime layer.

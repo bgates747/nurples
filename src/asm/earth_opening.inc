@@ -3,14 +3,17 @@
 earth_first_buffer: equ 1280
 earth_next_buffer: dl earth_first_buffer
 earth_bind_background:
+    ld bc,0
     ld hl,tile_active_art
     ld de,tile_activation_routines
     ld a,(cur_level)
     or a
     jp nz,@tables
+    ld bc,16*256 ; byte offset from spawn row to corresponding structure row
     ld hl,earth_marker_art
     ld de,earth_marker_callbacks
 @tables:
+    ld (terrain_visual_offset_operand),bc
     ld (terrain_art_operand),hl
     ld (terrain_activation_operand),de
     ld hl,bg_plot
