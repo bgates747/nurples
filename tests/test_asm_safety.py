@@ -1007,6 +1007,14 @@ class AssemblySafetyTests(unittest.TestCase):
             ),
         )
 
+    def test_respawn_restores_playfield_after_lives_redraw(self) -> None:
+        respawn = routine(read_asm("player_state.inc"), "player_dead",
+                          "; end player_dead").split("@respawn:", 1)[1]
+        self.assertLess(respawn.index("call draw_player_ships"),
+                        respawn.index("call set_gfx_playing_field"))
+        self.assertLess(respawn.index("call set_gfx_playing_field"),
+                        respawn.index("call player_init_respawn"))
+
     def test_defaults_copy_only_initialized_definition_bytes(self) -> None:
         sprites = read_asm("sprites.inc")
         tiles = read_asm("tile_table.inc")

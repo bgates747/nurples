@@ -727,6 +727,7 @@ player_dead:
     ld a,TELEMETRY_LIFECYCLE_RESPAWN
     call telemetry_post_lifecycle
     call draw_player_ships
+    call set_gfx_playing_field ; active tiles still plot later in this frame
 ; Preserve score, terrain position, active tiles and the current enemy world.
 ; The player alone begins a fresh logical lifetime and shared entrance.
     call player_init_respawn
