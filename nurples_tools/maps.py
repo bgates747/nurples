@@ -379,7 +379,7 @@ def _render_include(
     return "".join(lines)
 
 
-def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
+def compile_map_manifest(manifest_path: Path, *, earth_source: Path | None = None) -> CompiledMapSet:
     """Validate every input and return the deterministic include without writing."""
 
     manifest_path = manifest_path.resolve()
@@ -460,6 +460,8 @@ def compile_map_manifest(manifest_path: Path) -> CompiledMapSet:
             raise MapCompileError(f"duplicate map manifest level source: {source_path}")
         seen_sources.add(source_path)
         if earth:
+            if earth_source is not None:
+                source_path = earth_source
             _, _, markers, structures = earth_layers(source_path)
             levels.append(CompiledLevel(name, source_path, 256, markers, structures))
             continue

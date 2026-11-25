@@ -53,7 +53,7 @@ def check_assets() -> None:
     print("Current deployable assets are deterministic and up to date.")
 
 
-def assemble(*, scanout_fixture=False, earth_jit=False, pace=None) -> None:
+def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
@@ -63,6 +63,8 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None) -> None:
         output = PROJECT_ROOT / ".build/earth-jit-r01"
     if pace:
         output = PROJECT_ROOT / ".build" / f"aligned-pace-{pace}"
+    if staggered:
+        output = PROJECT_ROOT / ".build/staggered-pace-control"
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
@@ -78,6 +80,38 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None) -> None:
             configure(staged_asm, TARGET_DIR, output)
         if pace:
             from nurples_tools.loading_music import edit
+            if staggered:
+                from nurples_tools.maps import compile_map_manifest
+                level_dir = PROJECT_ROOT / "tiles/kenney/earth-city"
+                maps = compile_map_manifest(CAMPAIGN_MANIFEST, earth_source=level_dir/"earth-city-staggered.tmx")
+                if maps.levels[0].structure_rows != compile_map_manifest(CAMPAIGN_MANIFEST).levels[0].structure_rows:
+                    raise ValueError("Staggered audition expects unchanged city art")
+                (staged_asm/maps.output_path.name).write_text(maps.text)
+                edit(staged_asm, "earth_march.inc", "equ 5*16", "equ 6*16")
+                path = staged_asm/"enemy_side_air.inc"
+                source = path.read_text()
+                start = source.index("    ; Admission sees tiles_row")
+                end = source.index("@wait:\n", start)
+                edit(staged_asm, path.name, source[start:end], """    ld a,(tiles_row)
+@wave_row:
+    cp 48
+    jr c,@rank
+    sub 48
+    jr @wave_row
+@rank:
+    sub 38 ; rear rank (Tiled Y+1 modulo 48)
+    cp 6
+    jr c,@valid
+    xor a
+@valid:
+    or a
+    jr z,@wait
+    rlca
+    rlca
+    rlca
+    rlca
+    ld hl,256
+""")
             edit(staged_asm, "nurples.asm", "main_loop:\n",
                  "    call pace_init\nmain_loop:\n    call pace_classify\n")
             edit(staged_asm, "nurples.asm", "    call vdu_vblank\n",
@@ -150,6 +184,7 @@ def main() -> None:
     actions.add_argument("--earth-jit", action="store_true",
                          help="build single-row Earth audition in .build/earth-jit-r01")
     actions.add_argument("--aligned-pace", choices=("control", "bombing"))
+    actions.add_argument("--staggered-pace", action="store_true")
     args = parser.parse_args()
 
     if args.assets:
@@ -158,6 +193,8 @@ def main() -> None:
         check_assets()
     elif args.scanout_fixture:
         assemble(scanout_fixture=True)
+    elif args.staggered_pace:
+        assemble(earth_jit=True, pace="control", staggered=True)
     elif args.aligned_pace:
         assemble(earth_jit=True, pace=args.aligned_pace)
     elif args.earth_jit:
