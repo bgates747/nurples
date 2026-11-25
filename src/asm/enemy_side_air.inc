@@ -1,6 +1,6 @@
 ; Stateless pad callbacks: invoked once by do_active_tiles on row admission.
 ; Never allocate a collidable ground actor. All three share a bounded air pool.
-air_max: equ 8
+air_max: equ 32
 air_hp: equ actor_record_custom
 air_visibility: equ air_hp+1
 air_reload: equ air_visibility+1
@@ -130,11 +130,26 @@ earth_launch_march:
     ld (iy+sprite_xvel),hl
     ld hl,128 ; no initial wait: begin at march speed
     ld (iy+sprite_move_step),0
-    ld a,(iy+air_hp) ; constructor HP equals class 1/2/3
-    cp 3
+    ; Admission sees tiles_row before decrement: its low byte is Tiled Y+1.
+    ; Waves repeat every 45 rows; the final wave's ranks are Y=7,6,4.
+    ; Rank belongs to the marker row, not the ship class.
+    ld a,(tiles_row)
+@wave_row:
+    cp 45
+    jr c,@rank
+    sub 45
+    jr @wave_row
+@rank:
+    cp 8
+    jr z,@front
+    cp 7
     ld a,0
-    jr z,@wait
-    ld a,32 ; first rank is two 16px rows ahead of the large pair
+    jr nz,@wait ; trailing rank, or an independent marker: march immediately
+    ld a,32
+    jr @follow
+@front:
+    ld a,48
+@follow:
     ld hl,256 ; during the wait, follow each terrain scanline exactly
 @wait:
     ld (iy+sprite_move_timer),a

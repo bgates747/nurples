@@ -21,7 +21,7 @@ class PresentationOverlayRendererTests(unittest.TestCase):
         source = SOURCE.read_text()
         self.assertIn("PRESENTATION_SPRITE_TITLE: equ PRESENTATION_ACTIVE_ACTORS", source)
         self.assertIn("PRESENTATION_SPRITE_PROMPT: equ PRESENTATION_ACTIVE_ACTORS+1", source)
-        self.assertIn("PRESENTATION_ACTIVE_ACTORS: equ 28", source)
+        self.assertIn("PRESENTATION_ACTIVE_ACTORS: equ 20+air_max", source)
         self.assertIn("PRESENTATION_ACTIVE_ALL: equ PRESENTATION_ACTIVE_ACTORS+2", source)
         self.assertIn("PRESENTATION_TITLE_X: equ 136", source)
         self.assertIn("PRESENTATION_TITLE_Y: equ 116", source)

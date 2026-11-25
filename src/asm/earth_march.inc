@@ -27,7 +27,7 @@ earth_march_tick:
 @begin:
     ld a,1
     ld (iy+sprite_move_step),a
-    ld (iy+sprite_move_timer),64 ; cols 4..15: four tiles of left travel
+    ld (iy+sprite_move_timer),earth_march_stride
 @stride:
     ld de,-256
     cp 1
@@ -43,5 +43,7 @@ earth_march_tick:
     ld a,(iy+sprite_move_step)
     xor 3 ; 1 <-> 2
     ld (iy+sprite_move_step),a
-    ld (iy+sprite_move_timer),64 ; twelve tiles wide in a sixteen-tile field
+    ld (iy+sprite_move_timer),earth_march_stride
     jp side_visibility
+
+earth_march_stride: equ 5*16 ; outermost 16px ships at columns 5 and 15
