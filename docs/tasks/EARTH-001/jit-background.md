@@ -32,7 +32,7 @@ FAE performance establishes worst-case SD or VDP latency on hardware.
 ## Proposed tranche and gates
 
 - EARTH-001-008 [ ] **Build the stream, preserve the control.** Generate
-  a sequential SD asset in flight order from the existing packed artwork:
+  a separate AGNB container in flight order from the existing packed artwork:
   strip 00 first, bottom row first within each strip, pixels left to right.
   Stream strips 00–13; keep 14–15 as ordinary resident bitmaps used by both
   the playable approach and the future ending. Keep all four warp starfields
@@ -51,7 +51,9 @@ FAE performance establishes worst-case SD or VDP latency on hardware.
   **128 KiB + 256 B**, versus 1 MiB today. Measure peak memory separately.
 
 - EARTH-001-010 [ ] **Integrate at the bound Earth renderer only.** Prime
-  an eZ80 read-ahead buffer before the first Earth row is due. Start with
+  an eZ80 read-ahead buffer before the first Earth row is due. Open and
+  validate the single DATA record once per Earth entry; keep its cursor
+  open for sequential reads, without reopening or seeking between rows. Start with
   sequential 1 KiB reads (four rows), refill at a measured low-water mark,
   and measure the longest blocking read, not just average throughput.
   Send one complete row update and plot at the existing exposed scanline;
