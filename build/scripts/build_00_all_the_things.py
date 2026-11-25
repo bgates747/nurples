@@ -53,12 +53,16 @@ def check_assets() -> None:
     print("Current deployable assets are deterministic and up to date.")
 
 
-def assemble(*, scanout_fixture=False) -> None:
+def assemble(*, scanout_fixture=False, earth_jit=False, pace=None) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
     )
     output = PROJECT_ROOT / ".build/scanout-r01" if scanout_fixture else TARGET_DIR
+    if earth_jit:
+        output = PROJECT_ROOT / ".build/earth-jit-r01"
+    if pace:
+        output = PROJECT_ROOT / ".build" / f"aligned-pace-{pace}"
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
@@ -66,9 +70,26 @@ def assemble(*, scanout_fixture=False) -> None:
         modules = prepare_audio(PROJECT_ROOT, staged_asm)
         configure_loading_music(staged_asm, candidate=True, small_reads=True, whole=True,
                                 all_phases=True, combat_cues=True)
-        if scanout_fixture:
+        if scanout_fixture or earth_jit:
             from nurples_tools.scanout_fixture import instrument
             instrument(staged_asm)
+        if earth_jit:
+            from nurples_tools.earth_jit import configure
+            configure(staged_asm, TARGET_DIR, output)
+        if pace:
+            from nurples_tools.loading_music import edit
+            edit(staged_asm, "nurples.asm", "main_loop:\n",
+                 "    call pace_init\nmain_loop:\n    call pace_classify\n")
+            edit(staged_asm, "nurples.asm", "    call vdu_vblank\n",
+                 "    call vdu_vblank\n    call pace_sample\n")
+            edit(staged_asm, "nurples.asm", "    call jit_report",
+                 "    call jit_report\n    call pace_report")
+            edit(staged_asm, "nurples.asm", '    include "earth_jit.inc"',
+                 '    include "earth_jit.inc"\n    include "frame_pace_fixture.inc"')
+            if pace == "control":
+                # Replace the four-byte ADL call without moving other code.
+                edit(staged_asm, "enemy_side_air.inc", "    call air_try_bomb",
+                     "    db 0,0,0,0 ; control: no air bombs")
         staged_binary = staged_asm / "nurples.bin"
         staged_symbols = staged_asm / "nurples.symbols"
         staged_binary.unlink(missing_ok=True)
@@ -126,6 +147,9 @@ def main() -> None:
     )
     actions.add_argument("--scanout-fixture", action="store_true",
                          help="assemble the diagnostic game outside tgt/")
+    actions.add_argument("--earth-jit", action="store_true",
+                         help="build single-row Earth audition in .build/earth-jit-r01")
+    actions.add_argument("--aligned-pace", choices=("control", "bombing"))
     args = parser.parse_args()
 
     if args.assets:
@@ -134,6 +158,10 @@ def main() -> None:
         check_assets()
     elif args.scanout_fixture:
         assemble(scanout_fixture=True)
+    elif args.aligned_pace:
+        assemble(earth_jit=True, pace=args.aligned_pace)
+    elif args.earth_jit:
+        assemble(earth_jit=True)
     elif args.assemble:
         assemble()
     else:

@@ -31,7 +31,7 @@ FAE performance establishes worst-case SD or VDP latency on hardware.
 
 ## Proposed tranche and gates
 
-- EARTH-001-008 [ ] **Build the stream, preserve the control.** Generate
+- EARTH-001-008 [x] **Build the stream, preserve the control.** Generate
   a separate AGNB container in flight order from the existing packed artwork:
   strip 00 first, bottom row first within each strip, pixels left to right.
   Stream strips 00–13; keep 14–15 as ordinary resident bitmaps used by both
@@ -82,3 +82,49 @@ FAE performance establishes worst-case SD or VDP latency on hardware.
   control, identify whether SD, UART, or plotting consumed the margin, and
   bring back the previously proposed three-strip ring plus two pinned strips
   as an alternative. Do not implement both strategies in this tranche.
+
+## R01 staged for FAE, awaiting visual review
+
+Contract `b1fd8db53e22acd50e36c18a984614f481a35ed0`. Build with the normal
+orchestrator's `--earth-jit` option. Outputs are isolated in
+`.build/earth-jit-r01`; ordinary `tgt/` and the accepted scanout control
+are unchanged. The candidate loads 367 game bitmaps; `earth.agnb` holds one
+256×3584 RGBA2222 DATA record and is never uploaded wholesale. The exact-read
+path advances one open FIL in 1 KiB increments until the pinned approach.
+The runtime probe plots two distinct scanlines before querying either pixel;
+E1 means missing pixel reply, E2 means unexpected colours. These checks
+execute on the human launch, not during host verification. After ESC the
+fixture prints worst SD read and row submission times in music-timer counts
+(72 per ms); these are not VDP compositor timings. Existing MUSIC50.BIN
+keeps the 50 Hz counters.
+
+The host comparison checked all 4,096 rows against the preload control;
+246 tests ran, two skipped. All six guest files were read back on Oryx in
+the held FAE profile; diagnostic binary SHA-256
+`3fb17bca165eabb3ec2dafc5c26fc9568d54bf9f1bce4abe5d1591f5090af63c`.
+The previous card is retained under that profile at `earth-jit-r01/control.img`.
+No emulator launched or hardware run claimed. The pixel probe, motion,
+real deadlines and hardware peak memory remain to be qualified.
+
+Pool stress audition: all six waves now specify eight small, two medium
+and two large ships. Smith selected 32 concurrent air actors (hardware IDs
+12–43) for additional workload headroom. Existing first-free allocation is
+unchanged. Verified the linked map (48/12/12 markers), both JIT containers,
+and the staged executable `420af822e9e2dd99a55a76e3867cb20eb418de64ed192304db13d87c40a455e8`.
+Host suite: 246 run, two skipped. Oryx FAE visual review pending.
+
+Three-rank revision: copied the authored 4/6/2 marker pattern through all
+six waves. The first two ranks follow terrain for 48 and 32 steps; the rear
+rank enters at march speed. All begin their 80-pixel left stride together.
+Verified the linked marker rows and horizontal footprint bounds for every
+ship. Staged FAE binary SHA-256
+`60383849f847b9430111f64b5e6c8e2fb13f8fdca21e758e6a913ea2fd3e178c`;
+stream and resident asset hashes unchanged. Awaiting visual review.
+
+## Superseding decision: keep Earth structures out of background pixels
+
+Use the same separation in the ordinary dev game and both aligned pace fixtures.
+Pack pristine Xevious strips, render the Tiled Structures plane with the ordinary
+tile renderer, and keep the Spawns plane independent (including overlapping cells).
+No bake flag. Rebuild and check production, aligned control, and aligned bombing.
+Key 1 must suppress only the background; key 2 must suppress only tile visuals.
