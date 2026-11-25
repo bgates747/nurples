@@ -135,6 +135,19 @@ output = "generated/levels.inc"
         compiled = compile_map_manifest(self.manifest)
         self.assertEqual(compiled.levels[0].runtime_rows[0][:5], (1, 2, 3, 15, 121))
 
+    def test_dg_marker_over_existing_pad(self):
+        self._write_catalog({0, 121, 17})
+        self._write_manifest([("DG", "one.tmx")])
+        for art in (121, 17):
+            p = self._write_tmx("one.tmx", [self._row(art)], extra_content=
+                f'<layer name="Spawns" width="16" height="1"><data encoding="csv">{self._row(2)}</data></layer>')
+            p.write_text(p.read_text().replace('<layer width=', '<layer name="Structures" width='))
+            if art == 121:
+                self.assertEqual(compile_map_manifest(self.manifest).levels[0].runtime_rows[0][0], 2)
+            else:
+                with self.assertRaisesRegex(MapCompileError, "replace different DG terrain"):
+                    compile_map_manifest(self.manifest)
+
     def test_manifest_order_and_runtime_row_reversal(self) -> None:
         self._write_tmx(
             "first.tmx",

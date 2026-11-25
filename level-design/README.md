@@ -22,7 +22,8 @@ not all been migrated.
 
 ## Starting or varying a level
 
-1. Copy the template into a two-digit folder named for the **1-based story
+1. Copy the contents of `template/level/` into a two-digit folder under
+   `levels/`, named for the **1-based story
    stage**. Earth is `01`. Do not assign a story number just because a proving
    ground happens to be next in a test build.
 2. Name the project for its stage and give its campaign map the name
@@ -53,13 +54,15 @@ not all been migrated.
 In drawing order, use **Background** for a locked terrain image when needed,
 **Structures** for visible terrain tiles, and **Spawns** for placement markers.
 A scrolling starfield needs no dummy background image. Keep structures out
-of the background pixels. A spawn may overlap a structure without replacing
-it. A turret or electrode that *is* an active terrain tile remains terrain;
+of the background pixels. Earth allows any structure under a spawn. DG
+spawns retain a visible pad: use empty terrain or the matching pad underneath.
+Other DG overlaps require a separate runtime design decision.
+A turret or electrode that *is* an active terrain tile remains terrain;
 do not turn it into an invisible spawn just to match a layer name.
 
 ## Migration and checks
 
 Move files and repair references first; verify that compiled map bytes and
-artwork are unchanged. Migrate layer conventions separately. A future
-reference check should resolve paths from the referencing file and report
-both ends of a missing or forbidden reference.
+artwork are unchanged. Migrate layer conventions separately. The
+`test_design_refs` check resolves references and reports both ends of a
+missing or forbidden reference.

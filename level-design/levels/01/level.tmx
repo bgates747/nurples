@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="16" height="256" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="1">
  <tileset firstgid="1" source="../../assets/tilesets/tiny-city/tiny-city.tsx"/>
- <imagelayer id="1" name="Earth terrain" locked="1">
+ <imagelayer id="1" name="Background" locked="1">
   <image source="../../assets/backgrounds/earth/earth-background.png" width="256" height="4096"/>
  </imagelayer>
  <layer id="2" name="Structures" width="16" height="256">

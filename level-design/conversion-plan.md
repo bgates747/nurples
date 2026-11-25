@@ -31,21 +31,36 @@ Owner: Nurples. Approved and frozen at `2cd93861eda19b48a3650ed7e3125cd660d567f7
    Exercise tile-move tooling on a disposable copy. Checkpoint this pass
    separately before changing any layer semantics.
 
-- MAP-004-004 [ ] **Normalize authoring.** Supply a copyable per-level template and use
+- MAP-004-004 [x] **Normalize authoring.** Supply a copyable per-level template and use
    the conventions in the README. Separate invisible spawners from visible
    structures at compile time. Preserve visible pads, destructible terrain,
    electrode links and activation rows; do not mechanically move every
    active DG tile into Spawns. Test an overlapping marker/structure cell.
    If any case needs new runtime semantics, stop and review it separately.
 
-- MAP-004-005 [ ] **Validate and hand off.** Check that references exist on a case-sensitive
+- MAP-004-005 [x] **Validate and hand off.** Check that references exist on a case-sensitive
    filesystem, are relative, and stay inside the owning level or shared art.
    Reject cross-level links and dependencies on the template. Refresh Oryx
    sparse patterns without discarding local edits. Open Earth and a DG
    project independently in system Tiled; compare renders, then test Earth
    into DG in FAE. No physical-card deployment as part of the migration.
 
-**Proposed for review:** assign only Earth a story number now; keep the proving
+**Approved:** assign only Earth a story number now; keep the proving
 ground, modern DG map and recovered Z80 map named until their slots are
 decided. This preserves their existing runtime indices without treating
 test order as story design.
+
+**Move-only checkpoint:** `b25fcda3e27729db30aa899408253019b879c75d`.
+Verified from an isolated clean checkout: all four executables, runtime
+containers and campaign include matched the frozen baseline byte for byte;
+disposable tile move/swap tests passed. All five Tiled renders matched
+before and after relocation and again after separating layers. Normalized
+builds matched the same hashes. DG pad-over-pad compiles to the original
+active ID; a conflicting DG overlap is rejected, not flattened. The full
+suite still reports the known four starfield hash mismatches and bomb
+defaults assertion; no new failure observed.
+
+**MAP-004-005 accepted:** Smith reviewed the staged migration and reported
+that everything looked good. No outstanding migration tranche. Sparse
+workspace refreshed, previous entire checkout retained alongside it as
+`nurples-level-design-before-map004`. No physical card touched.

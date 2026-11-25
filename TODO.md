@@ -1,7 +1,5 @@
 # Purple Nurples TODO
 
-- [ ] **MAP-004 — [Level design migration](level-design/conversion-plan.md).** Awaiting plan review.
-
 - [ ] **[SPR-HW-001 — Explicit hardware sprites for gameplay](docs/tasks/SPR-HW-001/TASK.md).**
   Next proposed experiment: [mouse-driven scanline stress fixture](docs/tasks/SPR-HW-001/scanline-lab.md).
 

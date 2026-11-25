@@ -306,11 +306,32 @@ def _compile_tmx(
 
     content_tags = {"layer", "objectgroup", "imagelayer", "group"}
     content = [child for child in root if child.tag in content_tags]
-    if len(content) != 1 or content[0].tag != "layer":
+    split = [e.get("name") for e in content] == ["Structures", "Spawns"]
+    if (not split and len(content) != 1) or any(e.tag != "layer" for e in content):
         raise MapCompileError(
             f"{source_path}: map must contain exactly one tile layer and no other layers"
         )
-    layer = content[0]
+    def read_layer(layer):
+        return _read_dg_layer(layer, source_path, width, height, available_tiles, runtime_ids)
+
+    tiled_rows = read_layer(content[0])
+    if split:
+        spawn_rows = read_layer(content[1])
+        merged = []
+        for y, (structures, spawns) in enumerate(zip(tiled_rows, spawn_rows, strict=True)):
+            row = []
+            for x, (structure, spawn) in enumerate(zip(structures, spawns, strict=True)):
+                if spawn not in (0, 1, 2, 3, 15):
+                    raise MapCompileError(f"{source_path}: ({x},{y}) not an air spawn")
+                if spawn and structure not in (0, PAD_ART.get(spawn, spawn)):
+                    raise MapCompileError(f"{source_path}: ({x},{y}) spawn would replace different DG terrain")
+                row.append(spawn or structure)
+            merged.append(tuple(row))
+        tiled_rows = tuple(merged)
+    return CompiledLevel(name, source_path, height, tuple(reversed(tiled_rows)))
+
+
+def _read_dg_layer(layer, source_path, width, height, available_tiles, runtime_ids):
     layer_width = _decimal(
         layer.attrib.get("width"),
         f"{source_path}: layer width",
@@ -334,18 +355,12 @@ def _compile_tmx(
     data_elements = layer.findall("data")
     if len(data_elements) != 1:
         raise MapCompileError(f"{source_path}: tile layer must contain exactly one data element")
-    tiled_rows = _parse_csv_rows(
+    return _parse_csv_rows(
         data_elements[0],
         source_path=source_path,
         height=height,
         available_tiles=available_tiles,
         runtime_ids=runtime_ids,
-    )
-    return CompiledLevel(
-        name=name,
-        source_path=source_path,
-        height=height,
-        runtime_rows=tuple(reversed(tiled_rows)),
     )
 
 

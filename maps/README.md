@@ -7,12 +7,11 @@ cd ~/Agon/mystuff/nurples-level-design
 tiled level-design/levels/modern-dg/level.tmx
 ```
 
-The other campaign map is [the recovered Z80 level](../level-design/levels/recovered-z80/level.tmx).
-[campaign.toml](campaign.toml) lists the two in play order. For a small map
+[campaign.toml](campaign.toml) lists all four levels in play order. For a small map
 that shows how to place an active tile, open the [seeker nursery](../tests/maps/dg/pn_map_01_seeker_nursery.tmx)
 or [fire-control range](../tests/maps/dg/pn_map_02_fire_control_range.tmx).
-Use **Save As** beside the original TMX to start a sketch without modifying
-the campaign. A new TMX isn't added to the campaign just by saving it.
+Start new projects from the [level design template and conventions](../level-design/README.md).
+A new TMX isn't added to the campaign just by saving it.
 
 ## Art to review
 
@@ -23,9 +22,8 @@ the campaign. A new TMX isn't added to the campaign just by saving it.
 | [Processed sprites](../assets/img/proc/sprites/) | Compare the prepared game artwork with the sources before picking a marker. |
 | [Classic art](../tiles/nurples_classic/) and [Xevious sprite sheet](../tiles/xevious/xevious_sprites.png) | Historical and visual references, not new runtime spawn types. |
 
-For maps that must build today, keep the existing format: 16 columns of
-16×16 tiles, one CSV tile layer, one external `dg0.tsx` tileset. The bottom
-of the Tiled map enters play first. Enemy-sprite brushes that mean “spawn
-this type here, but draw the usual launch pad” are a design proposal. There
-is no such compiler mapping yet; don't add a second layer or tileset and
-expect the current build to accept it.
+Maps use sixteen columns of 16×16 tiles. The bottom enters play first.
+Earth supports any structure beneath a spawn. DG air spawners retain their
+visible pad: place them in Spawns over an empty cell or their matching pad.
+The compiler rejects unrelated underlying DG art rather than losing it.
+Turrets, electrodes and other active ground structures belong in Structures.

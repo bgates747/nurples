@@ -51,20 +51,28 @@ def rewrite_map(root, path, a, b):
         return None
     layers = tree.findall("layer")
     if (tree.tag != "map" or len(sets) != 1 or sets[0].get("firstgid") != "1"
-            or len(sets[0]) or len(layers) != 1 or tree.get("infinite", "0") != "0"
+            or len(sets[0]) or (len(layers) != 1 and [l.get("name") for l in layers] != ["Structures", "Spawns"])
+            or tree.get("infinite", "0") != "0"
             or any(e.tag not in {"tileset", "layer"} for e in tree)):
         raise ValueError(f"{path}: expected a single finite DG tile layer")
-    layer = layers[0]
+    matches = list(re.finditer(rb"<data\b[^>]*>([^<]*)</data\s*>", raw))
+    if len(matches) != len(layers):
+        raise ValueError(f"{path}: unsupported CSV serialization")
+    counts = Counter()
+    for layer, match in reversed(list(zip(layers, matches, strict=True))):
+        start, end = match.span(1)
+        updated, here = rewrite_csv(path, layer, raw[start:end], a, b)
+        counts.update(here)
+        raw = raw[:start] + updated + raw[end:]
+    return raw, counts[a], counts[b]
+
+
+def rewrite_csv(path, layer, payload, a, b):
     data = layer.find("data")
     if (len(layer) != 1 or data is None or data.attrib != {"encoding": "csv"}
             or len(data) or not data.text):
         raise ValueError(f"{path}: expected plain CSV data")
     # Splice only CSV bytes. Preserve the rest of the Tiled document verbatim.
-    matches = list(re.finditer(rb"<data\b[^>]*>([^<]*)</data\s*>", raw))
-    if len(matches) != 1:
-        raise ValueError(f"{path}: unsupported CSV serialization")
-    start, end = matches[0].span(1)
-    payload = raw[start:end]
     if not re.fullmatch(rb"\s*\d+(?:\s*,\s*\d+)*\s*", payload):
         raise ValueError(f"{path}: malformed CSV")
     ids = [int(token) for token in payload.split(b",")]
@@ -74,7 +82,7 @@ def rewrite_map(root, path, a, b):
     counts = Counter(ids)
     change = {a: str(b).encode(), b: str(a).encode()}
     updated = re.sub(rb"\d+", lambda m: change.get(int(m[0]), m[0]), payload)
-    return raw[:start] + updated + raw[end:], counts[a], counts[b]
+    return updated, counts
 
 
 def build_plan(root, op, src, dst):
