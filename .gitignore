@@ -141,3 +141,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+assets/rgba2/sprites/missile_3x6*.rgba2
