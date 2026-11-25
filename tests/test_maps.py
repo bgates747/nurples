@@ -440,7 +440,7 @@ class ProductionCampaignTests(unittest.TestCase):
         changed = [(a, b) for a, b in zip(control, review, strict=True) if a != b]
         self.assertEqual(len(changed), 1)
         self.assertEqual([(a, b) for a, b in zip(*(v.split(",") for v in changed[0]), strict=True)
-                          if a != b], [("121", "020")])
+                          if a != b], [("000", "020")])
 
     def test_modern_campaign_is_followed_by_original_z80_main_level(self) -> None:
         compiled = compile_map_manifest(CAMPAIGN_MANIFEST)

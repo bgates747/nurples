@@ -540,9 +540,9 @@ def overlap_audition(compiled: CompiledMapSet) -> str:
     if dg.earth or dg.name != "Air enemy proving ground":
         raise MapCompileError("expected the DG proving ground after Earth")
     # Assert the review landmark rather than silently changing an unrelated encounter.
-    row, col = 3, 8
-    if (dg.runtime_rows[row][col], dg.spawn_rows[row][col]) != (121, 2):
-        raise MapCompileError("review landmark changed: expected the small ship above pad art")
+    row, col = 0, 15
+    if (dg.runtime_rows[row][col], dg.spawn_rows[row][col]) != (0, 2):
+        raise MapCompileError("review landmark changed: expected the opening small ship above empty terrain")
     terrain = list(dg.runtime_rows)
     terrain[row] = (*terrain[row][:col], 20, *terrain[row][col+1:])  # horizontal conduit
     levels[1] = replace(dg, runtime_rows=tuple(terrain))
