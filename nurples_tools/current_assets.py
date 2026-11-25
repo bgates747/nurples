@@ -30,7 +30,7 @@ DERIVED_TITLE_NAMES = frozenset(f"{phase}_1" for phase in TITLE_PHASES)
 EXPECTED_COUNTS = {
     "ui": UI_ASSET_COUNT,
     "bg": 4,
-    "sprites": 169,
+    "sprites": 171,
     "tiles_dg": 192,
     "overlays": 4,
 }
@@ -39,7 +39,7 @@ ROTATING_SPRITES = frozenset({"seeker", "turret", "fireball_2", "fireball_3"})
 AIR_FRAMES = tuple(f"enemy_{size}_A{frame}" for size in ("small", "medium", "big")
                    for frame in (1, 2))
 MISSILES = tuple(f"missile_6x8{variant}_{frame}" for variant in ("", "_double")
-                 for frame in (1, 2))
+                 for frame in (1, 2)) + ("missile_10x8_1", "missile_10x8_2")
 
 
 def _rotate_image(image: Image.Image, degrees_256: int) -> Image.Image:
@@ -258,7 +258,7 @@ def container_records(
     )
     game_records = [record for record in game_resident
                     if record.name not in DERIVED_TITLE_NAMES]
-    if len(ui_records) != UI_ASSET_COUNT - 1 or len(game_records) != 368:
+    if len(ui_records) != UI_ASSET_COUNT - 1 or len(game_records) != 370:
         raise ValueError("UI/game AGNB record-count contract changed")
     return ui_records, game_records
 

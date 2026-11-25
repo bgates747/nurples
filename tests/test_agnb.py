@@ -49,10 +49,10 @@ class AgnbContainerTests(unittest.TestCase):
     def test_catalog_contract_and_global_ids(self) -> None:
         self.assertEqual(len(self.ui_records), 47)
         self.assertEqual(len(self.catalogs["bg"]), 4)
-        self.assertEqual(len(self.catalogs["sprites"]), 169)
+        self.assertEqual(len(self.catalogs["sprites"]), 171)
         self.assertEqual(len(self.catalogs["tiles_dg"]), 192)
         self.assertEqual(len(self.catalogs["overlays"]), 4)
-        self.assertEqual(len(self.game_records), 369)
+        self.assertEqual(len(self.game_records), 371)
         self.assertEqual(
             [record.family for record in self.game_records[:5]],
             ["bg", "bg", "bg", "bg", "sprites"],
@@ -63,7 +63,7 @@ class AgnbContainerTests(unittest.TestCase):
         self.assertEqual([record.buffer_id for record in self.ui_records], list(range(47)))
         self.assertEqual(
             [record.buffer_id for record in self.catalogs["sprites"]],
-            list(range(256, 425)),
+            list(range(256, 427)),
         )
         self.assertEqual(
             [record.buffer_id for record in self.catalogs["bg"]],
@@ -78,7 +78,7 @@ class AgnbContainerTests(unittest.TestCase):
         ui = (PROJECT_ROOT / "tgt/ui.agnb").read_bytes()
         game = (PROJECT_ROOT / "tgt/game.agnb").read_bytes()
         self.assertEqual(len(ui), 371_052)
-        self.assertEqual(len(game), 1_444_128)
+        self.assertEqual(len(game), 1_444_384)
         ui_records, game_records = container_records(self.catalogs)
         verify_container(ui, ui_records)
         with TemporaryDirectory() as tmp:
@@ -124,7 +124,7 @@ class AgnbContainerTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             container_counts = render_container_include(ui, game + earth_records(PROJECT_ROOT, Path(tmp)))
         self.assertIn("ui_agnb_num_images: equ 46", container_counts)
-        self.assertIn("game_num_images: equ 384", container_counts)
+        self.assertIn("game_num_images: equ 386", container_counts)
 
     def test_target_contains_only_supported_artifacts(self) -> None:
         files = {

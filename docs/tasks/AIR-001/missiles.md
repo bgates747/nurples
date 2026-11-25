@@ -1,5 +1,7 @@
 # Air-launched bombs — first audition
 
+**Heavy missile accepted on FAE, 2026-11-25:** Smith approved the 10×8 bomb for large ships. Its two frames are separate layers of `missile_10x8.xcf`. It uses the same 180° orientation adjustment, screen-relative speed, random reload, animation cadence, damage and projectile pool as the other missiles.
+
 **Accepted on FAE, 2026-11-25:** Smith selected the final brighter colors for both missiles. The editable XCFs and their four one-layer PNG exports are retained; the 3×6 frames below describe the earlier audition, not the accepted assets.
 
 **Art revision for the next FAE review:** each layer of the two Oryx 6×8 missile XCFs is exported separately, untrimmed. The single is 6×8 and the paired artwork is 16×8. The build rotates them bulb-first as before; muzzle centering and collision bounds use the new dimensions. Drop speed, reload and animation timing are unchanged.

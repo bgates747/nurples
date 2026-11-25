@@ -134,7 +134,7 @@ init_enemy_fireballs:
     pop bc
     djnz @frames_loop
     ld hl,BUF_MISSILE_6X8_1
-    ld b,4 ; append singles at frames 64/65 and doubles at 66/67
+    ld b,6 ; single 64/65, double 66/67, heavy 68/69
 @bomb_frames:
     push bc
     push hl
@@ -159,9 +159,6 @@ air_reset_reload:
     ret
 
 air_try_bomb:
-    ld a,(iy+sprite_frame) ; big 0/1, medium 2/3, small 4/5, independent of HP
-    cp 2
-    ret c
     ld hl,(player_state)
     ld de,player_alive
     or a
@@ -175,12 +172,20 @@ air_try_bomb:
     ld b,fireballs_max
     call spawn_sprite_from_sprite
     ret nc
-    ld a,(iy+sprite_frame)
+    ld a,(iy+sprite_frame) ; big 0/1, medium 2/3, small 4/5, independent of HP
     cp 4
     jr nc,@muzzle
+    cp 2
+    jr c,@heavy
     ld (ix+sprite_frame),66
     ld (ix+sprite_dim_x),16
     ld hl,BUF_MISSILE_6X8_DOUBLE_1
+    jr @set_bitmap
+@heavy:
+    ld (ix+sprite_frame),68
+    ld (ix+sprite_dim_x),10
+    ld hl,BUF_MISSILE_10X8_1
+@set_bitmap:
     ld (ix+sprite_base_bufferId),hl
 @muzzle:
     ld a,(iy+sprite_dim_x)
