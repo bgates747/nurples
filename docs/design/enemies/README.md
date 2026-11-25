@@ -4,6 +4,13 @@
 
 **Proposed:** [modular bosses and encounter placement](bosses/README.md).
 
+## Art to work into the game
+
+Smith adapted these from [Gustavo Vituri’s Space Shooter pack](https://gvituri.itch.io/space-shooter). The six edited PNGs are tracked in [the pending sprite folder](../../../assets/img/orig/sprites/pending/), outside the production builder’s nonrecursive PNG scan. The original download and its provenance file remain local to Oryx.
+
+- [ ] **Flitter enemy ship** — `flitter_1.png`, `flitter_2.png`. Choose its movement and encounter before assigning a spawn.
+- [ ] **Missile** — single: `missile_3x6_1.png`, `missile_3x6_2.png`; double: `missile_3x6_double_1.png`, `missile_3x6_double_2.png`. Shooter and firing behavior are undecided; the artwork need not be paired with the Flitter.
+
 ## Deferred: placing air spawns independently of terrain
 
 Earth City's Structures layer currently holds both scenery and spawn markers, so painting a marker over a building would replace the building in Tiled. A separate **Spawns** layer could remove that authoring restriction. Earth scenery is already baked into the background; the compiler could emit the markers into the existing one-byte runtime map without changing the engine.
