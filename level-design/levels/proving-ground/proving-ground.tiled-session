@@ -1,0 +1,26 @@
+{
+    "activeFile": "level.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "/home/smith/Agon/mystuff/nurples-level-design/level-design/assets/tilesets/dg/dg0.tsx": {
+            "scaleInDock": 1
+        },
+        "level.tmx": {
+            "scale": 2.1542,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 141.1196731965463,
+                "y": 2013.740599758611
+            }
+        }
+    },
+    "openFiles": [
+        "level.tmx"
+    ],
+    "project": "proving-ground.tiled-project",
+    "recentFiles": [
+        "level.tmx"
+    ]
+}

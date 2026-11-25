@@ -572,9 +572,8 @@ class AssemblySafetyTests(unittest.TestCase):
 
         tiles = read_asm("tiles.inc")
         self.assertIn(
-            "ld hl,tile_activation_routines\n"
-            "    ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic",
-            tiles,
+            "@lookup:\n    ld de,0\n    ld d,3\n    ld e,a\n    mlt de\n    add hl,de",
+            tiles.split("tiles_dispatch_event:", 1)[1],
         )
 
         tile_table = read_asm("tile_table.inc")

@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" orientation="orthogonal" renderorder="right-down" width="16" height="1" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.10" orientation="orthogonal" renderorder="right-down" width="16" height="1" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="1">
  <tileset firstgid="1" source="../../assets/tilesets/dg/dg0.tsx"/>
- <layer id="1" name="Structures" width="16" height="1"><data encoding="csv">
+ <layer id="3" name="Background" locked="1" width="16" height="1">
+  <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-</data></layer>
- <layer id="2" name="Spawns" width="16" height="1"><data encoding="csv">
+  </data>
+ </layer>
+ <layer id="1" name="Tiles" width="16" height="1">
+  <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-</data></layer>
+  </data>
+ </layer>
+ <layer id="2" name="Spawns" width="16" height="1">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  </data>
+ </layer>
 </map>

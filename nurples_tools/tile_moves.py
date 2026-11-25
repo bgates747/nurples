@@ -51,7 +51,7 @@ def rewrite_map(root, path, a, b):
         return None
     layers = tree.findall("layer")
     if (tree.tag != "map" or len(sets) != 1 or sets[0].get("firstgid") != "1"
-            or len(sets[0]) or (len(layers) != 1 and [l.get("name") for l in layers] != ["Structures", "Spawns"])
+            or len(sets[0]) or (len(layers) != 1 and [l.get("name") for l in layers] != ["Background", "Tiles", "Spawns"])
             or tree.get("infinite", "0") != "0"
             or any(e.tag not in {"tileset", "layer"} for e in tree)):
         raise ValueError(f"{path}: expected a single finite DG tile layer")

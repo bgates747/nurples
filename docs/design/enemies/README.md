@@ -1,6 +1,6 @@
 # Enemies
 
-**Current game:** launch pads identify air spawns. Tiled shows the designer which enemy a pad produces; the player sees the pad artwork. Small, medium and large side-to-side ships are ramming hazards that take one, two and three shots respectively. Seekers fill a different role: they pursue, then retreat when the player dies. See the [air enemy design and movement record](../../tasks/AIR-001/TASK.md) and [tile registry and editor mappings](../../tasks/MAP-002/TASK.md).
+**Current game:** Tiled shows an enemy marker on the Spawns layer; the player sees the terrain painted on Tiles. A functional seeker pad is different: it owns its launches and provides a retreat destination. Small, medium and large ships take one, two and three shots respectively. See the [air enemy design and movement record](../../tasks/AIR-001/TASK.md) and [tile registry and editor mappings](../../tasks/MAP-002/TASK.md).
 
 **Proposed:** [modular bosses and encounter placement](bosses/README.md).
 

@@ -8,6 +8,7 @@ from nurples_tools.maps import (
     MapCompileError,
     check_map_include,
     compile_map_manifest,
+    overlap_audition,
     write_map_include,
 )
 
@@ -133,20 +134,30 @@ output = "generated/levels.inc"
         self._write_catalog({0, 1, 121})
         self._compile_single([",".join(map(str, [1, 2, 3, 4, 121] + [0] * 11))])
         compiled = compile_map_manifest(self.manifest)
-        self.assertEqual(compiled.levels[0].runtime_rows[0][:5], (1, 2, 3, 15, 121))
+        level = compiled.levels[0]
+        self.assertEqual(level.runtime_rows[0][:5], (1, 121, 121, 121, 121))
+        self.assertEqual(next(level.event_rows()), (4, 0, 1, 16, 2, 32, 3, 48, 15))
 
-    def test_dg_marker_over_existing_pad(self):
-        self._write_catalog({0, 121, 17})
+    def test_dg_ground_and_sprite_events_are_independent(self):
+        self._write_catalog({0, 1, 5, 121, 17})
         self._write_manifest([("DG", "one.tmx")])
-        for art in (121, 17):
-            p = self._write_tmx("one.tmx", [self._row(art)], extra_content=
-                f'<layer name="Spawns" width="16" height="1"><data encoding="csv">{self._row(2)}</data></layer>')
-            p.write_text(p.read_text().replace('<layer width=', '<layer name="Structures" width='))
-            if art == 121:
-                self.assertEqual(compile_map_manifest(self.manifest).levels[0].runtime_rows[0][0], 2)
-            else:
-                with self.assertRaisesRegex(MapCompileError, "replace different DG terrain"):
-                    compile_map_manifest(self.manifest)
+        terrain = [5, 1, 17, 0] + [0]*11 + [5]
+        markers = [2, 0, 3, 1] + [0]*11 + [2]
+        def layer(name, cells):
+            return f'<layer name="{name}" width="16" height="1"><data encoding="csv">{",".join(map(str, cells))}</data></layer>'
+        def compile_cells(bg, tiles, spawns):
+            p = self._write_tmx("one.tmx", [self._row(0)], extra_content=
+                                layer("Tiles", tiles) + layer("Spawns", spawns))
+            p.write_text(p.read_text().replace('<layer width=', '<layer name="Background" width=')
+                         .replace(self._row(0), self._row(bg), 1))
+            return compile_map_manifest(self.manifest).levels[0]
+        level = compile_cells(0, terrain, markers)
+        self.assertEqual(level.runtime_rows[0], tuple(terrain))
+        self.assertEqual(next(level.event_rows()), (7, 0,5, 0,2, 16,1, 32,3, 48,129, 240,5, 240,2))
+        for bg, tiles, spawns, why in ((17, terrain, markers, "Background"), (0, markers, terrain, "belongs on Spawns"),
+                                        (0, terrain, terrain, "unknown sprite marker")):
+            with self.assertRaisesRegex(MapCompileError, why):
+                compile_cells(bg, tiles, spawns)
 
     def test_manifest_order_and_runtime_row_reversal(self) -> None:
         self._write_tmx(
@@ -422,6 +433,15 @@ class StandaloneMapSuiteTests(unittest.TestCase):
 
 
 class ProductionCampaignTests(unittest.TestCase):
+    def test_review_changes_one_terrain_byte_only(self):
+        campaign = compile_map_manifest(CAMPAIGN_MANIFEST)
+        control = campaign.text.splitlines()
+        review = overlap_audition(campaign).splitlines()
+        changed = [(a, b) for a, b in zip(control, review, strict=True) if a != b]
+        self.assertEqual(len(changed), 1)
+        self.assertEqual([(a, b) for a, b in zip(*(v.split(",") for v in changed[0]), strict=True)
+                          if a != b], [("121", "020")])
+
     def test_modern_campaign_is_followed_by_original_z80_main_level(self) -> None:
         compiled = compile_map_manifest(CAMPAIGN_MANIFEST)
 

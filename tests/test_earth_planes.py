@@ -20,7 +20,7 @@ class EarthPlaneTests(unittest.TestCase):
         earth = compile_map_manifest(ROOT / "maps/campaign.toml").levels[0]
         tmx = ET.parse(earth.source_path)
         base = earth.source_path.parent
-        for layer, rows in (("Structures", earth.structure_rows), ("Spawns", earth.runtime_rows)):
+        for layer, rows in (("Tiles", earth.runtime_rows), ("Spawns", earth.spawn_rows)):
             self.assertEqual([v for row in reversed(rows) for v in row],
                              list(map(int, tmx.findtext(f"layer[@name='{layer}']/data").split(","))))
         bank = {im.buffer_id: im.payload for im in parse_images((ROOT / "tgt/game.agnb").read_bytes())}
@@ -32,7 +32,7 @@ class EarthPlaneTests(unittest.TestCase):
             img_to_rgba2(bg, encoded)
             self.assertEqual(b"".join(bank[1280+i] for i in reversed(range(16))), encoded.read_bytes())
             self.assertEqual(bank[EARTH_TILE_BASE], bytes(256))
-            for gid in {v for row in earth.structure_rows for v in row if v}:
+            for gid in {v for row in earth.runtime_rows for v in row if v}:
                 x, y = (gid-1)%16*16, (gid-1)//16*16
                 img_to_rgba2(atlas.crop((x, y, x+16, y+16)), encoded)
                 self.assertEqual(bank[EARTH_TILE_BASE+gid], encoded.read_bytes(), gid)

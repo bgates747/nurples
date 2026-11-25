@@ -10,14 +10,14 @@ electrode_review:
     ld (tiles_row_defs),hl
     ld a,1
     ld (tiles_cols),a
-    call do_active_tiles                  ; register slot 15, actual ROM table
+    call review_admit                  ; register slot 15, actual ROM table
     ld a,(num_active_tiles)
     cp review_alias
     jp nz,review_save
     .if 1-review_alias
     ld a,11                              ; known positive control after no-op
     ld (review_row),a
-    call do_active_tiles
+    call review_admit
     .endif
     ld a,2
     ld (review_step),a
@@ -37,10 +37,10 @@ electrode_review:
     ld (review_step),a
     ld a,tile_lightning
     ld (review_row),a
-    call do_active_tiles                 ; matching Y
+    call review_admit                 ; matching Y
     ld hl,64
     ld (tiles_y_plot),hl
-    call do_active_tiles                 ; another independent barrier
+    call review_admit                 ; another independent barrier
     ld a,(num_active_tiles)
     cp 3
     jp nz,review_save
@@ -95,6 +95,11 @@ review_filename:
     .else
     asciz "CONTROL.OUT"
     .endif
+review_admit:
+    ld hl,review_event
+    ld (tiles_row_events),hl
+    jp do_active_tiles
+review_event: db 1,0 ; one event, column zero
 review_row: db 15
 review_receipt: db "M2",review_alias
 review_step: db 1

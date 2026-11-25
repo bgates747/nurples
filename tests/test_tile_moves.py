@@ -65,7 +65,8 @@ class TileMoveTests(unittest.TestCase):
 
     def cells(self):
         ids = self.runtime_ids()
-        return {p: bytes(ids[int(i)] for i in ET.parse(self.root / p).findtext("layer/data").split(","))
+        return {p: tuple(bytes(ids[int(i)] for i in data.text.split(","))
+                         for data in ET.parse(self.root / p).findall("layer/data"))
                 for p in tracked(self.root, "*.tmx") if ET.parse(self.root / p).find("tileset").get("source","").endswith("dg0.tsx")}
 
     def test_move_then_swap_on_full_map_set(self):

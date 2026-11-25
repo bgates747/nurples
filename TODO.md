@@ -1,6 +1,6 @@
 # Purple Nurples TODO
 
-- [ ] **MAP-005 — [Three authoring layers and independent sprite spawns](level-design/sprite-spawns.md).** Approved for implementation and FAE review.
+- [x] **MAP-005 — [Three authoring layers and independent sprite spawns](level-design/sprite-spawns.md).** Accepted after Smith's Oryx FAE playthrough.
 
 - [ ] **[SPR-HW-001 — Explicit hardware sprites for gameplay](docs/tasks/SPR-HW-001/TASK.md).**
   Next proposed experiment: [mouse-driven scanline stress fixture](docs/tasks/SPR-HW-001/scanline-lab.md).

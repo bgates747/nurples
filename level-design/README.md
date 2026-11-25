@@ -1,8 +1,7 @@
 # Nurples level design conventions
 
 Use one Tiled project per story level. Keep map placements local and share
-the artwork they reference. This is the target layout; existing maps have
-not all been migrated.
+the artwork they reference.
 
     level-design/
       template/                    Starting project and map; copy, don't link
@@ -51,14 +50,22 @@ not all been migrated.
 
 ## Map layers
 
-In drawing order, use **Background** for a locked terrain image when needed,
-**Structures** for visible terrain tiles, and **Spawns** for placement markers.
-A scrolling starfield needs no dummy background image. Keep structures out
-of the background pixels. Earth allows any structure under a spawn. DG
-spawns retain a visible pad: use empty terrain or the matching pad underneath.
-Other DG overlaps require a separate runtime design decision.
-A turret or electrode that *is* an active terrain tile remains terrain;
-do not turn it into an invisible spawn just to match a layer name.
+Use exactly three layers, bottom to top:
+
+1. **Background** — Earth's locked terrain image, or an empty tile layer for a
+   runtime starfield. The empty layer costs no bitmap upload.
+2. **Tiles** — visible scenery and fixed active tiles. In DG, put functional
+   seeker pads, turrets, electrodes and discharges here. A seeker pad already
+   owns its launches and is a retreat destination: don't also place a seeker
+   marker unless you want a second, independent ship.
+3. **Spawns** — place a sprite marker on any cell, even on top of a fixed
+   active tile. The marker draws nothing. To show an ornamental DG pad under
+   a ship, paint Tiled tile 120 on **Tiles**; to show a road, paint the road.
+
+The compiler keeps the terrain and emits row events in left-to-right order.
+If two events share a cell, the ground activates first, then the sprite.
+Both use the existing fully-scrolled-in timing. Hiding either drawing pass
+in a diagnostic build does not disable spawns.
 
 ## Migration and checks
 

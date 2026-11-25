@@ -3,22 +3,9 @@
 earth_first_buffer: equ 1280
 earth_next_buffer: dl earth_first_buffer
 earth_bind_background:
-    ld bc,0
-    ld hl,tile_active_art
-    ld de,tile_activation_routines
-    ld a,(cur_level)
-    or a
-    jp nz,@tables
-    ld bc,16*256 ; byte offset from spawn row to corresponding structure row
-    ld hl,earth_marker_art
-    ld de,earth_marker_callbacks
-@tables:
-    ld (terrain_visual_offset_operand),bc
-    ld (terrain_art_operand),hl
-    ld (terrain_activation_operand),de
     ld hl,bg_plot
-    ld a,(cur_level)
-    or a
+    ld a,(cur_baseBufferId+1)
+    cp 6 ; Earth artwork bank 0600h, not an assumption about level order
     jp nz,@bind
     ld hl,earth_first_buffer
     ld (earth_next_buffer),hl
@@ -34,13 +21,9 @@ earth_select:
     ld (earth_next_buffer),hl
     ret
 
-; Earth-only editor markers. Runtime artwork is the existing transparent tile 0.
-earth_marker_art: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+; Extended row events: solitary seeker (either tileset), Earth march S/M/L.
 earth_marker_callbacks:
     dl activate_null_tile,earth_launch_seeker,earth_launch_small,earth_launch_medium,earth_launch_large
-    dl activate_null_tile,activate_null_tile,activate_null_tile,activate_null_tile
-    dl activate_null_tile,activate_null_tile,activate_null_tile,activate_null_tile
-    dl activate_null_tile,activate_null_tile,activate_null_tile,activate_null_tile
 earth_launch_seeker:
     ld bc,(tiles_x_plot-1)
     ld c,0

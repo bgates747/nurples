@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import re
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from io import StringIO
 from pathlib import Path
 
@@ -46,7 +46,21 @@ class CompiledLevel:
     source_path: Path
     height: int
     runtime_rows: tuple[tuple[int, ...], ...]
-    structure_rows: tuple[tuple[int, ...], ...] = ()
+    spawn_rows: tuple[tuple[int, ...], ...]
+    earth: bool = False
+
+    def event_rows(self):
+        """One count and (pixel X, constructor ID) pairs per admitted terrain row."""
+        for tiles, markers in zip(self.runtime_rows, self.spawn_rows, strict=True):
+            events = []
+            for x, (tile, marker) in enumerate(zip(tiles, markers, strict=True)):
+                if not self.earth and 0 < tile <= 16:
+                    events.extend((16*x, tile))  # fixed actor first, even on overlap
+                if marker:
+                    # High bit selects the independent seeker/Earth march callbacks.
+                    constructor = marker | 0x80 if self.earth or marker == 1 else marker
+                    events.extend((16*x, constructor))
+            yield (len(events)//2, *events)
 
 
 @dataclass(frozen=True)
@@ -306,29 +320,30 @@ def _compile_tmx(
 
     content_tags = {"layer", "objectgroup", "imagelayer", "group"}
     content = [child for child in root if child.tag in content_tags]
-    split = [e.get("name") for e in content] == ["Structures", "Spawns"]
-    if (not split and len(content) != 1) or any(e.tag != "layer" for e in content):
-        raise MapCompileError(
-            f"{source_path}: map must contain exactly one tile layer and no other layers"
-        )
     def read_layer(layer):
         return _read_dg_layer(layer, source_path, width, height, available_tiles, runtime_ids)
 
-    tiled_rows = read_layer(content[0])
-    if split:
-        spawn_rows = read_layer(content[1])
-        merged = []
-        for y, (structures, spawns) in enumerate(zip(tiled_rows, spawn_rows, strict=True)):
-            row = []
-            for x, (structure, spawn) in enumerate(zip(structures, spawns, strict=True)):
-                if spawn not in (0, 1, 2, 3, 15):
-                    raise MapCompileError(f"{source_path}: ({x},{y}) not an air spawn")
-                if spawn and structure not in (0, PAD_ART.get(spawn, spawn)):
-                    raise MapCompileError(f"{source_path}: ({x},{y}) spawn would replace different DG terrain")
-                row.append(spawn or structure)
-            merged.append(tuple(row))
-        tiled_rows = tuple(merged)
-    return CompiledLevel(name, source_path, height, tuple(reversed(tiled_rows)))
+    if (len(content) == 1 and content[0].tag == "layer"
+            and content[0].get("name") not in {"Background", "Tiles", "Structures", "Spawns"}):
+        # Historical single-layer diagnostic input; same compiler output format.
+        old = read_layer(content[0])
+        tiles = tuple(tuple(PAD_ART.get(g, g) for g in row) for row in old)
+        markers = tuple(tuple(g if g in PAD_ART else 0 for g in row) for row in old)
+    elif [(e.tag, e.get("name")) for e in content] == [
+            ("layer", "Background"), ("layer", "Tiles"), ("layer", "Spawns")]:
+        background, tiles, markers = map(read_layer, content)
+        if any(any(row) for row in background):
+            raise MapCompileError(f"{source_path}: DG Background must be empty (runtime starfield)")
+        for y, (terrain, spawns) in enumerate(zip(tiles, markers, strict=True)):
+            for x, (tile, spawn) in enumerate(zip(terrain, spawns, strict=True)):
+                if tile in PAD_ART:
+                    raise MapCompileError(f"{source_path}: ({x},{y}) sprite marker belongs on Spawns")
+                if spawn not in (0, 1, *PAD_ART):
+                    raise MapCompileError(f"{source_path}: ({x},{y}) unknown sprite marker {spawn}")
+    else:
+        raise MapCompileError(f"{source_path}: expected Background, Tiles, Spawns, "
+                              "or exactly one tile layer for a legacy input")
+    return CompiledLevel(name, source_path, height, tuple(reversed(tiles)), tuple(reversed(markers)))
 
 
 def _read_dg_layer(layer, source_path, width, height, available_tiles, runtime_ids):
@@ -384,11 +399,15 @@ def _render_include(
                 f"{symbol_prefix}_level_{index:02X}: ; {level.name}\n",
                 f"\tdb {MAP_WIDTH}          ; num cols\n",
                 f"\tdl {level.height}          ; num rows\n",
-                f"\tdl {EARTH_TILE_BASE if level.structure_rows else base_buffer_id}        ; base bufferId\n",
+                f"\tdl {EARTH_TILE_BASE if level.earth else base_buffer_id}        ; base bufferId\n",
+                f"\tdl {symbol_prefix}_events_{index:02X} ; row-admission stream\n",
             )
         )
-        for row in (*level.runtime_rows, *level.structure_rows):
+        for row in level.runtime_rows:
             lines.append("\tdb " + ",".join(f"{gid:03d}" for gid in row) + "\n")
+        lines.append(f"{symbol_prefix}_events_{index:02X}:\n")
+        for row in level.event_rows():
+            lines.append("\tdb " + ",".join(map(str, row)) + "\n")
         if index + 1 != len(levels):
             lines.append("\n")
     return "".join(lines)
@@ -478,7 +497,7 @@ def compile_map_manifest(manifest_path: Path, *, earth_source: Path | None = Non
             if earth_source is not None:
                 source_path = earth_source
             _, _, markers, structures = earth_layers(source_path)
-            levels.append(CompiledLevel(name, source_path, 256, markers, structures))
+            levels.append(CompiledLevel(name, source_path, 256, structures, markers, earth=True))
             continue
         levels.append(
             _compile_tmx(
@@ -512,6 +531,22 @@ def write_map_include(manifest_path: Path) -> Path:
     compiled.output_path.parent.mkdir(parents=True, exist_ok=True)
     compiled.output_path.write_bytes(wanted)
     return compiled.output_path
+
+
+def overlap_audition(compiled: CompiledMapSet) -> str:
+    """Private FAE variant: swap only the art under the first proving-ground ship."""
+    levels = list(compiled.levels)
+    dg = levels[1]
+    if dg.earth or dg.name != "Air enemy proving ground":
+        raise MapCompileError("expected the DG proving ground after Earth")
+    # Assert the review landmark rather than silently changing an unrelated encounter.
+    row, col = 3, 8
+    if (dg.runtime_rows[row][col], dg.spawn_rows[row][col]) != (121, 2):
+        raise MapCompileError("review landmark changed: expected the small ship above pad art")
+    terrain = list(dg.runtime_rows)
+    terrain[row] = (*terrain[row][:col], 20, *terrain[row][col+1:])  # horizontal conduit
+    levels[1] = replace(dg, runtime_rows=tuple(terrain))
+    return _render_include(compiled.symbol_prefix, compiled.base_buffer_id, tuple(levels))
 
 
 def check_map_include(manifest_path: Path) -> list[str]:

@@ -4,7 +4,7 @@
  <imagelayer id="1" name="Background" locked="1">
   <image source="../../assets/backgrounds/earth/earth-background.png" width="256" height="4096"/>
  </imagelayer>
- <layer id="2" name="Structures" width="16" height="256">
+ <layer id="2" name="Tiles" width="16" height="256">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

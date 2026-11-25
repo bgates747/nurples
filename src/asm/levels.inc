@@ -125,7 +125,9 @@ init_level:
     ld hl,(ix+4)
     ld (cur_baseBufferId),hl
 ; set tiles_row_defs
-    lea ix,ix+7 ; ix points to definition of first tile of first row
+    ld hl,(ix+7)
+    ld (tiles_row_events),hl ; reset on every entry/restart, independent of LUT order
+    lea ix,ix+10 ; first visible terrain row
     ld (tiles_row_defs),ix
 ; reset tile rows and plot coordinates
     ld hl,-1

@@ -10,7 +10,7 @@ cur_baseBufferId: dl 0
 tiles_x_plot: dl 0
     db 0 ; padding for byte-shifting
 tiles_y_plot: dl -15
-tiles_visual_row: ds 16 ; render IDs only; activation still reads the source row
+tiles_row_events: dl 0 ; cursor into compiled count + (pixel X, callback ID) rows
 
 ; GAMEPLAY-ONLY TERRAIN PIPELINE.
 ; This loop is deliberately synchronized to one scanline per frame and to the
@@ -38,40 +38,8 @@ tiles_plot_travel:
 ; initialize tiles loop
     ld hl,0 ; init plotting x-coordinate
     ld (tiles_x_plot),hl
-    ld hl,(tiles_row_defs)
-; Resolve shared pad artwork once per incoming row, not per scanline.
-    ld a,(tiles_y_plot)
-    cp 0xF1 ; -15, first scanline of every new terrain row
-    jp nz,tiles_plot_visual_ready
-    ; Once per incoming row. DG reads the same row for art and activation;
-    ; Earth's structure plane follows its spawn plane in the compiled map.
-terrain_visual_offset_operand: equ $+1
-    ld de,0
-    add hl,de
-    ld de,tiles_visual_row
-    ld a,(tiles_cols)
-    ld b,a
-tiles_plot_resolve_art:
-    ld a,(hl)
-    inc hl
-    cp tile_activation_routines_count
-    jp nc,tiles_plot_store_art
-    push hl
-    ld hl,0
-    ld l,a
-    push de
-terrain_art_operand: equ $+1
-    ld de,tile_active_art
-    add hl,de
-    ld a,(hl)
-    pop de
-    pop hl
-tiles_plot_store_art:
-    ld (de),a
-    inc de
-    djnz tiles_plot_resolve_art
 tiles_plot_visual_ready:
-    ld hl,tiles_visual_row
+    ld hl,(tiles_row_defs) ; compiler already resolved the visible tile IDs
     ld a,(tiles_cols)
     ld b,a ; column loop counter
 tiles_plot_loop:
@@ -183,44 +151,49 @@ terrain_bg_call_operand: equ $+1 ; level-entry binding; same CALL, no dispatch o
 ; end tiles_scroll_background
 
 do_active_tiles:
-; initialize tiles loop
-    ld hl,0 ; init plotting x-coordinate
-    ld (tiles_x_plot),hl
-    ld hl,(tiles_row_defs)
-    ld a,(tiles_cols)
-    ld b,a ; column loop counter
-do_active_tiles_loop:
-    push bc ; save the loop counter
-; read the tile defintion for the current column
-    ld a,(hl) ; a has tile definition
-    push hl ; save pointer to tile definition
-    or a ; check for null tile
-    jp z,do_active_tiles_next_tile ; skip to next tile if null
-    cp tile_activation_routines_count ; carry reset if active tile
-    jp nc,do_active_tiles_next_tile ; skip to next tile if not active
-; call the tile activation routine
-terrain_activation_operand: equ $+1
+    ld hl,(tiles_row_events)
+    ld b,(hl)
+    inc hl
+    ld a,b
+    or a
+    jr z,@done
+@next:
+    ld de,0
+    ld e,(hl)
+    ld (tiles_x_plot),de
+    inc hl
+    ld a,(hl)
+    inc hl
+    push hl
+    push bc
+    call tiles_dispatch_event
+    pop bc
+    pop hl
+    djnz @next
+@done:
+    ld (tiles_row_events),hl
+    ret
+
+tiles_dispatch_event:
+    bit 7,a
+    jr nz,@extended
+    cp tile_activation_routines_count
+    ret nc
     ld hl,tile_activation_routines
-    ld de,0 ; MLT writes DE[15:0] only; clear DEU before pointer arithmetic
-    ld d,3 ; three bytes per table entry
-    ld e,a ; a is the tile type
-    mlt de ; de is now the offset to the table entry
-    add hl,de ; hl is now the address of the table entry
-    ld hl,(hl) ; hl is now the activation routine address
-    CALL_HL ; call the activation routine
-do_active_tiles_next_tile:
-; bump x-coords the width of one tile and save it
-    ld hl,(tiles_x_plot)
-    ld bc,16
-    add hl,bc
-    ld (tiles_x_plot),hl
-; prepare to loop to next column
-    pop hl ; get back pointer to tile def
-    inc hl ; bump it to the next column
-    pop bc ; snag our loop counter
-    djnz do_active_tiles_loop
-    ret ; done
-; end do_active_tiles
+    jr @lookup
+@extended:
+    and 07fh
+    cp 5
+    ret nc
+    ld hl,earth_marker_callbacks
+@lookup:
+    ld de,0
+    ld d,3
+    ld e,a
+    mlt de
+    add hl,de
+    ld hl,(hl)
+    jp (hl)
 
 bg_y_plot: dl -1
 bg_bufferId: dl BUF_BG_STARS_0 ; default bufferId for background tiles

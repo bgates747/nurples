@@ -53,7 +53,7 @@ def check_assets() -> None:
     print("Current deployable assets are deterministic and up to date.")
 
 
-def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False) -> None:
+def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False, spawn_review=False) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
@@ -65,10 +65,16 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         output = PROJECT_ROOT / ".build" / f"aligned-pace-{pace}"
     if staggered:
         output = PROJECT_ROOT / ".build/staggered-pace-control"
+    if spawn_review:
+        output = PROJECT_ROOT / ".build/map005-review"
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
+        if spawn_review:
+            from nurples_tools.maps import compile_map_manifest, overlap_audition
+            campaign = compile_map_manifest(CAMPAIGN_MANIFEST)
+            (staged_asm/campaign.output_path.name).write_text(overlap_audition(campaign))
         modules = prepare_audio(PROJECT_ROOT, staged_asm)
         configure_loading_music(staged_asm, candidate=True, small_reads=True, whole=True,
                                 all_phases=True, combat_cues=True)
@@ -84,7 +90,7 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
                 from nurples_tools.maps import compile_map_manifest
                 level_dir = PROJECT_ROOT / "level-design/levels/01"
                 maps = compile_map_manifest(CAMPAIGN_MANIFEST, earth_source=level_dir/"staggered.tmx")
-                if maps.levels[0].structure_rows != compile_map_manifest(CAMPAIGN_MANIFEST).levels[0].structure_rows:
+                if maps.levels[0].runtime_rows != compile_map_manifest(CAMPAIGN_MANIFEST).levels[0].runtime_rows:
                     raise ValueError("Staggered audition expects unchanged city art")
                 (staged_asm/maps.output_path.name).write_text(maps.text)
                 edit(staged_asm, "earth_march.inc", "equ 5*16", "equ 6*16")
@@ -185,6 +191,8 @@ def main() -> None:
                          help="build single-row Earth audition in .build/earth-jit-r01")
     actions.add_argument("--aligned-pace", choices=("control", "bombing"))
     actions.add_argument("--staggered-pace", action="store_true")
+    actions.add_argument("--sprite-spawn-review", action="store_true",
+                         help="MAP-005 campaign audition: draw toggles and one DG conduit under a ship")
     args = parser.parse_args()
 
     if args.assets:
@@ -193,6 +201,8 @@ def main() -> None:
         check_assets()
     elif args.scanout_fixture:
         assemble(scanout_fixture=True)
+    elif args.sprite_spawn_review:
+        assemble(scanout_fixture=True, spawn_review=True)
     elif args.staggered_pace:
         assemble(earth_jit=True, pace="control", staggered=True)
     elif args.aligned_pace:

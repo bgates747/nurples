@@ -1,38 +1,39 @@
 {
-    "activeFile": "staggered.tmx",
+    "activeFile": "level.tmx",
     "expandedProjectPaths": [
         "."
     ],
     "fileStates": {
-        "staggered.tmx": {
-            "scale": 4.1449,
-            "selectedLayer": 2,
-            "viewCenter": {
-                "x": 110.25597722502353,
-                "y": 3731.815001568192
-            }
+        "/home/smith/Agon/mystuff/nurples-level-design/level-design/assets/tilesets/tiny-city/tiny-city.tsx": {
+            "scaleInDock": 2.7488,
+            "scaleInEditor": 1
         },
         "level.tmx": {
             "scale": 4.1449,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 131.12499698424568,
+                "x": 131.0043668122271,
                 "y": 3680.185287944221
             }
         },
-        "../../assets/tilesets/tiny-city/tiny-city.tsx": {
-            "scaleInDock": 2.7488,
-            "scaleInEditor": 1
+        "staggered.tmx": {
+            "scale": 4.1449,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 128.10924268378005,
+                "y": 2047.8178001881834
+            }
         }
     },
     "map.lastUsedFormat": "tmx",
     "openFiles": [
-        "staggered.tmx"
+        "staggered.tmx",
+        "level.tmx"
     ],
     "project": "01-earth.tiled-project",
     "recentFiles": [
         "staggered.tmx",
         "level.tmx",
-        "../../assets/tilesets/tiny-city/tiny-city.tsx"
+        "/home/smith/Agon/mystuff/nurples-level-design/level-design/assets/tilesets/tiny-city/tiny-city.tsx"
     ]
 }

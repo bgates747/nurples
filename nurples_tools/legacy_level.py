@@ -7,6 +7,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from nurples_tools.tile_bindings import IDENTITY, bindings
+from nurples_tools.active_tiles import PAD_ART
 
 
 LEGACY_ROWS = 255
@@ -121,21 +122,22 @@ def render_tmx(runtime_rows: tuple[tuple[int, ...], ...], runtime_ids=IDENTITY,
             f"legacy map contains {len(runtime_rows)} rows; expected {LEGACY_ROWS}"
         )
     editor_gids = {runtime: gid for gid, runtime in enumerate(runtime_ids)}
-    planes = [[], []]
+    planes = [[], [], []]
     for row in reversed(runtime_rows):
         if len(row) != MAP_WIDTH:
             raise LegacyLevelError(f"legacy map row contains {len(row)} columns")
-        for i, rows in enumerate(planes):
-            rows.append(",".join(str(editor_gids[t] if (t in (1, 2, 3, 15)) == bool(i) else 0)
-                                 for t in row))
-    layers = "".join(f' <layer id="{i}" name="{name}" width="16" height="255">\n'
+        planes[0].append(",".join("0" for _ in row))
+        planes[1].append(",".join(str(editor_gids[PAD_ART.get(t, t)]) for t in row))
+        planes[2].append(",".join(str(editor_gids[t] if t in PAD_ART else 0) for t in row))
+    layers = "".join(f' <layer id="{i}" name="{name}"{lock} width="16" height="255">\n'
                      '  <data encoding="csv">\n' + ",\n".join(rows) + '\n  </data>\n </layer>\n'
-                     for i, (name, rows) in enumerate(zip(("Structures", "Spawns"), planes), 1))
+                     for (i, name, lock), rows in zip(
+                         ((3, "Background", ' locked="1"'), (1, "Tiles", ""), (2, "Spawns", "")), planes))
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" '
         'renderorder="right-down" width="16" height="255" tilewidth="16" '
-        'tileheight="16" infinite="0" nextlayerid="3" nextobjectid="1">\n'
+        'tileheight="16" infinite="0" nextlayerid="4" nextobjectid="1">\n'
         f' <tileset firstgid="1" source="{tileset_source}"/>\n'
         f'{layers}'
         '</map>\n'

@@ -171,13 +171,17 @@ or checked independently:
 .venv/bin/python build/scripts/build_campaign_maps.py --check
 ```
 
-Level zero remains the modern 256-row Agon map. Level one is the recovered
-original Z80 game's 255-row main level. `tools/import_legacy_z80_level.py` is a
+The campaign runs Earth, the DG proving ground, modern DG and the recovered
+255-row Z80 main level. Each record stores column count, 24-bit row count,
+bitmap base and event stream pointer, then one terrain byte per cell, bottom row
+first. Each event row is a count and (pixel X, callback ID) pairs, consumed once
+on admission. See the [Tiled conventions](../level-design/README.md#map-layers).
+`tools/import_legacy_z80_level.py` is a
 strict, provenance-only importer that decodes the old row mask and packed tile
-nibbles into the checked-in `tiles/dg/nurples_z80_main.tmx`; the normal build
+nibbles into the checked-in `level-design/levels/recovered-z80/level.tmx`; the normal build
 does not depend on the recovered checkout or import executable code.
 
-The unchanged old passive sources live under `tiles/dg/legacy_z80`. The asset
+The unchanged old passive sources live under `level-design/assets/tilesets/dg/legacy_z80`. The asset
 build converts them through Agon64 and canonical `agonutils`, publishes them as
 runtime tile IDs 17 through 21, and updates their Tiled atlas cells. Old tile
 ID 7 maps to modern active ID 1 and old ID 8 maps to modern active ID 5. This

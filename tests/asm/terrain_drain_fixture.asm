@@ -12,6 +12,8 @@ BUF_BG_STARS_0: equ 1024
 tile_activation_routines_count: equ 1
 tile_active_art: db 0
 tile_activation_routines: dl fixture_fail
+earth_marker_callbacks: dl fixture_fail
+fixture_events: db 0
 fixture_last_row: db 0
 fixture_scrolls: dl 0
 fixture_tile_plots: db 0
@@ -27,6 +29,8 @@ fixture_start:
     ld (cur_baseBufferId),hl
     ld hl,fixture_last_row
     ld (tiles_row_defs),hl
+    ld hl,fixture_events
+    ld (tiles_row_events),hl
     ld a,1
     ld (tiles_cols),a
     ld (tiles_row),a

@@ -10,13 +10,24 @@ def earth_layers(source: Path):
     root = ET.parse(source).getroot()
     if (root.get("width"), root.get("height"), root.get("tilewidth"), root.get("tileheight")) != ("16","256","16","16"):
         raise ValueError("Earth requires 16x256 cells")
-    layers = root.findall("layer")
-    if [item.get("name") for item in layers] not in (["Structures"], ["Structures", "Spawns"]):
-        raise ValueError("Expected Structures and optional Spawns above it")
-    layer = layers[0]
-    data = layer.find("data")
+    layers = [e for e in root if e.tag in ("layer", "imagelayer", "objectgroup", "group")]
+    if [(e.tag, e.get("name")) for e in layers] != [
+            ("imagelayer", "Background"), ("layer", "Tiles"), ("layer", "Spawns")]:
+        raise ValueError(f"{source}: expected Background, Tiles and Spawns in drawing order")
+    for e in layers:
+        if any(float(e.get(k, "0")) for k in ("x", "y", "offsetx", "offsety")):
+            raise ValueError(f"{source}: nonzero layer offset")
+    def cells_of(layer):
+        data = layer.find("data")
+        if ((layer.get("width"), layer.get("height")) != ("16", "256")
+                or data is None or data.attrib != {"encoding": "csv"} or len(data)):
+            raise ValueError(f"{source}: expected finite 16x256 CSV for {layer.get('name')}")
+        rows = [s.removesuffix(",").split(",") for s in data.text.strip().splitlines()]
+        if len(rows) != 256 or any(len(row) != 16 for row in rows):
+            raise ValueError(f"{source}: invalid row dimensions on {layer.get('name')}")
+        return [int(x) for row in rows for x in row]
     ts, = root.findall("tileset")
-    if ts.get("firstgid") != "1" or data.get("encoding") != "csv":
+    if ts.get("firstgid") != "1":
         raise ValueError("Unsupported Earth layer format")
     spec = source.parent / ts.attrib["source"]
     atlas = ET.parse(spec).getroot()
@@ -24,22 +35,11 @@ def earth_layers(source: Path):
     plane = Image.open(source.parent / root.find("imagelayer/image").attrib["source"]).convert("RGBA")
     if plane.size != (256,4096) or sheet.width != 256:
         raise ValueError("Invalid Earth artwork dimensions")
-    cells = [int(x) for x in data.text.strip().split(",")]
-    if len(cells)!=4096 or not all(0<=g<=int(atlas.attrib["tilecount"]) for g in cells):
-        raise ValueError("Invalid Earth map cells or transform flags")
-    if any(g > 255 for g in cells):
-        raise ValueError("Earth structure GID does not fit a runtime tile byte")
-    structures = [g if g > 16 else 0 for g in cells]
-    markers = [g if g <= 16 else 0 for g in cells]
-    if len(layers) == 2:
-        if any(markers):
-            raise ValueError("Move active markers from Structures to Spawns")
-        spawn = layers[1]
-        if (spawn.get("width"), spawn.get("height"), spawn.find("data").get("encoding")) != ("16", "256", "csv"):
-            raise ValueError("Expected 16x256 CSV spawn layer")
-        markers = [int(x) for x in spawn.findtext("data").strip().split(",")]
-        if len(markers) != len(cells) or any(not 0 <= g <= 4 for g in markers):
-            raise ValueError("Spawns accepts only empty cells or the four defined pad markers")
+    structures, markers = map(cells_of, layers[1:])
+    if any(g and not 17 <= g <= min(255, int(atlas.attrib["tilecount"])) for g in structures):
+        raise ValueError(f"{source}: Tiles requires scenery, not sprite markers or transform flags")
+    if any(not 0 <= g <= 4 for g in markers):
+        raise ValueError(f"{source}: Spawns accepts only the four defined sprite markers")
     def rows(values):
         return tuple(tuple(values[n:n+16]) for n in range(4080,-1,-16))
     return plane,sheet,rows(markers),rows(structures)
