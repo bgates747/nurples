@@ -117,7 +117,7 @@ def _sprites(
 
 
 def _tiles(project_root: Path, payload_dir: Path) -> list[ImageRecord]:
-    manifest = project_root / "tiles/dg/dg_0_files.xml"
+    manifest = project_root / "level-design/assets/tilesets/dg/dg_0_files.xml"
     root = ET.parse(manifest).getroot()
     if root.tag != "TileSet":
         raise ValueError(f"unexpected tile manifest root: {root.tag}")
@@ -314,7 +314,7 @@ def render_container_include(
 
 def earth_records(project_root: Path, scratch: Path) -> list[ImageRecord]:
     from nurples_tools.earth_city import EARTH_TILE_BASE, earth_layers
-    plane, sheet, _, structures = earth_layers(project_root / "tiles/kenney/earth-city/earth-city.tmx")
+    plane, sheet, _, structures = earth_layers(project_root / "level-design/levels/01/level.tmx")
     records = []
     for i in range(16):
         y = (15-i)*256

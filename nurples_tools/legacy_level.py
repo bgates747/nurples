@@ -112,7 +112,8 @@ def parse_main_level(source_text: str) -> tuple[tuple[int, ...], ...]:
     return tuple(rows)
 
 
-def render_tmx(runtime_rows: tuple[tuple[int, ...], ...], runtime_ids=IDENTITY) -> str:
+def render_tmx(runtime_rows: tuple[tuple[int, ...], ...], runtime_ids=IDENTITY,
+               tileset_source="dg0.tsx") -> str:
     """Render runtime rows as a portable Tiled top-to-bottom CSV map."""
 
     if len(runtime_rows) != LEGACY_ROWS:
@@ -131,7 +132,7 @@ def render_tmx(runtime_rows: tuple[tuple[int, ...], ...], runtime_ids=IDENTITY) 
         '<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" '
         'renderorder="right-down" width="16" height="255" tilewidth="16" '
         'tileheight="16" infinite="0" nextlayerid="2" nextobjectid="1">\n'
-        ' <tileset firstgid="1" source="dg0.tsx"/>\n'
+        f' <tileset firstgid="1" source="{tileset_source}"/>\n'
         ' <layer id="1" name="Original Z80 main level" width="16" height="255">\n'
         '  <data encoding="csv">\n'
         f'{csv_text}\n'
@@ -149,6 +150,7 @@ def import_main_level(source_path: Path, output_path: Path) -> None:
     tsx = output_path.with_name("dg0.tsx")
     if not tsx.exists():
         # Standalone exports to /tmp still use the project's current bindings.
-        tsx = Path(__file__).resolve().parents[1] / "tiles/dg/dg0.tsx"
+        tsx = Path(__file__).resolve().parents[1] / "level-design/assets/tilesets/dg/dg0.tsx"
     runtime_ids = bindings(ET.parse(tsx).getroot())
-    output_path.write_text(render_tmx(runtime_rows, runtime_ids), encoding="utf-8")
+    from os.path import relpath
+    output_path.write_text(render_tmx(runtime_rows, runtime_ids, relpath(tsx, output_path.parent)), encoding="utf-8")

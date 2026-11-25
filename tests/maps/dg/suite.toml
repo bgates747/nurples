@@ -3,8 +3,8 @@
 
 format_version = 1
 symbol_prefix = "tileset_00"
-tileset = "../../../tiles/dg/dg0.tsx"
-tile_catalog = "../../../tiles/dg/dg_0_files.xml"
+tileset = "../../../level-design/assets/tilesets/dg/dg0.tsx"
+tile_catalog = "../../../level-design/assets/tilesets/dg/dg_0_files.xml"
 output = "../../../src/asm/levels_test_maps.inc"
 
 [[levels]]

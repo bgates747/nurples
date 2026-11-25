@@ -1,0 +1,215 @@
+<?xml version="1.0" ?>
+<TileSet>
+  <BaseName>dg</BaseName>
+  <SourceDir>level-design/assets/tilesets/dg</SourceDir>
+  <TargetDir>level-design/assets/tilesets/dg</TargetDir>
+  <BaseName>dg</BaseName>
+  <FileName>dg0.png</FileName>
+  <TileWidth>16</TileWidth>
+  <TileHeight>16</TileHeight>
+  <HPitch>16</HPitch>
+  <VPitch>16</VPitch>
+  <TilesX>16</TilesX>
+  <TilesY>16</TilesY>
+  <StartX>0</StartX>
+  <StartY>0</StartY>
+  <SetNum>0</SetNum>
+  <MapFile>level-design/assets/tilesets/dg/dg_0_map.csv</MapFile>
+  <TilesFile>level-design/assets/tilesets/dg/dg_0_files.xml</TilesFile>
+  <FileCount>192</FileCount>
+  <BaseBufferId>512</BaseBufferId>
+  <Tiles>
+    <Tile index="0">level-design/assets/tilesets/dg/0/000.png</Tile>
+    <Tile index="1">level-design/assets/tilesets/dg/0/001.png</Tile>
+    <Tile index="2">level-design/assets/tilesets/dg/0/002.png</Tile>
+    <Tile index="3">level-design/assets/tilesets/dg/0/003.png</Tile>
+    <Tile index="4">level-design/assets/tilesets/dg/0/004.png</Tile>
+    <Tile index="5">level-design/assets/tilesets/dg/0/005.png</Tile>
+    <Tile index="6">level-design/assets/tilesets/dg/0/006.png</Tile>
+    <Tile index="7">level-design/assets/tilesets/dg/0/007.png</Tile>
+    <Tile index="8">level-design/assets/tilesets/dg/0/008.png</Tile>
+    <Tile index="9">level-design/assets/tilesets/dg/0/009.png</Tile>
+    <Tile index="10">level-design/assets/tilesets/dg/0/010.png</Tile>
+    <Tile index="11">level-design/assets/tilesets/dg/0/011.png</Tile>
+    <Tile index="16">level-design/assets/tilesets/dg/0/016.png</Tile>
+    <Tile index="17">level-design/assets/tilesets/dg/0/017.png</Tile>
+    <Tile index="18">level-design/assets/tilesets/dg/0/018.png</Tile>
+    <Tile index="19">level-design/assets/tilesets/dg/0/019.png</Tile>
+    <Tile index="20">level-design/assets/tilesets/dg/0/020.png</Tile>
+    <Tile index="21">level-design/assets/tilesets/dg/0/021.png</Tile>
+    <Tile index="33">level-design/assets/tilesets/dg/0/033.png</Tile>
+    <Tile index="34">level-design/assets/tilesets/dg/0/034.png</Tile>
+    <Tile index="35">level-design/assets/tilesets/dg/0/035.png</Tile>
+    <Tile index="36">level-design/assets/tilesets/dg/0/036.png</Tile>
+    <Tile index="37">level-design/assets/tilesets/dg/0/037.png</Tile>
+    <Tile index="38">level-design/assets/tilesets/dg/0/038.png</Tile>
+    <Tile index="39">level-design/assets/tilesets/dg/0/039.png</Tile>
+    <Tile index="40">level-design/assets/tilesets/dg/0/040.png</Tile>
+    <Tile index="45">level-design/assets/tilesets/dg/0/045.png</Tile>
+    <Tile index="46">level-design/assets/tilesets/dg/0/046.png</Tile>
+    <Tile index="47">level-design/assets/tilesets/dg/0/047.png</Tile>
+    <Tile index="48">level-design/assets/tilesets/dg/0/048.png</Tile>
+    <Tile index="49">level-design/assets/tilesets/dg/0/049.png</Tile>
+    <Tile index="50">level-design/assets/tilesets/dg/0/050.png</Tile>
+    <Tile index="51">level-design/assets/tilesets/dg/0/051.png</Tile>
+    <Tile index="52">level-design/assets/tilesets/dg/0/052.png</Tile>
+    <Tile index="53">level-design/assets/tilesets/dg/0/053.png</Tile>
+    <Tile index="54">level-design/assets/tilesets/dg/0/054.png</Tile>
+    <Tile index="55">level-design/assets/tilesets/dg/0/055.png</Tile>
+    <Tile index="56">level-design/assets/tilesets/dg/0/056.png</Tile>
+    <Tile index="57">level-design/assets/tilesets/dg/0/057.png</Tile>
+    <Tile index="58">level-design/assets/tilesets/dg/0/058.png</Tile>
+    <Tile index="59">level-design/assets/tilesets/dg/0/059.png</Tile>
+    <Tile index="61">level-design/assets/tilesets/dg/0/061.png</Tile>
+    <Tile index="62">level-design/assets/tilesets/dg/0/062.png</Tile>
+    <Tile index="63">level-design/assets/tilesets/dg/0/063.png</Tile>
+    <Tile index="64">level-design/assets/tilesets/dg/0/064.png</Tile>
+    <Tile index="65">level-design/assets/tilesets/dg/0/065.png</Tile>
+    <Tile index="66">level-design/assets/tilesets/dg/0/066.png</Tile>
+    <Tile index="67">level-design/assets/tilesets/dg/0/067.png</Tile>
+    <Tile index="68">level-design/assets/tilesets/dg/0/068.png</Tile>
+    <Tile index="69">level-design/assets/tilesets/dg/0/069.png</Tile>
+    <Tile index="70">level-design/assets/tilesets/dg/0/070.png</Tile>
+    <Tile index="71">level-design/assets/tilesets/dg/0/071.png</Tile>
+    <Tile index="72">level-design/assets/tilesets/dg/0/072.png</Tile>
+    <Tile index="73">level-design/assets/tilesets/dg/0/073.png</Tile>
+    <Tile index="74">level-design/assets/tilesets/dg/0/074.png</Tile>
+    <Tile index="75">level-design/assets/tilesets/dg/0/075.png</Tile>
+    <Tile index="76">level-design/assets/tilesets/dg/0/076.png</Tile>
+    <Tile index="77">level-design/assets/tilesets/dg/0/077.png</Tile>
+    <Tile index="81">level-design/assets/tilesets/dg/0/081.png</Tile>
+    <Tile index="82">level-design/assets/tilesets/dg/0/082.png</Tile>
+    <Tile index="83">level-design/assets/tilesets/dg/0/083.png</Tile>
+    <Tile index="84">level-design/assets/tilesets/dg/0/084.png</Tile>
+    <Tile index="85">level-design/assets/tilesets/dg/0/085.png</Tile>
+    <Tile index="86">level-design/assets/tilesets/dg/0/086.png</Tile>
+    <Tile index="87">level-design/assets/tilesets/dg/0/087.png</Tile>
+    <Tile index="88">level-design/assets/tilesets/dg/0/088.png</Tile>
+    <Tile index="89">level-design/assets/tilesets/dg/0/089.png</Tile>
+    <Tile index="90">level-design/assets/tilesets/dg/0/090.png</Tile>
+    <Tile index="91">level-design/assets/tilesets/dg/0/091.png</Tile>
+    <Tile index="92">level-design/assets/tilesets/dg/0/092.png</Tile>
+    <Tile index="93">level-design/assets/tilesets/dg/0/093.png</Tile>
+    <Tile index="97">level-design/assets/tilesets/dg/0/097.png</Tile>
+    <Tile index="98">level-design/assets/tilesets/dg/0/098.png</Tile>
+    <Tile index="99">level-design/assets/tilesets/dg/0/099.png</Tile>
+    <Tile index="100">level-design/assets/tilesets/dg/0/100.png</Tile>
+    <Tile index="101">level-design/assets/tilesets/dg/0/101.png</Tile>
+    <Tile index="102">level-design/assets/tilesets/dg/0/102.png</Tile>
+    <Tile index="103">level-design/assets/tilesets/dg/0/103.png</Tile>
+    <Tile index="104">level-design/assets/tilesets/dg/0/104.png</Tile>
+    <Tile index="105">level-design/assets/tilesets/dg/0/105.png</Tile>
+    <Tile index="106">level-design/assets/tilesets/dg/0/106.png</Tile>
+    <Tile index="107">level-design/assets/tilesets/dg/0/107.png</Tile>
+    <Tile index="108">level-design/assets/tilesets/dg/0/108.png</Tile>
+    <Tile index="113">level-design/assets/tilesets/dg/0/113.png</Tile>
+    <Tile index="114">level-design/assets/tilesets/dg/0/114.png</Tile>
+    <Tile index="115">level-design/assets/tilesets/dg/0/115.png</Tile>
+    <Tile index="116">level-design/assets/tilesets/dg/0/116.png</Tile>
+    <Tile index="117">level-design/assets/tilesets/dg/0/117.png</Tile>
+    <Tile index="118">level-design/assets/tilesets/dg/0/118.png</Tile>
+    <Tile index="119">level-design/assets/tilesets/dg/0/119.png</Tile>
+    <Tile index="120">level-design/assets/tilesets/dg/0/120.png</Tile>
+    <Tile index="121">level-design/assets/tilesets/dg/0/121.png</Tile>
+    <Tile index="122">level-design/assets/tilesets/dg/0/122.png</Tile>
+    <Tile index="123">level-design/assets/tilesets/dg/0/123.png</Tile>
+    <Tile index="129">level-design/assets/tilesets/dg/0/129.png</Tile>
+    <Tile index="130">level-design/assets/tilesets/dg/0/130.png</Tile>
+    <Tile index="131">level-design/assets/tilesets/dg/0/131.png</Tile>
+    <Tile index="132">level-design/assets/tilesets/dg/0/132.png</Tile>
+    <Tile index="133">level-design/assets/tilesets/dg/0/133.png</Tile>
+    <Tile index="134">level-design/assets/tilesets/dg/0/134.png</Tile>
+    <Tile index="135">level-design/assets/tilesets/dg/0/135.png</Tile>
+    <Tile index="136">level-design/assets/tilesets/dg/0/136.png</Tile>
+    <Tile index="137">level-design/assets/tilesets/dg/0/137.png</Tile>
+    <Tile index="138">level-design/assets/tilesets/dg/0/138.png</Tile>
+    <Tile index="139">level-design/assets/tilesets/dg/0/139.png</Tile>
+    <Tile index="140">level-design/assets/tilesets/dg/0/140.png</Tile>
+    <Tile index="145">level-design/assets/tilesets/dg/0/145.png</Tile>
+    <Tile index="146">level-design/assets/tilesets/dg/0/146.png</Tile>
+    <Tile index="147">level-design/assets/tilesets/dg/0/147.png</Tile>
+    <Tile index="148">level-design/assets/tilesets/dg/0/148.png</Tile>
+    <Tile index="149">level-design/assets/tilesets/dg/0/149.png</Tile>
+    <Tile index="150">level-design/assets/tilesets/dg/0/150.png</Tile>
+    <Tile index="151">level-design/assets/tilesets/dg/0/151.png</Tile>
+    <Tile index="152">level-design/assets/tilesets/dg/0/152.png</Tile>
+    <Tile index="153">level-design/assets/tilesets/dg/0/153.png</Tile>
+    <Tile index="154">level-design/assets/tilesets/dg/0/154.png</Tile>
+    <Tile index="155">level-design/assets/tilesets/dg/0/155.png</Tile>
+    <Tile index="156">level-design/assets/tilesets/dg/0/156.png</Tile>
+    <Tile index="161">level-design/assets/tilesets/dg/0/161.png</Tile>
+    <Tile index="162">level-design/assets/tilesets/dg/0/162.png</Tile>
+    <Tile index="163">level-design/assets/tilesets/dg/0/163.png</Tile>
+    <Tile index="164">level-design/assets/tilesets/dg/0/164.png</Tile>
+    <Tile index="165">level-design/assets/tilesets/dg/0/165.png</Tile>
+    <Tile index="166">level-design/assets/tilesets/dg/0/166.png</Tile>
+    <Tile index="167">level-design/assets/tilesets/dg/0/167.png</Tile>
+    <Tile index="168">level-design/assets/tilesets/dg/0/168.png</Tile>
+    <Tile index="169">level-design/assets/tilesets/dg/0/169.png</Tile>
+    <Tile index="170">level-design/assets/tilesets/dg/0/170.png</Tile>
+    <Tile index="171">level-design/assets/tilesets/dg/0/171.png</Tile>
+    <Tile index="172">level-design/assets/tilesets/dg/0/172.png</Tile>
+    <Tile index="174">level-design/assets/tilesets/dg/0/174.png</Tile>
+    <Tile index="175">level-design/assets/tilesets/dg/0/175.png</Tile>
+    <Tile index="176">level-design/assets/tilesets/dg/0/176.png</Tile>
+    <Tile index="177">level-design/assets/tilesets/dg/0/177.png</Tile>
+    <Tile index="178">level-design/assets/tilesets/dg/0/178.png</Tile>
+    <Tile index="179">level-design/assets/tilesets/dg/0/179.png</Tile>
+    <Tile index="180">level-design/assets/tilesets/dg/0/180.png</Tile>
+    <Tile index="181">level-design/assets/tilesets/dg/0/181.png</Tile>
+    <Tile index="182">level-design/assets/tilesets/dg/0/182.png</Tile>
+    <Tile index="183">level-design/assets/tilesets/dg/0/183.png</Tile>
+    <Tile index="184">level-design/assets/tilesets/dg/0/184.png</Tile>
+    <Tile index="185">level-design/assets/tilesets/dg/0/185.png</Tile>
+    <Tile index="186">level-design/assets/tilesets/dg/0/186.png</Tile>
+    <Tile index="187">level-design/assets/tilesets/dg/0/187.png</Tile>
+    <Tile index="188">level-design/assets/tilesets/dg/0/188.png</Tile>
+    <Tile index="190">level-design/assets/tilesets/dg/0/190.png</Tile>
+    <Tile index="191">level-design/assets/tilesets/dg/0/191.png</Tile>
+    <Tile index="192">level-design/assets/tilesets/dg/0/192.png</Tile>
+    <Tile index="193">level-design/assets/tilesets/dg/0/193.png</Tile>
+    <Tile index="194">level-design/assets/tilesets/dg/0/194.png</Tile>
+    <Tile index="195">level-design/assets/tilesets/dg/0/195.png</Tile>
+    <Tile index="196">level-design/assets/tilesets/dg/0/196.png</Tile>
+    <Tile index="197">level-design/assets/tilesets/dg/0/197.png</Tile>
+    <Tile index="198">level-design/assets/tilesets/dg/0/198.png</Tile>
+    <Tile index="199">level-design/assets/tilesets/dg/0/199.png</Tile>
+    <Tile index="200">level-design/assets/tilesets/dg/0/200.png</Tile>
+    <Tile index="201">level-design/assets/tilesets/dg/0/201.png</Tile>
+    <Tile index="202">level-design/assets/tilesets/dg/0/202.png</Tile>
+    <Tile index="203">level-design/assets/tilesets/dg/0/203.png</Tile>
+    <Tile index="204">level-design/assets/tilesets/dg/0/204.png</Tile>
+    <Tile index="206">level-design/assets/tilesets/dg/0/206.png</Tile>
+    <Tile index="207">level-design/assets/tilesets/dg/0/207.png</Tile>
+    <Tile index="208">level-design/assets/tilesets/dg/0/208.png</Tile>
+    <Tile index="209">level-design/assets/tilesets/dg/0/209.png</Tile>
+    <Tile index="210">level-design/assets/tilesets/dg/0/210.png</Tile>
+    <Tile index="211">level-design/assets/tilesets/dg/0/211.png</Tile>
+    <Tile index="212">level-design/assets/tilesets/dg/0/212.png</Tile>
+    <Tile index="213">level-design/assets/tilesets/dg/0/213.png</Tile>
+    <Tile index="214">level-design/assets/tilesets/dg/0/214.png</Tile>
+    <Tile index="215">level-design/assets/tilesets/dg/0/215.png</Tile>
+    <Tile index="216">level-design/assets/tilesets/dg/0/216.png</Tile>
+    <Tile index="217">level-design/assets/tilesets/dg/0/217.png</Tile>
+    <Tile index="218">level-design/assets/tilesets/dg/0/218.png</Tile>
+    <Tile index="219">level-design/assets/tilesets/dg/0/219.png</Tile>
+    <Tile index="220">level-design/assets/tilesets/dg/0/220.png</Tile>
+    <Tile index="225">level-design/assets/tilesets/dg/0/225.png</Tile>
+    <Tile index="226">level-design/assets/tilesets/dg/0/226.png</Tile>
+    <Tile index="227">level-design/assets/tilesets/dg/0/227.png</Tile>
+    <Tile index="228">level-design/assets/tilesets/dg/0/228.png</Tile>
+    <Tile index="229">level-design/assets/tilesets/dg/0/229.png</Tile>
+    <Tile index="230">level-design/assets/tilesets/dg/0/230.png</Tile>
+    <Tile index="231">level-design/assets/tilesets/dg/0/231.png</Tile>
+    <Tile index="232">level-design/assets/tilesets/dg/0/232.png</Tile>
+    <Tile index="233">level-design/assets/tilesets/dg/0/233.png</Tile>
+    <Tile index="234">level-design/assets/tilesets/dg/0/234.png</Tile>
+    <Tile index="235">level-design/assets/tilesets/dg/0/235.png</Tile>
+    <Tile index="236">level-design/assets/tilesets/dg/0/236.png</Tile>
+    <Tile index="241">level-design/assets/tilesets/dg/0/241.png</Tile>
+    <Tile index="242">level-design/assets/tilesets/dg/0/242.png</Tile>
+    <Tile index="245">level-design/assets/tilesets/dg/0/245.png</Tile>
+    <Tile index="246">level-design/assets/tilesets/dg/0/246.png</Tile>
+    <Tile index="248">level-design/assets/tilesets/dg/0/248.png</Tile>
+  </Tiles>
+</TileSet>

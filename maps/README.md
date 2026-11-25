@@ -4,10 +4,10 @@ From a terminal on the Oryx desktop, open the modern campaign map:
 
 ```sh
 cd ~/Agon/mystuff/nurples-level-design
-tiled tiles/dg/dg0_03.tmx
+tiled level-design/levels/modern-dg/level.tmx
 ```
 
-The other campaign map is [the recovered Z80 level](../tiles/dg/nurples_z80_main.tmx).
+The other campaign map is [the recovered Z80 level](../level-design/levels/recovered-z80/level.tmx).
 [campaign.toml](campaign.toml) lists the two in play order. For a small map
 that shows how to place an active tile, open the [seeker nursery](../tests/maps/dg/pn_map_01_seeker_nursery.tmx)
 or [fire-control range](../tests/maps/dg/pn_map_02_fire_control_range.tmx).
@@ -18,7 +18,7 @@ the campaign. A new TMX isn't added to the campaign just by saving it.
 
 | Open | What to look for |
 | --- | --- |
-| [Gameplay atlas](../tiles/dg/dg0.png) and [Tiled tileset](../tiles/dg/dg0.tsx) | The brushes the game maps use today. |
+| [Gameplay atlas](../level-design/assets/tilesets/dg/dg0.png) and [Tiled tileset](../level-design/assets/tilesets/dg/dg0.tsx) | The brushes the game maps use today. |
 | [Source sprites](../assets/img/orig/sprites/) | Compare `seeker.png`, `turret.png`, `pad.png` and the `tile_pad_*` animation frames. |
 | [Processed sprites](../assets/img/proc/sprites/) | Compare the prepared game artwork with the sources before picking a marker. |
 | [Classic art](../tiles/nurples_classic/) and [Xevious sprite sheet](../tiles/xevious/xevious_sprites.png) | Historical and visual references, not new runtime spawn types. |

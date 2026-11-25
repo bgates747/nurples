@@ -48,7 +48,7 @@ class MapCompilerTests(unittest.TestCase):
 
     def _write_catalog(self, indices: set[int]) -> None:
         records = "\n".join(
-            f'    <Tile index="{index}">tiles/dg/0/{index:03d}.png</Tile>'
+            f'    <Tile index="{index}">level-design/assets/tilesets/dg/0/{index:03d}.png</Tile>'
             for index in sorted(indices)
         )
         self.catalog.write_text(
@@ -129,7 +129,7 @@ output = "generated/levels.inc"
         self._write_manifest([("Test One", "one.tmx")])
 
     def test_air_pad_markers_share_art_but_keep_their_runtime_ids(self) -> None:
-        self.tileset.write_bytes((PROJECT_ROOT / "tiles/dg/dg0.tsx").read_bytes())
+        self.tileset.write_bytes((PROJECT_ROOT / "level-design/assets/tilesets/dg/dg0.tsx").read_bytes())
         self._write_catalog({0, 1, 121})
         self._compile_single([",".join(map(str, [1, 2, 3, 4, 121] + [0] * 11))])
         compiled = compile_map_manifest(self.manifest)

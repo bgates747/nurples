@@ -37,8 +37,8 @@ def generate_legacy_tile_outputs(
 ) -> dict[Path, bytes]:
     """Return the imported runtime tiles, payloads, and updated Tiled atlas."""
 
-    source_root = project_root / "tiles/dg/legacy_z80"
-    atlas_path = project_root / "tiles/dg/dg0.png"
+    source_root = project_root / "level-design/assets/tilesets/dg/legacy_z80"
+    atlas_path = project_root / "level-design/assets/tilesets/dg/dg0.png"
     runtime_ids = bindings(ET.parse(atlas_path.with_suffix(".tsx")).getroot())
     with Image.open(atlas_path) as source_atlas:
         atlas = source_atlas.convert("RGBA").copy()
@@ -67,7 +67,7 @@ def generate_legacy_tile_outputs(
 
             png_data = _png_bytes(converted)
             tile_name = f"{tile_id:03d}"
-            outputs[output_root / f"tiles/dg/0/{tile_name}.png"] = png_data
+            outputs[output_root / f"level-design/assets/tilesets/dg/0/{tile_name}.png"] = png_data
 
             rgba_path = temporary_root / f"{tile_name}.rgba2"
             img_to_rgba2(converted, rgba_path, num_colors=64, method="RGB")
@@ -82,7 +82,7 @@ def generate_legacy_tile_outputs(
 
     # Tiled's atlas is also an authored input. Preserve its encoding/metadata
     # on a no-op build; only serialize if the imported pixels actually changed.
-    outputs[output_root / "tiles/dg/dg0.png"] = (
+    outputs[output_root / "level-design/assets/tilesets/dg/dg0.png"] = (
         atlas_path.read_bytes() if atlas.tobytes() == original_pixels else _png_bytes(atlas)
     )
     return outputs

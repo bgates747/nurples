@@ -7,10 +7,10 @@ import tomllib
 
 
 LEVEL_MUSIC = {
-    "../tiles/kenney/earth-city/earth-city.tmx": "break2.pt3",
-    "../tiles/dg/dg0_00.tmx": "acidflsh.pt3",
-    "../tiles/dg/dg0_03.tmx": "terminator.pt3",
-    "../tiles/dg/nurples_z80_main.tmx": "bugs2_2.pt3",
+    "../level-design/levels/01/level.tmx": "break2.pt3",
+    "../level-design/levels/proving-ground/level.tmx": "acidflsh.pt3",
+    "../level-design/levels/modern-dg/level.tmx": "terminator.pt3",
+    "../level-design/levels/recovered-z80/level.tmx": "bugs2_2.pt3",
 }
 
 

@@ -16,7 +16,7 @@ from nurples_tools.active_tiles import registry
 from nurples_tools.maps import _load_tile_catalog, _validate_tileset
 from nurples_tools.tile_bindings import PROPERTY, exchange
 
-TSX = Path("tiles/dg/dg0.tsx")
+TSX = Path("level-design/assets/tilesets/dg/dg0.tsx")
 PNG = TSX.with_suffix(".png")
 CSV = TSX.with_name("dg_0_map.csv")
 CAT = TSX.with_name("dg_0_files.xml")

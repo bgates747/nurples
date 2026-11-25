@@ -1,12 +1,12 @@
-# MAP-004 — Level design migration — proposed for review
+# MAP-004 — Level design migration — approved
 
 Rollback point: `7c0f65ed362dbe8565a02a6caf4f3eb2e0773d43` on dev.
 Move files first, normalize authoring second. Neither step should change
 the campaign order, artwork, spawn timing, tile IDs, music, or gameplay.
 
-Owner: Nurples. Awaiting Smith’s review and contract freeze before execution.
+Owner: Nurples. Approved and frozen at `2cd93861eda19b48a3650ed7e3125cd660d567f7`.
 
-- MAP-004-001 [ ] **Inventory and baseline.** With the Oryx editor closed, compare its
+- MAP-004-001 [x] **Inventory and baseline.** With the Oryx editor closed, compare its
    sparse checkout to the checkpoint again; save any new edits before sync.
    Record TMX → TSX → image dependencies, project paths, art provenance,
    map compilers, music mappings, fixture scripts and sparse patterns.
@@ -14,7 +14,7 @@ Owner: Nurples. Awaiting Smith’s review and contract freeze before execution.
    spawn layouts, and reference Tiled renders. Keep private build outputs
    local. Record existing test failures separately.
 
-- MAP-004-002 [ ] **Move without converting.** Place Earth City in `levels/01/` with
+- MAP-004-002 [x] **Move without converting.** Place Earth City in `levels/01/` with
    `level.tmx`, `staggered.tmx`, and one project. Move its shared art to
    `assets/` as specified in the sibling README. Move the DG maps into
    named, unassigned directories until their story slots are confirmed;
@@ -25,7 +25,7 @@ Owner: Nurples. Awaiting Smith’s review and contract freeze before execution.
    identifies a dependency. Update relative references and build consumers
    together, including path-keyed music choices and staggered staging.
 
-- MAP-004-003 [ ] **Prove the move.** From a clean checkout build the ordinary campaign
+- MAP-004-003 [x] **Prove the move.** From a clean checkout build the ordinary campaign
    and both aligned and staggered fixtures. Compare compiled level rows,
    packed image payloads, music selections and Tiled renders to the baseline.
    Exercise tile-move tooling on a disposable copy. Checkpoint this pass

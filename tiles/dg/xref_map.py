@@ -91,8 +91,8 @@ def copy_and_renumber_tiles_from_tmx(tmx_data, tileset, output_dir):
 if __name__ == "__main__":
     # File paths
     tmx_file = "tiles/dg/tiled/dg0.tmx"
-    csv_file = "tiles/dg/dg_0_map.csv"
-    xml_file = "tiles/dg/dg_0_files.xml"
+    csv_file = "level-design/assets/tilesets/dg/dg_0_map.csv"
+    xml_file = "level-design/assets/tilesets/dg/dg_0_files.xml"
     output_tile_dir = "tiles/proc/dg/0"
 
     # Load files

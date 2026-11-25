@@ -3,23 +3,23 @@
 
 format_version = 1
 symbol_prefix = "tileset_00"
-tileset = "../tiles/dg/dg0.tsx"
-tile_catalog = "../tiles/dg/dg_0_files.xml"
+tileset = "../level-design/assets/tilesets/dg/dg0.tsx"
+tile_catalog = "../level-design/assets/tilesets/dg/dg_0_files.xml"
 output = "../src/asm/levels_tileset_0.inc"
 
 [[levels]]
 name = "Earth City"
-source = "../tiles/kenney/earth-city/earth-city.tmx"
+source = "../level-design/levels/01/level.tmx"
 terrain = "ordered-earth"
 
 [[levels]]
 name = "Air enemy proving ground"
-source = "../tiles/dg/dg0_00.tmx"
+source = "../level-design/levels/proving-ground/level.tmx"
 
 [[levels]]
 name = "Modern Agon campaign"
-source = "../tiles/dg/dg0_03.tmx"
+source = "../level-design/levels/modern-dg/level.tmx"
 
 [[levels]]
 name = "Original Z80 main level"
-source = "../tiles/dg/nurples_z80_main.tmx"
+source = "../level-design/levels/recovered-z80/level.tmx"

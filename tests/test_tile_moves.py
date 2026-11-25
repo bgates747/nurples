@@ -27,7 +27,7 @@ class TileMoveTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
-        for p in (*tracked(ROOT, "*.tmx", "tiles/dg/legacy_z80/*.png", "tiles/kenney/earth-city/*.tsx", "tiles/kenney/earth-city/*.png"),
+        for p in (*tracked(ROOT, "*.tmx", "level-design/assets/tilesets/dg/legacy_z80/*.png", "level-design/assets/tilesets/tiny-city/*", "level-design/assets/backgrounds/earth/*.png"),
                   TSX, PNG, CAT, CSV, REGISTRY, INCLUDE, *map(Path, MANIFESTS)):
             (self.root / p).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / p, self.root / p)
@@ -83,7 +83,7 @@ class TileMoveTests(unittest.TestCase):
         self.assertEqual([self.art(i) for i in (a, b, c)], [original[1], original[2], original[0]])
         self.assertEqual((self.slot(1), self.slot(17)), (c, b))
         legacy = compile_map_manifest(self.root / MANIFESTS[0]).levels[-1]
-        self.assertEqual(render_tmx(legacy.runtime_rows, self.runtime_ids()),
+        self.assertEqual(render_tmx(legacy.runtime_rows, self.runtime_ids(), "../../assets/tilesets/dg/dg0.tsx"),
                          legacy.source_path.read_text())
         # No runtime tile files were copied here. Missing files are expected;
         # an atlas regenerated at the wrong slots would be reported as changed.
@@ -97,7 +97,7 @@ class TileMoveTests(unittest.TestCase):
         token = self.cli("move", a, b).split()[-1]
         self.assertIn("stale", self.cli("swap", a, c, "--apply", token, ok=False))
         self.assertEqual(git(self.root, "status", "--porcelain"), b"")
-        p = self.root / "tiles/dg/dg0_00.tmx"
+        p = self.root / "level-design/levels/proving-ground/level.tmx"
         p.write_text(p.read_text().replace('encoding="csv"', 'encoding="base64"'))
         self.assertIn("clean", self.cli("move", a, b, "--apply", token, ok=False))
         git(self.root, "add", "--", p)

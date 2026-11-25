@@ -32,8 +32,8 @@ class CampaignAudioTests(unittest.TestCase):
         pins.write_text(json.dumps(metadata))
         manifest = self.root / "maps/campaign.toml"
         manifest.parent.mkdir()
-        manifest.write_text('[[levels]]\nsource="../tiles/dg/nurples_z80_main.tmx"\n'
-                            '[[levels]]\nsource="../tiles/dg/dg0_03.tmx"\n')
+        manifest.write_text('[[levels]]\nsource="../level-design/levels/recovered-z80/level.tmx"\n'
+                            '[[levels]]\nsource="../level-design/levels/modern-dg/level.tmx"\n')
 
     def test_manifest_order_and_loadtune(self):
         modules = prepare_audio(self.root, self.stage, directory=self.songs)

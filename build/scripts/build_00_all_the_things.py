@@ -82,8 +82,8 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
             from nurples_tools.loading_music import edit
             if staggered:
                 from nurples_tools.maps import compile_map_manifest
-                level_dir = PROJECT_ROOT / "tiles/kenney/earth-city"
-                maps = compile_map_manifest(CAMPAIGN_MANIFEST, earth_source=level_dir/"earth-city-staggered.tmx")
+                level_dir = PROJECT_ROOT / "level-design/levels/01"
+                maps = compile_map_manifest(CAMPAIGN_MANIFEST, earth_source=level_dir/"staggered.tmx")
                 if maps.levels[0].structure_rows != compile_map_manifest(CAMPAIGN_MANIFEST).levels[0].structure_rows:
                     raise ValueError("Staggered audition expects unchanged city art")
                 (staged_asm/maps.output_path.name).write_text(maps.text)

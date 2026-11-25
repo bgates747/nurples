@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="16" height="255" tilewidth="16" tileheight="16" infinite="0" nextlayerid="2" nextobjectid="1">
- <tileset firstgid="1" source="dg0.tsx"/>
+ <tileset firstgid="1" source="../../assets/tilesets/dg/dg0.tsx"/>
  <layer id="1" name="Original Z80 main level" width="16" height="255">
   <data encoding="csv">
 19,21,21,1,21,21,19,21,21,1,21,21,19,21,21,1,
