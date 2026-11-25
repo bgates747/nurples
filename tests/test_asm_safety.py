@@ -1711,9 +1711,7 @@ class AssemblySafetyTests(unittest.TestCase):
         self.assertEqual([op for op in ops if op], [
             "sprites_mark_actor_prefix:", "call overlay_feature_begin", "push af",
             "ld b,table_num_records", "@slot:", "push bc", "ld a,b", "dec a",
-            "cp formation_max", "jr nc,@regular", "call vdu_sprite_select",
-            "call vdu_sprite_mark_software", "jr @marked", "@regular:",
-            "call vdu_sprite_select", "call vdu_sprite_mark_hardware", "@marked:", "pop bc",
+            "call vdu_sprite_select", "call vdu_sprite_mark_hardware", "pop bc",
             "djnz @slot", "pop af", "ret nc", "jp overlay_feature_end",
         ])
         player = routine(read_asm("player_state.inc"), "player_init", "; end player_init")

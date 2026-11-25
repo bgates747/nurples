@@ -257,3 +257,31 @@ spawn-height limit. This run does not isolate draw order from total draw time.
 - Design observation, not part of this test: Smith saw Galaga keep the rack
   centered and expand/contract its vertical extent like breathing. Consider
   that motion separately; this comparison retains the existing lateral march.
+
+F40-HW-01 comparison result: Smith liked the hardware-sprite build on FAE,
+but on Olimex reported severe scanout errors and audible music skipping.
+The software control flickered until about mid-playfield, then rendered
+cleanly. Hardware therefore failed this formation audition; neither result
+is a general sprite-count limit. No audio timing or compositor trace was
+taken, so the cause of the music skips is unresolved. Bench remains held.
+
+Subsequent disposition: Olimex handback completed. F40 is archived, not
+active game logic. Recover its accounting, compiled rank scheduling and CPU
+fixture together from `2dbddaa`; the hardware audition changed only the
+formation mark-call target (audited executable SHA-256
+`40a0ef765608ac290fbcf1c04ef000a8a09908dc35aa24781b7f09ffb4131c64`).
+Restored the eight-slot pool and march from `0a38fa2`, dropping the diagnostic
+software override so IDs 12–19 are hardware in both builds. Recompiled the
+author's two-wave layered map without F40 admission shifts; kept ordinary
+Earth entry. Both assemblies pass; 245 tests run, 2 skipped. Not deployed.
+
+Eight-ship repeat audition: retained Smith's original marker rows 232/230;
+copied at 45-row intervals through 7/5, six complete waves total. Large
+ships enter 32 scroll ticks after the first rank, centered at Y=-6; at
+half a pixel per tick they retire at Y=336 on tick 716. Admission at tick
+720 is the earliest tile boundary after that retirement. Restored move
+program unchanged. Checked all 4096 linked Earth bytes and no-kill pool
+occupancy. Oryx Tiled file synced; FAE invulnerable diagnostic card readback
+`28dea77011c494bdbe66e726c7c5febdba6441e74ae16360a1364ed493d57460`.
+Smith accepted the six-wave build on Oryx FAE and requested this rollback
+checkpoint. This acceptance is for FAE, not a hardware qualification.

@@ -4,53 +4,6 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 
 
-def compile_march(rows):
-    """Group ranks separated by at most one spacer row; order is scroll-in order."""
-    sizes = {2: (16, 16), 3: (32, 16), 4: (28, 28)}
-    waves = []
-    result = [list(row) for row in rows]
-    for y, row in enumerate(rows):
-        rank = [(x, gid) for x, gid in enumerate(row) if gid in sizes]
-        if rank:
-            if not waves or y - waves[-1][-1][0] > 2:
-                waves.append([])
-            waves[-1].append((y, rank))
-            for x, _ in rank:
-                result[y][x] = 0
-    desc = []
-    available = 0
-    for wave in waves:
-        first, last = wave[0][0], wave[-1][0]
-        delay = max(0, available - first)
-        if sum(len(rank) for _, rank in wave) > 40 or (last-first)*16 > 255:
-            raise ValueError("Earth formation exceeds slot or entrance-timer capacity")
-        left = min(x*16+8-sizes[g][0]//2 for _, rank in wave for x,g in rank)
-        right = max(x*16+8+sizes[g][0]//2 for _, rank in wave for x,g in rank)
-        travel = 256-right+left
-        if left < 0 or right > 256 or not 1 <= travel <= 255:
-            raise ValueError("Earth formation has no legal horizontal sweep")
-        # At release of the final rank, earlier ranks have already descended
-        # their row spacing. At half speed the last survivor must pass Y=335
-        # BEFORE the next wave's admission (which precedes movement that tick).
-        latest_exit = 0
-        for y, rank in wave:
-            wait = (last-y)*16
-            dest = y+delay
-            if dest >= len(result):
-                raise ValueError("Earth wave extends beyond map")
-            for x,g in rank:
-                if result[dest][x]:
-                    raise ValueError("Delayed formation conflicts with another marker")
-                result[dest][x] = g
-                top = wait+8-sizes[g][1]//2
-                latest_exit = max(latest_exit, 2*(336-top))
-            desc.append(((256-dest)%256, wait, left or travel, travel, 1 if left else 2))
-        available = last+delay+latest_exit//16+1
-    text = "\nearth_rank_count: equ " + str(len(desc)) + "\nearth_rank_programs:\n"
-    text += "".join("\tdb " + ",".join(map(str, d)) + "\n" for d in desc)
-    return tuple(tuple(row) for row in result), text
-
-
 def earth_layers(source: Path):
     root = ET.parse(source).getroot()
     if (root.get("width"), root.get("height"), root.get("tilewidth"), root.get("tileheight")) != ("16","256","16","16"):

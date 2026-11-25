@@ -3,7 +3,7 @@
 ; title; the frozen game's title is painted onto the playfield. Overlay
 ; bitmaps are immutable process resources retained for later entries.
 
-PRESENTATION_ACTIVE_ACTORS: equ 28+formation_max ; checked against table_num_records after layout
+PRESENTATION_ACTIVE_ACTORS: equ 28 ; checked against table_num_records after layout
 PRESENTATION_SPRITE_TITLE: equ PRESENTATION_ACTIVE_ACTORS
 PRESENTATION_SPRITE_PROMPT: equ PRESENTATION_ACTIVE_ACTORS+1
 PRESENTATION_ACTIVE_ALL: equ PRESENTATION_ACTIVE_ACTORS+2

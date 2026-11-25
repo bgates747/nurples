@@ -85,7 +85,6 @@ cos_sprite_heading: dl 0x000000 ; signed fixed 16.8
 table_init:
 ; clear the sprite table
     xor a ; write zeroes to sprite table
-    ld (formation_live),a
     ld hl,table_base ; address to copy from
     ld bc,table_end-table_base ; number of bytes to clear
     call clear_mem
@@ -150,13 +149,6 @@ table_deactivate_sprite:
     call sprite_table_record_pointer_valid
     jp nc,@invalid
     ld a,(iy+sprite_id) ; get spriteId
-    cp formation_max
-    jr nc,@hide
-    bit sprite_alive,(iy+sprite_collisions)
-    jr z,@hide
-    ld hl,formation_live
-    dec (hl)
-@hide:
     push iy
     call vdu_sprite_select ; select sprite 
     call vdu_sprite_hide
@@ -219,15 +211,8 @@ sprites_mark_actor_prefix:
     push bc
     ld a,b
     dec a ; count-1 down through zero
-    cp formation_max
-    jr nc,@regular
-    call vdu_sprite_select
-    call vdu_sprite_mark_software
-    jr @marked
-@regular:
     call vdu_sprite_select
     call vdu_sprite_mark_hardware
-@marked:
     pop bc
     djnz @slot
     pop af
@@ -243,16 +228,6 @@ sprites_mark_actor_prefix:
 table_get_next_id:
     call sprite_pool_valid
     jp nc,@bad_pool
-    ld a,b
-    cp formation_max ; unique among validated pools
-    jr nz,@loop
-    ld ix,formation_end-table_record_size
-@formation:
-    bit sprite_alive,(ix+sprite_collisions)
-    jr z,@found
-    lea ix,ix-table_record_size
-    djnz @formation
-    jr @notfound
 @loop:
     bit sprite_alive,(ix+sprite_collisions)
     jr z,@found
@@ -280,14 +255,6 @@ table_get_next_id:
 ; outputs: carry set only for an exact known base/count pair
 ; destroys: a,de,hl
 sprite_pool_valid:
-    ld de,formation_base
-    call @base_matches
-    jr nz,@other
-    ld a,b
-    cp formation_max
-    jp z,@valid
-    jp @invalid
-@other:
     ld de,player_lasers_begin
     call @base_matches
     jp z,@player_lasers
@@ -470,16 +437,6 @@ spawn_sprite_from_sprite:
 ; destroys: a,de,hl
 sprite_move_program_valid:
     ld a,(iy+sprite_id)
-    cp formation_max
-    jr nc,@other
-    ld a,(iy+sprite_type)
-    cp enemy_air
-    jp nz,@invalid
-    ld de,move_earth_air
-    call @matches
-    jp z,@valid
-    jp @invalid
-@other:
     cp player_lasers_end_sprite_id
     jp c,@player_laser
     cp seeker_min_sprite_id
@@ -670,13 +627,10 @@ move_sprite_group:
 ; publication and first show: stock VDP sprites ignore the graphics viewport.
 sprite_move_publication_allowed:
     ld a,(iy+sprite_id)
-    cp formation_max
-    jr c,@air_visibility
     cp fireballs_end_sprite_id
     jp c,@ordinary
     cp air_end_sprite_id
     jp nc,@ordinary
-@air_visibility:
     bit sprite_alive,(iy+sprite_collisions)
     jp z,@hidden
     ld a,(iy+air_visibility)

@@ -1,8 +1,6 @@
 ; #### THIS IS THE SPACE ALLOCATED TO THE SPRITE TABLE ####
 table_base: equ $
-formation_base: equ table_base
-formation_end: equ table_record_size*formation_max+formation_base
-player_weapons_begin: equ formation_end
+player_weapons_begin: equ table_base
 player_lasers_begin: equ player_weapons_begin
 player_lasers_end: equ table_record_size*player_lasers_max+player_lasers_begin
 player_lasers_end_sprite_id: equ [player_lasers_end-table_base]/table_record_size

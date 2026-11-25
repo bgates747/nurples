@@ -139,7 +139,7 @@ game_loading:
     ret
 
 game_cutscene:
-    jp earth_opening_step
+    ret ; reserved legacy state; Earth uses ordinary level entry
 
 game_inventory:
     ; Unimplemented legacy state: remain here deterministically.

@@ -200,9 +200,8 @@ game_new_session_init:
     call init_tileset
 ; initialize player
     call draw_player_ships
-    call earth_begin_opening
-    scf
-    ret
+    call player_init_level_entry
+    ret nc
 ; Other campaign entry paths retain the ordinary session publication.
 game_publish_playing:
 ; set the game state to playing
