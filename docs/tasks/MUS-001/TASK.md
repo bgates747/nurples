@@ -706,3 +706,24 @@ guest readback SHA-256 `cd494f81fa62720c651cfb1cd075b0f83c75bb273b09927e8d70cb62
 Smith confirmed M works in R02 and approved committing it on dev. This is
 the rollback point for music with the previous renderer, not acceptance of
 the hardware-sprite renderer or a Console8 timing result.
+
+## Proposed VDP-timed music
+
+Keep PT3 decoding on the eZ80, but let the VDP apply the resulting music
+changes every 20 ms. Sending several ticks ahead (four ticks = 80 ms of
+music) would decouple UART submissions from the playback deadline. This is
+a roadmap option, not a change to the current PRT1 player or timing fixtures.
+
+- MUS-001-QUEUE-01 [ ] Check whether the [implemented shared audio queue](../../../../agon-vdplet/docs/audio-queues.md)
+  can express all changes emitted by our PT3 player, keep voices synchronized,
+  and preserve empty ticks. Command 15 works without a native module on
+  queue-enabled firmware; the tested lean production VDPlet build omits the
+  queue service. Consider a native sequencer only if the queue cannot provide
+  the required semantics. Keep a stock-compatible path unless Smith decides otherwise.
+
+- MUS-001-QUEUE-02 [ ] If approved, audition batching independently of pose
+  changes. Pause must silence immediately and resume at the *played* tick,
+  not the decoder's lookahead position. Preserve M's soundtrack-only stop,
+  discard stale ticks on track changes, and keep SFX and speech immediate.
+  Check tempo, queue underruns and control latency during loading and dense
+  combat against the current 50 Hz player before considering promotion.

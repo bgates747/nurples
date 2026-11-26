@@ -128,3 +128,23 @@ Pack pristine Xevious strips, render the Tiled Structures plane with the ordinar
 tile renderer, and keep the Spawns plane independent (including overlapping cells).
 No bake flag. Rebuild and check production, aligned control, and aligned bombing.
 Key 1 must suppress only the background; key 2 must suppress only tile visuals.
+
+### Eirene 1 KiB upload audition
+
+Read four scanlines in one SD request and submit them as one asynchronous
+VDP buffer adjustment. Keep plotting one clipped row per scroll step. Use
+independent source packets so the following read can overlap transmission;
+retain the stock build and pinned ending strips. Compare skipped/VBlanks
+on hardware before drawing performance conclusions.
+
+The audition uses the UART0 async ABI shared by Eirene RC3 and EMOS;
+do not gate startup on the CRC of one MOS image.
+
+Hardware report: with terrain scrolling, the 1 KiB push missed 915 of
+5,239 VBlanks (17.5%); with background disabled the Author saw smooth
+motion. Compare one 256-byte async upload per actual Earth scroll step.
+Retain four-row SD reads and prefetch the following block during the first
+row's transfer. Skipped/VBlanks on exit is the comparable pace metric.
+
+For the hardware wait measurements, review of the actual dispatch path,
+and proposed next experiment see [VBlank-led frame scheduling](vblank-dispatch-review.md).

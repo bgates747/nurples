@@ -54,7 +54,7 @@ def check_assets() -> None:
 
 
 def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False, spawn_review=False,
-             test_game=False) -> None:
+             test_game=False, batch=0, auto_pair=False, frame_trace=False) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
@@ -70,10 +70,25 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         output = PROJECT_ROOT / ".build/map005-review"
     if test_game:
         output = PROJECT_ROOT / ".build/test-game"
+    if batch:
+        output = PROJECT_ROOT / (".build/earth-jit-256" if batch == 256 else ".build/earth-jit-1k")
+    if auto_pair:
+        output = output / "auto-pair"
+    if frame_trace:
+        output = output / "frame-trace"
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
+        if frame_trace:
+            # The accepted timing baseline predates splash-buffer cleanup.
+            pin = "af46123ca1c8ceb54acf0ab263d522f402aa9fa5"
+            for name in ("images.inc", "presentation_flow_states.inc"):
+                (staged_asm / name).write_bytes(subprocess.check_output(
+                    ["git", "show", f"{pin}:src/asm/{name}"], cwd=PROJECT_ROOT))
+        if batch == 256:
+            from nurples_tools.earth_jit import stage_alignment_reader
+            stage_alignment_reader(staged_asm, PROJECT_ROOT.parent / "agon-utils")
         if test_game:
             from nurples_tools.loading_music import edit
             edit(staged_asm, "game_pause.inc", "\ngame_pause_poll:\n", "\nordinary_pause_poll:\n")
@@ -89,9 +104,13 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         if scanout_fixture or earth_jit:
             from nurples_tools.scanout_fixture import instrument
             instrument(staged_asm)
+            if batch and not auto_pair:
+                # Carry the ordinary D-key test game's collision damage, not
+                # the older invulnerable scanout fixture's override.
+                shutil.copy2(ASM_DIR / "player_shields.inc", staged_asm / "player_shields.inc")
         if earth_jit:
             from nurples_tools.earth_jit import configure
-            configure(staged_asm, TARGET_DIR, output)
+            configure(staged_asm, TARGET_DIR, output, 4 if batch == 1024 else 1, batch == 256)
         if pace:
             from nurples_tools.loading_music import edit
             if staggered:
@@ -134,10 +153,37 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
                  "    call jit_report\n    call pace_report")
             edit(staged_asm, "nurples.asm", '    include "earth_jit.inc"',
                  '    include "earth_jit.inc"\n    include "frame_pace_fixture.inc"')
+            if batch == 256:
+                edit(staged_asm, "nurples.asm", "    call timestamp_tick",
+                     "    call claim_count_start\n    call timestamp_tick")
+                edit(staged_asm, "levels.inc", "init_level:\n", "init_level:\n"
+                     "    ld a,1\n    ld (claim_reset),a ; level setup is not pending frame credit\n")
+                edit(staged_asm, "frame_pace_fixture.inc", "pace_sample:\n    call pace_read_clock",
+                     "pace_sample:\n    ld hl,(claim_epoch) ; the exact tick admitted by the scheduler")
+                edit(staged_asm, "nurples.asm", "    call pace_init", "    call wait_clock_init\n    call pace_init")
+                edit(staged_asm, "nurples.asm", "    call vdu_vblank\n    call pace_sample",
+                     "    call wait_clock_frame\n    call pace_sample")
+                edit(staged_asm, "nurples.asm", "    call pace_report", "    call pace_report\n    call wait_clock_report")
+                edit(staged_asm, "nurples.asm", '    include "frame_pace_fixture.inc"',
+                     '    include "frame_pace_fixture.inc"\n    include "vblank_wait_clock.inc"')
             if pace == "control":
                 # Replace the four-byte ADL call without moving other code.
                 edit(staged_asm, "enemy_side_air.inc", "    call air_try_bomb",
                      "    db 0,0,0,0 ; control: no air bombs")
+        if auto_pair:
+            from nurples_tools.earth_jit import configure_auto_pair
+            configure_auto_pair(staged_asm)
+        if frame_trace:
+            from hashlib import sha256
+            from nurples_tools.earth_jit import configure_frame_trace
+            # Prove the staged program is the exact running comparison before
+            # applying instrumentation, rather than assuming no other drift.
+            subprocess.run([assembler, "nurples.asm", "tracebase.bin"], cwd=staged_asm, check=True)
+            if sha256((staged_asm / "tracebase.bin").read_bytes()).hexdigest() != (
+                "b25b23494252276302f2152bfa0a1ed6a9dc669df583e36090ae77eaf7b0182b"
+            ):
+                raise RuntimeError("Pre-trace executable differs from the hardware baseline")
+            configure_frame_trace(staged_asm)
         staged_binary = staged_asm / "nurples.bin"
         staged_symbols = staged_asm / "nurples.symbols"
         staged_binary.unlink(missing_ok=True)
@@ -198,6 +244,10 @@ def main() -> None:
     actions.add_argument("--earth-jit", action="store_true",
                          help="build single-row Earth audition in .build/earth-jit-r01")
     actions.add_argument("--aligned-pace", choices=("control", "bombing"))
+    actions.add_argument("--earth-jit-1k", action="store_true", help="Eirene RC3 async Earth audition")
+    actions.add_argument("--earth-jit-256", action="store_true", help="one async Earth row per scroll")
+    actions.add_argument("--earth-auto-pair", action="store_true", help="unattended Earth alignment comparison")
+    actions.add_argument("--earth-frame-trace", action="store_true", help="Earth A/B with one timing row per update")
     actions.add_argument("--test-game", action="store_true", help="ordinary gameplay with D-to-die")
     actions.add_argument("--staggered-pace", action="store_true")
     actions.add_argument("--sprite-spawn-review", action="store_true",
@@ -210,6 +260,11 @@ def main() -> None:
         check_assets()
     elif args.scanout_fixture:
         assemble(scanout_fixture=True)
+    elif args.earth_auto_pair or args.earth_frame_trace:
+        assemble(earth_jit=True, pace="bombing", test_game=True, batch=256, auto_pair=True,
+                 frame_trace=args.earth_frame_trace)
+    elif args.earth_jit_1k or args.earth_jit_256:
+        assemble(earth_jit=True, pace="bombing", test_game=True, batch=256 if args.earth_jit_256 else 1024)
     elif args.test_game:
         assemble(test_game=True)
     elif args.sprite_spawn_review:

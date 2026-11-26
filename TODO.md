@@ -11,6 +11,7 @@
 
 - [ ] **EARTH-001 — [Earth City opening level](docs/tasks/EARTH-001/TASK.md).**
   Current audition: [just-in-time Earth background scanlines](docs/tasks/EARTH-001/jit-background.md) (single-row FAE build).
+  Current experiment: [stock pose batching, then async, Golem buffered poses and native VDPlets](docs/tasks/EARTH-001/TASK.md#authorized-execution-order).
 
 This is the project's only authoritative unfinished-work list. Evidence and
 decisions are recorded in the dated development log.
@@ -25,6 +26,7 @@ decisions are recorded in the dated development log.
   [R06 turret launch and shield pre-alerts](docs/tasks/MUS-001/TASK.md#r06--turret-launch-and-shield-pre-alerts-in-the-50-hz-game)
   passed sequencing checks. The [longer klaxon and louder speech passed
   Smith’s FAE and Console8 listening tests](docs/tasks/MUS-001/klaxon-r07.md).
+  Later proposal: [queue PT3 ticks ahead and let the VDP keep time](docs/tasks/MUS-001/TASK.md#proposed-vdp-timed-music).
 
 - [ ] **AIR-001 — Side-to-side movement for three new air spawns.**
   [Movement and constructor contract](docs/tasks/AIR-001/TASK.md). Launch

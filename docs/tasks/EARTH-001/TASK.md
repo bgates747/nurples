@@ -2,10 +2,115 @@
 
 Open the campaign on Earth, defending the city before following the attackers to their worlds. This silo owns the Earth level, from its editable map to Smith's first in-motion review.
 
+- EARTH-001-FRAME [ ] [Synthetic Earth streaming frame-timing fixture](NURPLES-FRAME-TIMING.md).
+  Nurples owns the draft transferred from Sprite. Awaiting design discussion
+  with Smith; implementation and hardware testing have not started.
+
+**Olimex timing follow-up:** [Check whether FAT fragmentation explains slow Earth reads](vblank-dispatch-review.md#olimex-sd-card-fragmentation-check).
+Keep both staged files in place through the firmware comparison and five repeat runs; inspect their allocation read-only afterward.
+
 **Current render contract:** Earth background strips contain Xevious pixels only.
 The ordinary dev build and both aligned fixtures draw the Kenney Structures
 layer with the regular tile renderer. Spawn markers are independent even when
 placed over a structure. The original baked-strip description below is historical.
+
+## Earth formation pose sends — proposed synchronous comparison
+
+### Authorized execution order
+
+On November 26 Smith approved proceeding, in this order: **ordinary stock
+batch, asynchronous batch, state-only stock buffered commands written in
+Golem, then native VDPlets**. This amendment supersedes the planning-only
+and stop-before-async clauses below, not their output-equivalence requirements.
+Owner: Nurples. No production promotion solely on benchmark results. Do not
+write new MOS or VDP firmware to implement these arms. The native arm may
+load an application module on existing module-capable firmware. Queued music
+is a separate feasibility question, not a change to the pose comparison.
+
+- EARTH-001-POSE-07 [ ] Build matched direct and batched stock-compatible
+  full-game fixtures. The old traced fixture uses EMOS async even for terrain:
+  keep a 256-byte synchronous terrain payload in *both* new fixtures. Retain
+  identical map, unaligned Earth file, 1 KiB reads, pending VBlanks, deterministic
+  input, audio and splash lifetime. Keep last hardware-qualified binaries intact.
+
+- EARTH-001-POSE-08 [ ] Implement async pose transport using the existing
+  UART ABI without changing terrain transport. Protect packet lifetime, order
+  relative to other commands, source release, failures and stream drain.
+  Qualify on the supported MOS; stock modes do not call the extension.
+
+- EARTH-001-POSE-09 [ ] Compile actual Golem source for state-only stock
+  buffered commands. Verify decoded output against direct poses for mixed
+  coordinates, order, zero and sparse counts. Report setup and per-frame cost.
+
+- EARTH-001-POSE-10 [ ] Explore native module poses using installed capabilities,
+  compare module on/off on identical firmware, and document whether the
+  existing music queue supports timed PT3 packets without firmware changes.
+  Do not substitute another firmware's baseline or alter music in pose runs.
+
+- EARTH-001-POSE-11 [ ] Run after Sprite checks in, one physical operator at
+  a time. Reset before each measured run. Report skips / VBlanks, completed
+  updates, 1 KiB refill distributions and actual wire counts separately from
+  computed bounds. Keep the reservation until Smith directs otherwise. No
+  Oryx work; Smith authorized Pi5 emulator runs during this task. These are
+  correctness checks, not substitutes for hardware timings.
+
+### Earlier design (execution order amended above)
+
+Does Earth miss fewer VBlanks if the eZ80 makes fewer MOS calls, or if it
+also sends fewer bytes? Compare three ways of publishing the **same poses in
+the same update**. Planning only: leave the current timing binaries, runners,
+SD files, firmware comparisons and repeat runs untouched. No async pose arm
+in this comparison; review the synchronous results before designing one.
+
+| Arm | How an already-visible formation ship gets its pose | Twelve consecutive poses |
+| --- | --- | ---: |
+| A — current sends | Keep the existing synchronous select-sprite, select-frame, move-absolute calls (4 + 4 + 7 bytes). | 36 sends, 180 bytes |
+| B — one synchronous batch | Prefill the fixed bytes of 15-byte records once. Write ID, frame, X and Y directly into their final positions; send the populated prefix once. | 1 send, same 180 bytes |
+| C — stock VDP buffered commands | Send one synchronous packet: update a resident state buffer with six bytes per ship (ID, frame, 16-bit X and Y), then CALL a preinstalled program that patches and executes the ordinary pose commands. Movement and collision logic stay on the eZ80. | 1 send, 89 bytes: 11-byte update header + 72 state + 6-byte CALL |
+
+The byte counts model one uninterrupted run of twelve poses, not a whole
+frame. Count any extra headers or count-selection bytes in the real result.
+A versus B tests fewer MOS calls with identical wire bytes; B versus C trades
+wire bytes for ESP32 interpreter work. [Rally's wire census](../../../../AgonArcade/docs/tasks/RALLY-28/standard-vdp/capacity/WIRE-CENSUS.md)
+documents the encoding; [its hardware result](../../../../AgonArcade-rally19/docs/tasks/RALLY-19/DELIVERY.md)
+is why fewer wire bytes alone do not establish a win.
+
+- EARTH-001-POSE-01 [ ] Pin the comparison inputs after the current series:
+  one Earth map and staged file, firmware, input/fire sequence, seed and
+  4,544-update interval. Use the same 256-byte terrain uploads, pending-VBlank
+  logic, music, drawing and splash lifetime in every arm. Reset the mainboard
+  before each measured run; identify each artifact and keep its report separate.
+
+- EARTH-001-POSE-02 [ ] Capture A as the reference, including sprite ID,
+  frame and position in publication order. Limit batching to uninterrupted
+  runs of ordinary formation poses. Flush before any intervening non-pose
+  output or presentation boundary. Leave spawn/show, hide/death, missiles,
+  sound and HUD on their existing paths; never defer a pose to the next frame.
+
+- EARTH-001-POSE-03 [ ] Compare B against A: verify byte-for-byte equality
+  of the ordered pose stream, including sparse ranks after kills. Submit
+  only occupied records; an empty run sends nothing.
+
+- EARTH-001-POSE-04 [ ] Compare C against that same reference: verify the
+  *executed* selects, frames and moves, not equality of the deliberately
+  different UART stream. Execute only the submitted records, never stale
+  slots after a kill. Check first spawn, full ranks and last disappearance.
+  Count resident buffer memory and one-time installation separately.
+
+- EARTH-001-POSE-05 [ ] Report skipped / total VBlanks over equal completed
+  updates as the primary outcome, with the dense formation interval broken
+  out. Report recurring pose bytes and sends, packet-build time and blocking
+  send time. A MOS return is not proof that VDP has rendered a frame. Compare
+  differences with measured run-to-run variation; report no clear winner if
+  appropriate. Stop for review before any async or production change.
+
+- EARTH-001-POSE-06 [ ] **Deferred option, not a fourth arm now:** after the
+  synchronous comparison, consider a native VDPlet consuming the same compact
+  pose records. Compare module on/off on the *same* module-capable firmware;
+  production VDPlet already beat stock without running a module, and the
+  fastest R30 direct-Set build has no module runtime. Keep async UART and
+  [queued music](../MUS-001/TASK.md#proposed-vdp-timed-music) separate.
+  No decision to require non-stock firmware for distribution.
 
 ## Design history
 

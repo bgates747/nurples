@@ -1,0 +1,129 @@
+{
+  "schema": 3,
+  "namespace": "earth-ab-vl1",
+  "fixtures": [
+    {
+      "id": "control",
+      "cwd": "/test/earth-ab-vl1/control",
+      "agon": {
+        "path": "/Agon/mystuff/nurples/.build/earth-jit-256/auto-pair/nurples.bin",
+        "bytes": 92852,
+        "sha256": "b25b23494252276302f2152bfa0a1ed6a9dc669df583e36090ae77eaf7b0182b"
+      },
+      "address": "040000",
+      "sd_program": "/test/earth-ab-vl1/control/nurples.bin",
+      "seconds": 300,
+      "success": "EARTH AB SAVED",
+      "failure": "EARTH AB FAILED",
+      "results": [
+        "/test/earth-ab-vl1/control/EARTHAB.BIN"
+      ],
+      "inputs": [
+        {
+          "sd_path": "/test/earth-ab-vl1/control/earth.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/.build/earth-jit-256/auto-pair/earth.agnb",
+            "bytes": 917576,
+            "sha256": "abf3e8355be3e90eca77c8dd22606d26626e8f64c6e0204743325c9a2cae35ee"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/control/game.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/.build/earth-jit-256/auto-pair/game.agnb",
+            "bytes": 541408,
+            "sha256": "30edadee99aafb65487657f5eaee6c4b6b4d7bb3bf047b8fd9e5fb677063318f"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/control/ui.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/tgt/ui.agnb",
+            "bytes": 371052,
+            "sha256": "d0024003369c8674a3e7989efa6d45c264ab2a455e6da628b16b2afd9594d41a"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/control/voice.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/tgt/voice.agnb",
+            "bytes": 79588,
+            "sha256": "3ba577d5053ce9ef5579ea6c2807f68a5e4523e8ded06684a4005e82707715fe"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/control/fonts/Lat38-VGA8_8x8.font",
+          "source": {
+            "path": "/Agon/mystuff/nurples/tgt/fonts/Lat38-VGA8_8x8.font",
+            "bytes": 2048,
+            "sha256": "23321abb10437db6b8bc8f21907268b46615d409b38975f6a195eb9643065a69"
+          }
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "cwd": "/test/earth-ab-vl1/aligned",
+      "agon": {
+        "path": "/Agon/mystuff/nurples/.build/earth-jit-256/auto-pair/nurples.bin",
+        "bytes": 92852,
+        "sha256": "b25b23494252276302f2152bfa0a1ed6a9dc669df583e36090ae77eaf7b0182b"
+      },
+      "address": "040000",
+      "sd_program": "/test/earth-ab-vl1/aligned/nurples.bin",
+      "seconds": 300,
+      "success": "EARTH AB SAVED",
+      "failure": "EARTH AB FAILED",
+      "results": [
+        "/test/earth-ab-vl1/aligned/EARTHAB.BIN"
+      ],
+      "inputs": [
+        {
+          "sd_path": "/test/earth-ab-vl1/aligned/earth.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/.build/earth-jit-256/aligned/earth.agnb",
+            "bytes": 918016,
+            "sha256": "13be5a719c649e0852e7148a57cb653da7748752a549e652f07bfe679217292b"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/aligned/game.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/.build/earth-jit-256/auto-pair/game.agnb",
+            "bytes": 541408,
+            "sha256": "30edadee99aafb65487657f5eaee6c4b6b4d7bb3bf047b8fd9e5fb677063318f"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/aligned/ui.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/tgt/ui.agnb",
+            "bytes": 371052,
+            "sha256": "d0024003369c8674a3e7989efa6d45c264ab2a455e6da628b16b2afd9594d41a"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/aligned/voice.agnb",
+          "source": {
+            "path": "/Agon/mystuff/nurples/tgt/voice.agnb",
+            "bytes": 79588,
+            "sha256": "3ba577d5053ce9ef5579ea6c2807f68a5e4523e8ded06684a4005e82707715fe"
+          }
+        },
+        {
+          "sd_path": "/test/earth-ab-vl1/aligned/fonts/Lat38-VGA8_8x8.font",
+          "source": {
+            "path": "/Agon/mystuff/nurples/tgt/fonts/Lat38-VGA8_8x8.font",
+            "bytes": 2048,
+            "sha256": "23321abb10437db6b8bc8f21907268b46615d409b38975f6a195eb9643065a69"
+          }
+        }
+      ]
+    }
+  ],
+  "firmware": {},
+  "preserve": {
+    "/autoexec.txt": "ed403e17f90a22c634afa0de3cad65451bc52da86bde6da084abe42fac3b7c64",
+    "/emos/sdserve.bin": "98492acc7dcd29e484ef76c69026e8801375738c33c617ba61a94d8481151f08"
+  }
+}
