@@ -104,6 +104,8 @@ class GameOverLifecycleTests(unittest.TestCase):
         self.assertLess(check, startup.index("call fonts_load"))
         redraw = block(source, "game_prepare_playfield")
         self.assertIn("call playfield_display_verify\n    ret nc", redraw)
+        self.assertLess(redraw.index("call playfield_display_verify"), redraw.index("ld a,26"))
+        self.assertNotIn("call vdu_cls", redraw)
         self.assertNotIn("call vdu_set_screen_mode", redraw)
 
     def test_startup_only_sets_mode_if_live_mode_differs(self) -> None:

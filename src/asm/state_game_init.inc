@@ -141,7 +141,6 @@ game_prepare_playfield:
     xor a
     ld c,c_black+128
     call vdu_gcol
-    call vdu_cls
 ; select font
     ld hl,Lat38_VGA8_8x8
     ld a,1 ; flags

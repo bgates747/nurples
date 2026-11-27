@@ -73,16 +73,16 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
     if batch:
         output = PROJECT_ROOT / (".build/earth-jit-256" if batch == 256 else ".build/earth-jit-1k")
     if auto_pair:
-        output = output / "auto-pair"
+        output = output / "auto-pair-r02"
     if frame_trace:
         output = output / "frame-trace"
     if pose:
-        output = PROJECT_ROOT / (".build/earth-pose-cost-r01" if pose_cost else ".build/earth-pose-r01") / pose
+        output = PROJECT_ROOT / (".build/earth-pose-cost-r02" if pose_cost else ".build/earth-pose-r02") / pose
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
         shutil.copytree(ASM_DIR, staged_asm)
-        if frame_trace:
+        if auto_pair:
             # The accepted timing baseline predates splash-buffer cleanup.
             pin = "af46123ca1c8ceb54acf0ab263d522f402aa9fa5"
             for name in ("images.inc", "presentation_flow_states.inc"):
@@ -178,13 +178,13 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         if frame_trace:
             from hashlib import sha256
             from nurples_tools.earth_jit import configure_frame_trace
-            # Prove the staged program is the exact running comparison before
-            # applying instrumentation, rather than assuming no other drift.
+            # Only instrument the matched R02 base (same as R01 minus the
+            # accepted playfield clear); R01 hardware evidence stays immutable.
             subprocess.run([assembler, "nurples.asm", "tracebase.bin"], cwd=staged_asm, check=True)
             if sha256((staged_asm / "tracebase.bin").read_bytes()).hexdigest() != (
-                "b25b23494252276302f2152bfa0a1ed6a9dc669df583e36090ae77eaf7b0182b"
+                "8ba499a5129133b638086c76dbf27d39f23a4bd3d604f6160b7e595233e40efe"
             ):
-                raise RuntimeError("Pre-trace executable differs from the hardware baseline")
+                raise RuntimeError("Pre-trace executable differs from the R02 fixture baseline")
             configure_frame_trace(staged_asm)
         if pose:
             from nurples_tools.earth_pose import configure_pose

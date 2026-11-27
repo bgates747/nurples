@@ -1,5 +1,18 @@
 # Earth pose comparison — execution record
 
+**November 27 — current fixtures (R02).** Smith accepted the Oryx transition
+without the full-screen clear. All 20 interactive and unattended fixture
+variants were rebuilt. Their linked playfield setup still verifies the mode,
+resets the viewport and draws the background; none calls the clear routine.
+The unattended builds keep the old splash-buffer lifetime for comparability.
+The eleven timing, pose and cost executables are each four bytes smaller than
+their R01 counterpart. Run `sha256sum -c ../docs/tasks/EARTH-001/pose/no-clear-r02.sha256`
+from `.build/` to verify their [pins](no-clear-r02.sha256).
+
+R01 manifests, binaries and hardware evidence below are historical. Do not
+use the R01 runners to qualify R02. No new bench run or deployment took place;
+the sync test remains on hold.
+
 Contract frozen on dev at `7d9cc146814c316c73cee2ba2e96f3ba577bb16a`.
 Do not use the earlier async-terrain trace as the control for these arms.
 All arms read the same staged unaligned Earth file, do ordinary 256-byte
