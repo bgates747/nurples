@@ -714,12 +714,16 @@ changes every 20 ms. Sending several ticks ahead (four ticks = 80 ms of
 music) would decouple UART submissions from the playback deadline. This is
 a roadmap option, not a change to the current PRT1 player or timing fixtures.
 
-- MUS-001-QUEUE-01 [ ] Check whether the [implemented shared audio queue](../../../../agon-vdplet/docs/audio-queues.md)
+- MUS-001-QUEUE-01 [x] Check whether the [implemented shared audio queue](../../../../agon-vdplet/docs/audio-queues.md)
   can express all changes emitted by our PT3 player, keep voices synchronized,
   and preserve empty ticks. Command 15 works without a native module on
   queue-enabled firmware; the tested lean production VDPlet build omits the
   queue service. Consider a native sequencer only if the queue cannot provide
   the required semantics. Keep a stock-compatible path unless Smith decides otherwise.
+  Result: **not lossless for the current PT3 player**. See the measured
+  [EARTH-001 music packet and clock audit](../EARTH-001/pose/RESULTS.md#can-the-vdp-clock-our-existing-pt3-music).
+  The stock VSYNC callback is a possible approximate clock, not a replacement
+  for the current 20 ms deadline. QUEUE-02 has not been implemented or auditioned.
 
 - MUS-001-QUEUE-02 [ ] If approved, audition batching independently of pose
   changes. Pause must silence immediately and resume at the *played* tick,
