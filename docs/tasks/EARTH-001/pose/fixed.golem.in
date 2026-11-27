@@ -1,0 +1,22 @@
+// One Golem slot, instantiated 32 times. No untyped VDU emitter, per-frame
+// array indexing or Golem compiler modification. The installer initializes
+// all fixed opcodes. VDU 0 padding makes each changing field a word.
+// @inputs
+uint16 inPair@ = 0
+uint16 inX@ = 0
+uint16 inY@ = 0
+// @commands
+uint16 startSelect@ = 5888
+uint16 selectSprite@ = 1051
+uint16 outId@ = 0
+uint16 startFrame@ = 6935
+uint16 outFrame@ = 10
+uint16 startMove@ = 5888
+uint16 moveAbs@ = 3355
+uint16 outX@ = 0
+uint16 outY@ = 0
+// @body
+    outId@ = inPair@ & 255
+    outFrame@ = (inPair@ & 65280) | 10
+    outX@ = inX@
+    outY@ = inY@

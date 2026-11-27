@@ -54,7 +54,7 @@ def check_assets() -> None:
 
 
 def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=False, spawn_review=False,
-             test_game=False, batch=0, auto_pair=False, frame_trace=False) -> None:
+             test_game=False, batch=0, auto_pair=False, frame_trace=False, pose=None, pose_cost=False) -> None:
     registry(PROJECT_ROOT)
     assembler = shutil.which("ez80asm") or str(
         Path.home() / ".local/bin/ez80asm"
@@ -76,6 +76,8 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         output = output / "auto-pair"
     if frame_trace:
         output = output / "frame-trace"
+    if pose:
+        output = PROJECT_ROOT / (".build/earth-pose-cost-r01" if pose_cost else ".build/earth-pose-r01") / pose
     output.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="nurples-assemble-") as temp_dir:
         staged_asm = Path(temp_dir) / "asm"
@@ -184,6 +186,12 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
             ):
                 raise RuntimeError("Pre-trace executable differs from the hardware baseline")
             configure_frame_trace(staged_asm)
+        if pose:
+            from nurples_tools.earth_pose import configure_pose
+            configure_pose(staged_asm, pose, PROJECT_ROOT, output)
+            if pose_cost:
+                from nurples_tools.pose_cost import configure_cost
+                configure_cost(staged_asm, pose)
         staged_binary = staged_asm / "nurples.bin"
         staged_symbols = staged_asm / "nurples.symbols"
         staged_binary.unlink(missing_ok=True)
@@ -195,6 +203,11 @@ def assemble(*, scanout_fixture=False, earth_jit=False, pace=None, staggered=Fal
         )
         if not staged_binary.is_file() or not staged_symbols.is_file():
             raise RuntimeError("assembly did not produce a binary/symbol pair")
+        if pose == "native":
+            linked = {name: int(value, 16) for line in staged_symbols.read_text().splitlines()
+                      if " $" in line for name, value in (line.split(" $", 1),)}
+            if (linked["fireballs_end_sprite_id"], linked["air_end_sprite_id"]) != (12, 44):
+                raise ValueError("native module does not match linked air-slot bounds")
         verify_audio(staged_binary.read_bytes(), modules)
         for staged, destination in (
             (staged_binary, output / "nurples.bin"),
@@ -248,6 +261,10 @@ def main() -> None:
     actions.add_argument("--earth-jit-256", action="store_true", help="one async Earth row per scroll")
     actions.add_argument("--earth-auto-pair", action="store_true", help="unattended Earth alignment comparison")
     actions.add_argument("--earth-frame-trace", action="store_true", help="Earth A/B with one timing row per update")
+    from nurples_tools.earth_pose import POSE_ARMS
+    actions.add_argument("--earth-pose", choices=POSE_ARMS, help="matched full-Earth pose transport fixture")
+    actions.add_argument("--earth-pose-cost", choices=("direct", "sync", "golem"),
+                         help="separate sparse CPU-side pose and MOS-call timing observer")
     actions.add_argument("--test-game", action="store_true", help="ordinary gameplay with D-to-die")
     actions.add_argument("--staggered-pace", action="store_true")
     actions.add_argument("--sprite-spawn-review", action="store_true",
@@ -260,9 +277,10 @@ def main() -> None:
         check_assets()
     elif args.scanout_fixture:
         assemble(scanout_fixture=True)
-    elif args.earth_auto_pair or args.earth_frame_trace:
+    elif args.earth_auto_pair or args.earth_frame_trace or args.earth_pose or args.earth_pose_cost:
         assemble(earth_jit=True, pace="bombing", test_game=True, batch=256, auto_pair=True,
-                 frame_trace=args.earth_frame_trace)
+                 frame_trace=bool(args.earth_frame_trace or args.earth_pose or args.earth_pose_cost),
+                 pose=args.earth_pose or args.earth_pose_cost, pose_cost=bool(args.earth_pose_cost))
     elif args.earth_jit_1k or args.earth_jit_256:
         assemble(earth_jit=True, pace="bombing", test_game=True, batch=256 if args.earth_jit_256 else 1024)
     elif args.test_game:

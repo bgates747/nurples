@@ -27,7 +27,7 @@ write new MOS or VDP firmware to implement these arms. The native arm may
 load an application module on existing module-capable firmware. Queued music
 is a separate feasibility question, not a change to the pose comparison.
 
-- EARTH-001-POSE-07 [ ] Build matched direct and batched stock-compatible
+- EARTH-001-POSE-07 [x] Build matched direct and batched stock-compatible
   full-game fixtures. The old traced fixture uses EMOS async even for terrain:
   keep a 256-byte synchronous terrain payload in *both* new fixtures. Retain
   identical map, unaligned Earth file, 1 KiB reads, pending VBlanks, deterministic
@@ -53,6 +53,9 @@ is a separate feasibility question, not a change to the pose comparison.
   computed bounds. Keep the reservation until Smith directs otherwise. No
   Oryx work; Smith authorized Pi5 emulator runs during this task. These are
   correctness checks, not substitutes for hardware timings.
+
+**Execution record:** [Pose comparison — builds, checks and hardware results](pose/RESULTS.md).
+The release game and the earlier SD timing fixtures remain separate from these arms.
 
 ### Earlier design (execution order amended above)
 
@@ -81,13 +84,13 @@ is why fewer wire bytes alone do not establish a win.
   logic, music, drawing and splash lifetime in every arm. Reset the mainboard
   before each measured run; identify each artifact and keep its report separate.
 
-- EARTH-001-POSE-02 [ ] Capture A as the reference, including sprite ID,
+- EARTH-001-POSE-02 [x] Capture A as the reference, including sprite ID,
   frame and position in publication order. Limit batching to uninterrupted
   runs of ordinary formation poses. Flush before any intervening non-pose
   output or presentation boundary. Leave spawn/show, hide/death, missiles,
   sound and HUD on their existing paths; never defer a pose to the next frame.
 
-- EARTH-001-POSE-03 [ ] Compare B against A: verify byte-for-byte equality
+- EARTH-001-POSE-03 [x] Compare B against A: verify byte-for-byte equality
   of the ordered pose stream, including sparse ranks after kills. Submit
   only occupied records; an empty run sends nothing.
 
@@ -103,6 +106,8 @@ is why fewer wire bytes alone do not establish a win.
   send time. A MOS return is not proof that VDP has rendered a frame. Compare
   differences with measured run-to-run variation; report no clear winner if
   appropriate. Stop for review before any async or production change.
+  The isolated [sparse clock observer](pose/RESULTS.md#sparse-attribution-observer-separate-from-the-scored-games)
+  is built and passed linked CPU checks; target evidence is still pending.
 
 - EARTH-001-POSE-06 [ ] **Deferred option, not a fourth arm now:** after the
   synchronous comparison, consider a native VDPlet consuming the same compact

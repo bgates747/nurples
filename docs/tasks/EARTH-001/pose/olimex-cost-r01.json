@@ -1,0 +1,32 @@
+{
+  "schema": 3,
+  "namespace": "earth-cost-r01",
+  "firmware": {},
+  "preserve": {
+    "/autoexec.txt": "ed403e17f90a22c634afa0de3cad65451bc52da86bde6da084abe42fac3b7c64",
+    "/emos/sdserve.bin": "98492acc7dcd29e484ef76c69026e8801375738c33c617ba61a94d8481151f08"
+  },
+  "fixtures": [
+    {
+      "id": "direct", "cwd": "/test/earth-cost-r01/direct",
+      "sd_program": "/test/earth-cost-r01/direct/nurples.bin",
+      "agon": {"path": "/Agon/mystuff/nurples/.build/earth-pose-cost-r01/direct/nurples.bin", "bytes": 144825, "sha256": "98740a9e0085b62bc95801220852f02f6804a0ddf9c41d2fb05b17deb66b7247"},
+      "address": "040000", "seconds": 300, "success": "EARTH AB SAVED", "failure": "EARTH AB FAILED",
+      "results": ["/test/earth-cost-r01/direct/POSECOST.BIN"]
+    },
+    {
+      "id": "sync", "cwd": "/test/earth-cost-r01/sync",
+      "sd_program": "/test/earth-cost-r01/sync/nurples.bin",
+      "agon": {"path": "/Agon/mystuff/nurples/.build/earth-pose-cost-r01/sync/nurples.bin", "bytes": 144760, "sha256": "ff40f9469d803667579bf9826b11cac53e9b3521f68976c5e08b5d0d9fb6b176"},
+      "address": "040000", "seconds": 300, "success": "EARTH AB SAVED", "failure": "EARTH AB FAILED",
+      "results": ["/test/earth-cost-r01/sync/POSECOST.BIN"]
+    },
+    {
+      "id": "golem", "cwd": "/test/earth-cost-r01/golem",
+      "sd_program": "/test/earth-cost-r01/golem/nurples.bin",
+      "agon": {"path": "/Agon/mystuff/nurples/.build/earth-pose-cost-r01/golem/nurples.bin", "bytes": 167216, "sha256": "4462bbf131ce05228664e050ba46c355420cc6847386d4248a4e5a24b863e732"},
+      "address": "040000", "seconds": 300, "success": "EARTH AB SAVED", "failure": "EARTH AB FAILED",
+      "results": ["/test/earth-cost-r01/golem/POSECOST.BIN"]
+    }
+  ]
+}

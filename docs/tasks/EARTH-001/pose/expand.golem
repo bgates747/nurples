@@ -1,0 +1,26 @@
+// Nurples owns movement. A host update writes count and six bytes per ship
+// to state. Expand only those records into the suffix of the VDP command
+// buffer. The caller executes that suffix, never stale slots after a kill.
+uint16 count = 0
+uint16 slot = 0
+uint16 source = 0
+uint16 target = 0
+uint16 idFrame = 0
+Array uint16 actors(0:96) = Fill(0)
+Array uint16 commands(0:255)
+Sub expand
+    count = actors(0)
+    If count <= 32 Then
+        For slot In Range(0:31)
+            If slot < count Then
+                source = slot * 3 + 1
+                target = (32 - count + slot) * 8
+                idFrame = actors(source)
+                commands(target + 1) = (idFrame & 255) * 256 + 4
+                commands(target + 3) = (idFrame & 65280) + 10
+                commands(target + 6) = actors(source + 1)
+                commands(target + 7) = actors(source + 2)
+            EndIf
+        Next slot
+    EndIf
+EndSub

@@ -1,0 +1,18 @@
+{
+  "schema": 3,
+  "namespace": "earth-golem-r01",
+  "firmware": {},
+  "preserve": {
+    "/autoexec.txt": "ed403e17f90a22c634afa0de3cad65451bc52da86bde6da084abe42fac3b7c64",
+    "/emos/sdserve.bin": "98492acc7dcd29e484ef76c69026e8801375738c33c617ba61a94d8481151f08"
+  },
+  "fixtures": [
+    {
+      "id": "golem", "cwd": "/test/earth-golem-r01/golem",
+      "sd_program": "/test/earth-golem-r01/golem/nurples.bin",
+      "agon": {"path": "/Agon/mystuff/nurples/.build/earth-pose-r01/golem/nurples.bin", "bytes": 146383, "sha256": "089e4e5578981a3b7573db9afd609121c80c41a25f97d611ff6ad99de929f0ee"},
+      "address": "040000", "seconds": 300, "success": "EARTH AB SAVED", "failure": "EARTH AB FAILED",
+      "results": ["/test/earth-golem-r01/golem/POSE.BIN"]
+    }
+  ]
+}
