@@ -19,6 +19,15 @@ game_load_callback_overflow: db 0
 splash_title_frame:          db 0
 splash_title_tick:           dl 0
 
+; The playfield has replaced the loading screen. Restart goes straight to
+; game_start_session and never draws the flashing title again.
+splash_release_title_frames:
+    ld hl,BUF_SPLASH_TITLE_0
+    call vdu_clear_buffer
+    ld hl,BUF_SPLASH_TITLE_1
+    jp vdu_clear_buffer
+; end splash_release_title_frames
+
 
 ; Print one completion breadcrumb at a safe record boundary. The canonical
 ; loader invokes this only after the bitmap has been fully created.
@@ -45,6 +54,9 @@ img_load_init:
     ld bc,0
     ld de,0
     call vdu_plot_bmp
+    ; The pixels are in the framebuffer; the loader never redraws this image.
+    ld hl,BUF_SPLASH_BG
+    call vdu_clear_buffer
     call splash_draw_title
     MOSCALL mos_sysvars
     ld hl,(ix+sysvar_time)

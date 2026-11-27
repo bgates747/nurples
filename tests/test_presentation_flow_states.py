@@ -29,6 +29,21 @@ def block(source: str, label: str) -> str:
 
 
 class PresentationFlowStateTests(unittest.TestCase):
+    def test_splash_background_released_after_plot_title_after_playfield_draw(self) -> None:
+        flow = SOURCE.read_text()
+        begin = block(flow, "game_attract_begin")
+        self.assertLess(begin.index("jp nc,presentation_flow_fail"), begin.index("call splash_release_title_frames"))
+        self.assertEqual(flow.count("call splash_release_title_frames"), 1)
+        images = (SOURCE.parent / "images.inc").read_text()
+        init = images.split("img_load_init:", 1)[1].split("jp splash_print_progress", 1)[0]
+        code = " ".join(" ".join(line.partition(";")[0].split()) for line in init.splitlines())
+        self.assertIn("call vdu_plot_bmp ld hl,BUF_SPLASH_BG call vdu_clear_buffer call splash_draw_title",
+                      " ".join(code.split()))
+        self.assertEqual(block(images, "splash_release_title_frames").split(), [
+            "ld", "hl,BUF_SPLASH_TITLE_0", "call", "vdu_clear_buffer",
+            "ld", "hl,BUF_SPLASH_TITLE_1", "jp", "vdu_clear_buffer",
+        ])
+
     def test_attract_defines_ordinary_prefix_before_overlay_entry(self) -> None:
         begin = block(SOURCE.read_text(), "game_attract_begin")
         prepare = begin.index("call game_prepare_playfield")

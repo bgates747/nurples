@@ -187,6 +187,7 @@ presentation_renderer_process_init:
 attract_lifecycle_process_init:
 game_over_lifecycle_process_init:
 start_choice_exit_stub:
+splash_release_title_frames:
     ret
 
 presentation_renderer_exit:

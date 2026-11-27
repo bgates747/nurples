@@ -43,6 +43,7 @@ game_attract_begin:
     ld a,PLAYFIELD_CHECK_ATTRACT
     call game_prepare_playfield
     jp nc,presentation_flow_fail
+    call splash_release_title_frames
     call reset_runtime_tables
     call attract_lifecycle_enter
     jp nc,presentation_flow_fail
