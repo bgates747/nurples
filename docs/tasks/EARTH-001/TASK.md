@@ -74,7 +74,8 @@ pose in those fixtures. The follow-ups below are proposals, not changes to the
 fixtures or authorization to resume the bench.
 
 - EARTH-001-POSE-12 [ ] Locate the missed deadline before deciding what to
-  defer. Check for a pending VBlank after terrain submission, after the last
+  defer. [Direct-build deadline observer: execution contract and results](pose/direct-deadlines.md).
+  Check for a pending VBlank after terrain submission, after the last
   actor update, and after the final pose batch. Today the actor traversal also
   sends poses, so the middle checkpoint is not pure simulation time. Report
   dense formations separately from the whole level; accompany aggregate
