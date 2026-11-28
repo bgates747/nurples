@@ -9,9 +9,22 @@ The eleven timing, pose and cost executables are each four bytes smaller than
 their R01 counterpart. Run `sha256sum -c ../docs/tasks/EARTH-001/pose/no-clear-r02.sha256`
 from `.build/` to verify their [pins](no-clear-r02.sha256).
 
-R01 manifests, binaries and hardware evidence below are historical. Do not
-use the R01 runners to qualify R02. No new bench run or deployment took place;
-the sync test remains on hold.
+R01 manifests, binaries and hardware evidence below are historical. The November
+27 evening suite uses the [R02 packet](olimex-suite-r02.json) and
+[runner](run-suite-r02.py), commissioned checkout `e141613c`, production
+VDPlet v0.1.4-alpha and approved EMOS. Smith authorized the run; the scheduler
+granted normal FIFO custody. Stage the nine binaries in fresh arm directories
+via P4-staged UART, using the existing Earth control assets. Reset before each
+arm; match the collected report to its own serial totals before proceeding.
+Do not flash, rerun, clean the SD, or touch the R01 POSE.BIN. Evidence:
+`.build/earth-pose-r02/bench-uart-01/`. Authorization and launch are not scores.
+
+Five arms validated (skipped / VBlanks): direct 558/5102, sync 553/5097,
+async 551/5095, Golem 2167/6711, native-direct 551/5095. Native did not
+validate; cost arms did not run. See the [native rejection evidence and
+investigation plan](native-run-investigation.md). Normal failed-phase
+handback proved a working MOS prompt and idle transfers; no firmware was
+changed. Scheduler released Nurples' reservation to Sprite.
 
 Contract frozen on dev at `7d9cc146814c316c73cee2ba2e96f3ba577bb16a`.
 Do not use the earlier async-terrain trace as the control for these arms.

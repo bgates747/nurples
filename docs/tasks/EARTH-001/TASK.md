@@ -56,6 +56,51 @@ is a separate feasibility question, not a change to the pose comparison.
 
 **Execution record:** [Pose comparison — builds, checks and hardware results](pose/RESULTS.md).
 The release game and the earlier SD timing fixtures remain separate from these arms.
+The R02 native arm stopped on repeated RUN rejections. [Investigation plan,
+POSE-15–18](pose/native-run-investigation.md): establish correct invocation
+before interpreting performance. This does not advance the deferred scheduling experiments.
+
+**Approved November 27:** [Direct UART vs. locally submitted poses from a C VDPlet (POSE-19–22)](pose/pure-native.md).
+Use the existing public interface and the corrected native fixture above;
+no firmware extension, Golem or music changes. Compare against the current
+direct control. This measures game performance, not interpreter cost alone.
+
+### After the full hardware suite: terrain deadlines and overdue formation poses
+
+Finish and review the current R02 comparisons first: direct, synchronous batch,
+async batch, Golem buffered commands, and native VDPlet against its matched
+direct control, plus the planned cost measurements. Keep sending every eligible
+pose in those fixtures. The follow-ups below are proposals, not changes to the
+fixtures or authorization to resume the bench.
+
+- EARTH-001-POSE-12 [ ] Locate the missed deadline before deciding what to
+  defer. Check for a pending VBlank after terrain submission, after the last
+  actor update, and after the final pose batch. Today the actor traversal also
+  sends poses, so the middle checkpoint is not pure simulation time. Report
+  dense formations separately from the whole level; accompany aggregate
+  sends and bytes with rates per update and per second. If the best full-pose
+  path meets pace through the dense interval, keep it and skip the added logic.
+
+- EARTH-001-POSE-13 [ ] If terrain is already late before actor updates,
+  audition preparing the next 256-byte row ahead of time. Keep the current
+  row's one-pixel scroll, exposed-row plot, and terrain overlay together;
+  do not overwrite a single VDP row buffer before submitting its plot.
+  Try moving the foreground music poll and SD refill outside that sequence,
+  **not** masking interrupts: the 50 Hz ISR records a tick, it does not send
+  music. Check scroll continuity and music timing as well as frame skips.
+
+- EARTH-001-POSE-14 [ ] If routine poses push otherwise on-time frames over
+  deadline, compare a separate overdue-first fixture with the unchanged sync
+  batch. Process all movement, firing, collisions and timers in their usual
+  order. Budget only already-visible formation poses. For the 32 slots,
+  try a ready mask, an owed mask and a rotating cursor (nine bytes). Pack
+  overdue slots first using their **current** frame and position, not a saved
+  pose. Keep first pose/show, hide and death immediate; clear pending bits
+  on retirement, reuse and reset. Leave the player and projectiles alone.
+  First try 12 visible ships with a budget of six: all 12 must keep updating,
+  and each surviving ship must be shown at least every other update. On
+  hardware, report the longest gap between pose sends alongside dense-frame
+  skips; a better frame counter alone does not establish smoother motion.
 
 ### Earlier design (execution order amended above)
 
